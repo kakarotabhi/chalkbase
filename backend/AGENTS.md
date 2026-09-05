@@ -39,6 +39,8 @@ in.chalkbase
   `schoolId` argument is a review blocker. Global reference data (boards, states, subjects) has no
   `school_id`.
 - **Controllers** live in `api/`, are thin, and return records. Path prefix `/api/v1/`.
+- **Navigation is data, not markup** (ADR-0008). A module contributes navigation nodes as
+  stable ids plus label keys. Never send a URL, a component name, or anything visual.
 - **Responses**: controllers return `ApiResponse<T>` via `ApiResponse.success(...)` (ADR-0007).
 - **Errors**: throw `ChalkbaseException` with a module `ErrorCode`; `platform.error.GlobalExceptionHandler`
   maps it. Never build an error response inside a controller, and never throw

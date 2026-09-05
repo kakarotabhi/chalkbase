@@ -45,6 +45,30 @@ Exactly one of `data` and `error` is present; the other is omitted.
   the session ([ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md)).
 - **UUID identifiers, ISO-8601 UTC timestamps, decimal strings for money** — never a float.
 
+## Bootstrap: `GET /api/v1/me`
+
+One call after login returns everything the client needs to render the shell — user, school,
+effective permissions, navigation and settings — instead of a waterfall of separate requests on a
+school's broadband.
+
+```jsonc
+{ "success": true,
+  "data": {
+    "user": { "id": "…", "displayName": "…" },
+    "school": { "id": "…", "name": "…" },
+    "permissionsVersion": 17,
+    "permissions": ["fee:invoice:create", "attendance:mark:write"],
+    "navigation": [
+      { "id": "fees", "labelKey": "nav.fees", "icon": "receipt", "order": 30,
+        "children": [ { "id": "fees.collect", "labelKey": "nav.fees.collect", "order": 10 } ] }
+    ]
+  } }
+```
+
+Navigation carries stable **ids**, never URLs — the client maps ids to its own routes
+([ADR-0008](../architecture/adr/0008-server-driven-navigation.md)). A `403` tells the client its
+view is stale: refetch this endpoint before showing the error.
+
 ## Error codes
 
 Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.

@@ -201,6 +201,13 @@ See [ADR-0005](../architecture/adr/0005-authorization-model.md) for the authoriz
 | FR-108 | Portals shall be mobile responsive and usable on low-cost Android phones. | P0 |
 | FR-109 | The system shall support parent access for multiple children in the same account. | P0 |
 | FR-110 | The system shall support notification preferences where appropriate. | P1 |
+| FR-110a | The system shall return the user's navigation menu from the server after login, derived from that user's effective permissions and the modules the school uses, so that a school-defined role produces a correct menu without a frontend release. | P0 |
+| FR-110b | Navigation items shall be identified by stable identifiers that the client resolves to its own routes. The server shall not send URLs, component names, or layout. | P0 |
+| FR-110c | Hiding a navigation item shall never be relied on as an access control; every endpoint shall enforce its own permission independently. | P0 |
+| FR-110d | The system shall allow a school to override a navigation label, and shall otherwise send translation keys rather than display text. | P1 |
+| FR-110e | The client shall refresh its navigation and permissions when the server rejects a request as unauthorised, so a role change mid-session self-corrects. | P1 |
+| FR-110f | User interface components shall be built in-house against the product's own design tokens; no third-party visual component library shall be adopted. | P0 |
+| FR-110g | Interactive components shall support keyboard operation and screen readers, and shall remain usable on low-cost Android tablets. | P0 |
 
 ## 14. Transport
 

@@ -26,7 +26,14 @@ src/environments/ apiBaseUrl per build configuration.
 - **Selectors are `cb-` prefixed.** Files are named after the thing (`school-list.ts`), no
   `.component` suffix.
 - **No UI component library, and no utility CSS framework.** Components are hand-designed here.
-  Build them in `shared/components` and compose features from them.
+  Build them in `shared/components` and compose features from them (ADR-0009).
+- **Angular CDK is allowed and preferred for behaviour** — `Overlay`, `A11y` focus trap, `Portal`,
+  virtual scroll. It ships no CSS. Do not hand-roll focus trapping or overlay positioning.
+- **Shared components take inputs and emit outputs.** No HTTP, no router, no store. Form controls
+  implement `ControlValueAccessor`. Keyboard and screen-reader support is part of "done".
+- **Navigation comes from the server** (ADR-0008). The menu is built from `/api/v1/me`, and the
+  server sends stable ids that this app maps to its own routes — never URLs. An unknown id is
+  dropped and logged, never rendered. Never treat a hidden menu item as access control.
 - **No literal colours, spacings or font sizes in a component style** — only
   `var(--cb-*)` tokens. New token, new entry in `_tokens.scss`, and it must have a dark value.
 - **Control flow uses `@if` / `@for` / `@let`**, never `*ngIf` / `*ngFor`.
