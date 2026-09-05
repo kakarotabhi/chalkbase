@@ -152,11 +152,18 @@ Reject the same key if the request body differs.
 
 ## Versioning
 
-- Use `/api/v1` from the start.
-- Do not make breaking changes inside a version.
-- Add fields in a backward-compatible way.
-- Deprecate before removing.
-- Keep frontend generated clients aligned with OpenAPI.
+The API is **not versioned** — see
+[ADR-0016](../../architecture/adr/0016-no-api-versioning.md). There is one client, shipped from the
+same commit as the backend, so serving an old contract has nobody to serve it to.
+
+- Use `/api/v1` as the base path. It is frozen and is not a version number; there will be no `v2`.
+- Add fields in a backward-compatible way; do not remove or rename them.
+- Both sides ignore unknown fields, so an added field breaks nobody.
+- A genuinely breaking change is made atomically across backend and frontend in one pull request.
+- Keep frontend generated clients aligned with OpenAPI — that is what makes a breaking change fail
+  the build instead of reaching a user.
+- Revisit only when a consumer exists that cannot be forced to upgrade (a parent mobile app, a board
+  integration). ADR-0016 records what to build then.
 
 ## OpenAPI
 
