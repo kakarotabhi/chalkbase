@@ -24,11 +24,23 @@ export interface CreateSchoolRequest {
   readonly state?: string;
 }
 
-/** RFC 9457 problem detail, the shape every backend error uses. */
-export interface ProblemDetail {
-  readonly type?: string;
-  readonly title?: string;
-  readonly status?: number;
-  readonly detail?: string;
-  readonly errors?: readonly string[];
+/**
+ * The envelope every `/api/v1` response uses. Exactly one of `data` and `error` is present.
+ * See ADR-0007.
+ */
+export interface ApiResponse<T> {
+  readonly success: boolean;
+  readonly data?: T;
+  readonly error?: ApiError;
+  readonly timestamp: string;
+  readonly traceId?: string;
+}
+
+export interface ApiError {
+  /** Stable machine-readable code, e.g. `VAL_001`. Branch on this, never on `message`. */
+  readonly code: string;
+  /** Sentence safe to show a user as-is. */
+  readonly message: string;
+  /** Field name to reason, present on validation failures. */
+  readonly details?: Readonly<Record<string, string>>;
 }
