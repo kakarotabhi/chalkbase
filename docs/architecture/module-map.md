@@ -30,5 +30,6 @@ Modules are added in roadmap order — see
 
 - One module owns a table. Other modules read it through that module's `api`, never with a join.
 - A table without an owner in this file should not exist.
-- Global reference data (boards, states, districts, subject catalogue) lives in `platform` and has
-  no `school_id`.
+- Global reference data (boards, states, districts, subject catalogue) lives in `platform` and is
+  created in the `public` schema by `db/migration/shared`. Everything else belongs to a school's own
+  schema, created by `db/migration/tenant` (ADR-0011).

@@ -1,9 +1,18 @@
 # ADR-0002: Multi-tenancy strategy
 
-- Status: Accepted
+- Status: **Superseded by [ADR-0011](0011-schema-per-tenant.md)**
 - Date: 2026-09-05
 - Deciders: Raja
 - Supersedes: none
+
+> **Superseded on 2026-09-05 by [ADR-0011](0011-schema-per-tenant.md), which chose schema per
+> tenant.** Not because the analysis below was wrong — the volume numbers still hold, and row-level
+> tenancy would not have been a throughput problem. It was changed because row-level puts the tenant
+> boundary in application code, where forgetting a `WHERE` clause leaks children's records, and
+> schema per tenant puts it in the database.
+>
+> This record is kept because it holds the sizing work, the case against database-per-tenant, and
+> the hybrid escape hatch — all of which still apply.
 
 ## Context
 

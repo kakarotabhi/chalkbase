@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-09-05
 - Deciders: Raja
-- Related: [ADR-0002](0002-multi-tenancy-strategy.md) (tenancy), [ADR-0003](0003-authentication-and-authorization.md) (authentication)
+- Related: [ADR-0011](0011-schema-per-tenant.md) (tenancy), [ADR-0003](0003-authentication-and-authorization.md) (authentication)
 
 ## Context
 
@@ -124,7 +124,8 @@ effective permission set is computed **once per session** at login, cached again
 invalidated when a role or grant changes, or on forced logout. No per-request permission queries.
 
 The only real cost is the scope-narrowing join on list queries, which is handled with indexes that
-lead with `school_id` and then the scope column — the same shape ADR-0002 already requires.
+lead with the scope column. Tenancy no longer contributes a leading column: each school's rows
+already live in their own schema (ADR-0011).
 
 ## Consequences
 

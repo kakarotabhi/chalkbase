@@ -53,8 +53,10 @@ Rules:
 Most business tables should include:
 
 - `id`
-- `school_id`
 - `academic_session_id` where session-specific
+
+There is deliberately no `school_id`: each school's rows live in that school's own schema
+(ADR-0011). A `school_id` column on a business table is a sign the table is in the wrong place.
 - `created_at`
 - `created_by`
 - `updated_at`
@@ -79,8 +81,8 @@ Add indexes matching these filters.
 Example index shape:
 
 ```sql
-CREATE INDEX idx_student_enrollment_school_session_class
-ON student_enrollment (school_id, academic_session_id, class_id, section_id);
+CREATE INDEX idx_student_enrollment_session_class
+ON student_enrollment (academic_session_id, class_id, section_id);
 ```
 
 ## Migration Rules
