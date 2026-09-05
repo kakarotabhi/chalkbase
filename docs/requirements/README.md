@@ -20,6 +20,7 @@ The system should be usable by a single school first, but designed so that it ca
 - [Data Model and Integrations](04-data-model-and-integrations.md)
 - [Technical Architecture](05-technical-architecture.md)
 - [Roadmap and MVP](06-roadmap-and-mvp.md)
+- [Phase 0 decisions](07-phase-0-decisions.md)
 
 ## Research Basis
 
@@ -174,17 +175,25 @@ Recorded as architecture decision records in [docs/architecture/adr](../architec
 | How is one installation split between schools? | One PostgreSQL schema per school in a single database, one connection pool. Migrations fan out to every schema at startup; a tenant registry in `public` lists them. | [ADR-0011](../architecture/adr/0011-schema-per-tenant.md) |
 | How does the layout work across devices? | Three window size classes (600px / 840px) — bottom bar, icon rail, sidebar. Compact navigation adapts to how many destinations the user actually has, since that is permission-dependent. Mobile is the default, not the fallback. | [ADR-0010](../architecture/adr/0010-responsive-and-adaptive-layout.md) |
 | How configurable should the product be? | Four tiers — master data, typed per-school settings, named strategies, and a deliberate list of things that stay fixed. A setting earns its place when two real schools disagree about it. | [ADR-0006](../architecture/adr/0006-configurability-model.md) |
+| How is money modelled? | Append-only. Immutable charges plus signed payment, concession, refund and reversal rows; a balance is always a sum, never a stored field. A correction is a credit note, never an edit. | [ADR-0012](../architecture/adr/0012-fee-ledger-model.md) |
+| Which payment gateway and messaging providers? | None yet. Both are ports. v1 registers offline fee collection, transactional email and web push; Razorpay, SMS and WhatsApp are later adapters against a data model that is already ready for them. | [ADR-0013](../architecture/adr/0013-external-provider-ports.md) |
+| How is children's data protected? | Four classification tiers declared on DTO fields, driving log redaction, error responses and export masking — with an unclassified field failing the build. Consent and retention are part of the model. | [ADR-0014](../architecture/adr/0014-data-classification.md) |
+| Where does it run? | One Hostinger KVM 2 in Mumbai via Coolify: PostgreSQL, backend, frontend and MinIO on one box. ~20–30 ms to Delhi, data in India, backups off-box and restore-drilled. | [ADR-0015](../architecture/adr/0015-deployment-baseline.md) |
 
 ## Open Decisions
 
-Still to decide:
+[Phase 0](07-phase-0-decisions.md) closed the questions that used to sit here: the first board
+(CBSE), the first state (Delhi NCR), the school type (K-12 day, single campus), the MVP list, the
+admission, fee, exam, attendance and certificate workflows, the providers, the deployment baseline,
+the data classification policy and the sample data plan.
 
-- Which board is the first target: CBSE, state board, CISCE, or mixed?
-- Which state is the first deployment target?
-- Which payment gateway, SMS provider, WhatsApp provider, email provider, and GPS provider will be used?
-  (The SMS provider carries a long lead time — transactional SMS in India needs TRAI DLT entity,
-  sender ID and per-template registration before phone + OTP login or fee reminders can ship.)
-- Whether parent/student access should be PWA-only or include native apps.
-- Whether document storage should be local VPS volume, S3-compatible storage, or managed object storage.
-- When phone + OTP login replaces or supplements passwords for parents and students.
+What remains open:
 
+- Which SMS and WhatsApp providers, once TRAI DLT entity registration completes — that process
+  reveals which are painless. **DLT registration itself starts now**, independently of when SMS
+  ships, because it is weeks of paperwork on the critical path of fee reminders and phone-OTP login.
+- Which payment gateway, once the pilot school's bank and settlement account are known. Razorpay is
+  the intended first adapter, not a commitment.
+- When phone + OTP login supplements passwords for parents and students — blocked on DLT above.
+- Which GPS provider, when transport reaches Phase 4.
+- Whether a Tally or accounting export is needed, and in what shape, when a school asks for it.

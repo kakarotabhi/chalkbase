@@ -93,6 +93,27 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
 them turns the login form into a way to discover which parents are registered.
 
+## Paging a list
+
+Offset paging, settled in [Phase 0](../requirements/07-phase-0-decisions.md#api-conventions):
+
+```
+GET /api/v1/students?page=0&size=25&sort=name,asc
+```
+
+The payload is a `PageResponse<T>` inside the usual envelope:
+
+```json
+{ "data": { "items": [], "page": 0, "size": 25, "totalElements": 613, "totalPages": 25 } }
+```
+
+Offset rather than cursor because every list here is a bounded admin table where the user wants
+"page 7 of 12" and a total — and because "how many fee defaulters are there" is the question actually
+being asked, which a cursor cannot answer. Cursor paging stays available for the two unbounded,
+append-heavy logs (audit and notification delivery) if they ever need it.
+
+`size` is capped server-side. An unbounded list endpoint is a review blocker.
+
 ## Adding an endpoint
 
 1. Return `ApiResponse<T>` (`ApiResponse.success(payload)`). Do not wrap automatically — explicit

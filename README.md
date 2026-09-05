@@ -53,3 +53,7 @@ tools/       developer scripts
 - [ADR-0008](docs/architecture/adr/0008-server-driven-navigation.md) — the server decides the menu, the client decides the pixels
 - [ADR-0009](docs/architecture/adr/0009-hand-built-component-library.md) — build the components, adopt the CDK for behaviour
 - [ADR-0010](docs/architecture/adr/0010-responsive-and-adaptive-layout.md) — bottom bar, rail, sidebar; mobile is the default
+- [ADR-0012](docs/architecture/adr/0012-fee-ledger-model.md) — the fee ledger is append-only; a balance is a sum
+- [ADR-0013](docs/architecture/adr/0013-external-provider-ports.md) — payments and messaging are ports; v1 is offline and email
+- [ADR-0014](docs/architecture/adr/0014-data-classification.md) — four data tiers, enforced by a build-failing test
+- [ADR-0015](docs/architecture/adr/0015-deployment-baseline.md) — one Mumbai VPS running everything, via Coolify
