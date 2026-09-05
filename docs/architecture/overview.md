@@ -35,8 +35,10 @@
 |---|---|
 | Why a modular monolith | [ADR-0001](adr/0001-modular-monolith.md) |
 | How multi-tenancy works | [ADR-0002](adr/0002-multi-tenancy-strategy.md) |
-| Auth and permissions | [ADR-0003](adr/0003-authentication-and-authorization.md) — open |
+| Authentication | [ADR-0003](adr/0003-authentication-and-authorization.md) |
 | H2 now, PostgreSQL next | [ADR-0004](adr/0004-h2-now-postgresql-next.md) |
+| Permissions, roles and scopes | [ADR-0005](adr/0005-authorization-model.md) |
+| What is configurable, and where | [ADR-0006](adr/0006-configurability-model.md) |
 
 ## Module inventory
 
