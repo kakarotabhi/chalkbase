@@ -1,0 +1,31 @@
+<label class="checkbox" [class.is-disabled]="isDisabled()">
+  <input
+    class="checkbox__input"
+    type="checkbox"
+    [attr.id]="id()"
+    [attr.aria-describedby]="describedBy()"
+    [checked]="checked()"
+    [disabled]="isDisabled()"
+    (change)="handleChange($event)"
+    (blur)="handleBlur()"
+  />
+
+  <span class="checkbox__box" aria-hidden="true">
+    @if (checked()) {
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 6.5 9.4 17.5 4 12.3" />
+      </svg>
+    }
+  </span>
+
+  <span class="checkbox__label">{{ label() }}</span>
+</label>

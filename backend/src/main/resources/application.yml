@@ -45,6 +45,19 @@ spring:
     virtual:
       enabled: true
 
+  # Server-side sessions in PostgreSQL (ADR-0003): forced logout and lockout are requirements, and
+  # a restart must not sign every parent out.
+  session:
+    timeout: 8h
+    jdbc:
+      # The tables are created by db/migration/shared, alongside every other schema change. Letting
+      # Spring Session run its own DDL would put a second, untracked owner on the same tables.
+      initialize-schema: never
+      # Schema-qualified on purpose. A pooled connection's search_path is whichever school was last
+      # served (ADR-0011), so an unqualified `spring_session` would resolve inside a tenant schema —
+      # where it does not exist. The session store is the one thing that lives in `public`.
+      table-name: public.spring_session
+
 server:
   port: ${PORT:8080}
   error:

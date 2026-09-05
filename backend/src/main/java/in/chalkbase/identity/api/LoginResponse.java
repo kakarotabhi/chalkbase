@@ -1,0 +1,14 @@
+package in.chalkbase.identity.api;
+
+import java.util.UUID;
+
+/**
+ * What a client learns from signing in.
+ *
+ * <p>No token, and no session id: the session is carried by an {@code HttpOnly} cookie the browser
+ * never exposes to script (ADR-0003). Putting the session id in the body would defeat that.
+ *
+ * @param mustChangePassword true when the school issued a temporary password. The client must send
+ *     the user to the change-password screen and let them do nothing else first.
+ */
+public record LoginResponse(UUID userId, String displayName, boolean mustChangePassword, SchoolSummary school) {}

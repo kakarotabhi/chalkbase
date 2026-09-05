@@ -44,3 +44,35 @@ export interface ApiError {
   /** Field name to reason, present on validation failures. */
   readonly details?: Readonly<Record<string, string>>;
 }
+
+/* ── Auth (POST /api/auth/*) ─────────────────────────────────────────────── */
+
+export interface LoginRequest {
+  readonly schoolCode: string;
+  readonly username: string;
+  readonly password: string;
+  /**
+   * Lengthens the session from the 8-hour default to 7 days. Sent only when the parent ticks the
+   * box, so a shared machine at the school counter keeps the short session.
+   */
+  readonly rememberMe: boolean;
+}
+
+/** The school a successful sign-in resolves to, as echoed back by the login endpoint. */
+export interface LoginSchool {
+  readonly code: string;
+  readonly name: string;
+}
+
+export interface LoginResponse {
+  readonly userId: string;
+  readonly displayName: string;
+  /** True when the school issued a temporary password that must be replaced before continuing. */
+  readonly mustChangePassword: boolean;
+  readonly school: LoginSchool;
+}
+
+export interface ChangePasswordRequest {
+  readonly currentPassword: string;
+  readonly newPassword: string;
+}

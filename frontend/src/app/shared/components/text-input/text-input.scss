@@ -1,0 +1,13 @@
+@use '../../../../styles/controls' as *;
+
+:host {
+  display: block;
+}
+
+.input {
+  @include control-surface;
+}
+
+.input--invalid {
+  @include control-invalid;
+}

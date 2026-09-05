@@ -1,0 +1,36 @@
+<label class="field__label" [attr.for]="controlId()">
+  {{ label() }}
+  @if (required()) {
+    <!--
+      The asterisk is decoration; the word is what a screen reader announces. Marking the input
+      `required` alone is not enough — sighted users need to see it before they submit.
+    -->
+    <span class="field__marker" aria-hidden="true">*</span>
+    <span class="field__marker-text">(required)</span>
+  }
+</label>
+
+<ng-content />
+
+@if (hasError()) {
+  <p class="field__error" [id]="errorId()" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <span>{{ error() }}</span>
+  </p>
+} @else if (hint(); as hintText) {
+  <p class="field__hint" [id]="hintId()">{{ hintText }}</p>
+}

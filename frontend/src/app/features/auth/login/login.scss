@@ -1,0 +1,74 @@
+@use '../../../../styles/mixins' as *;
+@use '../../../../styles/banner' as *;
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-4);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.login__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+}
+
+// A link in appearance only. It changes what is on this page rather than navigating, so it is a
+// button — a screen reader announcing "link" here would be a promise the app cannot keep.
+.login__link {
+  min-height: var(--cb-touch-target-min);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--cb-primary-hover);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--cb-focus);
+    outline-offset: 2px;
+    border-radius: var(--cb-radius-sm);
+  }
+}
+
+.login__help {
+  // Pinned to the bottom of the phone viewport, where the mock puts it; a normal trailing note
+  // once the form is centred in a column of its own.
+  margin-top: auto;
+  padding: var(--cb-space-6) 0 calc(var(--cb-space-6) + var(--cb-safe-bottom));
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+  text-align: center;
+
+  &:focus-visible {
+    outline: 2px solid var(--cb-focus);
+    outline-offset: 2px;
+    border-radius: var(--cb-radius-sm);
+  }
+
+  &.is-called-out {
+    color: var(--cb-text);
+    font-weight: 500;
+  }
+
+  @include from-expanded {
+    margin-top: var(--cb-space-6);
+    padding: 0;
+  }
+}

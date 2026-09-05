@@ -1,0 +1,134 @@
+@use '../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+// Compact is the whole layout: one column, form first, nothing decorative competing with it.
+.auth {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--cb-bg);
+
+  @include from-expanded {
+    display: grid;
+    // 512 of 1280 in the approved desktop mock.
+    grid-template-columns: 40% 1fr;
+  }
+}
+
+.auth__aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--cb-space-8) var(--cb-space-4) 0;
+  padding-top: calc(var(--cb-safe-top) + var(--cb-space-8));
+
+  @include from-expanded {
+    padding: var(--cb-space-12);
+    background: var(--cb-primary);
+    color: var(--cb-primary-contrast);
+  }
+}
+
+.auth__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+}
+
+// The mark is a filled square with a cut-out glyph. Both halves come from tokens, and they swap
+// when the mark moves onto the primary panel — hence the local custom property rather than two
+// copies of the SVG.
+.auth__mark {
+  color: var(--cb-primary);
+  --mark-ink: var(--cb-primary-contrast);
+
+  @include from-expanded {
+    color: var(--cb-primary-contrast);
+    --mark-ink: var(--cb-primary);
+  }
+}
+
+// var() is unreliable inside SVG presentation attributes, so the glyph is coloured from the
+// stylesheet instead.
+.auth__mark-stroke {
+  stroke: var(--mark-ink);
+}
+
+.auth__mark-dot {
+  fill: var(--mark-ink);
+}
+
+.auth__wordmark {
+  font-size: var(--cb-font-size-lg);
+  font-weight: 700;
+}
+
+.auth__pitch {
+  display: none;
+
+  @include from-expanded {
+    display: block;
+  }
+}
+
+.auth__headline {
+  max-width: 19ch;
+  margin: 0;
+  font-size: var(--cb-font-size-2xl);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.auth__blurb {
+  max-width: 38ch;
+  margin: var(--cb-space-4) 0 0;
+  font-size: var(--cb-font-size-base);
+  // The panel has one text colour; this line is the quieter of the two.
+  opacity: 0.82;
+}
+
+.auth__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--cb-space-6) var(--cb-space-4) 0;
+
+  @include from-expanded {
+    align-items: center;
+    justify-content: center;
+    padding: var(--cb-space-12);
+  }
+}
+
+.auth__panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+
+  @include from-medium {
+    max-width: var(--cb-form-column-width);
+    margin-inline: auto;
+  }
+
+  @include from-expanded {
+    flex: none;
+    margin-inline: 0;
+  }
+}
+
+.auth__heading {
+  margin: var(--cb-space-4) 0 0;
+  font-size: var(--cb-font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.auth__subtitle {
+  margin: var(--cb-space-1) 0 var(--cb-space-6);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}

@@ -1,0 +1,37 @@
+<div class="auth">
+  <aside class="auth__aside">
+    <div class="auth__brand">
+      <svg class="auth__mark" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="currentColor" />
+        <path
+          class="auth__mark-stroke"
+          d="M9.5 20.5c0-4.4 3-7.8 7.3-7.8 1.9 0 3.4.6 4.6 1.7"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          fill="none"
+        />
+        <circle class="auth__mark-dot" cx="21.6" cy="19.4" r="2.1" />
+      </svg>
+      <span class="auth__wordmark">Chalkbase</span>
+    </div>
+
+    <!--
+      Product copy, not data. It is hidden below `expanded` rather than shrunk: on a 360px screen
+      the only thing worth showing above the fold is the form.
+    -->
+    <div class="auth__pitch">
+      <h2 class="auth__headline">One record for every student, from enquiry to alumni.</h2>
+      <p class="auth__blurb">Admissions, attendance, fees and results for Indian K–12 schools.</p>
+    </div>
+  </aside>
+
+  <main class="auth__main">
+    <div class="auth__panel">
+      <h1 class="auth__heading">{{ heading() }}</h1>
+      @if (subtitle(); as text) {
+        <p class="auth__subtitle">{{ text }}</p>
+      }
+      <ng-content />
+    </div>
+  </main>
+</div>

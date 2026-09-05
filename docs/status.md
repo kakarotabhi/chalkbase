@@ -19,7 +19,7 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | Screen designs for the first six screens | ✅ Done |
 | Architecture decisions (ADR-0001…0015) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
-| **Identity: login, users, sessions** | ⬜ Not started — **the next build** |
+| Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ⬜ Not started |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Shared UI components | ⬜ Not started |
@@ -50,9 +50,9 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 
 Each line says what it unblocks, because the order is not arbitrary.
 
-1. **Identity — schema and login.** `user`, `user_identifier`, `user_credential`, session storage in
-   PostgreSQL. Username/password only (ADR-0003).
-   *Unblocks:* everything below, plus turning off `permitAll` in `SecurityConfig`.
+1. ~~**Identity — schema and login.**~~ ✅ Done. `user_account`, `user_identifier`, `user_credential`
+   per tenant; Spring Session in `public`; login, logout and forced password change; the session
+   filter binding `TenantContext`; `permitAll` off except onboarding (ADR-0017).
 2. **Permissions, roles, grants.** Permission registry per module, role templates, scoped grants
    (ADR-0005).
    *Unblocks:* `@PreAuthorize` on every endpoint, and the navigation payload.

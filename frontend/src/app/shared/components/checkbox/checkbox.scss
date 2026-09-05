@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+
+  // The row is the target, not the 20px box.
+  min-height: var(--cb-touch-target-min);
+  cursor: pointer;
+
+  &.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Hidden from sight, not from the accessibility tree or the tab order: the real control is still
+// what receives focus and fires change.
+.checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+}
+
+.checkbox__box {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  // 20px, built from the spacing scale rather than typed as a magic number.
+  width: calc(var(--cb-space-4) + var(--cb-space-1));
+  height: calc(var(--cb-space-4) + var(--cb-space-1));
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-primary-contrast);
+}
+
+.checkbox__input:checked + .checkbox__box {
+  border-color: var(--cb-primary);
+  background: var(--cb-primary);
+}
+
+// Focus lands on the invisible input, so the ring has to be painted on the box that follows it.
+.checkbox__input:focus-visible + .checkbox__box {
+  outline: 2px solid var(--cb-focus);
+  outline-offset: 2px;
+  box-shadow: var(--cb-focus-ring);
+}
+
+.checkbox__label {
+  font-size: var(--cb-font-size-sm);
+}

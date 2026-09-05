@@ -1,5 +1,6 @@
 package in.chalkbase.school;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -23,6 +24,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 @Import(TestcontainersConfiguration.class)
 class SchoolApiTests {
+    // CSRF protection is on (ADR-0003), so every state-changing call needs a token. `csrf()` is
+    // the test equivalent of the browser echoing the XSRF-TOKEN cookie back as a header.
+    //
     // Deliberately NOT @Transactional. A unique constraint is only enforced when the insert reaches
     // the database, so a rolled-back test would report success for a duplicate that production
     // would reject. These tests commit and clean up after themselves instead.
@@ -52,6 +56,7 @@ class SchoolApiTests {
     @Test
     void createsAndReadsBackASchool() throws Exception {
         mockMvc.perform(post("/api/schools")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated())
@@ -70,6 +75,7 @@ class SchoolApiTests {
     @Test
     void reportsFieldLevelValidationFailures() throws Exception {
         mockMvc.perform(post("/api/schools")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"\", \"name\": \"\", \"schemaName\": \"\", \"board\": \"CBSE\"}"))
                 .andExpect(status().isBadRequest())
@@ -84,11 +90,13 @@ class SchoolApiTests {
     @Test
     void translatesADuplicateCodeIntoTheModulesOwnErrorCode() throws Exception {
         mockMvc.perform(post("/api/schools")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/schools")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isConflict())
@@ -100,6 +108,7 @@ class SchoolApiTests {
     @Test
     void rejectsAMalformedBodyWithoutEchoingIt() throws Exception {
         mockMvc.perform(post("/api/schools")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"SECRET-VALUE\", not json"))
                 .andExpect(status().isBadRequest())

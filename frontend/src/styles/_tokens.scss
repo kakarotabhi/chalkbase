@@ -56,6 +56,9 @@
 
   --cb-focus: #1f5f4f;
   --cb-focus-ring: 0 0 0 3px rgba(31, 95, 79, 0.35);
+  /* The ring an invalid input wears. Paired with --cb-danger on the border, never on its own —
+     a red glow with no message is not an error state. */
+  --cb-danger-ring: 0 0 0 3px rgba(165, 34, 24, 0.18);
 
   /* ── Spacing (4px base) ───────────────────────────────────────────────── */
   --cb-space-1: 0.25rem;
@@ -64,6 +67,8 @@
   --cb-space-4: 1rem;
   --cb-space-6: 1.5rem;
   --cb-space-8: 2rem;
+  /* Full-height marketing panels and the gutters either side of a centred sign-in card. */
+  --cb-space-12: 3rem;
 
   /* ── Typography ───────────────────────────────────────────────────────── */
   --cb-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -71,6 +76,8 @@
   --cb-font-size-base: 0.9375rem;
   --cb-font-size-lg: 1.125rem;
   --cb-font-size-xl: 1.5rem;
+  /* Only for a full-bleed hero headline, e.g. the sign-in panel at expanded widths. */
+  --cb-font-size-2xl: 2rem;
   --cb-line-height: 1.5;
 
   /* Tabular figures keep fee amounts and roll numbers aligned in columns. */
@@ -88,6 +95,9 @@
   --cb-rail-width: 80px;
   --cb-header-height: 56px;
   --cb-bottom-nav-height: 56px;
+  /* A single column of form controls, wide enough for a date and narrow enough to read in one
+     eye movement. Used by the sign-in screens; any centred form should reuse it. */
+  --cb-form-column-width: 380px;
 
   /* Smallest comfortable tap area. WCAG 2.2 SC 2.5.8 (AA) requires 24px; 44px is
      SC 2.5.5 (AAA) and matches both platform conventions. Fee counters and teachers
@@ -129,6 +139,7 @@
 
   --cb-focus: #7ad4ba;
   --cb-focus-ring: 0 0 0 3px rgba(122, 212, 186, 0.4);
+  --cb-danger-ring: 0 0 0 3px rgba(242, 139, 130, 0.28);
 
   --cb-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --cb-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5);

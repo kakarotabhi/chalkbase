@@ -1,18 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, CreateSchoolRequest, School } from './models';
-
-/** Unwraps the response envelope so callers work with the payload, not the transport shape. */
-const unwrap = map(<T>(response: ApiResponse<T>): T => {
-  if (!response.success || response.data === undefined) {
-    // The interceptor turns non-2xx into an error, so reaching here means a 2xx that does not
-    // match the contract — worth failing loudly rather than handing `undefined` to a template.
-    throw new Error(`Malformed API response: ${response.error?.code ?? 'no data'}`);
-  }
-  return response.data;
-});
+import { unwrap } from './unwrap';
 
 /**
  * HTTP access to the school module. Components never call HttpClient directly — they go through a

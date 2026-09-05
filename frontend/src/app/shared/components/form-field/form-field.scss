@@ -1,0 +1,42 @@
+@use '../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text);
+}
+
+.field__marker {
+  margin-left: var(--cb-space-1);
+  color: var(--cb-danger);
+}
+
+.field__marker-text {
+  @include visually-hidden;
+}
+
+.field__hint {
+  margin: var(--cb-space-2) 0 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-1);
+  margin: var(--cb-space-2) 0 0;
+  font-size: var(--cb-font-size-sm);
+  font-weight: 500;
+  color: var(--cb-danger);
+
+  svg {
+    flex: none;
+  }
+}
