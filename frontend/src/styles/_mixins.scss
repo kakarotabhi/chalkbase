@@ -8,16 +8,34 @@
   white-space: nowrap;
 }
 
-/// Breakpoints. Chalkbase is used on low-end Android tablets at the fee counter — design mobile
-/// first and layer desktop on top.
-@mixin from-tablet {
-  @media (min-width: 48rem) {
+/// Breakpoints, aligned to Material's window size classes (600dp / 840dp) rather than invented
+/// numbers. Most Chalkbase traffic is Android, and matching the platform's own boundaries means the
+/// layout changes where users' devices actually change. See ADR-0010.
+///
+/// compact  (< 600px)  phone            → bottom navigation
+/// medium   (>= 600px) tablet, portrait → navigation rail
+/// expanded (>= 840px) tablet landscape, desktop → permanent sidebar
+$cb-breakpoint-medium: 37.5rem; // 600px
+$cb-breakpoint-expanded: 52.5rem; // 840px
+
+/// Tablet portrait and up.
+@mixin from-medium {
+  @media (min-width: $cb-breakpoint-medium) {
     @content;
   }
 }
 
-@mixin from-desktop {
-  @media (min-width: 64rem) {
+/// Desktop and tablet landscape.
+@mixin from-expanded {
+  @media (min-width: $cb-breakpoint-expanded) {
+    @content;
+  }
+}
+
+/// Phone only. Use sparingly — prefer writing the compact layout as the default and layering the
+/// larger ones on top, so a new screen is mobile-correct before anyone opens a desktop browser.
+@mixin compact-only {
+  @media (max-width: #{$cb-breakpoint-medium - 0.0625rem}) {
     @content;
   }
 }

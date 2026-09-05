@@ -199,6 +199,12 @@ See [ADR-0005](../architecture/adr/0005-authorization-model.md) for the authoriz
 | FR-106 | Student portal shall show timetable, homework, assignments, learning resources, library, results, and announcements. | P0 |
 | FR-107 | Teacher portal shall support attendance, homework, marks entry, timetable, substitution, lesson plans, student search, and communication. | P0 |
 | FR-108 | Portals shall be mobile responsive and usable on low-cost Android phones. | P0 |
+| FR-108a | The interface shall adapt at the compact (<600px), medium (>=600px) and expanded (>=840px) width classes, presenting bottom navigation, an icon rail and a labelled sidebar respectively. | P0 |
+| FR-108b | Compact navigation shall show up to five top-level destinations directly, and where a user has more, shall show four plus an expandable sheet containing the full menu. | P0 |
+| FR-108c | Interactive targets shall be at least 44x44 CSS pixels, and no content shall be obscured by fixed navigation or by device system areas. | P0 |
+| FR-108d | No screen shall require horizontal scrolling of the page; wide content such as tables shall scroll within its own container or adopt a card or expandable-row presentation. | P0 |
+| FR-108e | Anything a parent, student or teacher does routinely shall be fully usable on a phone. Administrative bulk tasks may be designated desktop-first, and shall be listed explicitly and degrade with a clear message rather than a broken layout. | P0 |
+| FR-108f | Screens shall be verified at 360x640, 390x844, 768x1024 and 1280x800 before release. | P1 |
 | FR-109 | The system shall support parent access for multiple children in the same account. | P0 |
 | FR-110 | The system shall support notification preferences where appropriate. | P1 |
 | FR-110a | The system shall return the user's navigation menu from the server after login, derived from that user's effective permissions and the modules the school uses, so that a school-defined role produces a correct menu without a frontend release. | P0 |

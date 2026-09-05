@@ -3,10 +3,16 @@
     <span class="shell__brand">Chalkbase</span>
   </header>
 
+  <!--
+    One <nav> for all three layouts, not one per breakpoint. Rendering the menu three times and
+    hiding two would give screen readers three navigation landmarks and triple the DOM on the
+    cheapest devices. CSS moves and restyles this single element instead.
+  -->
   <nav class="shell__nav" aria-label="Primary">
     @for (item of navItems; track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="is-active" class="shell__nav-link">
-        {{ item.label }}
+      <a [routerLink]="item.path" routerLinkActive="is-active" class="nav-item">
+        <span class="nav-item__icon" aria-hidden="true">{{ item.icon }}</span>
+        <span class="nav-item__label">{{ item.label }}</span>
       </a>
     }
   </nav>

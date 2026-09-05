@@ -40,7 +40,18 @@
 
   /* Layout */
   --cb-sidebar-width: 260px;
+  --cb-rail-width: 80px;
   --cb-header-height: 56px;
+  --cb-bottom-nav-height: 56px;
+
+  /* Smallest comfortable tap area. WCAG 2.2 SC 2.5.8 (AA) requires 24px; 44px is SC 2.5.5 (AAA)
+     and matches both platform conventions. Fee counters and teachers tap fast on cheap tablets,
+     so 44 is the working default rather than the minimum. */
+  --cb-touch-target-min: 44px;
+
+  /* Home indicator / notch. Zero on devices without one. */
+  --cb-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --cb-safe-top: env(safe-area-inset-top, 0px);
 }
 
 @media (prefers-color-scheme: dark) {

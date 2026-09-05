@@ -51,3 +51,4 @@ tools/       developer scripts
 - [ADR-0007](docs/architecture/adr/0007-api-response-envelope.md) — one response envelope, error codes as contract
 - [ADR-0008](docs/architecture/adr/0008-server-driven-navigation.md) — the server decides the menu, the client decides the pixels
 - [ADR-0009](docs/architecture/adr/0009-hand-built-component-library.md) — build the components, adopt the CDK for behaviour
+- [ADR-0010](docs/architecture/adr/0010-responsive-and-adaptive-layout.md) — bottom bar, rail, sidebar; mobile is the default
