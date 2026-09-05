@@ -1,16 +1,48 @@
 # Chalkbase
 
-School management system for Indian K-12 schools (pre-primary through senior secondary).
+School management system for Indian K-12 schools — pre-primary through senior secondary.
 
-Stack: Spring Boot, Angular, PostgreSQL. Self-hosted on a VPS via Coolify.
+Spring Boot 4.1 (Java 21) · Angular 22 · PostgreSQL · self-hosted on a VPS with Coolify.
 
-## Requirements
+> **Status: scaffold.** One vertical slice (`/api/v1/schools`) proves the stack end to end. Auth is
+> not implemented and the database is in-memory H2 — do not deploy this publicly yet.
 
-The full requirement pack lives in [`docs/requirements`](docs/requirements/README.md):
+## Quick start
 
-- [Product Scope](docs/requirements/01-product-scope.md)
-- [Functional Requirements](docs/requirements/02-functional-requirements.md)
-- [India Compliance Requirements](docs/requirements/03-india-compliance-requirements.md)
-- [Data Model and Integrations](docs/requirements/04-data-model-and-integrations.md)
-- [Technical Architecture](docs/requirements/05-technical-architecture.md)
-- [Roadmap and MVP](docs/requirements/06-roadmap-and-mvp.md)
+```bash
+tools/setup-dev.sh                        # one-time: git hooks, npm ci, warm the build
+
+cd backend  && ./mvnw spring-boot:run     # http://localhost:8080
+cd frontend && npm start                  # http://localhost:4200
+```
+
+Requires JDK 21 and Node 24. More in [docs/development](docs/development/README.md).
+
+## Repository
+
+```
+backend/     Spring Boot modular monolith (Spring Modulith)
+frontend/    Angular app — hand-built components, no UI library
+contracts/   OpenAPI spec shared by both sides
+docs/        requirements, architecture + ADRs, development, operations, user manual, AI guidelines
+ops/         Docker, Compose, Coolify
+tools/       developer scripts
+```
+
+## Documentation
+
+| | |
+|---|---|
+| [What we are building](docs/requirements/README.md) | Full requirement pack |
+| [How it is built](docs/architecture/overview.md) | Architecture and decision records |
+| [Module map](docs/architecture/module-map.md) | Which module owns what |
+| [Development](docs/development/README.md) | Setup, standards, workflow |
+| [User manual](docs/manual/README.md) | End-user help, per role |
+| [AGENTS.md](AGENTS.md) | Rules for AI agents and humans alike |
+
+## Decisions worth knowing before you read the code
+
+- [ADR-0001](docs/architecture/adr/0001-modular-monolith.md) — modular monolith, boundaries enforced by a test
+- [ADR-0002](docs/architecture/adr/0002-multi-tenancy-strategy.md) — shared database, row-level tenancy, with a path to per-tenant databases
+- [ADR-0003](docs/architecture/adr/0003-authentication-and-authorization.md) — auth, still open
+- [ADR-0004](docs/architecture/adr/0004-h2-now-postgresql-next.md) — H2 now, PostgreSQL before real data

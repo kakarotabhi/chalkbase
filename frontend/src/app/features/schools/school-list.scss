@@ -1,0 +1,40 @@
+.page-title {
+  margin: 0 0 var(--cb-space-6);
+  font-size: var(--cb-font-size-xl);
+  font-weight: 600;
+}
+
+.page-status {
+  color: var(--cb-text-muted);
+
+  &--error {
+    color: var(--cb-danger);
+  }
+}
+
+.school-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--cb-space-2);
+}
+
+.school-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-1);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.school-list__name {
+  font-weight: 600;
+}
+
+.school-list__meta {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}

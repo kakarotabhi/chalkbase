@@ -1,0 +1,23 @@
+<h1 class="page-title">Schools</h1>
+
+@if (isLoading()) {
+  <p class="page-status">Loading schools…</p>
+} @else if (loadFailed()) {
+  <p class="page-status page-status--error">
+    Could not reach the Chalkbase API. Is the backend running on port 8080?
+  </p>
+} @else {
+  @let rows = schools() ?? [];
+  @if (rows.length === 0) {
+    <p class="page-status">No schools yet.</p>
+  } @else {
+    <ul class="school-list">
+      @for (school of rows; track school.id) {
+        <li class="school-list__item">
+          <span class="school-list__name">{{ school.name }}</span>
+          <span class="school-list__meta">{{ school.code }} · {{ school.board }}</span>
+        </li>
+      }
+    </ul>
+  }
+}

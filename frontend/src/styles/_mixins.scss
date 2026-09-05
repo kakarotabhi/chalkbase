@@ -1,0 +1,23 @@
+/// Hide content visually while keeping it available to screen readers.
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/// Breakpoints. Chalkbase is used on low-end Android tablets at the fee counter — design mobile
+/// first and layer desktop on top.
+@mixin from-tablet {
+  @media (min-width: 48rem) {
+    @content;
+  }
+}
+
+@mixin from-desktop {
+  @media (min-width: 64rem) {
+    @content;
+  }
+}

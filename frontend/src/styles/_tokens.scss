@@ -1,0 +1,56 @@
+/**
+ * Design tokens. Every custom component reads from these — no raw hex values in component styles.
+ * Light values live on :root; dark overrides only redefine what changes.
+ */
+:root {
+  /* Colour */
+  --cb-bg: #ffffff;
+  --cb-surface: #f7f8fa;
+  --cb-border: #e3e6ea;
+  --cb-text: #16191d;
+  --cb-text-muted: #5b6472;
+  --cb-primary: #1f5f4f;
+  --cb-primary-contrast: #ffffff;
+  --cb-danger: #b3261e;
+  --cb-warning: #a15c00;
+  --cb-success: #1c6c3c;
+
+  /* Spacing scale (4px base) */
+  --cb-space-1: 0.25rem;
+  --cb-space-2: 0.5rem;
+  --cb-space-3: 0.75rem;
+  --cb-space-4: 1rem;
+  --cb-space-6: 1.5rem;
+  --cb-space-8: 2rem;
+
+  /* Typography */
+  --cb-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cb-font-size-sm: 0.8125rem;
+  --cb-font-size-base: 0.9375rem;
+  --cb-font-size-lg: 1.125rem;
+  --cb-font-size-xl: 1.5rem;
+  --cb-line-height: 1.5;
+
+  /* Shape and depth */
+  --cb-radius-sm: 4px;
+  --cb-radius-md: 8px;
+  --cb-radius-lg: 12px;
+  --cb-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --cb-shadow-2: 0 4px 12px rgba(16, 24, 40, 0.1);
+
+  /* Layout */
+  --cb-sidebar-width: 260px;
+  --cb-header-height: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --cb-bg: #101418;
+    --cb-surface: #171c22;
+    --cb-border: #2a313a;
+    --cb-text: #e7ebf0;
+    --cb-text-muted: #98a2b3;
+    --cb-primary: #4fb59a;
+    --cb-primary-contrast: #08120f;
+  }
+}

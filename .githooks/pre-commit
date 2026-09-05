@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Chalkbase pre-commit hook: format staged files so style never reaches review.
+# Enable with: git config core.hooksPath .githooks   (or run tools/setup-dev.sh)
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+staged() { git diff --cached --name-only --diff-filter=ACMR -- "$@"; }
+
+java_files=$(staged '*.java' '*.sql' 'backend/pom.xml' || true)
+web_files=$(staged 'frontend/**/*.ts' 'frontend/**/*.html' 'frontend/**/*.scss' 'frontend/**/*.json' || true)
+
+if [ -n "$java_files" ]; then
+  echo "[pre-commit] formatting Java/SQL with Spotless…"
+  (cd "$repo_root/backend" && ./mvnw -q -o spotless:apply) || {
+    echo "[pre-commit] Spotless failed. Fix the errors above, or commit with --no-verify if you know why." >&2
+    exit 1
+  }
+fi
+
+if [ -n "$web_files" ]; then
+  echo "[pre-commit] formatting frontend with Prettier…"
+  (cd "$repo_root/frontend" && npx --no-install prettier --write $(echo "$web_files" | sed "s|^frontend/||" | tr '\n' ' ')) || {
+    echo "[pre-commit] Prettier failed." >&2
+    exit 1
+  }
+fi
+
+# Re-stage whatever the formatters rewrote.
+if [ -n "$java_files$web_files" ]; then
+  echo "$java_files $web_files" | tr ' ' '\n' | grep -v '^$' | xargs -r git add
+fi

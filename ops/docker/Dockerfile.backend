@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+# Build context is the repository root:  docker build -f ops/docker/Dockerfile.backend .
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /build
+COPY backend/pom.xml backend/mvnw ./
+COPY backend/.mvn ./.mvn
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q dependency:go-offline
+COPY backend/src ./src
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S chalkbase && adduser -S chalkbase -G chalkbase
+WORKDIR /app
+COPY --from=build /build/target/*.jar app.jar
+USER chalkbase
+EXPOSE 8080
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
+  CMD wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

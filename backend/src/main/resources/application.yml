@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: chalkbase
+
+  # H2 runs in PostgreSQL compatibility mode so migrations and queries written now keep
+  # working after the switch to PostgreSQL. See ADR-0004.
+  datasource:
+    url: jdbc:h2:mem:chalkbase;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway owns the schema. Never let Hibernate create it.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  error:
+    include-message: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,modulith
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    in.chalkbase: DEBUG
+
+# NOTE(events): durable cross-module events (spring-modulith-starter-jpa) are deliberately not
+# enabled yet — the registry needs an event_publication table, and that migration lands together
+# with the first published domain event. See docs/architecture/adr/0001-modular-monolith.md.
