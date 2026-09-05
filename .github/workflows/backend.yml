@@ -1,0 +1,77 @@
+name: Backend
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/**'
+      - 'ops/docker/Dockerfile.backend'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'ops/docker/Dockerfile.backend'
+      - '.github/workflows/backend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # `verify` is the whole gate: tests, the Spring Modulith boundary check and the
+      # Spotless format check. Keep it as one step so CI and `./mvnw verify` cannot drift.
+      - name: Verify
+        run: ./mvnw -B verify
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: chalkbase-backend-jar
+          path: backend/target/*.jar
+          retention-days: 7
+
+  image:
+    name: Docker image builds
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Build only, no push: Coolify builds from the repository. This step exists so a broken
+      # Dockerfile fails here instead of during a deploy.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ops/docker/Dockerfile.backend
+          push: false
+          tags: chalkbase-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

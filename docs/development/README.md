@@ -41,6 +41,26 @@ cd frontend && npm test -- --watch=false && npm run build
 
 CI runs exactly these.
 
+## Pipelines
+
+Two independent workflows, so a backend change never waits on a frontend build and vice versa.
+
+| Workflow | Triggers on changes to | Does |
+|---|---|---|
+| [`.github/workflows/backend.yml`](../../.github/workflows/backend.yml) | `backend/**`, its Dockerfile | `./mvnw verify` (tests + module boundaries + format gate), uploads the jar; on `main` also builds the Docker image |
+| [`.github/workflows/frontend.yml`](../../.github/workflows/frontend.yml) | `frontend/**`, its Dockerfile and nginx config | Prettier check, tests, build, uploads the bundle; on `main` also builds the Docker image |
+
+Both run on **every push to any branch** and on pull requests, and can be started by hand from the
+Actions tab.
+
+The image jobs build but do not push — Coolify builds from the repository itself. They exist so a
+broken Dockerfile fails in CI instead of during a deploy. If Coolify is later switched to pulling
+prebuilt images, these are where the push to GHCR goes.
+
+**Caveat on branch protection:** because both workflows are path-filtered, a docs-only PR runs
+neither. If these are made *required* status checks, such a PR will sit forever waiting for a check
+that will never start. Either leave them optional, or add a no-op job that always runs.
+
 ## Coding standards
 
 Formatting is not a matter of taste here — it is automated:
