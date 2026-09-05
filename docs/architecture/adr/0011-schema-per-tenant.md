@@ -133,13 +133,40 @@ build, and one fewer place for the boundary to be wrong.
   module needs the negative test: tenant A cannot read tenant B — now by proving the query fails,
   not that it returns nothing.
 
-## Open question, to settle before the first migration
+## The tenant is a campus, not a group
 
-**Is a multi-campus school group one schema or one per campus?** FR-002 puts campuses under a group.
+**A multi-campus school group is one schema per campus.** FR-002 puts campuses under a group; each of
+those campuses is a tenant in its own right, with its own schema, its own Flyway history and its own
+row in the registry.
 
-- One schema per campus gives clean isolation, and makes group-wide reporting a `UNION` across five
-  schemas.
-- One schema per group makes group reporting trivial but puts `campus_id` back on every table —
-  which is row-level tenancy again, one level down.
+The alternative — one schema per group with a `campus_id` column on every table — was rejected
+because it is row-level tenancy again, one level down, and it reintroduces exactly the failure this
+ADR exists to remove: a forgotten `WHERE campus_id` showing one campus another campus's children.
+Having chosen a structural boundary, putting a second, weaker boundary inside it would be the worst
+of both.
 
-This is baked into every table created, so it is not a decision to defer.
+A group is therefore a **grouping in `public`**, not a container:
+
+```
+public.school_group          the trust or society
+public.school                one row per campus, its schema name, and its group
+```
+
+### What this costs
+
+Group-wide reporting is a fan-out — query each campus's schema and merge — where one schema per
+group would have made it a single query. That is the price of the isolation, and it is paid by the
+few groups rather than by every school.
+
+Two things follow from it, and they are cheap now:
+
+- **Primary keys must be globally unique**, because ids from different schemas meet in a merged
+  report. UUIDv7 is already the convention.
+- **A group report is a read-side concern.** When one is needed, it fans out and merges — it does
+  not justify a shared schema, and it does not justify a cross-schema foreign key. There are none.
+
+### Not exercised by the MVP
+
+Phase 0 scoped the first market to a single-campus CBSE day school in Delhi NCR, so nothing built
+for the MVP will have more than one campus. This is settled now because it constrains every table
+created from the first migration onward — not because a group is imminent.

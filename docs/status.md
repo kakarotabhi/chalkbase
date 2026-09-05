@@ -108,8 +108,10 @@ Recorded so they are decided rather than discovered.
   above lands.
 - Startup migration is deliberate and has a recorded expiry — move it to a deploy step once startup
   passes ~1 minute, a second replica appears, or tenant count passes ~50 (ADR-0011).
-- **Open before the first tenant migration:** is a multi-campus group one schema or one per campus?
-  ADR-0011 explains why deferring it is expensive.
+- The tenant is a **campus**, not a group: a multi-campus trust gets one schema per campus, with the
+  group as a row in `public` (ADR-0011). Group-wide reporting is therefore a fan-out, and primary
+  keys must be globally unique — UUIDv7, already the convention. Not exercised by the MVP, which is
+  scoped to a single-campus school.
 
 ## Keeping this honest
 
