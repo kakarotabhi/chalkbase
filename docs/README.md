@@ -1,5 +1,8 @@
 # Chalkbase documentation
 
+**Start here for state:** [status.md](status.md) — what is done, what is next, what is waiting on a
+decision. Updated in the same pull request as the work.
+
 | Folder | What lives here | Who reads it |
 |---|---|---|
 | [requirements/](requirements/README.md) | What we are building and why. Scope source of truth. | Everyone |

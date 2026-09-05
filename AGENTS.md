@@ -12,6 +12,7 @@ Keep this file short. Detail belongs in `docs/`, and is read on demand.
 | `backend/` | Spring Boot modular monolith. See `backend/AGENTS.md`. |
 | `frontend/` | Angular app. See `frontend/AGENTS.md`. |
 | `contracts/` | OpenAPI spec shared by both sides. |
+| `docs/status.md` | What is done, what is next, what is blocked. **Read this first.** |
 | `docs/requirements/` | What we are building. The source of truth for scope. |
 | `docs/architecture/adr/` | Decisions and their reasons. Read before contradicting one. |
 | `docs/architecture/module-map.md` | Which module owns which tables and endpoints. Start here. |
@@ -47,7 +48,8 @@ cd frontend && npm test -- --watch=false
    logs, error messages, test fixtures committed to the repo, or third-party calls. See
    `docs/ai/guidelines/06-security-privacy-compliance.md`.
 10. **Update the docs in the same change.** A user-facing change updates `docs/manual/`; a
-    structural decision gets an ADR; a new module updates `docs/architecture/module-map.md`.
+    structural decision gets an ADR; a new module updates `docs/architecture/module-map.md`; and
+    anything that moves the project forward updates `docs/status.md`.
 
 ## Conventions
 

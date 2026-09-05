@@ -33,6 +33,7 @@ tools/       developer scripts
 
 | | |
 |---|---|
+| [**Where the project is**](docs/status.md) | Done, next, and waiting on a decision |
 | [What we are building](docs/requirements/README.md) | Full requirement pack |
 | [How it is built](docs/architecture/overview.md) | Architecture and decision records |
 | [Module map](docs/architecture/module-map.md) | Which module owns what |
