@@ -1,0 +1,135 @@
+<button
+  #trigger
+  type="button"
+  class="user-menu__trigger"
+  aria-haspopup="menu"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="open() ? menuId : null"
+  (click)="toggle()"
+  (keydown)="onTriggerKeydown($event)"
+>
+  <span class="user-menu__avatar" aria-hidden="true">{{ initials() }}</span>
+  <!--
+    The name is the button's accessible name, so it stays in the DOM at every width. Below 600px it
+    is only hidden visually — the header there has room for the avatar and nothing else.
+  -->
+  <span class="user-menu__name">{{ displayName() }}</span>
+  <svg
+    class="user-menu__chevron"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M6 9.5l6 6 6-6" />
+  </svg>
+</button>
+
+@if (open()) {
+  <div class="user-menu__panel" (keydown)="onMenuKeydown($event)">
+    <!--
+      Outside the role="menu" element on purpose: a menu's children are menu items, and a heading
+      smuggled in among them is announced as one.
+    -->
+    <p class="user-menu__identity" [id]="identityId">
+      <span class="user-menu__identity-name">{{ displayName() }}</span>
+      @if (schoolName(); as school) {
+        <span class="user-menu__identity-detail">{{ school }}</span>
+      }
+    </p>
+
+    <div class="user-menu__items" role="menu" [id]="menuId" [attr.aria-labelledby]="identityId">
+      <!--
+        My profile and Settings are not built. They are shown disabled rather than dropped, because
+        the design promises them and a menu that changes shape between releases is harder to learn
+        than one that greys an item out. `aria-disabled` rather than `disabled`: the item keeps its
+        place in the arrow-key order, so nobody has to work out why the list skips.
+      -->
+      <button
+        #menuItem
+        type="button"
+        role="menuitem"
+        tabindex="-1"
+        class="user-menu__item"
+        aria-disabled="true"
+      >
+        <svg
+          class="user-menu__item-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="8.5" r="3.7" />
+          <path d="M4.5 20.5c0-3.6 3.2-6 7.5-6s7.5 2.4 7.5 6" />
+        </svg>
+        My profile
+      </button>
+
+      <button
+        #menuItem
+        type="button"
+        role="menuitem"
+        tabindex="-1"
+        class="user-menu__item"
+        aria-disabled="true"
+      >
+        <svg
+          class="user-menu__item-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H2a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 3.7 7.9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"
+          />
+        </svg>
+        Settings
+      </button>
+
+      <button
+        #menuItem
+        type="button"
+        role="menuitem"
+        tabindex="-1"
+        class="user-menu__item user-menu__item--danger"
+        (click)="signOut()"
+      >
+        <svg
+          class="user-menu__item-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9.5 20.5H5.5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h4" />
+          <path d="M15.5 16.5l4.5-4.5-4.5-4.5" />
+          <path d="M20 12H9.5" />
+        </svg>
+        Sign out
+      </button>
+    </div>
+  </div>
+}

@@ -10,6 +10,7 @@ const LOGIN_PAYLOAD: LoginResponse = {
   displayName: 'Priya Sharma',
   mustChangePassword: false,
   school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+  permissions: [],
 };
 
 describe('AuthApi', () => {

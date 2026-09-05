@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth-guard';
 
 /**
  * Top-level routes.
@@ -24,6 +25,9 @@ export const routes: Routes = [
   },
   {
     path: '',
+    // One guard on the shell rather than one per feature: everything inside it needs a session,
+    // and a list that has to be added to is a list someone forgets.
+    canActivate: [authGuard],
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'schools' },

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AUTH_ERROR } from '../../../core/api/auth-api';
 import { SessionStore } from '../../../core/auth/session-store';
@@ -15,6 +15,7 @@ const SUCCESS = {
     displayName: 'Priya Sharma',
     mustChangePassword: false,
     school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+    permissions: [],
   },
 };
 
@@ -252,5 +253,116 @@ describe('Login on a device that has signed in before', () => {
       '#login-school-code',
     ) as HTMLInputElement;
     expect(schoolCode.value).toBe('GPS-S12');
+  });
+});
+
+describe('Login arriving with a returnTo', () => {
+  let fixture: ComponentFixture<Login>;
+  let httpMock: HttpTestingController;
+  let navigate: ReturnType<typeof vi.spyOn>;
+
+  const arriveFrom = async (returnTo: string) => {
+    await TestBed.configureTestingModule({
+      imports: [Login],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ returnTo }) } },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(Login);
+    httpMock = TestBed.inject(HttpTestingController);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const type = (id: string, value: string) => {
+      const input = element.querySelector(`#${id}`) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    type('login-school-code', 'GPS-S12');
+    type('login-username', 'priya.sharma');
+    type('login-password', 'secret-one');
+
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/auth/login').flush(SUCCESS);
+    fixture.detectChanges();
+  };
+
+  afterEach(() => {
+    httpMock.verify();
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  it('takes the user on to the page they were trying to reach', async () => {
+    await arriveFrom('/fees/receipts?year=2026');
+
+    expect(navigate).toHaveBeenCalledWith('/fees/receipts?year=2026');
+  });
+
+  it('ignores an absolute URL to another origin', async () => {
+    // An open redirect on a login form is a phishing kit: the victim signs in on the real site and
+    // the real site hands them to the fake one.
+    await arriveFrom('https://evil.example.com');
+
+    expect(navigate).toHaveBeenCalledWith('/');
+  });
+
+  it('ignores a protocol-relative URL', async () => {
+    await arriveFrom('//evil.example.com');
+
+    expect(navigate).toHaveBeenCalledWith('/');
+  });
+
+  it('does not follow returnTo past a temporary password', async () => {
+    await TestBed.configureTestingModule({
+      imports: [Login],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ returnTo: '/schools' }) } },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(Login);
+    httpMock = TestBed.inject(HttpTestingController);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    for (const [id, value] of [
+      ['login-school-code', 'GPS-S12'],
+      ['login-username', 'priya.sharma'],
+      ['login-password', 'secret-one'],
+    ]) {
+      const input = element.querySelector(`#${id}`) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    }
+    fixture.detectChanges();
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/auth/login').flush({
+      ...SUCCESS,
+      data: { ...SUCCESS.data, mustChangePassword: true },
+    });
+    fixture.detectChanges();
+
+    expect(navigate).toHaveBeenCalledWith('/change-password');
   });
 });

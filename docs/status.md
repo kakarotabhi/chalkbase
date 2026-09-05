@@ -20,7 +20,7 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | Architecture decisions (ADR-0001…0015) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
-| Permissions, roles, scoped grants | ⬜ Not started |
+| Permissions, roles, scoped grants | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Shared UI components | ⬜ Not started |
 | School setup, academic session, classes | ⬜ Not started |
@@ -53,9 +53,10 @@ Each line says what it unblocks, because the order is not arbitrary.
 1. ~~**Identity — schema and login.**~~ ✅ Done. `user_account`, `user_identifier`, `user_credential`
    per tenant; Spring Session in `public`; login, logout and forced password change; the session
    filter binding `TenantContext`; `permitAll` off except onboarding (ADR-0017).
-2. **Permissions, roles, grants.** Permission registry per module, role templates, scoped grants
-   (ADR-0005).
-   *Unblocks:* `@PreAuthorize` on every endpoint, and the navigation payload.
+2. ~~**Permissions, roles, grants.**~~ ✅ Done. Permission registry per module seeded per tenant,
+   twelve role templates copied on onboarding, scoped grants with validity windows, effective
+   permissions resolved once at login, `@PreAuthorize` enforcement, and the test that fails the
+   build when a controller method carries no authorization annotation (ADR-0005).
 3. **`GET /api/me`** — user, school, permissions, navigation, settings (ADR-0008).
    *Unblocks:* the real menu, and the "More" bottom sheet on phones.
 4. **Tenant resolution from the session.** The plumbing is built; what is missing is the filter that

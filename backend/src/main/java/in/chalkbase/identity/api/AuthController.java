@@ -5,6 +5,7 @@ import in.chalkbase.platform.api.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>No version segment in the path — the API is not versioned (ADR-0016). Nothing here builds an
  * error response: every failure is a {@code ChalkbaseException} that
  * {@code platform.error.GlobalExceptionHandler} turns into the envelope.
+ *
+ * <p>Signing in and signing out are the two endpoints in the application that carry no
+ * authorization annotation, and {@code ControllerAuthorizationTests} names them explicitly for that
+ * reason. Changing your own password needs a session and nothing more: it is not a permission a
+ * school could take away, because an account that cannot change its own password is an account that
+ * cannot be used (ADR-0005).
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -43,6 +50,7 @@ public class AuthController {
         return ApiResponse.success(null);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/password")
     public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         authentication.changePassword(request);

@@ -1,0 +1,161 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  // The panel is anchored to the trigger with a fixed offset, exactly as the design draws it, so
+  // this element is the whole positioning context. No overlay, nothing to reposition on scroll.
+  position: relative;
+  display: inline-flex;
+}
+
+.user-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  min-height: var(--cb-touch-target-min);
+  min-width: var(--cb-touch-target-min);
+  padding-inline: var(--cb-space-1);
+  border: 1px solid transparent;
+  border-radius: var(--cb-radius-sm);
+  background: transparent;
+  color: var(--cb-text);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--cb-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--cb-focus);
+    outline-offset: 2px;
+  }
+
+  @include from-medium {
+    padding-inline: var(--cb-space-1) var(--cb-space-2);
+  }
+}
+
+.user-menu__avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--cb-avatar-size);
+  height: var(--cb-avatar-size);
+  border-radius: 50%;
+  background: var(--cb-primary);
+  color: var(--cb-primary-contrast);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.user-menu__name {
+  font-size: var(--cb-font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+
+  // Kept in the DOM rather than removed: it is what names the button for a screen reader.
+  @include compact-only {
+    @include visually-hidden;
+  }
+}
+
+.user-menu__chevron {
+  flex: none;
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.user-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--cb-space-1));
+  // Right-aligned so it stays on screen: the trigger sits in the top-right corner at every width,
+  // and a 360px phone has no room for it to open the other way.
+  right: 0;
+  z-index: 20;
+  width: var(--cb-menu-width);
+  padding: var(--cb-space-2);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  background: var(--cb-surface-raised);
+  box-shadow: var(--cb-shadow-2);
+}
+
+.user-menu__identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-1);
+  margin: 0;
+  padding: var(--cb-space-2) var(--cb-space-3) var(--cb-space-3);
+  border-bottom: 1px solid var(--cb-border);
+}
+
+.user-menu__identity-name {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  color: var(--cb-text);
+}
+
+.user-menu__identity-detail {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.user-menu__items {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--cb-space-1);
+}
+
+.user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-3);
+  width: 100%;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-2) var(--cb-space-3);
+  border: none;
+  border-radius: var(--cb-radius-sm);
+  background: transparent;
+  color: var(--cb-text);
+  font: inherit;
+  font-size: var(--cb-font-size-base);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--cb-surface);
+  }
+
+  // Not :focus-visible. Focus arrives here programmatically — the menu moves it on open and on
+  // every arrow key — and it must always be visible when it does.
+  &:focus {
+    outline: 2px solid var(--cb-focus);
+    outline-offset: -2px;
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.user-menu__item--danger {
+  color: var(--cb-danger);
+
+  &:hover {
+    background: var(--cb-danger-surface);
+  }
+}
+
+.user-menu__item-icon {
+  flex: none;
+}

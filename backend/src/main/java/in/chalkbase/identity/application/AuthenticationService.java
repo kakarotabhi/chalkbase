@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -43,6 +46,11 @@ import org.springframework.stereotype.Service;
  * {@code public}. Something has to break the circle between "the cookie says which school" and "the
  * user record lives inside a school", and the school code on the login form is that something.
  *
+ * <p>The last step of a login is resolving what the user may do. That happens exactly once, here,
+ * and the result rides on the principal for the life of the session (ADR-0005) — there is no
+ * per-request permission query. A role or grant change takes effect on the next login, or
+ * immediately if the session is invalidated.
+ *
  * <p><strong>This class carries no transaction annotation, deliberately.</strong> Hibernate picks
  * the tenant when it opens a session at the start of a transaction, so a transaction opened here —
  * before {@link TenantContext} has been bound — would run every statement against {@code public}.
@@ -56,6 +64,7 @@ public class AuthenticationService {
 
     private final SchoolLookup schools;
     private final UserAccountService users;
+    private final AccessResolver accessResolver;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContextRepository securityContextRepository;
     private final Map<CredentialType, CredentialVerifier> verifiers = new EnumMap<>(CredentialType.class);
@@ -66,11 +75,13 @@ public class AuthenticationService {
     public AuthenticationService(
             SchoolLookup schools,
             UserAccountService users,
+            AccessResolver accessResolver,
             PasswordEncoder passwordEncoder,
             SecurityContextRepository securityContextRepository,
             List<CredentialVerifier> credentialVerifiers) {
         this.schools = schools;
         this.users = users;
+        this.accessResolver = accessResolver;
         this.passwordEncoder = passwordEncoder;
         this.securityContextRepository = securityContextRepository;
         for (CredentialVerifier verifier : credentialVerifiers) {
@@ -92,9 +103,16 @@ public class AuthenticationService {
         SchoolRef school = schools.byCode(request.schoolCode())
                 .orElseThrow(() -> new ChalkbaseException(IdentityErrorCode.UNKNOWN_SCHOOL));
 
-        UserAccount account = inSchool(school.schemaName(), () -> authenticate(request));
+        // Authenticating and resolving access happen in one tenant-bound block: the grants live in
+        // the same schema as the account, and resolving them afterwards would need the tenant bound
+        // a second time.
+        SignedIn signedIn = inSchool(school.schemaName(), () -> {
+            UserAccount account = authenticate(request);
+            return new SignedIn(account, accessResolver.resolveFor(account.getId(), LocalDate.now()));
+        });
+        UserAccount account = signedIn.account();
 
-        establishSession(http, response, school, account, request.username(), request.isRemembered());
+        establishSession(http, response, school, signedIn, request.username(), request.isRemembered());
         // The school code is safe to log; the username is not — it is usually a child's admission
         // number. Never add it here.
         log.info("Login succeeded for school {} (account {})", school.code(), account.getId());
@@ -103,7 +121,8 @@ public class AuthenticationService {
                 account.getId(),
                 account.getDisplayName(),
                 account.isMustChangePassword(),
-                new SchoolSummary(school.code(), school.name()));
+                new SchoolSummary(school.code(), school.name()),
+                signedIn.access().permissions().stream().sorted().toList());
     }
 
     /** Ends the session. Idempotent: signing out twice is not an error. */
@@ -200,13 +219,17 @@ public class AuthenticationService {
         return verifier;
     }
 
+    /** An authenticated account together with what it may do, both read inside the same tenant. */
+    private record SignedIn(UserAccount account, EffectiveAccess access) {}
+
     private void establishSession(
             HttpServletRequest http,
             HttpServletResponse response,
             SchoolRef school,
-            UserAccount account,
+            SignedIn signedIn,
             String username,
             boolean remembered) {
+        UserAccount account = signedIn.account();
         HttpSession existing = http.getSession(false);
         if (existing != null) {
             // A new session id for a new principal: otherwise a session id an attacker planted
@@ -222,8 +245,17 @@ public class AuthenticationService {
         session.setAttribute(SessionAttributes.SCHEMA, school.schemaName());
         session.setAttribute(SessionAttributes.USER_ID, account.getId());
 
-        AuthenticatedUser principal = new AuthenticatedUser(account.getId(), username, school.schemaName());
-        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(principal, null, List.of());
+        // The permission codes become the authorities, so `hasAuthority('school:school:read')` in a
+        // @PreAuthorize is checked against exactly the set resolved above, with no second lookup and
+        // no translation step where the two could disagree. Note there is no ROLE_ prefix and no
+        // role name anywhere: code checks permissions only (ADR-0005).
+        AuthenticatedUser principal =
+                new AuthenticatedUser(account.getId(), username, school.schemaName(), signedIn.access());
+        List<GrantedAuthority> authorities = signedIn.access().permissions().stream()
+                .sorted()
+                .map(permission -> (GrantedAuthority) new SimpleGrantedAuthority(permission))
+                .toList();
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(principal, null, authorities);
         SecurityContext context = securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(authentication);
         securityContextHolderStrategy.setContext(context);

@@ -9,10 +9,11 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { apiErrorCode } from '../../../core/api/api-error';
 import { AUTH_ERROR, AuthApi } from '../../../core/api/auth-api';
 import { DevicePreferences } from '../../../core/auth/device-preferences';
+import { safeReturnTo } from '../../../core/auth/return-to';
 import { SessionStore } from '../../../core/auth/session-store';
 import { Button } from '../../../shared/components/button/button';
 import { Checkbox } from '../../../shared/components/checkbox/checkbox';
@@ -51,6 +52,7 @@ export class Login {
   private readonly session = inject(SessionStore);
   private readonly device = inject(DevicePreferences);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly formBuilder = inject(NonNullableFormBuilder);
@@ -162,13 +164,31 @@ export class Login {
           this.device.rememberSchoolCode(schoolCode);
           this.device.setKeepSignedIn(keepSignedIn);
           this.session.signedIn(user, password);
-          void this.router.navigateByUrl(user.mustChangePassword ? '/change-password' : '/');
+          void this.router.navigateByUrl(this.destination(user.mustChangePassword));
         },
         error: (error: unknown) => {
           this.submitting.set(false);
           this.failureCode.set(apiErrorCode(error));
         },
       });
+  }
+
+  /**
+   * Where sign-in lands.
+   *
+   * A temporary password wins over everything: there is nothing useful to do with an account that
+   * still has the password printed on the slip the office handed over. Otherwise the guard's
+   * `returnTo` is honoured, so following a deep link and being asked to sign in first ends where
+   * the link pointed.
+   *
+   * `returnTo` arrives from the address bar, which means it is attacker-supplied — `safeReturnTo`
+   * is what stops this being an open redirect, and dropping it is not optional.
+   */
+  private destination(mustChangePassword: boolean): string {
+    if (mustChangePassword) {
+      return '/change-password';
+    }
+    return safeReturnTo(this.route.snapshot.queryParamMap.get('returnTo')) ?? '/';
   }
 
   /**

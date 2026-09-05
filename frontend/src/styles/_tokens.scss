@@ -95,6 +95,11 @@
   --cb-rail-width: 80px;
   --cb-header-height: 56px;
   --cb-bottom-nav-height: 56px;
+  /* The account menu in the header. Wide enough for "My profile" with its icon, narrow enough to
+     open inside a 360px phone without touching either edge. */
+  --cb-menu-width: 240px;
+  /* Initials avatar in the header. */
+  --cb-avatar-size: 32px;
   /* A single column of form controls, wide enough for a date and narrow enough to read in one
      eye movement. Used by the sign-in screens; any centred form should reuse it. */
   --cb-form-column-width: 380px;

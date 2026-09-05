@@ -70,6 +70,14 @@ export interface LoginResponse {
   /** True when the school issued a temporary password that must be replaced before continuing. */
   readonly mustChangePassword: boolean;
   readonly school: LoginSchool;
+  /**
+   * The user's effective permissions, resolved once at sign-in.
+   *
+   * For deciding what to SHOW — a menu item, a button. Never for deciding what is allowed: the
+   * server enforces every permission independently, and a client that hides a control is a
+   * convenience, not a boundary (ADR-0005).
+   */
+  readonly permissions: readonly string[];
 }
 
 export interface ChangePasswordRequest {
