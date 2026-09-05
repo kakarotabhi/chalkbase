@@ -20,7 +20,7 @@
     .btn-danger{background:var(--danger);color:#fff}
     .btn-ghost{background:transparent;color:var(--primary)}
     .btn-block{width:100%}
-    .btn-sm{min-height:36px;padding:0 12px;font-size:13px}
+    .btn-sm{min-height:44px;padding:0 12px;font-size:13px}
     .is-disabled{opacity:.45;cursor:not-allowed}
     .label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
     .req{color:var(--danger);margin-left:2px}
@@ -40,7 +40,7 @@
     .muted{color:var(--muted)}
     .sm{font-size:13px}
     .num{font-variant-numeric:tabular-nums}
-    .sk{background:linear-gradient(90deg,#eef1f3 25%,#e4e8eb 37%,#eef1f3 63%);border-radius:var(--r-sm)}
+    .sk{background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);border-radius:var(--r-sm)}
     .banner{display:flex;gap:10px;padding:12px;border-radius:var(--r-sm);font-size:14px;align-items:flex-start}
     .stateLabel{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;margin-bottom:10px}
   </style>
@@ -50,7 +50,7 @@
     <div class="stateLabel">Invalid credentials</div>
     <div style="border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);padding:22px 20px 26px;min-height:560px">
       <h1 style="font-size:22px;margin-bottom:4px">Sign in</h1>
-      <p class="muted sm" style="margin:0 0 20px">Delhi Public School, R. K. Puram</p>
+      <p class="muted sm" style="margin:0 0 20px">Greenfield Public School</p>
       <div class="banner" style="background:var(--danger-surface);color:var(--danger);margin-bottom:20px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg><div><strong style="display:block;font-weight:600">Invalid username or password</strong><span style="color:var(--danger);opacity:.9">Check both and try again.</span></div></div>
     <div style="display:flex;flex-direction:column;gap:18px">
       <div>
@@ -65,7 +65,7 @@
       <label class="label">Password<span class="req">*</span></label>
       <div style="position:relative">
         <div class="input" style="padding-right:48px;display:flex;align-items:center"><span style="color:var(--muted)"></span></div>
-        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
       </div>
       
     </div>
@@ -82,13 +82,13 @@
     <div class="stateLabel">Account locked</div>
     <div style="border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);padding:22px 20px 26px;min-height:560px">
       <h1 style="font-size:22px;margin-bottom:4px">Sign in</h1>
-      <p class="muted sm" style="margin:0 0 20px">Delhi Public School, R. K. Puram</p>
+      <p class="muted sm" style="margin:0 0 20px">Greenfield Public School</p>
       <div class="banner" style="background:var(--danger-surface);color:var(--danger);margin-bottom:20px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"></rect><path d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9"></path></svg><div><strong style="display:block;font-weight:600">Account locked</strong><span style="color:var(--danger);opacity:.9">Too many attempts. Try again in 15 minutes, or ask your school office to unlock it.</span></div></div>
     <div style="display:flex;flex-direction:column;gap:18px">
       <div>
       <label class="label">Username or email<span class="req">*</span></label>
       <div style="position:relative">
-        <div class="input" style="background:var(--surface);color:var(--muted)display:flex;align-items:center">priya.sharma</div>
+        <div class="input" style="background:var(--surface);color:var(--muted);display:flex;align-items:center">priya.sharma</div>
         
       </div>
       
@@ -96,8 +96,8 @@
       <div>
       <label class="label">Password<span class="req">*</span></label>
       <div style="position:relative">
-        <div class="input" style="padding-right:48px;background:var(--surface);color:var(--muted)display:flex;align-items:center"><span style="color:var(--muted)"></span></div>
-        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        <div class="input" style="padding-right:48px;background:var(--surface);color:var(--muted);display:flex;align-items:center"><span style="color:var(--muted)"></span></div>
+        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
       </div>
       
     </div>
@@ -114,13 +114,13 @@
     <div class="stateLabel">Signing in</div>
     <div style="border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);padding:22px 20px 26px;min-height:560px">
       <h1 style="font-size:22px;margin-bottom:4px">Sign in</h1>
-      <p class="muted sm" style="margin:0 0 20px">Delhi Public School, R. K. Puram</p>
+      <p class="muted sm" style="margin:0 0 20px">Greenfield Public School</p>
       
     <div style="display:flex;flex-direction:column;gap:18px">
       <div>
       <label class="label">Username or email<span class="req">*</span></label>
       <div style="position:relative">
-        <div class="input" style="background:var(--surface);color:var(--muted)display:flex;align-items:center">priya.sharma</div>
+        <div class="input" style="background:var(--surface);color:var(--muted);display:flex;align-items:center">priya.sharma</div>
         
       </div>
       
@@ -128,8 +128,8 @@
       <div>
       <label class="label">Password<span class="req">*</span></label>
       <div style="position:relative">
-        <div class="input" style="padding-right:48px;background:var(--surface);color:var(--muted)display:flex;align-items:center">••••••••••</div>
-        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        <div class="input" style="padding-right:48px;background:var(--surface);color:var(--muted);display:flex;align-items:center">••••••••••</div>
+        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
       </div>
       
     </div>
@@ -146,14 +146,14 @@
     <div class="stateLabel">First sign-in</div>
     <div style="border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);padding:22px 20px 26px;min-height:560px">
       <h1 style="font-size:22px;margin-bottom:4px">Sign in</h1>
-      <p class="muted sm" style="margin:0 0 20px">Delhi Public School, R. K. Puram</p>
+      <p class="muted sm" style="margin:0 0 20px">Greenfield Public School</p>
       <div style="display:flex;flex-direction:column;gap:18px">
       <div class="banner" style="background:var(--info-surface);color:var(--info)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg><div><strong style="display:block;font-weight:600">Set a new password</strong><span>Your school issued a temporary one.</span></div></div>
       <div>
       <label class="label">New password<span class="req">*</span></label>
       <div style="position:relative">
         <div class="input" style="padding-right:48px;display:flex;align-items:center">•••••••••••</div>
-        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
       </div>
       
     </div>
@@ -166,7 +166,7 @@
       <label class="label">Confirm new password<span class="req">*</span></label>
       <div style="position:relative">
         <div class="input" style="padding-right:48px;display:flex;align-items:center">•••••••</div>
-        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        <button type="button" aria-label="Show password" style="position:absolute;right:2px;top:2px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
       </div>
       
     </div>

@@ -20,7 +20,7 @@
     .btn-danger{background:var(--danger);color:#fff}
     .btn-ghost{background:transparent;color:var(--primary)}
     .btn-block{width:100%}
-    .btn-sm{min-height:36px;padding:0 12px;font-size:13px}
+    .btn-sm{min-height:44px;padding:0 12px;font-size:13px}
     .is-disabled{opacity:.45;cursor:not-allowed}
     .label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
     .req{color:var(--danger);margin-left:2px}
@@ -40,7 +40,7 @@
     .muted{color:var(--muted)}
     .sm{font-size:13px}
     .num{font-variant-numeric:tabular-nums}
-    .sk{background:linear-gradient(90deg,#eef1f3 25%,#e4e8eb 37%,#eef1f3 63%);border-radius:var(--r-sm)}
+    .sk{background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);border-radius:var(--r-sm)}
     .banner{display:flex;gap:10px;padding:12px;border-radius:var(--r-sm);font-size:14px;align-items:flex-start}
     .stateLabel{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;margin-bottom:10px}
   </style>
@@ -82,25 +82,25 @@
       <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--success-surface);color:var(--success);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M8 12.3l2.7 2.7L16 9.6"></path></svg></span>
       <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Fee receipt saved</div><div class="sm muted" style="margin-top:1px;line-height:1.5">Receipt 2026/R-4471 for ₹42,500.</div></div>
       <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">View</a>
-      <span style="color:var(--muted);display:flex;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
     </div>
         <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
       <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--danger-surface);color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg></span>
       <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Could not save school profile</div><div class="sm muted" style="margin-top:1px;line-height:1.5">A school with this code already exists.</div></div>
       <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">Retry</a>
-      <span style="color:var(--muted);display:flex;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
     </div>
         <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
       <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--warning-surface);color:var(--warning);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg></span>
       <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Attendance not marked</div><div class="sm muted" style="margin-top:1px;line-height:1.5">Class VI-B has no attendance for today.</div></div>
       <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">Mark now</a>
-      <span style="color:var(--muted);display:flex;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
     </div>
         <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
       <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--info-surface);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M8 12.3l2.7 2.7L16 9.6"></path></svg></span>
       <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Import finished</div><div class="sm muted" style="margin-top:1px;line-height:1.5">1,392 students added, 36 rows skipped.</div></div>
       <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">See report</a>
-      <span style="color:var(--muted);display:flex;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
     </div>
       </div>
       <p class="sm muted" style="margin:12px 2px 0;line-height:1.5">Bottom-right on desktop, above the bottom bar on phones. Errors persist until dismissed; the rest auto-dismiss.</p></div>
