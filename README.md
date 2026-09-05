@@ -2,7 +2,7 @@
 
 School management system for Indian K-12 schools — pre-primary through senior secondary.
 
-Spring Boot 4.1 (Java 21) · Angular 22 · PostgreSQL · self-hosted on a VPS with Coolify.
+Spring Boot 4.1 (Java 21) · Angular 22 · PostgreSQL 17 · self-hosted on a VPS with Coolify.
 
 > **Status: scaffold.** One vertical slice (`/api/v1/schools`) proves the stack end to end.
 > Authentication is not implemented yet, so do not expose a deployment publicly.
@@ -48,3 +48,4 @@ tools/       developer scripts
 - [ADR-0004](docs/architecture/adr/0004-h2-now-postgresql-next.md) — H2 now, PostgreSQL before real data
 - [ADR-0005](docs/architecture/adr/0005-authorization-model.md) — permissions are code, roles are data, grants carry a scope
 - [ADR-0006](docs/architecture/adr/0006-configurability-model.md) — four tiers of configurability
+- [ADR-0007](docs/architecture/adr/0007-api-response-envelope.md) — one response envelope, error codes as contract
