@@ -41,6 +41,8 @@
 | Permissions, roles and scopes | [ADR-0005](adr/0005-authorization-model.md) |
 | What is configurable, and where | [ADR-0006](adr/0006-configurability-model.md) |
 | The API response envelope | [ADR-0007](adr/0007-api-response-envelope.md) |
+| Where navigation comes from | [ADR-0008](adr/0008-server-driven-navigation.md) |
+| Hand-built UI components | [ADR-0009](adr/0009-hand-built-component-library.md) |
 
 ## Module inventory
 
