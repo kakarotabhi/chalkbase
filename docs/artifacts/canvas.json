@@ -1,0 +1,183 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Login & shell"
+    },
+    {
+      "id": "page-2",
+      "name": "Dashboard, form & list"
+    },
+    {
+      "id": "page-3",
+      "name": "Components & overlays"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 360,
+      "h": 800,
+      "title": "1 · Login — 360"
+    },
+    {
+      "file": "LoginStates.dc.html",
+      "page": "page-1",
+      "x": 460,
+      "y": 0,
+      "w": 1584,
+      "h": 860,
+      "title": "1 · Login — states"
+    },
+    {
+      "file": "LoginDesktop.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 980,
+      "w": 1280,
+      "h": 800,
+      "title": "1 · Login — 1280"
+    },
+    {
+      "file": "Shell360.dc.html",
+      "page": "page-1",
+      "x": 1400,
+      "y": 980,
+      "w": 800,
+      "h": 890,
+      "title": "2 · Shell — 360 + More sheet"
+    },
+    {
+      "file": "Shell700.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 1990,
+      "w": 700,
+      "h": 720,
+      "title": "2 · Shell — 700 rail"
+    },
+    {
+      "file": "Shell1280.dc.html",
+      "page": "page-1",
+      "x": 800,
+      "y": 1990,
+      "w": 1280,
+      "h": 800,
+      "title": "2 · Shell — 1280 + user menu"
+    },
+    {
+      "file": "Dashboard360.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 408,
+      "h": 830,
+      "title": "3 · Dashboard — 360"
+    },
+    {
+      "file": "Dashboard1280.dc.html",
+      "page": "page-2",
+      "x": 520,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "3 · Dashboard — 1280"
+    },
+    {
+      "file": "SchoolForm360.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 950,
+      "w": 800,
+      "h": 910,
+      "title": "4 · School form — 360"
+    },
+    {
+      "file": "SchoolForm1280.dc.html",
+      "page": "page-2",
+      "x": 900,
+      "y": 950,
+      "w": 1280,
+      "h": 800,
+      "title": "4 · School form — 1280"
+    },
+    {
+      "file": "Students360.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 1980,
+      "w": 408,
+      "h": 830,
+      "title": "5 · Students — 360 cards"
+    },
+    {
+      "file": "Students1280.dc.html",
+      "page": "page-2",
+      "x": 520,
+      "y": 1980,
+      "w": 1280,
+      "h": 800,
+      "title": "5 · Students — 1280 table"
+    },
+    {
+      "file": "StudentsStates.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 2930,
+      "w": 1740,
+      "h": 660,
+      "title": "5 · Students — empty / no results / loading / error"
+    },
+    {
+      "file": "Components.dc.html",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 1240,
+      "h": 1880,
+      "title": "6 · Components"
+    },
+    {
+      "file": "Overlays.dc.html",
+      "page": "page-3",
+      "x": 1340,
+      "y": 0,
+      "w": 1500,
+      "h": 970,
+      "title": "6 · Dialogs, confirmations, toasts"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "note-1",
+      "x": 0,
+      "y": -230,
+      "w": 900,
+      "text": "Screens 1–2. Every value comes from frontend/src/styles/_tokens.scss — same greens, spacing, radii and 44px targets as the built shell.\n\nStatic mockups, not a clickable prototype: the ask was states, and states read better side by side than behind clicks.",
+      "page": "page-1"
+    },
+    {
+      "id": "note-2",
+      "x": 0,
+      "y": -230,
+      "w": 900,
+      "text": "Screens 3–5. Breakpoints are ADR-0010's: 360 compact, 1280 expanded.\n\nThe students list is the one that sets the pattern — table at 1280, cards at 360, and four distinct empty/loading/error states rather than one.",
+      "page": "page-2"
+    },
+    {
+      "id": "note-3",
+      "x": 0,
+      "y": -230,
+      "w": 900,
+      "text": "Screen 6. The primitives the five screens imply, in every state you would have to build anyway.\n\nSample data is invented (student names, amounts, receipt numbers). Nothing here is real school data.",
+      "page": "page-3"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

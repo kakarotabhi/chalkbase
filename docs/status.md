@@ -15,6 +15,7 @@ Last updated: 2026-09-05 · Roadmap phase: **0 → 1** ([Phase definitions](requ
 | PostgreSQL, profiles, Testcontainers | ✅ Done |
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
+| Screen designs for the first six screens | ✅ Done |
 | Architecture decisions (ADR-0001…0010) | ✅ Done |
 | **Identity: login, users, sessions** | ⬜ Not started — **the next build** |
 | Permissions, roles, scoped grants | ⬜ Not started |
@@ -39,6 +40,7 @@ Last updated: 2026-09-05 · Roadmap phase: **0 → 1** ([Phase definitions](requ
 | Server-driven navigation and hand-built component decisions | PR #5 |
 | Responsive layout, verified at 360 / 700 / 1280 | PR #6 |
 | Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark) | `frontend/src/styles/` |
+| Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
 
 ## Next, in order
 
@@ -55,7 +57,8 @@ Each line says what it unblocks, because the order is not arbitrary.
 4. **Row-level security policies** on tenant-scoped tables (ADR-0002), plus `TenantContext` fed from
    the session instead of the development-only resolver.
 5. **Shared components** as the login and admin screens need them: button, form field, text input,
-   select, dialog, toast (ADR-0009).
+   select, dialog, toast (ADR-0009). Designed already — see
+   [`docs/artifacts`](artifacts/README.md).
 6. **School setup and academic session** — the first real admin screens, and Phase 1 proper.
 
 Also queued, not blocking:
