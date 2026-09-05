@@ -17,12 +17,13 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0015) | ✅ Done |
+| Architecture decisions (ADR-0001…0017) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
+| Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
-| Shared UI components | ⬜ Not started |
+| Shared UI components | ✅ Button, field, inputs, checkbox, bottom sheet |
 | School setup, academic session, classes | ⬜ Not started |
 | Students and guardians | ⬜ Not started |
 | Deployment to Coolify | ⬜ Not started |
@@ -57,8 +58,9 @@ Each line says what it unblocks, because the order is not arbitrary.
    twelve role templates copied on onboarding, scoped grants with validity windows, effective
    permissions resolved once at login, `@PreAuthorize` enforcement, and the test that fails the
    build when a controller method carries no authorization annotation (ADR-0005).
-3. **`GET /api/me`** — user, school, permissions, navigation, settings (ADR-0008).
-   *Unblocks:* the real menu, and the "More" bottom sheet on phones.
+3. ~~**`GET /api/me`**~~ ✅ Done. Bootstrap returns user, school, permissions, a
+   `permissionsVersion` hash and the permission-filtered navigation tree; the shell renders from it,
+   unknown ids are dropped and logged, and the guard now asks the server (ADR-0008).
 4. **Tenant resolution from the session.** The plumbing is built; what is missing is the filter that
    binds `TenantContext` per request. Until identity lands there is no authenticated school to bind,
    so every request runs against `public` — correct for the registry, and nothing else is exposed
@@ -111,6 +113,17 @@ Recorded so they are decided rather than discovered.
   group as a row in `public` (ADR-0011). Group-wide reporting is therefore a fan-out, and primary
   keys must be globally unique — UUIDv7, already the convention. Not exercised by the MVP, which is
   scoped to a single-campus school.
+
+- **The navigation contract has no test across the two sides.** The backend declares `settings` and
+  `settings.access`; the frontend route registry maps neither, so a principal's menu shows one item
+  and logs two drops. That is ADR-0008's designed transitional behaviour and it resolves when the
+  settings screen lands — but the guard against it is a CI check comparing the backend's ids to the
+  frontend's registry, which needs both artefacts and so belongs in neither agent's half. Both left
+  a matching `TODO(contract)`.
+- **ADR-0008's staleness rule is not implemented.** A `403` should make the client refetch
+  `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
+  without a refetch loop.
+- Expired sessions are never purged
 
 ## Keeping this honest
 

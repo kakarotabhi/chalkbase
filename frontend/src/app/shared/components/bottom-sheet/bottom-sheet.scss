@@ -1,0 +1,93 @@
+/**
+ * Fixed to the bottom of the window, over everything, at every width.
+ *
+ * The sheet is a compact-width pattern (ADR-0010) but it is not written `compact-only`: a caller
+ * decides when a sheet is the right shape, and hiding one at 600px would leave that caller with a
+ * dialog that silently does nothing on a tablet.
+ */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: block;
+}
+
+.sheet__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--cb-scrim);
+}
+
+.sheet__panel {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  // Never taller than most of the window: what is behind stays visible, so the sheet reads as
+  // something covering the page rather than as a new page.
+  max-height: var(--cb-sheet-max-height);
+  padding: var(--cb-space-2) var(--cb-space-4) var(--cb-space-6);
+  // Clear of the home indicator on gesture-navigation phones.
+  padding-bottom: calc(var(--cb-space-6) + var(--cb-safe-bottom));
+  background: var(--cb-surface-raised);
+  border-radius: var(--cb-radius-xl) var(--cb-radius-xl) 0 0;
+  box-shadow: var(--cb-shadow-2);
+}
+
+.sheet__handle {
+  flex: none;
+  width: var(--cb-space-8);
+  height: var(--cb-space-1);
+  margin: 0 auto var(--cb-space-3);
+  background: var(--cb-border-strong);
+  border-radius: var(--cb-radius-lg);
+  opacity: 0.5;
+}
+
+.sheet__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+}
+
+.sheet__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+  color: var(--cb-text);
+}
+
+.sheet__close {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  // 44px of tappable area, pulled back to the panel's edge so the icon still lines up with it.
+  width: var(--cb-touch-target-min);
+  height: var(--cb-touch-target-min);
+  margin-inline-end: calc(var(--cb-space-3) * -1);
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--cb-radius-sm);
+  color: var(--cb-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--cb-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.sheet__body {
+  // The sheet, not the page, is what scrolls when there are more sections than fit.
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

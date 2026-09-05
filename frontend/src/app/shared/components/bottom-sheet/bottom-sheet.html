@@ -1,0 +1,28 @@
+<!--
+  The scrim is decoration and a large, forgiving tap target for "not this". It is hidden from
+  assistive technology because the close button and Escape are the announced ways out.
+-->
+<div class="sheet__scrim" aria-hidden="true" (click)="close()"></div>
+
+<div
+  class="sheet__panel"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="headingId"
+  cdkTrapFocus
+  [cdkTrapFocusAutoCapture]="true"
+>
+  <!-- The grab handle says "this can be pushed back down" before anyone has to guess. -->
+  <span class="sheet__handle" aria-hidden="true"></span>
+
+  <div class="sheet__head">
+    <h2 class="sheet__heading" [id]="headingId">{{ heading() }}</h2>
+    <button type="button" class="sheet__close" [attr.aria-label]="closeLabel()" (click)="close()">
+      <cb-icon name="close" />
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <ng-content />
+  </div>
+</div>

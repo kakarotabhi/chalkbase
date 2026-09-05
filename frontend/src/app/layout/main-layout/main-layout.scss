@@ -110,6 +110,8 @@
   }
 }
 
+// A link, or the More button. Both are navigation entries and both are drawn the same, so the
+// button carries the same class and is reset to look like one rather than like a form control.
 .nav-item {
   display: flex;
   align-items: center;
@@ -117,9 +119,15 @@
   gap: var(--cb-space-1);
   min-height: var(--cb-touch-target-min);
   min-width: var(--cb-touch-target-min);
+  padding: 0;
+  background: none;
+  border: 0;
   border-radius: var(--cb-radius-sm);
   color: var(--cb-text-muted);
+  font: inherit;
+  text-align: inherit;
   text-decoration: none;
+  cursor: pointer;
 
   @include compact-only {
     flex: 1;
@@ -133,6 +141,11 @@
     padding: var(--cb-space-2) var(--cb-space-3);
   }
 
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+
   &.is-active {
     background: var(--cb-bg);
     color: var(--cb-text);
@@ -140,9 +153,24 @@
   }
 }
 
+// Everything past the fourth item, when there are more than a bottom bar can hold. It is still one
+// list in the DOM — the rail and the sidebar show these, the bar does not (ADR-0010).
+.nav-item--overflow {
+  @include compact-only {
+    display: none;
+  }
+}
+
+// The reverse: More belongs to the bottom bar alone, since the rail and the sidebar have room for
+// every item and nothing to overflow.
+.nav-item--more {
+  @include from-medium {
+    display: none;
+  }
+}
+
 .nav-item__icon {
-  font-size: var(--cb-font-size-lg);
-  line-height: 1;
+  flex: none;
 }
 
 .nav-item__label {
@@ -172,5 +200,46 @@
   // Nothing may hide behind the fixed bottom navigation.
   @include compact-only {
     padding-bottom: calc(var(--cb-bottom-nav-height) + var(--cb-safe-bottom) + var(--cb-space-6));
+  }
+}
+
+/**
+ * The More sheet's contents. The sheet itself is a shared component; this is only the list inside
+ * it, which is the shell's own navigation and not something another screen would reuse.
+ */
+.sheet-nav {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-3);
+  // The full 44px, not a smaller "it's only a menu row": these sit directly under one another with
+  // no gap between targets, and the list is scanned and tapped in a hurry.
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-2) var(--cb-space-1);
+  border-radius: var(--cb-radius-sm);
+  color: var(--cb-text);
+  font-weight: 500;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.sheet-nav__children {
+  // Indented under the parent, so "Collect fees" reads as part of Fees rather than as a peer of it.
+  margin: 0;
+  padding-inline-start: var(--cb-space-8);
+  list-style: none;
+
+  .sheet-nav__link {
+    color: var(--cb-text-muted);
+    font-weight: 400;
   }
 }

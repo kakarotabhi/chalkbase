@@ -84,3 +84,64 @@ export interface ChangePasswordRequest {
   readonly currentPassword: string;
   readonly newPassword: string;
 }
+
+/* ── Bootstrap (GET /api/me) ─────────────────────────────────────────────── */
+
+/**
+ * One node of the menu the server returns.
+ *
+ * There is deliberately no URL, path or component name here. The server sends a stable dotted
+ * `id` (`fees.collect`) and this app maps it to a route it owns, so a backend deploy cannot break
+ * navigation by naming a route the frontend does not have (ADR-0008). An id this app cannot
+ * resolve is dropped and logged, never rendered as a dead link.
+ */
+export interface NavigationItem {
+  /** Stable, dotted, e.g. `fees.collect`. The key into the frontend's route registry. */
+  readonly id: string;
+  /** Translation key, e.g. `nav.fees.collect`. Never a display string. */
+  readonly labelKey: string;
+  /**
+   * A school's own renaming of the item — "Fees & Dues" rather than "Fees". Present only when a
+   * school overrode the default (Tier-2 configuration, ADR-0006), and it wins over `labelKey`
+   * because it is that school's data rather than a translation of ours.
+   */
+  readonly label?: string;
+  /** A hint only. Icons are the frontend's business (ADR-0008), so the registry decides. */
+  readonly icon: string | null;
+  /** Ascending. Ties are broken by id so the menu never reshuffles between loads. */
+  readonly order: number;
+  readonly children: readonly NavigationItem[];
+}
+
+export interface MeUser {
+  readonly id: string;
+  readonly displayName: string;
+  readonly mustChangePassword: boolean;
+}
+
+export interface MeSchool {
+  readonly code: string;
+  readonly name: string;
+}
+
+/**
+ * The single bootstrap call: who is signed in, where, what they may see, and the menu.
+ *
+ * One call rather than five, because the alternative is a request waterfall on every page load,
+ * on a school's broadband (ADR-0008).
+ */
+export interface MeResponse {
+  readonly user: MeUser;
+  readonly school: MeSchool;
+  /**
+   * Changes when the user's effective permissions are recomputed. Effective permissions are
+   * resolved once per session, so this is what tells a long-lived tab its view has gone stale.
+   */
+  readonly permissionsVersion: string;
+  /**
+   * For deciding what to SHOW. Never for deciding what is allowed — the server enforces every
+   * permission independently (ADR-0005).
+   */
+  readonly permissions: readonly string[];
+  readonly navigation: readonly NavigationItem[];
+}

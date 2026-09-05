@@ -87,8 +87,14 @@
   --cb-radius-sm: 4px;
   --cb-radius-md: 8px;
   --cb-radius-lg: 12px;
+  /* Only for a surface that meets the edge of the screen — the bottom sheet. A large radius reads
+     as "this slid in over the page" rather than as part of it. */
+  --cb-radius-xl: 16px;
   --cb-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
   --cb-shadow-2: 0 4px 12px rgba(16, 24, 40, 0.1);
+  /* The wash over the page behind a modal surface. Dark enough to push the page back, light
+     enough that a fee counter can still see which screen they left open behind it. */
+  --cb-scrim: rgba(16, 25, 29, 0.45);
 
   /* ── Layout ───────────────────────────────────────────────────────────── */
   --cb-sidebar-width: 260px;
@@ -103,6 +109,9 @@
   /* A single column of form controls, wide enough for a date and narrow enough to read in one
      eye movement. Used by the sign-in screens; any centred form should reuse it. */
   --cb-form-column-width: 380px;
+  /* A bottom sheet never covers the whole window: leaving the page visible above it is what says
+     the sheet is temporary. dvh, not vh — see ADR-0010. */
+  --cb-sheet-max-height: 82dvh;
 
   /* Smallest comfortable tap area. WCAG 2.2 SC 2.5.8 (AA) requires 24px; 44px is
      SC 2.5.5 (AAA) and matches both platform conventions. Fee counters and teachers
@@ -148,6 +157,9 @@
 
   --cb-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --cb-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  /* Heavier in the dark: the light scrim all but disappears against a dark page, and a modal
+     nobody can see the edge of is a modal nobody knows they are in. */
+  --cb-scrim: rgba(0, 0, 0, 0.62);
 }
 
 @media (prefers-color-scheme: dark) {

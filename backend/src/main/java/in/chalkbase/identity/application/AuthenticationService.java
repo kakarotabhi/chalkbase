@@ -249,8 +249,12 @@ public class AuthenticationService {
         // @PreAuthorize is checked against exactly the set resolved above, with no second lookup and
         // no translation step where the two could disagree. Note there is no ROLE_ prefix and no
         // role name anywhere: code checks permissions only (ADR-0005).
-        AuthenticatedUser principal =
-                new AuthenticatedUser(account.getId(), username, school.schemaName(), signedIn.access());
+        AuthenticatedUser principal = new AuthenticatedUser(
+                account.getId(),
+                username,
+                school.schemaName(),
+                new SchoolSummary(school.code(), school.name()),
+                signedIn.access());
         List<GrantedAuthority> authorities = signedIn.access().permissions().stream()
                 .sorted()
                 .map(permission -> (GrantedAuthority) new SimpleGrantedAuthority(permission))
