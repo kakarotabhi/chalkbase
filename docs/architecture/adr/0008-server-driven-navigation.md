@@ -23,7 +23,7 @@ either a menu item that 403s when clicked, or a feature a school paid for that n
 **The server returns the navigation tree after login**, as part of a single bootstrap call.
 
 ```
-GET /api/v1/me
+GET /api/me
 → { user, school, permissions[], navigation[], settings }
 ```
 
@@ -82,7 +82,7 @@ a stale menu. Handling:
 
 - The bootstrap response carries a `permissionsVersion`.
 - Any `403` from the API is treated by the frontend as a signal that its view is stale: refetch
-  `/api/v1/me`, re-render navigation, then show the error.
+  `/api/me`, re-render navigation, then show the error.
 
 That converts the confusing case ("the button is there but it fails") into a self-correcting one.
 
@@ -93,5 +93,5 @@ That converts the confusing case ("the button is there but it fails") into a sel
 - The navigation contract needs a test on both sides — the backend must not emit an id the frontend
   cannot resolve. A test enumerating the frontend's known ids against the backend's catalogue is the
   cheap way to catch it, and belongs with the identity module.
-- `/api/v1/me` becomes a hot path and the first thing to break the app if it is slow. It is served
+- `/api/me` becomes a hot path and the first thing to break the app if it is slow. It is served
   from the session's cached permissions, not recomputed per call.

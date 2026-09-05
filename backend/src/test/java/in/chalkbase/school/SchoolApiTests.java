@@ -50,7 +50,7 @@ class SchoolApiTests {
 
     @Test
     void createsAndReadsBackASchool() throws Exception {
-        mockMvc.perform(post("/api/v1/schools")
+        mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated())
@@ -60,7 +60,7 @@ class SchoolApiTests {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
 
-        mockMvc.perform(get("/api/v1/schools"))
+        mockMvc.perform(get("/api/schools"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].name").value("Delhi Public School, R. K. Puram"));
@@ -68,7 +68,7 @@ class SchoolApiTests {
 
     @Test
     void reportsFieldLevelValidationFailures() throws Exception {
-        mockMvc.perform(post("/api/v1/schools")
+        mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"\", \"name\": \"\", \"board\": \"CBSE\"}"))
                 .andExpect(status().isBadRequest())
@@ -82,12 +82,12 @@ class SchoolApiTests {
     /** The unique index on school.code must surface as the school module's own message. */
     @Test
     void translatesADuplicateCodeIntoTheModulesOwnErrorCode() throws Exception {
-        mockMvc.perform(post("/api/v1/schools")
+        mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/v1/schools")
+        mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isConflict())
@@ -98,7 +98,7 @@ class SchoolApiTests {
 
     @Test
     void rejectsAMalformedBodyWithoutEchoingIt() throws Exception {
-        mockMvc.perform(post("/api/v1/schools")
+        mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"SECRET-VALUE\", not json"))
                 .andExpect(status().isBadRequest())
@@ -109,7 +109,7 @@ class SchoolApiTests {
 
     @Test
     void returnsTheEnvelopeForAnUnknownId() throws Exception {
-        mockMvc.perform(get("/api/v1/schools/{id}", "11111111-1111-1111-1111-111111111111"))
+        mockMvc.perform(get("/api/schools/{id}", "11111111-1111-1111-1111-111111111111"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("NF_001"));
@@ -117,19 +117,19 @@ class SchoolApiTests {
 
     @Test
     void rejectsAnUnparseableIdAsABadRequestRatherThanAServerError() throws Exception {
-        mockMvc.perform(get("/api/v1/schools/{id}", "not-a-uuid"))
+        mockMvc.perform(get("/api/schools/{id}", "not-a-uuid"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VAL_001"));
     }
 
     @Test
     void putsATraceIdOnEveryResponse() throws Exception {
-        mockMvc.perform(get("/api/v1/schools")).andExpect(header().exists("X-Request-Id"));
+        mockMvc.perform(get("/api/schools")).andExpect(header().exists("X-Request-Id"));
     }
 
     @Test
     void honoursAnInboundTraceId() throws Exception {
-        mockMvc.perform(get("/api/v1/schools").header("X-Request-Id", "abc-123"))
+        mockMvc.perform(get("/api/schools").header("X-Request-Id", "abc-123"))
                 .andExpect(header().string("X-Request-Id", "abc-123"))
                 .andExpect(jsonPath("$.traceId").value("abc-123"));
     }

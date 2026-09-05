@@ -313,7 +313,7 @@ the question actually being asked, and its scale advantage appears at volumes th
 reach. It stays available for the two genuinely unbounded, append-heavy logs — audit and notification
 delivery — if they need it.
 
-Also fixed: `/api/v1/<plural-resource>` paths in kebab-case, ISO-8601 dates, and amounts as decimal
+Also fixed: `/api/<plural-resource>` paths in kebab-case, ISO-8601 dates, and amounts as decimal
 strings rather than floats.
 
 ### UI design system

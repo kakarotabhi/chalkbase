@@ -56,7 +56,7 @@ Each line says what it unblocks, because the order is not arbitrary.
 2. **Permissions, roles, grants.** Permission registry per module, role templates, scoped grants
    (ADR-0005).
    *Unblocks:* `@PreAuthorize` on every endpoint, and the navigation payload.
-3. **`GET /api/v1/me`** — user, school, permissions, navigation, settings (ADR-0008).
+3. **`GET /api/me`** — user, school, permissions, navigation, settings (ADR-0008).
    *Unblocks:* the real menu, and the "More" bottom sheet on phones.
 4. **Schema-per-tenant plumbing** (ADR-0011). The tenant registry in `public`; splitting migrations
    into `db/migration/shared` and `db/migration/tenant`; a `MultiTenantConnectionProvider` that sets

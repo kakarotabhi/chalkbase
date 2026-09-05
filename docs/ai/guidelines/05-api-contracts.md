@@ -6,7 +6,7 @@ Use REST APIs first.
 
 Default:
 
-- Base path: `/api/v1`.
+- Base path: `/api`.
 - JSON request/response bodies.
 - OpenAPI documentation.
 - Consistent pagination, sorting, filtering, and error formats.
@@ -18,20 +18,20 @@ Do not add GraphQL or gRPC unless there is a clear product need.
 
 Use plural resource names:
 
-- `/api/v1/students`
-- `/api/v1/admissions/applications`
-- `/api/v1/attendance/daily-records`
-- `/api/v1/fees/receipts`
-- `/api/v1/exams/report-cards`
-- `/api/v1/compliance/disclosures`
+- `/api/students`
+- `/api/admissions/applications`
+- `/api/attendance/daily-records`
+- `/api/fees/receipts`
+- `/api/exams/report-cards`
+- `/api/compliance/disclosures`
 
 Use domain actions only when a simple CRUD model is misleading:
 
-- `POST /api/v1/admissions/applications/{id}/approve`
-- `POST /api/v1/attendance/daily-records/{id}/corrections`
-- `POST /api/v1/fees/receipts/{id}/void`
-- `POST /api/v1/exams/{id}/publish-results`
-- `POST /api/v1/certificates/{id}/generate`
+- `POST /api/admissions/applications/{id}/approve`
+- `POST /api/attendance/daily-records/{id}/corrections`
+- `POST /api/fees/receipts/{id}/void`
+- `POST /api/exams/{id}/publish-results`
+- `POST /api/certificates/{id}/generate`
 
 ## Request Rules
 
@@ -156,7 +156,8 @@ The API is **not versioned** — see
 [ADR-0016](../../architecture/adr/0016-no-api-versioning.md). There is one client, shipped from the
 same commit as the backend, so serving an old contract has nobody to serve it to.
 
-- Use `/api/v1` as the base path. It is frozen and is not a version number; there will be no `v2`.
+- Use `/api` as the base path. There is no version segment, and adding one is a decision to reverse
+  ADR-0016, not a routine change.
 - Add fields in a backward-compatible way; do not remove or rename them.
 - Both sides ignore unknown fields, so an added field breaks nobody.
 - A genuinely breaking change is made atomically across backend and frontend in one pull request.

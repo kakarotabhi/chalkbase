@@ -141,7 +141,7 @@ Use REST APIs with OpenAPI documentation.
 
 API requirements:
 
-- Version APIs as `/api/v1`.
+- Version APIs as `/api`.
 - Use pagination for list endpoints.
 - Support sorting and filtering.
 - Return structured validation errors.
