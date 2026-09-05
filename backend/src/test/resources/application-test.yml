@@ -1,0 +1,12 @@
+# Tests run against a real PostgreSQL container, never against the shared Supabase database:
+# CI cannot reach it, and tests that share a database with a human are not tests.
+# The datasource is supplied by @ServiceConnection in TestcontainersConfiguration.
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    in.chalkbase: DEBUG

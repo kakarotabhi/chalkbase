@@ -1,0 +1,31 @@
+# Copy to application-local.yml and fill in the password:
+#
+#     cp application-local.yml.example application-local.yml
+#
+# application-local.yml is gitignored. This repository is PUBLIC — never put a real password in a
+# committed file. Prefer exporting CHALKBASE_DB_PASSWORD in your shell over typing it here.
+spring:
+  datasource:
+    # Supabase pooler (Supavisor), session mode on 5432.
+    #
+    # The direct host db.<ref>.supabase.co resolves to IPv6 ONLY, which most machines (WSL2
+    # included) cannot reach. The pooler host is dual-stack, so use it. Session mode rather than
+    # transaction mode (6543) because ADR-0002's row-level security uses session settings.
+    url: jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require&currentSchema=chalkbase
+    username: postgres.zmnlyttpcirpurzdqwbb
+    password: ${CHALKBASE_DB_PASSWORD:REPLACE_ME}
+    hikari:
+      # The free tier has a small connection budget and it is shared by everyone using this project.
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    in.chalkbase: DEBUG
+    org.hibernate.SQL: DEBUG

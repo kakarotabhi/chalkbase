@@ -4,8 +4,8 @@ School management system for Indian K-12 schools — pre-primary through senior 
 
 Spring Boot 4.1 (Java 21) · Angular 22 · PostgreSQL · self-hosted on a VPS with Coolify.
 
-> **Status: scaffold.** One vertical slice (`/api/v1/schools`) proves the stack end to end. Auth is
-> not implemented and the database is in-memory H2 — do not deploy this publicly yet.
+> **Status: scaffold.** One vertical slice (`/api/v1/schools`) proves the stack end to end.
+> Authentication is not implemented yet, so do not expose a deployment publicly.
 
 ## Quick start
 
