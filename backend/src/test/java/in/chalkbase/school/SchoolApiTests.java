@@ -29,8 +29,9 @@ class SchoolApiTests {
 
     private static final String DPS = """
             {
-              "code": "DPS-RKP",
-              "name": "Delhi Public School, R. K. Puram",
+              "code": "GPS-S12",
+              "name": "Greenfield Public School",
+              "schemaName": "greenfield",
               "board": "CBSE",
               "city": "New Delhi",
               "state": "Delhi"
@@ -56,21 +57,21 @@ class SchoolApiTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
-                .andExpect(jsonPath("$.data.code").value("DPS-RKP"))
+                .andExpect(jsonPath("$.data.code").value("GPS-S12"))
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
 
         mockMvc.perform(get("/api/schools"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].name").value("Delhi Public School, R. K. Puram"));
+                .andExpect(jsonPath("$.data[0].name").value("Greenfield Public School"));
     }
 
     @Test
     void reportsFieldLevelValidationFailures() throws Exception {
         mockMvc.perform(post("/api/schools")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\": \"\", \"name\": \"\", \"board\": \"CBSE\"}"))
+                        .content("{\"code\": \"\", \"name\": \"\", \"schemaName\": \"\", \"board\": \"CBSE\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.data").doesNotExist())

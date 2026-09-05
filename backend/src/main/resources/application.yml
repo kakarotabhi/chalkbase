@@ -13,11 +13,14 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate # Flyway owns the schema. Never let Hibernate create it.
+      # `validate` cannot work here: it would check one schema, and there are as many as there are
+      # schools. Flyway owns the schema and TenantMigrationRunner proves every tenant is current.
+      ddl-auto: none
     open-in-view: false
     properties:
       hibernate:
-        default_schema: ${chalkbase.db.schema}
+        # No default_schema. The schema is chosen per connection by
+        # SchemaMultiTenantConnectionProvider; the registry tables qualify themselves as `public`.
         jdbc:
           time_zone: UTC
           batch_size: 50
@@ -25,12 +28,9 @@ spring:
         order_updates: true
 
   flyway:
-    enabled: true
-    locations: classpath:db/migration
-    schemas: ${chalkbase.db.schema}
-    default-schema: ${chalkbase.db.schema}
-    create-schemas: true
-    baseline-on-migrate: false
+    # Off on purpose. Boot's initializer migrates a single schema; ADR-0011 needs `public` plus one
+    # run per school, which TenantMigrationRunner does at startup.
+    enabled: false
 
   jackson:
     default-property-inclusion: non_null
@@ -55,10 +55,10 @@ server:
   shutdown: graceful
 
 chalkbase:
-  db:
-    # Chalkbase owns one schema. On Supabase this keeps our tables away from the managed
-    # auth/storage/realtime schemas; everywhere else it keeps `public` empty and obvious.
-    schema: chalkbase
+  tenancy:
+    # One PostgreSQL schema per school (ADR-0011). `public` holds the tenant registry and shared
+    # reference data; each school's own data lives in the schema named in public.school.
+    platform-schema: public
 
 management:
   endpoints:

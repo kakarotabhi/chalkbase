@@ -10,8 +10,8 @@ spring:
     #
     # The direct host db.<ref>.supabase.co resolves to IPv6 ONLY, which most machines (WSL2
     # included) cannot reach. The pooler host is dual-stack, so use it. Session mode rather than
-    # transaction mode (6543) because ADR-0002's row-level security uses session settings.
-    url: jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require&currentSchema=chalkbase
+    # transaction mode (6543) because the tenant schema is selected with SET search_path (ADR-0011).
+    url: jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
     username: postgres.zmnlyttpcirpurzdqwbb
     password: ${CHALKBASE_DB_PASSWORD:REPLACE_ME}
     hikari:

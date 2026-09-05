@@ -21,7 +21,7 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | **Identity: login, users, sessions** | ⬜ Not started — **the next build** |
 | Permissions, roles, scoped grants | ⬜ Not started |
-| Schema-per-tenant: registry, migration orchestrator | ⬜ Not started — **decided, not built** |
+| Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Shared UI components | ⬜ Not started |
 | School setup, academic session, classes | ⬜ Not started |
 | Students and guardians | ⬜ Not started |
@@ -58,11 +58,10 @@ Each line says what it unblocks, because the order is not arbitrary.
    *Unblocks:* `@PreAuthorize` on every endpoint, and the navigation payload.
 3. **`GET /api/me`** — user, school, permissions, navigation, settings (ADR-0008).
    *Unblocks:* the real menu, and the "More" bottom sheet on phones.
-4. **Schema-per-tenant plumbing** (ADR-0011). The tenant registry in `public`; splitting migrations
-   into `db/migration/shared` and `db/migration/tenant`; a `MultiTenantConnectionProvider` that sets
-   `search_path` on acquire and **resets it on release**; the startup orchestrator that migrates
-   every tenant; onboarding that creates and migrates a schema. `TenantContext` stops using its
-   development-only resolver and takes the school from the session.
+4. **Tenant resolution from the session.** The plumbing is built; what is missing is the filter that
+   binds `TenantContext` per request. Until identity lands there is no authenticated school to bind,
+   so every request runs against `public` — correct for the registry, and nothing else is exposed
+   yet.
 5. **Shared components** as the login and admin screens need them: button, form field, text input,
    select, dialog, toast (ADR-0009). Designed already — see
    [`docs/artifacts`](artifacts/README.md).
@@ -102,10 +101,9 @@ Recorded so they are decided rather than discovered.
   and mirrors the backend by hand (ADR-0007).
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
 - No audit logging yet, though FR-008 marks it P0.
-- **The code still reflects the superseded tenancy decision.** `application.yml` points at a single
-  `chalkbase` schema and lets Spring run Flyway automatically; ADR-0011 needs one schema per school,
-  `spring.flyway.enabled: false` and a custom orchestrator. Docs and code disagree until item 4
-  above lands.
+- Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
+  dominated by round trips. Fifty schools would be about four minutes of startup. Mumbai (ADR-0015)
+  will cut it sharply; the linear shape does not change, so the ADR-0011 expiry stands.
 - Startup migration is deliberate and has a recorded expiry — move it to a deploy step once startup
   passes ~1 minute, a second replica appears, or tenant count passes ~50 (ADR-0011).
 - The tenant is a **campus**, not a group: a multi-campus trust gets one schema per campus, with the

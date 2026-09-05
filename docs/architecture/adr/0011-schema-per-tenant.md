@@ -40,16 +40,23 @@ pool. The tenant comes from the authenticated session ([ADR-0003](0003-authentic
 never from a request parameter.
 
 ```java
+private static final String SET_SEARCH_PATH = "select set_config('search_path', ?, false)";
+
 Connection getConnection(String schema) {
     Connection c = dataSource.getConnection();
-    exec(c, "SET search_path TO " + validated(schema));
+    applySearchPath(c, SchemaName.requireValid(schema));
     return c;
 }
 void releaseConnection(String schema, Connection c) {
-    exec(c, "SET search_path TO public");   // not optional — see below
+    applySearchPath(c, "public");   // not optional — see below
     c.close();
 }
 ```
+
+`SET search_path TO ?` is not valid SQL — an identifier cannot be a bind parameter — but its
+function form takes the value as an ordinary parameter. Using `set_config` removes the injection
+surface entirely rather than relying on validation to hold. The name is still validated, so the two
+are independent.
 
 Application code contains no tenancy at all: no `school_id` column, no filter to forget.
 
@@ -59,9 +66,10 @@ Application code contains no tenancy at all: no `school_id` column, no filter to
    `search_path` to whoever gets it next. Skip the reset and the next request reads the previous
    school's data — silently, with no error and nothing in a log. This was reproduced against the
    real database before the decision was made.
-2. **Validate the schema name.** `SET search_path TO ?` is not valid SQL, so the identifier is
-   concatenated. It comes from the tenant registry and is checked against a strict pattern — never
-   passed through from a request.
+2. **Validate the schema name anyway.** `set_config` binds the value, so injection is closed by
+   construction; validation is the second, independent guard, and it is also what stops a tenant
+   occupying `public`, `pg_*` or one of Supabase's managed schemas. A matching check constraint on
+   `public.school` makes the database the third.
 3. **The connection must be in session mode.** `SET` does not survive a transaction-mode pooler.
    Supabase's port 5432 is session mode and 6543 is not. Tenancy now depends on that port; it is not
    a tuning knob.
@@ -90,7 +98,10 @@ handful of schools it costs seconds.
 
 It has a known expiry, recorded here so that reaching it is a decision and not an incident:
 
-- **Startup time is linear in tenant count.** At 500 schools and ~2s each, boot takes ~17 minutes.
+- **Startup time is linear in tenant count.** Measured against the Seoul development database, two
+  schools took 9.4 seconds — about 4.7s each, dominated by round trips on a 150-200ms link.
+  Fifty schools would be roughly four minutes of startup. Mumbai (ADR-0015) will cut that
+  sharply, but the shape is linear either way.
 - **Every replica migrates.** Flyway's advisory lock keeps this safe, but instances queue behind
   each other and the slowest start wins.
 - **A failing migration means the application does not start**, for every school, including the ones
