@@ -41,16 +41,21 @@ The API changes without breaking anyone, by discipline rather than by mechanism.
 - **The envelope stays stable regardless** ([ADR-0007](0007-api-response-envelope.md)): `success`,
   `error`, `traceId` never change shape, so client error handling is unaffected by any of this.
 
-### The `/api/v1` prefix stays, frozen
+### There is no version segment in the path
 
-Paths keep the literal `/api/v1` prefix they have today, and it never changes.
+Endpoints are `/api/schools`, not `/api/v1/schools`. The `v1` segment was removed when this ADR was
+accepted.
 
-This is deliberate and is not a hedge. Removing it would be a breaking change to every endpoint
-**today**, touching the backend, the frontend base URL, the OpenAPI spec and the design mockups, in
-order to avoid a hypothetical breaking change later. Keeping it costs nothing, changes no code, and
-leaves the only free hook available should the trigger below ever fire.
+The alternative was to keep `v1` frozen as a no-cost hook in case the trigger below ever fires. That
+was rejected: a version number nobody increments is a lie in the URL, and every reader has to be
+told it does not mean what it says. A path should describe the resource, not carry a decision we
+have declined to make.
 
-Treat `v1` as part of the base path, not as a version number. There will be no `v2` under this ADR.
+Removing it now is cheap — one client, deployed with the server, and no external consumer exists to
+break. It will not be cheap later, which is precisely why it is done now rather than left.
+
+If the trigger fires, adding a version segment then is itself a breaking change — and it will be
+made against a client we can update, alongside whatever forced it.
 
 ### Webhooks are the one exception, and they are not a version
 

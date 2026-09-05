@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/schools")
+@RequestMapping("/api/schools")
 public class SchoolController {
 
     private final SchoolService schoolService;
@@ -37,7 +37,7 @@ public class SchoolController {
     @PostMapping
     public ResponseEntity<ApiResponse<SchoolResponse>> create(@Valid @RequestBody CreateSchoolRequest request) {
         SchoolResponse created = schoolService.create(request);
-        return ResponseEntity.created(URI.create("/api/v1/schools/" + created.id()))
+        return ResponseEntity.created(URI.create("/api/schools/" + created.id()))
                 .body(ApiResponse.success(created));
     }
 }

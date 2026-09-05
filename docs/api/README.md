@@ -40,8 +40,8 @@ Exactly one of `data` and `error` is present; the other is omitted.
 - **`traceId` is on every response** and in the `X-Request-Id` header. A client may send its own
   `X-Request-Id` and it will be echoed. Show it in user-facing error screens — it is what a school
   quotes when they report a problem.
-- **The API is not versioned** (ADR-0016). Everything sits under `/api/v1/`, and that prefix is
-  frozen — treat it as part of the base path, not a version number. There will be no `/v2`.
+- **The API is not versioned** (ADR-0016). Endpoints are `/api/schools`, with no version segment.
+  A path describes the resource; it does not carry a version number nobody increments.
 - **Evolve additively.** Add fields; do not remove or rename them. Both sides ignore fields they do
   not model, so an added field never breaks anyone. A genuinely breaking change is made atomically
   across backend and frontend in one pull request, because they ship together.
@@ -49,7 +49,7 @@ Exactly one of `data` and `error` is present; the other is omitted.
   the session ([ADR-0011](../architecture/adr/0011-schema-per-tenant.md)).
 - **UUID identifiers, ISO-8601 UTC timestamps, decimal strings for money** — never a float.
 
-## Bootstrap: `GET /api/v1/me`
+## Bootstrap: `GET /api/me`
 
 One call after login returns everything the client needs to render the shell — user, school,
 effective permissions, navigation and settings — instead of a waterfall of separate requests on a
@@ -102,7 +102,7 @@ them turns the login form into a way to discover which parents are registered.
 Offset paging, settled in [Phase 0](../requirements/07-phase-0-decisions.md#api-conventions):
 
 ```
-GET /api/v1/students?page=0&size=25&sort=name,asc
+GET /api/students?page=0&size=25&sort=name,asc
 ```
 
 The payload is a `PageResponse<T>` inside the usual envelope:

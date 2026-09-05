@@ -7,7 +7,7 @@
 
 ## Context
 
-Every `/api/v1` response needs one predictable shape, so the frontend has one place that knows how
+Every `/api` response needs one predictable shape, so the frontend has one place that knows how
 to read a success and one that knows how to read a failure.
 
 The scaffold used **RFC 9457 problem details**, which Spring produces natively. The team already

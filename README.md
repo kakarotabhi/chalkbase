@@ -4,7 +4,7 @@ School management system for Indian K-12 schools — pre-primary through senior 
 
 Spring Boot 4.1 (Java 21) · Angular 22 · PostgreSQL 17 · self-hosted on a VPS with Coolify.
 
-> **Status: scaffold.** One vertical slice (`/api/v1/schools`) proves the stack end to end.
+> **Status: scaffold.** One vertical slice (`/api/schools`) proves the stack end to end.
 > Authentication is not implemented yet, so do not expose a deployment publicly.
 
 ## Quick start
@@ -57,4 +57,4 @@ tools/       developer scripts
 - [ADR-0013](docs/architecture/adr/0013-external-provider-ports.md) — payments and messaging are ports; v1 is offline and email
 - [ADR-0014](docs/architecture/adr/0014-data-classification.md) — four data tiers, enforced by a build-failing test
 - [ADR-0015](docs/architecture/adr/0015-deployment-baseline.md) — one Mumbai VPS running everything, via Coolify
-- [ADR-0016](docs/architecture/adr/0016-no-api-versioning.md) — the API is not versioned; `/api/v1` is a frozen base path
+- [ADR-0016](docs/architecture/adr/0016-no-api-versioning.md) — the API is not versioned and paths carry no version segment

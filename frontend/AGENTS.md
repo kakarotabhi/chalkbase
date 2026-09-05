@@ -31,7 +31,7 @@ src/environments/ apiBaseUrl per build configuration.
   virtual scroll. It ships no CSS. Do not hand-roll focus trapping or overlay positioning.
 - **Shared components take inputs and emit outputs.** No HTTP, no router, no store. Form controls
   implement `ControlValueAccessor`. Keyboard and screen-reader support is part of "done".
-- **Navigation comes from the server** (ADR-0008). The menu is built from `/api/v1/me`, and the
+- **Navigation comes from the server** (ADR-0008). The menu is built from `/api/me`, and the
   server sends stable ids that this app maps to its own routes — never URLs. An unknown id is
   dropped and logged, never rendered. Never treat a hidden menu item as access control.
 - **No literal colours, spacings or font sizes in a component style** — only

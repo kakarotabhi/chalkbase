@@ -15,7 +15,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   styleUrl: './main-layout.scss',
 })
 export class MainLayout {
-  // Placeholder. Navigation is served by the backend from /api/v1/me once the identity module
+  // Placeholder. Navigation is served by the backend from /api/me once the identity module
   // exists (ADR-0008), including the compact-width "More" sheet when a user has more top-level
   // items than a bottom bar can hold.
   protected readonly navItems = [{ path: '/schools', label: 'Schools', icon: '🏫' }] as const;

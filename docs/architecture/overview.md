@@ -4,7 +4,7 @@
                      ┌──────────────────────────┐
   Browser / tablet ──▶  Angular 22 (frontend/)   │  static bundle, served by nginx
                      └────────────┬─────────────┘
-                                  │  /api/v1  (JSON, RFC 9457 errors)
+                                  │  /api  (JSON, RFC 9457 errors)
                      ┌────────────▼─────────────┐
                      │  Spring Boot 4 (backend/) │  one deployable, many modules
                      │  ┌─────────────────────┐  │

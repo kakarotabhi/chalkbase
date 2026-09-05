@@ -4,7 +4,7 @@ import in.chalkbase.platform.web.RequestId;
 import java.time.Instant;
 
 /**
- * The single response shape for every {@code /api/v1} endpoint.
+ * The single response shape for every {@code /api} endpoint.
  *
  * <p>Exactly one of {@code data} and {@code error} is present; the other is omitted, because
  * {@code spring.jackson.default-property-inclusion=non_null} drops nulls.

@@ -25,7 +25,7 @@ export interface CreateSchoolRequest {
 }
 
 /**
- * The envelope every `/api/v1` response uses. Exactly one of `data` and `error` is present.
+ * The envelope every `/api` response uses. Exactly one of `data` and `error` is present.
  * See ADR-0007.
  */
 export interface ApiResponse<T> {

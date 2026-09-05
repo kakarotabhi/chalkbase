@@ -22,7 +22,7 @@ describe('SchoolList', () => {
   it('renders the schools returned by the API', async () => {
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/v1/schools').flush({
+    httpMock.expectOne('/api/schools').flush({
       success: true,
       timestamp: '2026-09-05T10:00:00Z',
       traceId: 'test-trace',
@@ -46,7 +46,7 @@ describe('SchoolList', () => {
   it('shows an error message when the API returns a failure envelope', async () => {
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/v1/schools').flush(
+    httpMock.expectOne('/api/schools').flush(
       {
         success: false,
         timestamp: '2026-09-05T10:00:00Z',
