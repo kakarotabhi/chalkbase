@@ -28,6 +28,7 @@
 - **Shared database with row-level tenancy** (ADR-0002), with a documented path to per-tenant
   databases for schools that need physical isolation.
 - **Flyway owns the schema.** Hibernate validates it and never creates it.
+- **One response envelope** for every endpoint, with a trace id on every response (ADR-0007).
 
 ## Where things are decided
 
@@ -39,6 +40,7 @@
 | H2 now, PostgreSQL next | [ADR-0004](adr/0004-h2-now-postgresql-next.md) |
 | Permissions, roles and scopes | [ADR-0005](adr/0005-authorization-model.md) |
 | What is configurable, and where | [ADR-0006](adr/0006-configurability-model.md) |
+| The API response envelope | [ADR-0007](adr/0007-api-response-envelope.md) |
 
 ## Module inventory
 
