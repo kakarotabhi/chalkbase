@@ -1,0 +1,129 @@
+<cb-auth-layout heading="Sign in" subtitle="Use the details your school issued you.">
+  <form class="login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (banner(); as message) {
+      <!--
+        role="alert" so the reason is spoken the moment it appears. It sits above the fields
+        because that is where the eye goes back to after a failed submit.
+      -->
+      <div class="banner banner--danger" role="alert">
+        @if (message.icon === 'lock') {
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="4.5" y="10.5" width="15" height="9.5" rx="2" />
+            <path d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9" />
+          </svg>
+        } @else {
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+        }
+        <div>
+          <strong class="banner__title">{{ message.title }}</strong>
+          <span>{{ message.detail }}</span>
+        </div>
+      </div>
+    }
+
+    <cb-form-field
+      #schoolCodeField
+      label="School code"
+      [controlId]="fieldIds.schoolCode"
+      [required]="true"
+      hint="On your school's circulars and fee receipts."
+      [error]="schoolCodeError()"
+    >
+      <cb-text-input
+        formControlName="schoolCode"
+        [id]="schoolCodeField.controlId()"
+        [describedBy]="schoolCodeField.describedById()"
+        [invalid]="schoolCodeField.hasError()"
+        [readOnly]="submitting()"
+        autocomplete="organization"
+        autocapitalize="characters"
+        placeholder="GPS-S12"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #usernameField
+      label="Username or email"
+      [controlId]="fieldIds.username"
+      [required]="true"
+      [error]="usernameError()"
+    >
+      <cb-text-input
+        formControlName="username"
+        [id]="usernameField.controlId()"
+        [describedBy]="usernameField.describedById()"
+        [invalid]="usernameField.hasError()"
+        [readOnly]="submitting()"
+        autocomplete="username"
+        autocapitalize="none"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #passwordField
+      label="Password"
+      [controlId]="fieldIds.password"
+      [required]="true"
+      [error]="passwordError()"
+    >
+      <cb-password-input
+        formControlName="password"
+        [id]="passwordField.controlId()"
+        [describedBy]="passwordField.describedById()"
+        [invalid]="passwordField.hasError()"
+        [readOnly]="submitting()"
+        autocomplete="current-password"
+      />
+    </cb-form-field>
+
+    <div class="login__row">
+      <cb-checkbox formControlName="keepSignedIn" label="Keep me signed in" />
+      <button class="login__link" type="button" (click)="explainRecovery()">
+        Forgot password?
+      </button>
+    </div>
+
+    <!--
+      Never hidden and never removed. When the account is locked it goes disabled and the banner
+      above says why — a button that disappears leaves the user with nothing to read.
+    -->
+    <cb-button
+      type="submit"
+      variant="primary"
+      [block]="true"
+      [loading]="submitting()"
+      [disabled]="isLocked()"
+      loadingLabel="Signing in…"
+    >
+      Sign in
+    </cb-button>
+  </form>
+
+  <p class="login__help" id="login-help" tabindex="-1" [class.is-called-out]="recoveryExplained()">
+    Trouble signing in? Your school office can reset your password.
+  </p>
+</cb-auth-layout>

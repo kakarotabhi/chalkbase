@@ -1,0 +1,37 @@
+/// A short block of consequence at the top of a form — "we could not sign you in", "set a new
+/// password". Icon plus a bold first line plus a sentence saying what to do about it.
+///
+/// Not a toast: a banner belongs to the thing it is about and stays until that changes.
+@mixin banner-base {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-2);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  font-size: var(--cb-font-size-sm);
+
+  svg {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+/// Tone modifiers, each a foreground paired with its own tinted surface so the text keeps its
+/// contrast in both colour schemes.
+@mixin banner-tones {
+  &.banner--danger {
+    background: var(--cb-danger-surface);
+    color: var(--cb-danger);
+  }
+
+  &.banner--info {
+    background: var(--cb-info-surface);
+    color: var(--cb-info);
+  }
+}
+
+/// The bold first line inside a banner.
+@mixin banner-title {
+  display: block;
+  font-weight: 600;
+}

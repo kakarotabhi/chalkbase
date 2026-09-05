@@ -7,7 +7,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 |---|---|---|---|---|
 | `platform` | nothing (shared kernel: tenancy, security, error handling, config) | — | n/a | scaffolded |
 | `school` | `public.school`, `public.school_group` (registry); `academic_session` (per tenant) | `/api/schools` | registry is not; `academic_session` is | scaffolded |
-| `identity` | users, roles, permissions, sessions | `/api/auth`, `/api/users` | yes | planned |
+| `identity` | `user_account`, `user_identifier`, `user_credential` (per tenant); `public.spring_session` | `/api/auth/login`, `/api/auth/logout`, `/api/auth/password` | yes | scaffolded |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
 | `student` | students, guardians, documents, alumni | `/api/students` | yes | planned |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |

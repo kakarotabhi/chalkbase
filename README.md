@@ -58,3 +58,4 @@ tools/       developer scripts
 - [ADR-0014](docs/architecture/adr/0014-data-classification.md) — four data tiers, enforced by a build-failing test
 - [ADR-0015](docs/architecture/adr/0015-deployment-baseline.md) — one Mumbai VPS running everything, via Coolify
 - [ADR-0016](docs/architecture/adr/0016-no-api-versioning.md) — the API is not versioned and paths carry no version segment
+- [ADR-0017](docs/architecture/adr/0017-identity-model.md) — accounts live per school; sessions are the one thing in `public`

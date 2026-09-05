@@ -1,0 +1,17 @@
+<input
+  class="input"
+  [class.input--invalid]="invalid()"
+  [attr.id]="id()"
+  [attr.type]="type()"
+  [attr.placeholder]="placeholder() || null"
+  [attr.autocomplete]="autocomplete()"
+  [attr.inputmode]="inputmode()"
+  [attr.autocapitalize]="autocapitalize()"
+  [attr.aria-describedby]="describedBy()"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [readOnly]="readOnly()"
+  [disabled]="isDisabled()"
+  [value]="value()"
+  (input)="handleInput($event)"
+  (blur)="handleBlur()"
+/>

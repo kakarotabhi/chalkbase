@@ -1,0 +1,45 @@
+/// The shared skin of a text-entry control, so the text input and the password input cannot drift
+/// apart. Structure only — each component adds its own affordances on top.
+///
+/// The outline uses --cb-border-strong, not --cb-border: an input's edge is what tells you where
+/// to type, so it has to clear 3:1 like any other meaningful boundary.
+@mixin control-surface {
+  width: 100%;
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-3);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font-size: var(--cb-font-size-base);
+
+  &::placeholder {
+    color: var(--cb-text-muted);
+  }
+
+  &:focus {
+    border-color: var(--cb-primary);
+    box-shadow: var(--cb-focus-ring);
+    outline: none;
+  }
+
+  // Read-only is the "request in flight" state: still readable, obviously not editable, and it
+  // keeps its box so nothing on the form moves.
+  &:read-only {
+    background: var(--cb-surface);
+    color: var(--cb-text-muted);
+  }
+
+  &:disabled {
+    background: var(--cb-surface);
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+/// The invalid state. Colour is paired with a message under the field and aria-invalid on the
+/// control — the ring on its own says nothing.
+@mixin control-invalid {
+  border-color: var(--cb-danger);
+  box-shadow: var(--cb-danger-ring);
+}
