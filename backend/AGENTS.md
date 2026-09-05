@@ -39,8 +39,12 @@ in.chalkbase
   `schoolId` argument is a review blocker. Global reference data (boards, states, subjects) has no
   `school_id`.
 - **Controllers** live in `api/`, are thin, and return records. Path prefix `/api/v1/`.
-- **Errors**: throw; let `platform.error.GlobalExceptionHandler` map to RFC 9457 problem details.
-  Do not build error responses inside a controller.
+- **Responses**: controllers return `ApiResponse<T>` via `ApiResponse.success(...)` (ADR-0007).
+- **Errors**: throw `ChalkbaseException` with a module `ErrorCode`; `platform.error.GlobalExceptionHandler`
+  maps it. Never build an error response inside a controller, and never throw
+  `IllegalArgumentException` to mean "bad request" — it is what the JDK throws for real bugs.
+- **New constraint, new message**: a migration adding a unique or check constraint also adds a
+  `ConstraintMapping` in that module, or the violation surfaces as a generic conflict.
 - **Transactions**: `@Transactional(readOnly = true)` on the service class, `@Transactional` on the
   writes. Never on a controller or a repository.
 - **Cross-module writes** go through the other module's `api/` or a domain event — never its

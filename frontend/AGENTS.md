@@ -34,6 +34,8 @@ src/environments/ apiBaseUrl per build configuration.
   / `from-desktop` mixins to layer desktop on top.
 - **API models come from the backend contract.** Until the generated client lands, `core/api/models.ts`
   mirrors the backend records exactly — do not invent fields.
+- **The response envelope is unwrapped in `core/api`,** not in components. Components receive plain
+  payloads; error handling reads `error.code`, never `error.message` (ADR-0007).
 
 ## Tests
 

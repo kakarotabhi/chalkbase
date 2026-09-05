@@ -1,5 +1,6 @@
 package in.chalkbase.school.api;
 
+import in.chalkbase.platform.api.ApiResponse;
 import in.chalkbase.school.application.SchoolService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -24,19 +25,19 @@ public class SchoolController {
     }
 
     @GetMapping
-    public List<SchoolResponse> list() {
-        return schoolService.findAll();
+    public ApiResponse<List<SchoolResponse>> list() {
+        return ApiResponse.success(schoolService.findAll());
     }
 
     @GetMapping("/{id}")
-    public SchoolResponse get(@PathVariable UUID id) {
-        return schoolService.findById(id);
+    public ApiResponse<SchoolResponse> get(@PathVariable UUID id) {
+        return ApiResponse.success(schoolService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<SchoolResponse> create(@Valid @RequestBody CreateSchoolRequest request) {
+    public ResponseEntity<ApiResponse<SchoolResponse>> create(@Valid @RequestBody CreateSchoolRequest request) {
         SchoolResponse created = schoolService.create(request);
         return ResponseEntity.created(URI.create("/api/v1/schools/" + created.id()))
-                .body(created);
+                .body(ApiResponse.success(created));
     }
 }

@@ -1,8 +1,10 @@
 name: Backend
 
 on:
+  # Only main. Branch pushes are already covered by the pull_request trigger below, and
+  # listening to both ran every suite twice on every PR.
   push:
-    branches: ['**']
+    branches: [main]
     paths:
       - 'backend/**'
       - 'ops/docker/Dockerfile.backend'

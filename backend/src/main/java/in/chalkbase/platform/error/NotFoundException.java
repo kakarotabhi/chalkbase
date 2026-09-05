@@ -1,9 +1,9 @@
 package in.chalkbase.platform.error;
 
-/** Thrown when a requested resource does not exist or is not visible to the current tenant. */
-public class NotFoundException extends RuntimeException {
+/** Thrown when a resource does not exist, or is not visible to the current tenant. */
+public class NotFoundException extends ChalkbaseException {
 
     public NotFoundException(String resource, Object id) {
-        super("%s %s not found".formatted(resource, id));
+        super(PlatformErrorCode.NOT_FOUND, "%s %s was not found".formatted(resource, id));
     }
 }

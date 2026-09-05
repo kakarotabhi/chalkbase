@@ -1,32 +1,86 @@
 # API conventions
 
-The generated reference lives at `/v3/api-docs` (JSON) and `/swagger-ui.html` while the backend is
-running. The committed spec is `contracts/openapi.json`.
+The generated reference is at `/v3/api-docs` and `/swagger-ui.html` while the backend runs. The
+committed spec is `contracts/openapi.json`.
+
+## Every response uses the same envelope
+
+See [ADR-0007](../architecture/adr/0007-api-response-envelope.md).
+
+```jsonc
+// 201 Created
+{
+  "success": true,
+  "data": { "id": "…", "code": "DPS-RKP", "name": "Delhi Public School, R. K. Puram" },
+  "timestamp": "2026-09-05T10:22:31.004Z",
+  "traceId": "7f1c…"
+}
+
+// 400 Bad Request
+{
+  "success": false,
+  "error": {
+    "code": "VAL_001",
+    "message": "Some of the information provided is not valid",
+    "details": { "code": "must not be blank", "name": "must not be blank" }
+  },
+  "timestamp": "2026-09-05T10:22:31.004Z",
+  "traceId": "7f1c…"
+}
+```
+
+Exactly one of `data` and `error` is present; the other is omitted.
 
 ## Rules
 
-- **Versioned prefix**: every endpoint is under `/api/v1/`. A breaking change means `/v2`, never a
-  silent change to `/v1`.
-- **Errors are RFC 9457 problem details**, produced centrally by
-  `platform.error.GlobalExceptionHandler`:
+- **The HTTP status is truthful.** A failure is never `200 OK` with `success: false`. The envelope
+  adds a code and a trace id on top of the status; it does not replace it.
+- **Branch on `error.code`, never on `error.message`.** Codes are part of the contract; messages are
+  wording and will change.
+- **`traceId` is on every response** and in the `X-Request-Id` header. A client may send its own
+  `X-Request-Id` and it will be echoed. Show it in user-facing error screens — it is what a school
+  quotes when they report a problem.
+- **Versioned prefix.** Everything under `/api/v1/`. A breaking change means `/v2`.
+- **Never accept a tenant id from the client.** No `?schoolId=`; the server resolves the tenant from
+  the session ([ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md)).
+- **UUID identifiers, ISO-8601 UTC timestamps, decimal strings for money** — never a float.
 
-  ```json
-  {
-    "type": "https://chalkbase.in/problems/validation",
-    "title": "Validation failed",
-    "status": 400,
-    "errors": ["code: must not be blank"]
-  }
-  ```
+## Error codes
 
-- **Never accept a tenant id from the client.** No `?schoolId=`. The server resolves the tenant from
-  the authenticated session — see [ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md).
-- **Identifiers are UUIDs** in path segments; time is ISO-8601 UTC (`Instant`); money is a decimal
-  string with an explicit currency, never a float.
-- **Lists paginate** once a collection can exceed a few hundred rows: `?page=&size=&sort=`.
+Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
+
+| Code | HTTP | Meaning |
+|---|---|---|
+| `VAL_001` | 400 | Validation failed. `details` carries field to reason. |
+| `VAL_002` | 400 | Body missing or unparseable. |
+| `VAL_003` | 413 | Upload too large. |
+| `VAL_004` | 405 | Wrong HTTP method for this address. |
+| `VAL_005` | 415 | Unsupported content type. |
+| `AUTH_001` | 401 | Invalid username or password. |
+| `AUTH_002` | 401 | Authentication required. |
+| `PERM_001` | 403 | Authenticated, but not allowed. |
+| `NF_001` | 404 | Resource not found. |
+| `NF_002` | 404 | No such endpoint. |
+| `CONF_001` | 409 | Conflicts with existing data. |
+| `CONF_002` | 409 | Concurrent update; reload and retry. |
+| `GEN_001` | 500 | Unexpected server failure. Quote the trace id. |
+| `SCHOOL_001` | 409 | A school with this code already exists. |
+
+`AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
+them turns the login form into a way to discover which parents are registered.
+
+## Adding an endpoint
+
+1. Return `ApiResponse<T>` (`ApiResponse.success(payload)`). Do not wrap automatically — explicit
+   wrapping keeps the generated OpenAPI schema honest.
+2. Throw `ChalkbaseException` with a module error code for business failures. Do **not** throw
+   `IllegalArgumentException` to signal a bad request: the JDK throws it for real bugs, and mapping
+   it to 400 would hide them.
+3. If the change adds a unique or check constraint, add a `ConstraintMapping` in the same commit, or
+   violations surface as a generic conflict instead of a useful sentence.
 
 ## Frontend client
 
-Today `frontend/src/app/core/api/models.ts` mirrors the backend records by hand. Once the OpenAPI
-spec is published to `contracts/`, that file is replaced by a generated client and editing it by hand
-becomes a review blocker.
+`frontend/src/app/core/api` unwraps the envelope, so components receive plain payloads. Until the
+generated client lands, `core/api/models.ts` mirrors the backend records by hand and inventing a
+field there is a review blocker.
