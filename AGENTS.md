@@ -14,6 +14,7 @@ Keep this file short. Detail belongs in `docs/`, and is read on demand.
 | `contracts/` | OpenAPI spec shared by both sides. |
 | `docs/status.md` | What is done, what is next, what is blocked. **Read this first.** |
 | `docs/requirements/` | What we are building. The source of truth for scope. |
+| `docs/requirements/07-phase-0-decisions.md` | The 13 Phase 0 answers: board, state, workflows, providers, hosting. |
 | `docs/architecture/adr/` | Decisions and their reasons. Read before contradicting one. |
 | `docs/architecture/module-map.md` | Which module owns which tables and endpoints. Start here. |
 | `docs/manual/` | End-user help, per role. |
@@ -60,3 +61,13 @@ cd frontend && npm test -- --watch=false
 - Commits: `type(module): summary` — e.g. `feat(fee): add concession heads`.
 - Formatting is automatic (Spotless for Java, Prettier for the frontend) and enforced in CI.
   Do not reformat files you did not otherwise change.
+- Database: `snake_case`, **singular** table names (`student`, `fee_charge`). FKs `<table>_id`,
+  booleans `is_`/`has_`, timestamps `created_at`/`updated_at` as `timestamptz`, indexes
+  `ix_<table>_<cols>`, constraints `uq_`/`ck_`/`fk_`, migrations `V<n>__<snake_case>.sql`.
+- **Primary keys are UUIDv7**, because schema-per-tenant (ADR-0011) means ids from different schools
+  meet during any cross-school rollup or export, where sequences would collide.
+- **Money is `numeric(12,2)`** in the database and `BigDecimal` in Java. Never a float, anywhere.
+- Lists use **offset pagination** — `?page=0&size=25&sort=name,asc`, returning `PageResponse<T>`
+  inside the ADR-0007 envelope.
+- **Fees are append-only** (ADR-0012). Never update a charge or a ledger entry; write a reversal.
+- **Every DTO field carries a `@Classification`** (ADR-0014). An unclassified field fails the build.

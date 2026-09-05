@@ -3,7 +3,8 @@
 Living status. **Updated in the same pull request as the work it describes** — a status file that is
 updated "later" is worse than none, because people trust it.
 
-Last updated: 2026-09-05 · Roadmap phase: **0 → 1** ([Phase definitions](requirements/06-roadmap-and-mvp.md))
+Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
+([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md))
 
 ## At a glance
 
@@ -16,7 +17,8 @@ Last updated: 2026-09-05 · Roadmap phase: **0 → 1** ([Phase definitions](requ
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0010) | ✅ Done |
+| Architecture decisions (ADR-0001…0015) | ✅ Done |
+| **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | **Identity: login, users, sessions** | ⬜ Not started — **the next build** |
 | Permissions, roles, scoped grants | ⬜ Not started |
 | Schema-per-tenant: registry, migration orchestrator | ⬜ Not started — **decided, not built** |
@@ -41,6 +43,8 @@ Last updated: 2026-09-05 · Roadmap phase: **0 → 1** ([Phase definitions](requ
 | Responsive layout, verified at 360 / 700 / 1280 | PR #6 |
 | Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark) | `frontend/src/styles/` |
 | Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
+| Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy | [Phase 0 decisions](requirements/07-phase-0-decisions.md) |
+| Fee ledger, provider ports, data classification, deployment baseline | ADR-0012…0015 |
 
 ## Next, in order
 
@@ -66,22 +70,25 @@ Each line says what it unblocks, because the order is not arbitrary.
 
 Also queued, not blocking:
 
-- `PageResponse<T>` — settle before the first list endpoint that needs paging (noted in ADR-0007).
-- Deploy to Coolify once authentication exists.
+- `PageResponse<T>` — **settled by Phase 0**: offset pagination, `?page&size&sort`, inside the
+  ADR-0007 envelope. Build it with the first list endpoint.
+- Deploy to Coolify on the Hostinger Mumbai box once authentication exists (ADR-0015).
 - Audit log (FR-008), which is a Phase 1 exit criterion.
+- `@Classification` annotation and the build-failing test for unclassified DTO fields (ADR-0014) —
+  cheapest to add before there are many DTOs, not after.
+- Synthetic school seeder for the `dev` profile: ~600 students, 14 classes, one term of attendance,
+  fixed seed. Needed to make list screens and performance real.
 
 ## Waiting on a decision
 
-These are not blocked on engineering.
+Phase 0 cleared this table. What is left is externally blocked rather than undecided.
 
 | Question | Why it matters | Urgency |
 |---|---|---|
-| **TRAI DLT registration** | Weeks of paperwork. Needed for fee reminders and any OTP. | **Start now** regardless of when OTP ships |
-| Production database region | Supabase project is in `ap-northeast-2` (Seoul), ~150-200 ms from India. Moving means a new project. | Before there is data worth migrating |
-| First board and state | Shapes compliance, report cards, fee structures | Before Phase 2 |
-| SMS / WhatsApp / payment / email providers | Integration work and cost | Before Phase 2 |
-| Document storage: VPS volume, S3-compatible, or managed | Affects student documents and certificates | Before Phase 1 finishes |
-| Parent access: PWA only, or native apps too | Changes the frontend plan | Before Phase 2 |
+| **TRAI DLT registration** | Weeks of paperwork, and nothing can start it retroactively. Blocks SMS fee reminders, absence alerts and any phone-OTP login. Not blocking v1, since v1 ships email and web push only ([ADR-0013](architecture/adr/0013-external-provider-ports.md)). | **Start now** |
+| SMS / WhatsApp provider | Chosen once DLT registration completes — that process shows which providers are painless. | After DLT |
+| Payment gateway | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter. | Before online fees |
+| Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating. | Before first real data |
 
 ## Known gaps and debt
 

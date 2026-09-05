@@ -43,7 +43,10 @@ in.chalkbase
   `tenant`) breaks onboarding. Spring's auto-migration is off — the orchestrator fans out at startup.
 - **Migrations are expand/contract only.** A fan-out can fail partway and leave schools on different
   versions, so a release must never contain a destructive change the same release's code depends on.
-- **Controllers** live in `api/`, are thin, and return records. Path prefix `/api/v1/`.
+- **Controllers** live in `api/`, are thin, and return records. Path prefix `/api/v1/` — frozen and
+  not a version number; the API is not versioned (ADR-0016). Never create a `v2` package.
+- **Add fields, never remove or rename them.** A breaking change is allowed, but it changes the
+  frontend in the same pull request.
 - **Navigation is data, not markup** (ADR-0008). A module contributes navigation nodes as
   stable ids plus label keys. Never send a URL, a component name, or anything visual.
 - **Responses**: controllers return `ApiResponse<T>` via `ApiResponse.success(...)` (ADR-0007).

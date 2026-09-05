@@ -46,6 +46,11 @@
 | Hand-built UI components | [ADR-0009](adr/0009-hand-built-component-library.md) |
 | Responsive and adaptive layout | [ADR-0010](adr/0010-responsive-and-adaptive-layout.md) |
 | Schema per tenant | [ADR-0011](adr/0011-schema-per-tenant.md) |
+| No API versioning | [ADR-0016](adr/0016-no-api-versioning.md) |
+| The fee ledger is append-only | [ADR-0012](adr/0012-fee-ledger-model.md) |
+| Payment and messaging provider ports | [ADR-0013](adr/0013-external-provider-ports.md) |
+| Data classification and DPDP handling | [ADR-0014](adr/0014-data-classification.md) |
+| Deployment baseline | [ADR-0015](adr/0015-deployment-baseline.md) |
 
 ## Module inventory
 
