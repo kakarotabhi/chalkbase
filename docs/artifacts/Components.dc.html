@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    :root{--bg:#ffffff;--surface:#f6f8f9;--raised:#ffffff;--border:#e2e6ea;--border-strong:#7d8794;--text:#16191d;--muted:#5b6472;--primary:#1f5f4f;--primary-hover:#17493c;--on-primary:#ffffff;--primary-surface:#e6f1ee;--accent:#8a4b1f;--danger:#a52218;--danger-surface:#fdecea;--warning:#8a5000;--warning-surface:#fdf2e0;--success:#1a6b3c;--success-surface:#e6f4ec;--info:#1f5470;--info-surface:#e6f0f5;--r-sm:4px;--r-md:8px;--r-lg:12px;--sh1:0 1px 2px rgba(16,24,40,.06);--sh2:0 4px 12px rgba(16,24,40,.1)}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    a{color:var(--primary);text-decoration:none}a:hover{color:var(--primary-hover);text-decoration:underline}
+    h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:var(--r-sm);border:1px solid transparent;font:inherit;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap}
+    .btn-primary{background:var(--primary);color:var(--on-primary)}
+    .btn-secondary{background:var(--bg);color:var(--text);border-color:var(--border-strong)}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-ghost{background:transparent;color:var(--primary)}
+    .btn-block{width:100%}
+    .btn-sm{min-height:44px;padding:0 12px;font-size:13px}
+    .is-disabled{opacity:.45;cursor:not-allowed}
+    .label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .req{color:var(--danger);margin-left:2px}
+    .input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font:inherit;font-size:15px}
+    .input::placeholder{color:var(--muted)}
+    .input-err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(165,34,24,.12)}
+    .input-focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,95,79,.35);outline:none}
+    .hint{font-size:13px;color:var(--muted);margin-top:6px}
+    .err-text{display:flex;gap:6px;align-items:flex-start;font-size:13px;color:var(--danger);margin-top:6px;font-weight:500}
+    .card{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--sh1)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4}
+    .b-success{background:var(--success-surface);color:var(--success)}
+    .b-danger{background:var(--danger-surface);color:var(--danger)}
+    .b-warning{background:var(--warning-surface);color:var(--warning)}
+    .b-info{background:var(--info-surface);color:var(--info)}
+    .b-neutral{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+    .muted{color:var(--muted)}
+    .sm{font-size:13px}
+    .num{font-variant-numeric:tabular-nums}
+    .sk{background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);border-radius:var(--r-sm)}
+    .banner{display:flex;gap:10px;padding:12px;border-radius:var(--r-sm);font-size:14px;align-items:flex-start}
+    .stateLabel{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;margin-bottom:10px}
+  </style>
+</helmet>
+<div style="width:1240px;min-height:2150px;background:var(--bg);padding:34px 36px">
+  <h2 style="font-size:21px;margin-bottom:4px">Components</h2>
+  <p class="sm muted" style="margin:0 0 30px;max-width:80ch;line-height:1.6">Every value here is read from <code style="font-family:ui-monospace,monospace;font-size:13px;background:var(--surface);padding:1px 5px;border-radius:3px">frontend/src/styles/_tokens.scss</code>. Controls are 44px tall — the tap target ADR-0010 sets, not the 24px WCAG floor.</p>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Button</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">Four variants. Loading keeps the button's width so nothing reflows, and disables it so a double submit is impossible. Disabled stays visible rather than hidden, so the reason can be explained next to it.</p>
+      <div style="display:grid;grid-template-columns:96px repeat(3, minmax(0,150px));gap:14px;margin-bottom:10px"><span></span><div class="stateLabel" style="margin-bottom:8px">Default</div><div class="stateLabel" style="margin-bottom:8px">Loading</div><div class="stateLabel" style="margin-bottom:8px">Disabled</div></div><div style="display:grid;grid-template-columns:96px repeat(3, minmax(0,150px));gap:14px;align-items:center;margin-bottom:12px">
+      <span class="sm muted" style="font-weight:600">Primary</span>
+      <button class="btn btn-primary">Save changes</button>
+      <button class="btn btn-primary is-disabled" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.35)" stroke-width="2.5"></circle><path d="M21 12a9 9 0 0 0-9-9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"></path></svg>Saving…</button>
+      <button class="btn btn-primary is-disabled" disabled>Save changes</button>
+    </div><div style="display:grid;grid-template-columns:96px repeat(3, minmax(0,150px));gap:14px;align-items:center;margin-bottom:12px">
+      <span class="sm muted" style="font-weight:600">Secondary</span>
+      <button class="btn btn-secondary">Save changes</button>
+      <button class="btn btn-secondary is-disabled" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="rgba(31,95,79,.25)" stroke-width="2.5"></circle><path d="M21 12a9 9 0 0 0-9-9" stroke="#1f5f4f" stroke-width="2.5" stroke-linecap="round"></path></svg>Saving…</button>
+      <button class="btn btn-secondary is-disabled" disabled>Save changes</button>
+    </div><div style="display:grid;grid-template-columns:96px repeat(3, minmax(0,150px));gap:14px;align-items:center;margin-bottom:12px">
+      <span class="sm muted" style="font-weight:600">Danger</span>
+      <button class="btn btn-danger">Save changes</button>
+      <button class="btn btn-danger is-disabled" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.35)" stroke-width="2.5"></circle><path d="M21 12a9 9 0 0 0-9-9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"></path></svg>Saving…</button>
+      <button class="btn btn-danger is-disabled" disabled>Save changes</button>
+    </div><div style="display:grid;grid-template-columns:96px repeat(3, minmax(0,150px));gap:14px;align-items:center;margin-bottom:12px">
+      <span class="sm muted" style="font-weight:600">Ghost</span>
+      <button class="btn btn-ghost">Save changes</button>
+      <button class="btn btn-ghost is-disabled" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="rgba(31,95,79,.25)" stroke-width="2.5"></circle><path d="M21 12a9 9 0 0 0-9-9" stroke="#1f5f4f" stroke-width="2.5" stroke-linecap="round"></path></svg>Saving…</button>
+      <button class="btn btn-ghost is-disabled" disabled>Save changes</button>
+    </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Form field</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">Label above the control, required marker on the label, message under the field it belongs to. Error replaces the hint rather than stacking with it.</p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Default</div>
+      <label class="label">School code<span class="req">*</span></label>
+      <div class="input" style="display:flex;align-items:center;gap:8px">GPS-S12</div>
+      
+      <p class="hint">Shown on receipts and certificates.</p>
+    </div>
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Focused</div>
+      <label class="label">School code<span class="req">*</span></label>
+      <div class="input input-focus" style="display:flex;align-items:center;gap:8px">GPS-S12</div>
+      
+      <p class="hint">Shown on receipts and certificates.</p>
+    </div>
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Error</div>
+      <label class="label">School code<span class="req">*</span></label>
+      <div class="input input-err" style="display:flex;align-items:center;gap:8px">GPS-S12</div>
+      <p class="err-text"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg><span>A school with this code already exists</span></p>
+      
+    </div>
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Disabled</div>
+      <label class="label">School code<span class="req">*</span></label>
+      <div class="input" style="background:var(--surface);color:var(--muted);display:flex;align-items:center;gap:8px">GPS-S12</div>
+      
+      <p class="hint">Set by your administrator.</p>
+    </div>
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Select</div>
+      <label class="label">Board<span class="req">*</span></label>
+      <div class="input" style="display:flex;align-items:center;gap:8px">CBSE<span style="margin-left:auto;color:var(--muted);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6"></path></svg></span></div>
+      
+      
+    </div>
+      <div style="width:240px">
+      <div class="stateLabel" style="margin-bottom:8px">Password</div>
+      <label class="label">Password<span class="req">*</span></label>
+      <div class="input" style="display:flex;align-items:center;gap:8px">••••••••••<span style="margin-left:auto;color:var(--muted);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg></span></div>
+      
+      
+    </div>
+    </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Checkbox</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">44px row so the whole label is the target, not just the 20px box.</p>
+      <div style="display:flex;gap:32px;flex-wrap:wrap">
+      <div><div class="stateLabel" style="margin-bottom:8px">Unchecked</div><label style="display:flex;align-items:center;gap:10px;min-height:44px;"><span style="width:20px;height:20px;border-radius:4px;background:var(--bg);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;color:#fff;flex:none"></span><span class="sm">Keep me signed in</span></label></div>
+      <div><div class="stateLabel" style="margin-bottom:8px">Checked</div><label style="display:flex;align-items:center;gap:10px;min-height:44px;"><span style="width:20px;height:20px;border-radius:4px;background:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6.5 9.4 17.5 4 12.3"></path></svg></span><span class="sm">Keep me signed in</span></label></div>
+      <div><div class="stateLabel" style="margin-bottom:8px">Indeterminate</div><label style="display:flex;align-items:center;gap:10px;min-height:44px;"><span style="width:20px;height:20px;border-radius:4px;background:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;flex:none"><span style="width:9px;height:2px;background:#fff;border-radius:1px"></span></span><span class="sm">6 of 20 selected</span></label></div>
+      <div><div class="stateLabel" style="margin-bottom:8px">Disabled</div><label style="display:flex;align-items:center;gap:10px;min-height:44px;opacity:.6;"><span style="opacity:.45;width:20px;height:20px;border-radius:4px;background:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6.5 9.4 17.5 4 12.3"></path></svg></span><span class="sm">Not available</span></label></div>
+    </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Badge</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">Status is never colour alone — each carries a word, so it survives colour blindness and a black-and-white photocopy.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <span class="badge b-success">Paid</span><span class="badge b-warning">Due</span>
+      <span class="badge b-danger">Overdue</span><span class="badge b-info">Draft</span>
+      <span class="badge b-neutral">2026–27</span>
+    </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Empty state</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">A shape reused for no-data, no-results and error. Always one clear action.</p>
+      <div class="card" style="max-width:520px;padding:38px 28px;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <span style="width:52px;height:52px;border-radius:var(--r-lg);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 13.5h4l1.5 3h6l1.5-3h4"></path><path d="M5.6 5.5h12.8l2.1 8v5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-5z"></path></svg></span>
+      <h3 style="font-size:16px;margin-bottom:6px">No circulars yet</h3>
+      <p class="sm muted" style="margin:0 0 18px;max-width:34ch;line-height:1.55">Circulars you send to parents will appear here.</p>
+      <button class="btn btn-primary">Write a circular</button>
+    </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Table and card list</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">The same rows in both presentations. Which one a screen uses is decided per screen by the task, not by dropping overflow-x on a table (ADR-0010).</p>
+      <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+        <div style="width:560px">
+          <div class="stateLabel" style="margin-bottom:8px">Expanded — table row</div>
+          <div class="card" style="overflow:hidden">
+            <table style="width:100%;border-collapse:collapse">
+              <tr style="background:var(--surface)"><th style="text-align:left;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted)">Student</th><th style="text-align:left;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted)">Class</th><th style="text-align:left;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted)">Fees</th><th style="text-align:right;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted)">Attendance</th></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:11px 14px"><span style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:999px;background:var(--primary-surface);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">AS</span><span style="font-weight:500">Aarav Sharma</span></span></td><td class="sm" style="padding:11px 14px">IX-A</td><td style="padding:11px 14px"><span class="badge b-success">Paid</span></td><td class="sm num" style="padding:11px 14px;text-align:right">96%</td></tr>
+              <tr style="border-top:1px solid var(--border)"><td style="padding:11px 14px"><span style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:999px;background:var(--primary-surface);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">KS</span><span style="font-weight:500">Kabir Singh</span></span></td><td class="sm" style="padding:11px 14px">IX-B</td><td style="padding:11px 14px"><span class="badge b-danger">Overdue</span></td><td class="sm num" style="padding:11px 14px;text-align:right">78%</td></tr>
+            </table>
+          </div>
+        </div>
+        <div style="width:340px">
+          <div class="stateLabel" style="margin-bottom:8px">Compact — the same rows as cards</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div class="card" style="padding:13px 14px;display:flex;gap:11px;align-items:center"><span style="width:36px;height:36px;border-radius:999px;background:var(--primary-surface);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none">AS</span><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">Aarav Sharma</span><span class="badge b-success">Paid</span></div><div class="sm muted num" style="margin-top:2px">2026/0412 · IX-A · 96%</div></div></div>
+            <div class="card" style="padding:13px 14px;display:flex;gap:11px;align-items:center"><span style="width:36px;height:36px;border-radius:999px;background:var(--primary-surface);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none">KS</span><div style="min-width:0;flex:1"><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600">Kabir Singh</span><span class="badge b-danger">Overdue</span></div><div class="sm muted num" style="margin-top:2px">2026/0414 · IX-B · 78%</div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <section style="margin-bottom:34px">
+      <h3 style="font-size:15px;margin-bottom:3px">Colour</h3>
+      <p class="sm muted" style="margin:0 0 14px;max-width:70ch;line-height:1.55">Contrast-checked in both modes by frontend/src/styles/contrast-audit.mjs — 44 pairs, zero failures.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--primary);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-primary</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--primary-surface);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#1f5f4f;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-primary-surface</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--success);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-success</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--warning);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-warning</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--danger);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-danger</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--info);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-info</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--accent);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-accent</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#16191d;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-surface</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--border-strong);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-border-strong</div></div><div style="flex:1;min-width:104px"><div style="height:54px;border-radius:var(--r-sm);background:var(--text);border:1px solid var(--border);display:flex;align-items:flex-end;padding:6px 8px;color:#fff;font-size:11px;font-weight:600"></div><div class="sm muted" style="margin-top:5px">--cb-text</div></div></div>
+    </section>
+</div>
+</x-dc>
+</body>
+</html>

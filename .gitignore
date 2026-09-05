@@ -37,3 +37,8 @@ yarn-error.log*
 
 # --- Generated docs/diagrams from Spring Modulith ---
 backend/target/spring-modulith-docs/
+
+# Built design canvases: ~2.7MB single-file bundles, rebuilt from the .dc.html sources.
+# The negation matters — without it this also swallows the artboard sources.
+docs/artifacts/*.html
+!docs/artifacts/*.dc.html

@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    :root{--bg:#ffffff;--surface:#f6f8f9;--raised:#ffffff;--border:#e2e6ea;--border-strong:#7d8794;--text:#16191d;--muted:#5b6472;--primary:#1f5f4f;--primary-hover:#17493c;--on-primary:#ffffff;--primary-surface:#e6f1ee;--accent:#8a4b1f;--danger:#a52218;--danger-surface:#fdecea;--warning:#8a5000;--warning-surface:#fdf2e0;--success:#1a6b3c;--success-surface:#e6f4ec;--info:#1f5470;--info-surface:#e6f0f5;--r-sm:4px;--r-md:8px;--r-lg:12px;--sh1:0 1px 2px rgba(16,24,40,.06);--sh2:0 4px 12px rgba(16,24,40,.1)}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    a{color:var(--primary);text-decoration:none}a:hover{color:var(--primary-hover);text-decoration:underline}
+    h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:var(--r-sm);border:1px solid transparent;font:inherit;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap}
+    .btn-primary{background:var(--primary);color:var(--on-primary)}
+    .btn-secondary{background:var(--bg);color:var(--text);border-color:var(--border-strong)}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-ghost{background:transparent;color:var(--primary)}
+    .btn-block{width:100%}
+    .btn-sm{min-height:44px;padding:0 12px;font-size:13px}
+    .is-disabled{opacity:.45;cursor:not-allowed}
+    .label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .req{color:var(--danger);margin-left:2px}
+    .input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font:inherit;font-size:15px}
+    .input::placeholder{color:var(--muted)}
+    .input-err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(165,34,24,.12)}
+    .input-focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,95,79,.35);outline:none}
+    .hint{font-size:13px;color:var(--muted);margin-top:6px}
+    .err-text{display:flex;gap:6px;align-items:flex-start;font-size:13px;color:var(--danger);margin-top:6px;font-weight:500}
+    .card{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--sh1)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4}
+    .b-success{background:var(--success-surface);color:var(--success)}
+    .b-danger{background:var(--danger-surface);color:var(--danger)}
+    .b-warning{background:var(--warning-surface);color:var(--warning)}
+    .b-info{background:var(--info-surface);color:var(--info)}
+    .b-neutral{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+    .muted{color:var(--muted)}
+    .sm{font-size:13px}
+    .num{font-variant-numeric:tabular-nums}
+    .sk{background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);border-radius:var(--r-sm)}
+    .banner{display:flex;gap:10px;padding:12px;border-radius:var(--r-sm);font-size:14px;align-items:flex-start}
+    .stateLabel{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;margin-bottom:10px}
+  </style>
+</helmet>
+<div style="width:1740px;min-height:620px;background:var(--surface);padding:28px 24px;display:flex;gap:28px;align-items:flex-start">
+  <div style="width:400px">
+    <div class="stateLabel">Empty · no data</div>
+    <div class="card" style="min-height:430px;display:flex;flex-direction:column;overflow:hidden"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px">
+      <span style="width:52px;height:52px;border-radius:var(--r-lg);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"></path><path d="M16 6.2a3 3 0 0 1 0 5.6"></path><path d="M17.5 14.8c2 .6 3.2 2.4 3.2 4.7"></path></svg></span>
+      <h3 style="font-size:16px;margin-bottom:6px">No students yet</h3>
+      <p class="sm muted" style="margin:0 0 20px;max-width:30ch;line-height:1.55">Import your list from a spreadsheet, or add students one at a time.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn btn-primary">Import from file</button><button class="btn btn-secondary">Add student</button></div>
+    </div></div>
+    <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">First run. The action is import, because a school arrives with a spreadsheet, not with one student.</p>
+  </div>
+  <div style="width:400px">
+    <div class="stateLabel">Empty · no results</div>
+    <div class="card" style="min-height:430px;display:flex;flex-direction:column;overflow:hidden"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px">
+      <span style="width:52px;height:52px;border-radius:var(--r-lg);background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg></span>
+      <h3 style="font-size:16px;margin-bottom:6px">No students match these filters</h3>
+      <p class="sm muted" style="margin:0 0 20px;max-width:30ch;line-height:1.55">No one in Class IX has an overdue fee this month.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn btn-secondary">Clear filters</button></div>
+    </div></div>
+    <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Different from no data, and needs a different action. Conflating the two is the usual bug.</p>
+  </div>
+  <div style="width:400px">
+    <div class="stateLabel">Loading</div>
+    <div class="card" style="min-height:430px;display:flex;flex-direction:column;overflow:hidden"><div style="padding:12px 16px;background:var(--surface);display:flex;gap:12px;align-items:center">
+      <div class="sk" style="height:9px;width:90px"></div><div class="sk" style="height:9px;width:64px;margin-left:auto"></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+      <div class="sk" style="width:30px;height:30px;border-radius:999px"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:9px;width:46%"></div><div class="sk" style="height:8px;width:28%"></div></div>
+      <div class="sk" style="height:20px;width:56px;border-radius:999px"></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+      <div class="sk" style="width:30px;height:30px;border-radius:999px"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:9px;width:38%"></div><div class="sk" style="height:8px;width:32%"></div></div>
+      <div class="sk" style="height:20px;width:56px;border-radius:999px"></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+      <div class="sk" style="width:30px;height:30px;border-radius:999px"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:9px;width:52%"></div><div class="sk" style="height:8px;width:24%"></div></div>
+      <div class="sk" style="height:20px;width:56px;border-radius:999px"></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+      <div class="sk" style="width:30px;height:30px;border-radius:999px"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:9px;width:42%"></div><div class="sk" style="height:8px;width:30%"></div></div>
+      <div class="sk" style="height:20px;width:56px;border-radius:999px"></div></div><div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+      <div class="sk" style="width:30px;height:30px;border-radius:999px"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:9px;width:35%"></div><div class="sk" style="height:8px;width:26%"></div></div>
+      <div class="sk" style="height:20px;width:56px;border-radius:999px"></div></div>
+    <div style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--border)"><div class="sk" style="height:9px;width:130px"></div></div></div>
+    <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Skeletons match the row shape so nothing jumps when data lands.</p>
+  </div>
+  <div style="width:400px">
+    <div class="stateLabel">Error</div>
+    <div class="card" style="min-height:430px;display:flex;flex-direction:column;overflow:hidden"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px">
+      <span style="width:52px;height:52px;border-radius:var(--r-lg);background:var(--danger-surface);color:var(--danger);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M8.5 8.6A5 5 0 0 0 7 18.5h9.5a4.5 4.5 0 0 0 2.6-.8"></path><path d="M20.4 15.3A4.5 4.5 0 0 0 17 7.6 6.5 6.5 0 0 0 10 5.2"></path></svg></span>
+      <h3 style="font-size:16px;margin-bottom:6px">Could not load students</h3>
+      <p class="sm muted" style="margin:0 0 8px;max-width:32ch;line-height:1.55">The server did not respond. Your filters are unchanged — try again.</p>
+      <p class="sm num" style="margin:0 0 20px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 9px">Trace 7f1c·4b20·9ae3</p>
+      <div style="display:flex;gap:10px"><button class="btn btn-primary">Try again</button></div>
+    </div></div>
+    <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Says what failed, that filters survived, and carries the trace id the API returns.</p>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

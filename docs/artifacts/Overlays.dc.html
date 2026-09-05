@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    :root{--bg:#ffffff;--surface:#f6f8f9;--raised:#ffffff;--border:#e2e6ea;--border-strong:#7d8794;--text:#16191d;--muted:#5b6472;--primary:#1f5f4f;--primary-hover:#17493c;--on-primary:#ffffff;--primary-surface:#e6f1ee;--accent:#8a4b1f;--danger:#a52218;--danger-surface:#fdecea;--warning:#8a5000;--warning-surface:#fdf2e0;--success:#1a6b3c;--success-surface:#e6f4ec;--info:#1f5470;--info-surface:#e6f0f5;--r-sm:4px;--r-md:8px;--r-lg:12px;--sh1:0 1px 2px rgba(16,24,40,.06);--sh2:0 4px 12px rgba(16,24,40,.1)}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    a{color:var(--primary);text-decoration:none}a:hover{color:var(--primary-hover);text-decoration:underline}
+    h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:var(--r-sm);border:1px solid transparent;font:inherit;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap}
+    .btn-primary{background:var(--primary);color:var(--on-primary)}
+    .btn-secondary{background:var(--bg);color:var(--text);border-color:var(--border-strong)}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-ghost{background:transparent;color:var(--primary)}
+    .btn-block{width:100%}
+    .btn-sm{min-height:44px;padding:0 12px;font-size:13px}
+    .is-disabled{opacity:.45;cursor:not-allowed}
+    .label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .req{color:var(--danger);margin-left:2px}
+    .input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--bg);color:var(--text);font:inherit;font-size:15px}
+    .input::placeholder{color:var(--muted)}
+    .input-err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(165,34,24,.12)}
+    .input-focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,95,79,.35);outline:none}
+    .hint{font-size:13px;color:var(--muted);margin-top:6px}
+    .err-text{display:flex;gap:6px;align-items:flex-start;font-size:13px;color:var(--danger);margin-top:6px;font-weight:500}
+    .card{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--sh1)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4}
+    .b-success{background:var(--success-surface);color:var(--success)}
+    .b-danger{background:var(--danger-surface);color:var(--danger)}
+    .b-warning{background:var(--warning-surface);color:var(--warning)}
+    .b-info{background:var(--info-surface);color:var(--info)}
+    .b-neutral{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+    .muted{color:var(--muted)}
+    .sm{font-size:13px}
+    .num{font-variant-numeric:tabular-nums}
+    .sk{background:linear-gradient(90deg,var(--surface) 25%,var(--border) 37%,var(--surface) 63%);border-radius:var(--r-sm)}
+    .banner{display:flex;gap:10px;padding:12px;border-radius:var(--r-sm);font-size:14px;align-items:flex-start}
+    .stateLabel{font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5b6472;margin-bottom:10px}
+  </style>
+</helmet>
+<div style="width:1500px;min-height:950px;background:var(--surface);padding:30px 26px">
+  <h2 style="font-size:19px;margin-bottom:4px">Dialogs, confirmations and toasts</h2>
+  <p class="sm muted" style="margin:0 0 26px">Every overlay traps focus, closes on Escape, and returns focus to whatever opened it.</p>
+
+  <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap">
+    <div style="width:440px"><div class="stateLabel">Confirmation · destructive</div>
+      <div class="card" style="width:440px;box-shadow:var(--sh2);overflow:hidden">
+      <div style="padding:22px 24px 0"><h3 style="font-size:18px;margin-bottom:8px">Remove Kabir Singh from Class IX-B?</h3>
+      <p class="sm muted" style="margin:0;line-height:1.6">Their attendance and fee history stay on record. The student will not appear in class lists from tomorrow.</p></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:22px 24px"><button class="btn btn-secondary">Cancel</button><button class="btn btn-danger">Remove student</button></div>
+    </div>
+      <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">The title asks the actual question and the button repeats the verb — never "Are you sure?" with OK/Cancel.</p></div>
+
+    <div style="width:440px"><div class="stateLabel">Confirmation · unsaved changes</div>
+      <div class="card" style="width:440px;box-shadow:var(--sh2);overflow:hidden">
+      <div style="padding:22px 24px 0"><h3 style="font-size:18px;margin-bottom:8px">Discard your changes?</h3>
+      <p class="sm muted" style="margin:0;line-height:1.6">You changed the school code and affiliation number. Leaving now loses both.</p></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:22px 24px"><button class="btn btn-secondary">Keep editing</button><button class="btn btn-danger">Discard changes</button></div>
+    </div>
+      <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Triggered by navigating away from a dirty form. Names what would be lost.</p></div>
+
+    <div style="width:440px"><div class="stateLabel">Dialog · working</div>
+      <div class="card" style="width:440px;box-shadow:var(--sh2);overflow:hidden">
+      <div style="padding:22px 24px 0"><h3 style="font-size:18px;margin-bottom:8px">Publish Term 1 report cards?</h3>
+      <p class="sm muted" style="margin:0;line-height:1.6">1,428 report cards become visible to parents immediately. This cannot be undone.</p></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:22px 24px"><button class="btn btn-secondary is-disabled" disabled>Cancel</button><button class="btn btn-primary is-disabled" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.35)" stroke-width="2.5"></circle><path d="M21 12a9 9 0 0 0-9-9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"></path></svg>Publishing…</button></div>
+    </div>
+      <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Both buttons lock so the action cannot be fired twice.</p></div>
+  </div>
+
+  <div style="display:flex;gap:28px;align-items:flex-start;margin-top:34px;flex-wrap:wrap">
+    <div style="width:400px"><div class="stateLabel">Toasts</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
+      <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--success-surface);color:var(--success);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M8 12.3l2.7 2.7L16 9.6"></path></svg></span>
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Fee receipt saved</div><div class="sm muted" style="margin-top:1px;line-height:1.5">Receipt 2026/R-4471 for ₹42,500.</div></div>
+      <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">View</a>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    </div>
+        <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
+      <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--danger-surface);color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg></span>
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Could not save school profile</div><div class="sm muted" style="margin-top:1px;line-height:1.5">A school with this code already exists.</div></div>
+      <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">Retry</a>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    </div>
+        <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
+      <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--warning-surface);color:var(--warning);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 7.5v5"></path><path d="M12 16.2v.1"></path></svg></span>
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Attendance not marked</div><div class="sm muted" style="margin-top:1px;line-height:1.5">Class VI-B has no attendance for today.</div></div>
+      <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">Mark now</a>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    </div>
+        <div class="card" style="width:400px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;box-shadow:var(--sh2)">
+      <span style="width:28px;height:28px;border-radius:var(--r-sm);background:var(--info-surface);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M8 12.3l2.7 2.7L16 9.6"></path></svg></span>
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Import finished</div><div class="sm muted" style="margin-top:1px;line-height:1.5">1,392 students added, 36 rows skipped.</div></div>
+      <a href="#" class="sm" style="font-weight:600;flex:none;padding-top:1px">See report</a>
+      <span style="color:var(--muted);display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px -11px -11px 0;flex:none;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+    </div>
+      </div>
+      <p class="sm muted" style="margin:12px 2px 0;line-height:1.5">Bottom-right on desktop, above the bottom bar on phones. Errors persist until dismissed; the rest auto-dismiss.</p></div>
+
+    <div style="width:360px"><div class="stateLabel">Compact · dialog becomes a sheet</div>
+      <div style="width:360px;height:420px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);position:relative;overflow:hidden">
+        <div style="padding:16px;opacity:.45"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:9px;width:80%;margin-top:12px"></div><div class="sk" style="height:9px;width:70%;margin-top:8px"></div><div class="sk" style="height:64px;margin-top:16px"></div><div class="sk" style="height:64px;margin-top:10px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(16,25,29,.45)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:var(--raised);border-radius:16px 16px 0 0;padding:10px 18px 20px;box-shadow:var(--sh2)">
+          <div style="width:38px;height:4px;border-radius:999px;background:var(--border-strong);opacity:.5;margin:0 auto 14px"></div>
+          <h3 style="font-size:17px;margin-bottom:8px">Remove Kabir Singh?</h3>
+          <p class="sm muted" style="margin:0 0 18px;line-height:1.55">Their attendance and fee history stay on record.</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-danger btn-block">Remove student</button>
+            <button class="btn btn-secondary btn-block">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <p class="sm muted" style="margin:10px 2px 0;line-height:1.5">Destructive action first under the thumb; cancel below it, both full width.</p></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
