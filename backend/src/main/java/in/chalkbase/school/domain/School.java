@@ -11,11 +11,13 @@ import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 
 @Entity
-@Table(name = "school")
+// The registry lives in `public`, not in any school's schema, so it is qualified explicitly
+// rather than resolved through search_path (ADR-0011).
+@Table(name = "school", schema = "public")
 public class School {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
+    @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 32)
@@ -23,6 +25,10 @@ public class School {
 
     @Column(nullable = false, length = 200)
     private String name;
+
+    /** The PostgreSQL schema holding this school's data. Immutable once the schema exists. */
+    @Column(name = "schema_name", nullable = false, unique = true, length = 63)
+    private String schemaName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
@@ -44,9 +50,10 @@ public class School {
         // for JPA
     }
 
-    public School(String code, String name, Board board, String city, String state) {
+    public School(String code, String name, String schemaName, Board board, String city, String state) {
         this.code = code;
         this.name = name;
+        this.schemaName = schemaName;
         this.board = board;
         this.city = city;
         this.state = state;
@@ -62,6 +69,10 @@ public class School {
 
     public String getName() {
         return name;
+    }
+
+    public String getSchemaName() {
+        return schemaName;
     }
 
     public Board getBoard() {

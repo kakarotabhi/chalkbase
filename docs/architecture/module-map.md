@@ -6,7 +6,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
 | `platform` | nothing (shared kernel: tenancy, security, error handling, config) | — | n/a | scaffolded |
-| `school` | `school` | `/api/schools` | no — this **is** the tenant | scaffolded |
+| `school` | `public.school`, `public.school_group` (registry); `academic_session` (per tenant) | `/api/schools` | registry is not; `academic_session` is | scaffolded |
 | `identity` | users, roles, permissions, sessions | `/api/auth`, `/api/users` | yes | planned |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
 | `student` | students, guardians, documents, alumni | `/api/students` | yes | planned |
