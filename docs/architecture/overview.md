@@ -43,6 +43,7 @@
 | The API response envelope | [ADR-0007](adr/0007-api-response-envelope.md) |
 | Where navigation comes from | [ADR-0008](adr/0008-server-driven-navigation.md) |
 | Hand-built UI components | [ADR-0009](adr/0009-hand-built-component-library.md) |
+| Responsive and adaptive layout | [ADR-0010](adr/0010-responsive-and-adaptive-layout.md) |
 
 ## Module inventory
 

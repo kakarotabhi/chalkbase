@@ -1,13 +1,32 @@
+@use '../../../styles/mixins' as *;
+
+/**
+ * Three arrangements of the same markup, switching at the window size classes in _mixins.scss.
+ *
+ * compact  (< 600px)  header on top, content, navigation fixed to the bottom
+ * medium   (>= 600px) header on top, icon rail on the left
+ * expanded (>= 840px) header on top, labelled sidebar on the left
+ *
+ * Compact is the default and the larger layouts are layered on, so a new screen is mobile-correct
+ * before anyone opens a desktop browser. See ADR-0010.
+ */
 .shell {
   display: grid;
-  grid-template-areas: 'header' 'nav' 'content';
-  grid-template-rows: var(--cb-header-height) auto 1fr;
-  min-height: 100vh;
+  grid-template-areas: 'header' 'content';
+  grid-template-rows: var(--cb-header-height) 1fr;
 
-  @media (min-width: 48rem) {
+  // 100vh is wrong on mobile: it is the viewport with browser chrome hidden, so the bottom of the
+  // page sits underneath the address bar. dvh tracks the actual visible area.
+  min-height: 100dvh;
+
+  @include from-medium {
     grid-template-areas: 'header header' 'nav content';
-    grid-template-columns: var(--cb-sidebar-width) 1fr;
+    grid-template-columns: var(--cb-rail-width) 1fr;
     grid-template-rows: var(--cb-header-height) 1fr;
+  }
+
+  @include from-expanded {
+    grid-template-columns: var(--cb-sidebar-width) 1fr;
   }
 }
 
@@ -16,6 +35,7 @@
   display: flex;
   align-items: center;
   padding-inline: var(--cb-space-4);
+  padding-top: var(--cb-safe-top);
   background: var(--cb-surface);
   border-bottom: 1px solid var(--cb-border);
 }
@@ -27,24 +47,55 @@
 }
 
 .shell__nav {
-  grid-area: nav;
   display: flex;
-  gap: var(--cb-space-2);
-  padding: var(--cb-space-3) var(--cb-space-4);
-  border-bottom: 1px solid var(--cb-border);
+  background: var(--cb-surface);
 
-  @media (min-width: 48rem) {
+  @include compact-only {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 10;
+    justify-content: space-around;
+    border-top: 1px solid var(--cb-border);
+    // Keep clear of the home indicator on gesture-navigation devices.
+    padding-bottom: var(--cb-safe-bottom);
+  }
+
+  @include from-medium {
+    grid-area: nav;
     flex-direction: column;
-    border-bottom: none;
+    gap: var(--cb-space-1);
+    padding: var(--cb-space-3) var(--cb-space-2);
     border-right: 1px solid var(--cb-border);
+  }
+
+  @include from-expanded {
+    padding: var(--cb-space-3);
   }
 }
 
-.shell__nav-link {
-  padding: var(--cb-space-2) var(--cb-space-3);
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cb-space-1);
+  min-height: var(--cb-touch-target-min);
+  min-width: var(--cb-touch-target-min);
   border-radius: var(--cb-radius-sm);
   color: var(--cb-text-muted);
   text-decoration: none;
+
+  @include compact-only {
+    flex: 1;
+    flex-direction: column;
+    padding: var(--cb-space-1);
+  }
+
+  @include from-expanded {
+    justify-content: flex-start;
+    gap: var(--cb-space-3);
+    padding: var(--cb-space-2) var(--cb-space-3);
+  }
 
   &.is-active {
     background: var(--cb-bg);
@@ -53,7 +104,37 @@
   }
 }
 
+.nav-item__icon {
+  font-size: var(--cb-font-size-lg);
+  line-height: 1;
+}
+
+.nav-item__label {
+  font-size: var(--cb-font-size-sm);
+
+  // The rail is icons only. The label stays in the DOM for screen readers rather than being
+  // removed, so the link is still announced by name.
+  @include from-medium {
+    @include visually-hidden;
+  }
+
+  @include from-expanded {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    font-size: var(--cb-font-size-base);
+  }
+}
+
 .shell__content {
   grid-area: content;
   padding: var(--cb-space-6) var(--cb-space-4);
+
+  // Nothing may hide behind the fixed bottom navigation.
+  @include compact-only {
+    padding-bottom: calc(var(--cb-bottom-nav-height) + var(--cb-safe-bottom) + var(--cb-space-6));
+  }
 }

@@ -37,8 +37,16 @@ src/environments/ apiBaseUrl per build configuration.
 - **No literal colours, spacings or font sizes in a component style** — only
   `var(--cb-*)` tokens. New token, new entry in `_tokens.scss`, and it must have a dark value.
 - **Control flow uses `@if` / `@for` / `@let`**, never `*ngIf` / `*ngFor`.
-- **Mobile first.** Fee counters and attendance run on low-end Android tablets; use the `from-tablet`
-  / `from-desktop` mixins to layer desktop on top.
+- **Mobile first, and it is not optional** (ADR-0010). Write the compact layout as the default and
+  layer larger ones with `from-medium` (600px) / `from-expanded` (840px). `compact-only` exists but
+  use it sparingly.
+- **`100dvh`, never `100vh`.** Fixed bottom chrome pads by `var(--cb-safe-bottom)`, and content pads
+  so nothing hides behind it.
+- **Tap targets are at least `var(--cb-touch-target-min)`** (44px).
+- **The page never scrolls horizontally.** Tables become cards, expandable rows, or scroll inside
+  their own container — decided per screen by task, not `overflow-x: auto` everywhere.
+- **Render navigation once** and move it with CSS. Three copies means three landmarks for screen
+  readers and triple the DOM on the cheapest devices.
 - **API models come from the backend contract.** Until the generated client lands, `core/api/models.ts`
   mirrors the backend records exactly — do not invent fields.
 - **The response envelope is unwrapped in `core/api`,** not in components. Components receive plain
