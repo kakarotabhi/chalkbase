@@ -7,6 +7,7 @@
 | JDK | 21 (LTS) | Spring Boot 4.1 needs 17+; 21 is what CI uses. |
 | Maven | wrapper (`./mvnw`) | Do not install Maven separately. |
 | Node | 24 (Active LTS) | Angular 22 requires ≥ 22.22.3. Use `nvm use 24`. |
+| Docker | any recent | Integration tests start a PostgreSQL container. |
 
 ## Setup
 
@@ -14,7 +15,19 @@
 tools/setup-dev.sh
 ```
 
-That points git at `.githooks`, installs frontend dependencies and warms the backend build.
+That points git at `.githooks`, installs frontend dependencies, warms the backend build and
+creates `backend/src/main/resources/application-local.yml` from the committed example.
+
+### Database credentials
+
+`application-local.yml` is **gitignored** and is the only file that may hold a real password. This
+repository is public; a connection string committed to it is scraped within minutes.
+
+Preferred: leave the placeholder in place and export the password instead.
+
+```bash
+export CHALKBASE_DB_PASSWORD='…'   # add to ~/.bashrc
+```
 
 ## Running
 
@@ -26,11 +39,27 @@ cd frontend && npm start                  # http://localhost:4200 (proxies /api 
 | URL | What |
 |---|---|
 | http://localhost:8080/swagger-ui.html | API explorer |
-| http://localhost:8080/h2-console | H2 console (JDBC URL `jdbc:h2:mem:chalkbase`, user `sa`, no password) |
+| http://localhost:8080/actuator/health | Health |
 | http://localhost:8080/actuator/modulith | Live module structure |
 
-H2 is in-memory: **data disappears on restart.** That is deliberate while the schema churns — see
-[ADR-0004](../architecture/adr/0004-h2-now-postgresql-next.md).
+## Profiles
+
+| Profile | Database | Where it is configured |
+|---|---|---|
+| `local` (default) | Shared Supabase PostgreSQL 17 | `application-local.yml`, gitignored, created from `.example` |
+| `test` | PostgreSQL 17 in a Testcontainers container | `src/test/resources/application-test.yml` |
+| `prod` | Environment variables only | `application-prod.yml` + `ops/coolify/.env.example` |
+
+`application.yml` holds only what is true everywhere and deliberately contains **no datasource**, so
+no environment can inherit another's database by accident.
+
+Two things about the development database that are easy to get wrong, both explained in
+[ADR-0004](../architecture/adr/0004-h2-now-postgresql-next.md): use the **pooler** host, not
+`db.<ref>.supabase.co` (that one is IPv6-only and unreachable from WSL), and use **port 5432**, not
+6543, because row-level security needs a session.
+
+The development database is **shared and persistent.** It is not a scratch space — tests never run
+against it, and a migration you push is a migration everyone gets.
 
 ## Checks before pushing
 

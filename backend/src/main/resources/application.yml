@@ -1,14 +1,15 @@
+# Common configuration for every environment.
+#
+# There is deliberately NO datasource here — each profile supplies its own, so no environment can
+# accidentally inherit another's database. Profiles: local (developer machine), test (Testcontainers,
+# under src/test/resources), prod (environment variables only).
 spring:
   application:
     name: chalkbase
 
-  # H2 runs in PostgreSQL compatibility mode so migrations and queries written now keep
-  # working after the switch to PostgreSQL. See ADR-0004.
-  datasource:
-    url: jdbc:h2:mem:chalkbase;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
-    username: sa
-    password: ""
-    driver-class-name: org.h2.Driver
+  # Running with no profile picks `local`. Production sets SPRING_PROFILES_ACTIVE=prod explicitly.
+  profiles:
+    default: local
 
   jpa:
     hibernate:
@@ -16,32 +17,54 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        jdbc.time_zone: UTC
-        format_sql: true
+        default_schema: ${chalkbase.db.schema}
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
 
   flyway:
     enabled: true
     locations: classpath:db/migration
+    schemas: ${chalkbase.db.schema}
+    default-schema: ${chalkbase.db.schema}
+    create-schemas: true
     baseline-on-migrate: false
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
 
   jackson:
     default-property-inclusion: non_null
+    deserialization:
+      # Ignore fields the client sends that we do not model, so adding a field to a request DTO is
+      # not a breaking change for older clients.
+      fail-on-unknown-properties: false
+    # Dates are ISO-8601 strings. Not configured here because Jackson 3 already defaults to that —
+    # WRITE_DATES_AS_TIMESTAMPS moved from SerializationFeature to DateTimeFeature and defaults off.
+
+  threads:
+    virtual:
+      enabled: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   error:
+    # Errors are produced by platform.error.GlobalExceptionHandler, never by the servlet container's
+    # default error page. See ADR-0007.
     include-message: never
+    include-stacktrace: never
+  shutdown: graceful
+
+chalkbase:
+  db:
+    # Chalkbase owns one schema. On Supabase this keeps our tables away from the managed
+    # auth/storage/realtime schemas; everywhere else it keeps `public` empty and obvious.
+    schema: chalkbase
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,modulith
+        include: health,info
   endpoint:
     health:
       show-details: when-authorized
@@ -54,8 +77,4 @@ springdoc:
 
 logging:
   level:
-    in.chalkbase: DEBUG
-
-# NOTE(events): durable cross-module events (spring-modulith-starter-jpa) are deliberately not
-# enabled yet — the registry needs an event_publication table, and that migration lands together
-# with the first published domain event. See docs/architecture/adr/0001-modular-monolith.md.
+    root: INFO
