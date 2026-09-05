@@ -44,5 +44,7 @@ tools/       developer scripts
 
 - [ADR-0001](docs/architecture/adr/0001-modular-monolith.md) — modular monolith, boundaries enforced by a test
 - [ADR-0002](docs/architecture/adr/0002-multi-tenancy-strategy.md) — shared database, row-level tenancy, with a path to per-tenant databases
-- [ADR-0003](docs/architecture/adr/0003-authentication-and-authorization.md) — auth, still open
+- [ADR-0003](docs/architecture/adr/0003-authentication-and-authorization.md) — server-side sessions, in-app identity, pluggable credentials
 - [ADR-0004](docs/architecture/adr/0004-h2-now-postgresql-next.md) — H2 now, PostgreSQL before real data
+- [ADR-0005](docs/architecture/adr/0005-authorization-model.md) — permissions are code, roles are data, grants carry a scope
+- [ADR-0006](docs/architecture/adr/0006-configurability-model.md) — four tiers of configurability
