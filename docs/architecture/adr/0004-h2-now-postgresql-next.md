@@ -7,7 +7,8 @@
 ## Context
 
 Development starts before any database infrastructure exists. H2 in-memory removes that setup step.
-PostgreSQL is the production target (ADR-0002 depends on Row Level Security, which H2 does not have).
+PostgreSQL is the production target (tenancy depends on per-schema `search_path` switching, which
+H2 does not support the same way).
 
 The risk is the usual one: code written against H2 that quietly depends on H2 behaviour, discovered
 only at the switch.
@@ -34,7 +35,7 @@ Constraints while on H2:
 
 Move to PostgreSQL when **any** of the following is true, whichever comes first:
 
-- The first tenant-scoped table ships (RLS from ADR-0002 cannot be deferred past it).
+- The first tenant-scoped table ships (the per-school schemas in ADR-0011 cannot be deferred past it).
 - A feature needs `jsonb`, full-text search, partitioning or a partial index.
 - Any data must survive a restart, i.e. the first demo with real content.
 
@@ -44,7 +45,7 @@ Move to PostgreSQL when **any** of the following is true, whichever comes first:
 2. Switch the datasource via an `application-local.yml` profile; keep H2 only for fast tests.
 3. Replace `@SpringBootTest` datasource with Testcontainers PostgreSQL (already a test dependency)
    so tests run against the real engine.
-4. Add the RLS policies from ADR-0002 in the same change.
+4. Create the per-school schemas and the two migration sets from ADR-0011 in the same change.
 
 ## Outcome — executed 2026-09-05
 
@@ -69,21 +70,22 @@ jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=requi
 username: postgres.<project-ref>
 ```
 
-**Port 5432 on the pooler, not 6543.** 5432 is session mode; 6543 is transaction mode. Row-level
-security (ADR-0002) sets a per-session variable for the current tenant, and transaction mode gives
-no stable session to set it on.
+**Port 5432 on the pooler, not 6543.** 5432 is session mode; 6543 is transaction mode. The tenant's
+schema is selected with `SET search_path` (ADR-0011), and transaction mode gives no stable session
+to set it on. This is now load-bearing for tenancy, not a tuning knob.
 
 ### Layout
 
-Chalkbase owns a dedicated `chalkbase` schema rather than `public`. On Supabase the `postgres`
-database also holds managed `auth`, `storage`, `realtime`, `graphql` and `vault` schemas; keeping
-our tables out of `public` means Flyway, backups and a `pg_dump -n chalkbase` all have an
-unambiguous target.
+Chalkbase keeps its tables out of `public`, which on Supabase also holds the managed `auth`,
+`storage`, `realtime`, `graphql` and `vault` schemas.
 
-Verified on the live instance before committing: schema creation, table creation, and
-`set_config`/`current_setting` for the RLS session variable. The connecting role is **not** a
-superuser, which matters — a superuser silently bypasses RLS, so policies would appear to work in
-development while protecting nothing.
+The single `chalkbase` schema created here was superseded by [ADR-0011](0011-schema-per-tenant.md):
+Chalkbase now owns one schema per school, plus a `public`-resident registry and reference data.
+
+Verified on the live instance before committing: schema creation, table creation, and that the
+connecting role is **not** a superuser. Switching `search_path` between schemas on one pooled
+connection — including the leak when it is not reset on release — was reproduced against this same
+instance before ADR-0011 was accepted.
 
 ### Still open
 

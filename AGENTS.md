@@ -36,8 +36,9 @@ cd frontend && npm test -- --watch=false
    immutable once merged — fix forward.
 2. **Never cross a module boundary except through its named interface or a domain event.**
    `ModularityTests` enforces this; a failure means fix the dependency, not the test.
-3. **Every tenant-scoped table carries `school_id`**, and tenant filtering goes through
-   `platform.tenancy`, never a hand-written `WHERE` or a `schoolId` request parameter. See ADR-0002.
+3. **Tenancy is a PostgreSQL schema per school, not a column.** No `school_id` anywhere. The
+   current tenant comes from `platform.tenancy` and is applied as `search_path`, never from a
+   `schoolId` request parameter. See ADR-0011.
 4. **Never expose a JPA entity** over HTTP or across a module boundary. Use a record DTO.
 5. **The frontend never invents an API shape.** If the endpoint does not exist yet, say so.
 6. **Do not add a UI component library.** Components are hand-designed; build them in

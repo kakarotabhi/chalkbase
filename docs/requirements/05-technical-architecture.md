@@ -97,18 +97,23 @@ Requirements:
 - Use UUID primary keys.
 - Use foreign keys and check constraints.
 - Use partial indexes for active records.
-- Use composite indexes for school_id, academic_session_id, class_id, section_id, and status filters.
+- Use composite indexes for academic_session_id, class_id, section_id, and status filters.
 - Use JSONB for custom fields only where relational modeling is not practical.
 - Use generated columns or materialized views where reporting needs justify them.
-- Use row-level security only if the team can implement and test it consistently.
+- Row-level security is not used: the tenant boundary is the schema (ADR-0011).
 - Use database migrations for every schema change.
 
-Tenancy approach:
+Tenancy approach — decided in [ADR-0011](../architecture/adr/0011-schema-per-tenant.md):
 
-- For first release, use one database with `school_id` on business tables.
-- Keep all queries tenant-scoped.
-- Add automated tests that fail when repository queries miss tenant filters.
-- If the product becomes SaaS at scale, evaluate schema-per-tenant or database-per-tenant for premium isolation.
+- One PostgreSQL schema per school in a single database, served by one application and one
+  connection pool. Business tables carry **no** `school_id`.
+- The schema is selected per connection from the authenticated session, and reset when the
+  connection returns to the pool.
+- Reference data and the tenant registry live in `public`; migrations are split into a shared set
+  and a per-tenant set that fans out to every school.
+- Add automated tests that prove one tenant cannot read another's rows.
+- A school needing physical isolation can later be moved to its own database without changing
+  application code.
 
 ## Document Storage
 

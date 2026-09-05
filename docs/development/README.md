@@ -56,7 +56,7 @@ no environment can inherit another's database by accident.
 Two things about the development database that are easy to get wrong, both explained in
 [ADR-0004](../architecture/adr/0004-h2-now-postgresql-next.md): use the **pooler** host, not
 `db.<ref>.supabase.co` (that one is IPv6-only and unreachable from WSL), and use **port 5432**, not
-6543, because row-level security needs a session.
+6543, because the tenant schema is selected with `SET search_path`, which needs a session.
 
 The development database is **shared and persistent.** It is not a scratch space — tests never run
 against it, and a migration you push is a migration everyone gets.

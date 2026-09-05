@@ -34,10 +34,15 @@ in.chalkbase
   PostgreSQL until ADR-0004 is executed; PostgreSQL-only syntax needs a vendor-specific location.
 - **`ddl-auto` stays `validate`.** If Hibernate complains about a missing table, the migration is
   missing — do not relax the setting.
-- **Tenancy**: tenant-scoped tables get a non-null `school_id uuid`, indexes lead with it, and the
-  current tenant comes from `platform.tenancy.TenantContext`. A repository method taking a raw
-  `schoolId` argument is a review blocker. Global reference data (boards, states, subjects) has no
-  `school_id`.
+- **Tenancy is structural** (ADR-0011). One PostgreSQL schema per school; **no `school_id` column
+  anywhere**. Entities and queries carry no tenancy at all — the schema is selected per connection
+  from `platform.tenancy.TenantContext`. A repository method taking a `schoolId` argument is a
+  review blocker. Global reference data (boards, states, subjects) lives in `public`.
+- **Two migration folders**: `db/migration/shared` runs once against `public`; `db/migration/tenant`
+  runs against every school's schema. Putting a tenant table in `shared` (or the registry in
+  `tenant`) breaks onboarding. Spring's auto-migration is off — the orchestrator fans out at startup.
+- **Migrations are expand/contract only.** A fan-out can fail partway and leave schools on different
+  versions, so a release must never contain a destructive change the same release's code depends on.
 - **Controllers** live in `api/`, are thin, and return records. Path prefix `/api/v1/`.
 - **Navigation is data, not markup** (ADR-0008). A module contributes navigation nodes as
   stable ids plus label keys. Never send a URL, a component name, or anything visual.

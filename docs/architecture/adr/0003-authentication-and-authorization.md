@@ -75,8 +75,8 @@ approval — which takes weeks of paperwork. Start that before the code is neede
 
 - Sessions must be in PostgreSQL before the first multi-user deployment; in-memory sessions are a
   restart away from an outage.
-- Every authenticated request now has a subject, which is what lets `TenantContext` (ADR-0002) stop
-  using its development-only resolver.
+- Every authenticated request now has a subject, which is what lets `TenantContext` (ADR-0011) stop
+  using its development-only resolver and resolve the school's schema from the session.
 - MFA (FR-007) and SSO remain open, but as additive work behind interfaces that exist from day one.
 - Cookie-based auth means CSRF protection has to be switched on for state-changing endpoints; it is
   currently disabled in the scaffold's `SecurityConfig`.

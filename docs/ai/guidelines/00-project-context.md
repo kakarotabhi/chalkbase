@@ -13,13 +13,13 @@ Primary stack:
 
 Primary product requirements live in:
 
-- [requirement.md](../requirement.md)
-- [requirements/01-product-scope.md](../requirements/01-product-scope.md)
-- [requirements/02-functional-requirements.md](../requirements/02-functional-requirements.md)
-- [requirements/03-india-compliance-requirements.md](../requirements/03-india-compliance-requirements.md)
-- [requirements/04-data-model-and-integrations.md](../requirements/04-data-model-and-integrations.md)
-- [requirements/05-technical-architecture.md](../requirements/05-technical-architecture.md)
-- [requirements/06-roadmap-and-mvp.md](../requirements/06-roadmap-and-mvp.md)
+- [Requirement pack](../../requirements/README.md)
+- [01-product-scope](../../requirements/01-product-scope.md)
+- [02-functional-requirements](../../requirements/02-functional-requirements.md)
+- [03-india-compliance-requirements](../../requirements/03-india-compliance-requirements.md)
+- [04-data-model-and-integrations](../../requirements/04-data-model-and-integrations.md)
+- [05-technical-architecture](../../requirements/05-technical-architecture.md)
+- [06-roadmap-and-mvp](../../requirements/06-roadmap-and-mvp.md)
 
 ## Product Principle
 

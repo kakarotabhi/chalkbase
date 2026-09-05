@@ -42,7 +42,7 @@ Exactly one of `data` and `error` is present; the other is omitted.
   quotes when they report a problem.
 - **Versioned prefix.** Everything under `/api/v1/`. A breaking change means `/v2`.
 - **Never accept a tenant id from the client.** No `?schoolId=`; the server resolves the tenant from
-  the session ([ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md)).
+  the session ([ADR-0011](../architecture/adr/0011-schema-per-tenant.md)).
 - **UUID identifiers, ISO-8601 UTC timestamps, decimal strings for money** — never a float.
 
 ## Bootstrap: `GET /api/v1/me`

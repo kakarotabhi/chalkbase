@@ -6,8 +6,8 @@ Deployment target: a self-hosted VPS running [Coolify](https://coolify.io/docs/)
 
 - [ ] Deploy and rollback (Coolify application + database service)
 - [ ] Backup and restore — cluster PITR **plus** per-school logical export
-      ([ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md) makes per-school restore the
-      hard case)
+      ([ADR-0011](../architecture/adr/0011-schema-per-tenant.md) makes per-school export a
+      `pg_dump -n <schema>`)
 - [ ] Database migration failure recovery
 - [ ] Certificate renewal
 - [ ] Incident response and parent/school communication

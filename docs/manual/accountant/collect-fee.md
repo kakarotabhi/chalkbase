@@ -24,5 +24,7 @@
 
 ## Related
 
-- [Apply a concession](apply-concession.md)
-- [Day book and reconciliation](day-book.md)
+Pages not written yet — linked once they exist, so the link check stays meaningful:
+
+- Apply a concession
+- Day book and reconciliation
