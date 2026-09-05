@@ -1,21 +1,63 @@
 /**
- * Design tokens. Every custom component reads from these — no raw hex values in component styles.
- * Light values live on :root; dark overrides only redefine what changes.
+ * Design tokens. Every component reads from these — no raw hex in component styles (ADR-0009).
+ *
+ * Every colour pair here is contrast-checked against WCAG 2.1: 4.5:1 for text, 3:1 for
+ * non-text UI such as input outlines and focus rings. The check is not decoration — the first
+ * version of this file had dark-mode status colours that were never overridden, so "overdue" was
+ * rendering at 2.83:1 on a dark background.
+ *
+ * Light values live on :root. Dark redefines only what changes, under both the system preference
+ * and an explicit [data-theme] so a future toggle wins in either direction.
  */
 :root {
-  /* Colour */
+  color-scheme: light;
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
   --cb-bg: #ffffff;
-  --cb-surface: #f7f8fa;
-  --cb-border: #e3e6ea;
+  --cb-surface: #f6f8f9; /* sidebar, table headers, subtle panels */
+  --cb-surface-raised: #ffffff; /* cards and menus sitting above --cb-surface */
+
+  /* --cb-border is decorative (dividers, table rules) and need not meet 3:1.
+     --cb-border-strong is for anything that conveys a boundary — input outlines,
+     checkbox edges — and does meet it. Using the wrong one is the usual way an
+     "accessible" palette still produces invisible form fields. */
+  --cb-border: #e2e6ea;
+  --cb-border-strong: #7d8794;
+
+  /* ── Text ─────────────────────────────────────────────────────────────── */
   --cb-text: #16191d;
   --cb-text-muted: #5b6472;
-  --cb-primary: #1f5f4f;
-  --cb-primary-contrast: #ffffff;
-  --cb-danger: #b3261e;
-  --cb-warning: #a15c00;
-  --cb-success: #1c6c3c;
 
-  /* Spacing scale (4px base) */
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  /* Deep green: reads as school and growth, stays clear of the blue that every
+     competing Indian school ERP uses, and avoids saffron, which carries political
+     weight here that a school product should not. */
+  --cb-primary: #1f5f4f;
+  --cb-primary-hover: #17493c;
+  --cb-primary-contrast: #ffffff;
+  --cb-primary-surface: #e6f1ee; /* selected rows, active nav, quiet badges */
+
+  --cb-accent: #8a4b1f; /* sparingly: highlights, charts, never a second CTA */
+
+  /* ── Status ───────────────────────────────────────────────────────────── */
+  /* Each pairs a foreground with its own tinted surface for badges and banners.
+     Fee status is the workhorse: paid / due / overdue must be distinguishable. */
+  --cb-danger: #a52218;
+  --cb-danger-surface: #fdecea;
+  --cb-warning: #8a5000;
+  --cb-warning-surface: #fdf2e0;
+  --cb-success: #1a6b3c;
+  --cb-success-surface: #e6f4ec;
+  --cb-info: #1f5470;
+  --cb-info-surface: #e6f0f5;
+
+  /* Colour is never the only signal — a badge carries an icon or text too, for
+     colour-blind users and for photocopied printouts. */
+
+  --cb-focus: #1f5f4f;
+  --cb-focus-ring: 0 0 0 3px rgba(31, 95, 79, 0.35);
+
+  /* ── Spacing (4px base) ───────────────────────────────────────────────── */
   --cb-space-1: 0.25rem;
   --cb-space-2: 0.5rem;
   --cb-space-3: 0.75rem;
@@ -23,7 +65,7 @@
   --cb-space-6: 1.5rem;
   --cb-space-8: 2rem;
 
-  /* Typography */
+  /* ── Typography ───────────────────────────────────────────────────────── */
   --cb-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --cb-font-size-sm: 0.8125rem;
   --cb-font-size-base: 0.9375rem;
@@ -31,22 +73,25 @@
   --cb-font-size-xl: 1.5rem;
   --cb-line-height: 1.5;
 
-  /* Shape and depth */
+  /* Tabular figures keep fee amounts and roll numbers aligned in columns. */
+  --cb-font-numeric: 'Inter', ui-monospace, 'SF Mono', monospace;
+
+  /* ── Shape and depth ──────────────────────────────────────────────────── */
   --cb-radius-sm: 4px;
   --cb-radius-md: 8px;
   --cb-radius-lg: 12px;
   --cb-shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
   --cb-shadow-2: 0 4px 12px rgba(16, 24, 40, 0.1);
 
-  /* Layout */
+  /* ── Layout ───────────────────────────────────────────────────────────── */
   --cb-sidebar-width: 260px;
   --cb-rail-width: 80px;
   --cb-header-height: 56px;
   --cb-bottom-nav-height: 56px;
 
-  /* Smallest comfortable tap area. WCAG 2.2 SC 2.5.8 (AA) requires 24px; 44px is SC 2.5.5 (AAA)
-     and matches both platform conventions. Fee counters and teachers tap fast on cheap tablets,
-     so 44 is the working default rather than the minimum. */
+  /* Smallest comfortable tap area. WCAG 2.2 SC 2.5.8 (AA) requires 24px; 44px is
+     SC 2.5.5 (AAA) and matches both platform conventions. Fee counters and teachers
+     tap fast on cheap tablets, so 44 is the working default, not the minimum. */
   --cb-touch-target-min: 44px;
 
   /* Home indicator / notch. Zero on devices without one. */
@@ -54,14 +99,47 @@
   --cb-safe-top: env(safe-area-inset-top, 0px);
 }
 
+@mixin cb-dark-tokens {
+  color-scheme: dark;
+
+  --cb-bg: #101418;
+  --cb-surface: #171c22;
+  --cb-surface-raised: #1e242c;
+  --cb-border: #2f3742;
+  --cb-border-strong: #6b7686;
+
+  --cb-text: #e7ebf0;
+  --cb-text-muted: #a3adbb;
+
+  --cb-primary: #5ec4a7;
+  --cb-primary-hover: #7ad4ba;
+  --cb-primary-contrast: #06120e;
+  --cb-primary-surface: #173029;
+
+  --cb-accent: #e0a06a;
+
+  --cb-danger: #f28b82;
+  --cb-danger-surface: #3a1714;
+  --cb-warning: #e9b949;
+  --cb-warning-surface: #3a2c10;
+  --cb-success: #6ddc9b;
+  --cb-success-surface: #14301f;
+  --cb-info: #7cc0e0;
+  --cb-info-surface: #132b36;
+
+  --cb-focus: #7ad4ba;
+  --cb-focus-ring: 0 0 0 3px rgba(122, 212, 186, 0.4);
+
+  --cb-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --cb-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --cb-bg: #101418;
-    --cb-surface: #171c22;
-    --cb-border: #2a313a;
-    --cb-text: #e7ebf0;
-    --cb-text-muted: #98a2b3;
-    --cb-primary: #4fb59a;
-    --cb-primary-contrast: #08120f;
+    @include cb-dark-tokens;
   }
+}
+
+:root[data-theme='dark'] {
+  @include cb-dark-tokens;
 }
