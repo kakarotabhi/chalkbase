@@ -34,16 +34,52 @@
   grid-area: header;
   display: flex;
   align-items: center;
-  padding-inline: var(--cb-space-4);
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  padding-inline: var(--cb-space-3);
   padding-top: var(--cb-safe-top);
   background: var(--cb-surface);
   border-bottom: 1px solid var(--cb-border);
+
+  @include from-medium {
+    padding-inline: var(--cb-space-4);
+  }
 }
 
-.shell__brand {
-  font-size: var(--cb-font-size-lg);
+.shell__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  // Without this the school name refuses to shrink and pushes the account menu off a 360px screen
+  // instead of ellipsing.
+  min-width: 0;
+}
+
+.shell__mark {
+  flex: none;
+}
+
+// The mark is two shapes on a plate; both take their colour from the brand tokens so it inverts
+// with the rest of the interface in dark mode rather than staying a light square.
+.shell__mark-plate {
+  fill: var(--cb-primary);
+}
+
+.shell__mark-arc {
+  stroke: var(--cb-primary-contrast);
+}
+
+.shell__mark-dot {
+  fill: var(--cb-primary-contrast);
+}
+
+.shell__school {
+  overflow: hidden;
+  font-size: var(--cb-font-size-base);
   font-weight: 600;
-  color: var(--cb-primary);
+  color: var(--cb-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .shell__nav {

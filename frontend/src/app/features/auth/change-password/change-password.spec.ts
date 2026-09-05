@@ -36,6 +36,7 @@ describe('ChangePassword', () => {
           displayName: 'Priya Sharma',
           mustChangePassword: true,
           school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+          permissions: [],
         },
         'temp-issued-one',
       );

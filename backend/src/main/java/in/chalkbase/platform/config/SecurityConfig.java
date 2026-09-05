@@ -3,6 +3,7 @@ package in.chalkbase.platform.config;
 import in.chalkbase.platform.error.SecurityErrorResponder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
@@ -25,8 +26,16 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
  * <p>The 401 and 403 responders are wired here so those two responses use the same envelope as
  * every other error, even though they are produced inside the filter chain rather than by a
  * controller.
+ *
+ * <p>{@code @EnableMethodSecurity} is what makes {@code @PreAuthorize("hasAuthority('...')")} on a
+ * controller method mean anything. The rules below decide only whether a request may reach the
+ * application at all; <strong>which</strong> action it may perform is decided per method, against
+ * the effective permissions resolved once at login and carried as the authorities of the
+ * authentication (ADR-0005). The two are not interchangeable: a URL pattern cannot express
+ * "create an invoice", and a school that renames an endpoint must not silently widen access.
  */
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -57,25 +66,33 @@ public class SecurityConfig {
                         // /api/schools/** authenticated.
                         .ignoringRequestMatchers("/api/auth/login", "/api/schools/**"))
                 .securityContext(context -> context.securityContextRepository(securityContextRepository()))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/login")
-                        .permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/health/**")
-                        .permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-                        .permitAll()
-                        // TODO(identity): onboarding a school is a platform-operator action and has
-                        // no principal to authenticate until the authorization model of ADR-0005
-                        // lands. Left open so onboarding still works; close it in the same change
-                        // that introduces platform-operator accounts, and do not expose this
-                        // application publicly before then.
-                        .requestMatchers("/api/schools/**")
-                        .permitAll()
-                        .requestMatchers("/api/**")
-                        .authenticated()
-                        // Static resources, the error dispatch and the OpenAPI assets. Nothing
-                        // under /api reaches this line.
-                        .anyRequest()
-                        .permitAll())
+                .authorizeHttpRequests(auth ->
+                        // Signing in has no session yet, and signing out must work even when the
+                        // session has already expired — a 401 from logout leaves a client unable to
+                        // do the one thing it wanted. Both still require a CSRF token except login,
+                        // which has no cookie to echo.
+                        auth.requestMatchers("/api/auth/login", "/api/auth/logout")
+                                .permitAll()
+                                .requestMatchers("/actuator/health", "/actuator/health/**")
+                                .permitAll()
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                                .permitAll()
+                                // TODO(identity): onboarding a school is a platform-operator action and has
+                                // no principal to authenticate until the authorization model of ADR-0005
+                                // lands. Left open so onboarding still works; close it in the same change
+                                // that introduces platform-operator accounts, and do not expose this
+                                // application publicly before then.
+                                .requestMatchers("/api/schools/**")
+                                .permitAll()
+                                .requestMatchers("/api/**")
+                                .authenticated()
+                                // Everything else under /api needs a session, and then a permission: the
+                                // method-level @PreAuthorize decides the rest. An endpoint that carries no
+                                // annotation is caught by ControllerAuthorizationTests, not by review.
+                                // Static resources, the error dispatch and the OpenAPI assets. Nothing
+                                // under /api reaches this line.
+                                .anyRequest()
+                                .permitAll())
                 .exceptionHandling(handling ->
                         handling.authenticationEntryPoint(securityErrors).accessDeniedHandler(securityErrors))
                 .build();

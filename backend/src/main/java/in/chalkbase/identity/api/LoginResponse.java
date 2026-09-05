@@ -1,5 +1,6 @@
 package in.chalkbase.identity.api;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -10,5 +11,9 @@ import java.util.UUID;
  *
  * @param mustChangePassword true when the school issued a temporary password. The client must send
  *     the user to the change-password screen and let them do nothing else first.
+ * @param permissions the permission codes this session holds, sorted, so the client can hide what
+ *     the user cannot do. It is a convenience for the interface, never the enforcement: the server
+ *     checks the same set on every call, and a client that ignored this list would gain nothing.
  */
-public record LoginResponse(UUID userId, String displayName, boolean mustChangePassword, SchoolSummary school) {}
+public record LoginResponse(
+        UUID userId, String displayName, boolean mustChangePassword, SchoolSummary school, List<String> permissions) {}

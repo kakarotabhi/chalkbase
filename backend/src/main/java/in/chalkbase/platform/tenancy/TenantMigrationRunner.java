@@ -8,7 +8,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 /**
- * Migrates `public` and then every active school, at startup, before anything can serve a request.
+ * Brings `public` and then every active school up to the current release at startup, before
+ * anything can serve a request.
  *
  * <p>This is an {@link InitializingBean} rather than an {@code ApplicationRunner} on purpose: runners
  * fire after the web server is already accepting connections, which would leave a window where a
@@ -27,10 +28,19 @@ public class TenantMigrationRunner implements InitializingBean {
 
     private final TenantMigrations migrations;
     private final TenantRegistry registry;
+    private final SchoolProvisioning provisioning;
 
-    public TenantMigrationRunner(TenantMigrations migrations, TenantRegistry registry) {
+    /**
+     * Each school goes through {@link SchoolProvisioning}, the same path onboarding uses, so a
+     * school that starts up and a school that is created land in identical states. Nothing here may
+     * depend on JPA: the entity manager factory is made to depend on this bean, so it does not
+     * exist yet.
+     */
+    public TenantMigrationRunner(
+            TenantMigrations migrations, TenantRegistry registry, SchoolProvisioning provisioning) {
         this.migrations = migrations;
         this.registry = registry;
+        this.provisioning = provisioning;
     }
 
     @Override
@@ -47,7 +57,7 @@ public class TenantMigrationRunner implements InitializingBean {
         List<String> failed = new ArrayList<>();
         for (String schema : schemas) {
             try {
-                migrations.migrateTenant(schema);
+                provisioning.provision(schema);
             } catch (RuntimeException ex) {
                 // Collect rather than abort, so one school's failure does not hide the state of the
                 // rest. The startup still fails — a partially migrated fleet must not serve traffic.
@@ -56,7 +66,10 @@ public class TenantMigrationRunner implements InitializingBean {
             }
         }
 
-        log.info("Migrated {} school(s) in {} ms", schemas.size() - failed.size(), System.currentTimeMillis() - start);
+        log.info(
+                "Migrated and seeded {} school(s) in {} ms",
+                schemas.size() - failed.size(),
+                System.currentTimeMillis() - start);
 
         if (!failed.isEmpty()) {
             throw new IllegalStateException(

@@ -1,5 +1,6 @@
 package in.chalkbase.platform.tenancy;
 
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,11 @@ import org.springframework.stereotype.Service;
  *
  * <p>A fresh schema receives every tenant migration in order, so a school onboarded today lands on
  * the same version as one onboarded a year ago.
+ *
+ * <p>Migrating is only half of it. The tables Flyway creates are empty, and a school cannot be used
+ * until the shipped contents are in them — the permission catalogue and a copy of every role
+ * template (ADR-0005). Each {@link TenantInitializer} puts one module's share there, which is why
+ * onboarding is a defined process rather than a pile of manual inserts.
  *
  * <p>This is deliberately serialised. A school created while the startup fan-out is running could
  * otherwise be created at the old version and then miss the migration that is mid-flight.
@@ -20,10 +26,17 @@ public class SchoolProvisioning {
 
     private final TenantMigrations migrations;
     private final TenantRegistry registry;
+    private final List<TenantInitializer> initializers;
 
-    public SchoolProvisioning(TenantMigrations migrations, TenantRegistry registry) {
+    /**
+     * Spring injects {@code initializers} in {@code @Order} order, which is load-bearing: the
+     * permission rows have to exist before a role template can point a foreign key at them.
+     */
+    public SchoolProvisioning(
+            TenantMigrations migrations, TenantRegistry registry, List<TenantInitializer> initializers) {
         this.migrations = migrations;
         this.registry = registry;
+        this.initializers = initializers;
     }
 
     /**
@@ -34,6 +47,9 @@ public class SchoolProvisioning {
         SchemaName.requireValid(schema);
         boolean existed = registry.schemaExists(schema);
         migrations.migrateTenant(schema);
+        for (TenantInitializer initializer : initializers) {
+            initializer.initialize(schema);
+        }
         log.info("{} schema {}", existed ? "Re-migrated existing" : "Provisioned", schema);
     }
 }
