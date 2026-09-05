@@ -159,15 +159,28 @@ The product should be considered successful when:
 - Admins can generate compliance and board-ready data with minimal manual cleanup.
 - Backups and restore procedures are tested.
 
+## Decisions Made
+
+Recorded as architecture decision records in [docs/architecture/adr](../architecture/adr/):
+
+| Question | Decision | Record |
+|---|---|---|
+| One school, a group, or many schools? | Built for many; shared database with row-level tenancy, and a documented path to a dedicated database per school where one is required. | [ADR-0002](../architecture/adr/0002-multi-tenancy-strategy.md) |
+| School-controlled authentication or external SSO? | School-controlled, owned by the `identity` module. Sessions, not JWT. External SSO stays addable as another credential type. | [ADR-0003](../architecture/adr/0003-authentication-and-authorization.md) |
+| How do users log in? | Username/email and password for the first release. Credentials are pluggable, so phone + OTP, MFA and SSO are additive rather than a migration. | [ADR-0003](../architecture/adr/0003-authentication-and-authorization.md) |
+| Role-based or fine-grained permissions? | Permissions are the unit of enforcement and are defined in code; roles are per-school editable bundles of them; each grant carries a scope (campus, class, section, subject, ward). | [ADR-0005](../architecture/adr/0005-authorization-model.md) |
+| How configurable should the product be? | Four tiers — master data, typed per-school settings, named strategies, and a deliberate list of things that stay fixed. A setting earns its place when two real schools disagree about it. | [ADR-0006](../architecture/adr/0006-configurability-model.md) |
+
 ## Open Decisions
 
-Before implementation, decide:
+Still to decide:
 
-- Will the product be for one school only, one school group, or many unrelated schools?
 - Which board is the first target: CBSE, state board, CISCE, or mixed?
 - Which state is the first deployment target?
 - Which payment gateway, SMS provider, WhatsApp provider, email provider, and GPS provider will be used?
+  (The SMS provider carries a long lead time — transactional SMS in India needs TRAI DLT entity,
+  sender ID and per-template registration before phone + OTP login or fee reminders can ship.)
 - Whether parent/student access should be PWA-only or include native apps.
-- Whether to use school-controlled authentication only or Google/Microsoft SSO for staff and students.
 - Whether document storage should be local VPS volume, S3-compatible storage, or managed object storage.
+- When phone + OTP login replaces or supplements passwords for parents and students.
 

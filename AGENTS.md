@@ -52,6 +52,8 @@ cd frontend && npm test -- --watch=false
 ## Conventions
 
 - Branches: `feat/<module>-<slug>`, `fix/<module>-<slug>`, `docs/<slug>`.
+- **`main` is protected.** Never push to it directly — open a pull request and let both CI
+  checks pass. This applies to agents too.
 - Commits: `type(module): summary` — e.g. `feat(fee): add concession heads`.
 - Formatting is automatic (Spotless for Java, Prettier for the frontend) and enforced in CI.
   Do not reformat files you did not otherwise change.

@@ -13,10 +13,21 @@ Priority:
 | FR-001 | The system shall support one or more schools under one installation. | P0 |
 | FR-002 | The system shall support campuses/branches under a school group. | P1 |
 | FR-003 | The system shall maintain academic sessions and allow session-specific configuration. | P0 |
-| FR-004 | The system shall support role-based permissions for every module and action. | P0 |
-| FR-005 | The system shall support attribute-based restrictions such as campus, class, section, subject, department, and assigned students. | P0 |
+| FR-004 | The system shall enforce access through named permissions of the form `module:resource:action`, defined in code and seeded per release. Authorization checks shall reference permissions only, never role names. | P0 |
+| FR-004a | The system shall ship versioned system role templates (principal, class teacher, accountant, librarian, transport manager, parent, student, auditor and similar) that a school copies when it is onboarded. | P0 |
+| FR-004b | The system shall allow each school to create and edit its own roles as bundles of permissions, independently of other schools and of the templates they were copied from. | P0 |
+| FR-004c | The system shall notify school administrators when a release introduces permissions their roles do not yet grant, and shall not widen access automatically. | P0 |
+| FR-005 | The system shall grant a role to a user within a scope — school, campus, department, class, section, subject, self or ward — and shall allow a user to hold several such grants at once. | P0 |
+| FR-005a | The system shall support validity periods on a grant, so temporary responsibilities such as an acting principal or an exam controller expire without manual removal. | P1 |
+| FR-005b | The system shall apply scope restrictions within data queries rather than by filtering results after retrieval. | P0 |
+| FR-005c | The system shall derive parent and student access from the guardian and enrolment relationship rather than from an administrator-assigned scope. | P0 |
+| FR-005d | The system shall compute access as the union of a user's grants. Explicit deny rules shall not be supported. | P0 |
 | FR-006 | The system shall support user activation, deactivation, password reset, forced logout, and account lockout. | P0 |
+| FR-006a | The system shall separate a user's identity from their credentials, supporting several identifier types (username, email, phone) and several credential types per user, so that additional login methods can be added without migrating existing accounts. | P0 |
+| FR-006b | The system shall authenticate the first release with username or email and password, and shall issue a server-side session referenced by an HttpOnly cookie. | P0 |
 | FR-007 | The system shall support optional multi-factor authentication for staff and admins. | P1 |
+| FR-007a | The system shall support phone number and one-time password login for parents and students. | P1 |
+| FR-007b | The system shall provide a platform-level support role that exists outside any school, is time-boxed, and records every access to school data in the audit log. | P1 |
 | FR-008 | The system shall maintain a complete audit log for create, update, delete, approval, login, export, and publish actions. | P0 |
 | FR-009 | The system shall support configurable master data for board, class, section, subject, category, religion, caste/community, language, fee head, designation, and department. | P0 |
 | FR-010 | The system shall provide import and export for master data through validated CSV/XLSX templates. | P0 |
@@ -25,6 +36,11 @@ Acceptance notes:
 
 - Every privileged action must be traceable to user, role, timestamp, IP/device where available, and changed fields.
 - Admin users must be able to preview permission impact before assigning roles.
+- Every endpoint must carry an explicit authorization check; this is verified automatically rather than by review.
+- Permission identifiers are treated as public API. Renaming one requires a migration that rewrites existing school roles and grants.
+
+See [ADR-0005](../architecture/adr/0005-authorization-model.md) for the authorization model and
+[ADR-0003](../architecture/adr/0003-authentication-and-authorization.md) for authentication.
 
 ## 2. Organization Setup
 

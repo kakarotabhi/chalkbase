@@ -8,12 +8,9 @@ on:
       - 'ops/docker/Dockerfile.frontend'
       - 'ops/docker/nginx.conf'
       - '.github/workflows/frontend.yml'
+  # No path filter on pull_request: these checks are required for merge, and a required check
+  # that never starts blocks the PR forever. The job is 25s, so running it on every PR is cheap.
   pull_request:
-    paths:
-      - 'frontend/**'
-      - 'ops/docker/Dockerfile.frontend'
-      - 'ops/docker/nginx.conf'
-      - '.github/workflows/frontend.yml'
   workflow_dispatch:
 
 concurrency:
@@ -25,7 +22,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and test
+    name: Frontend build and test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,7 +56,7 @@ jobs:
           retention-days: 7
 
   image:
-    name: Docker image builds
+    name: Frontend image
     needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

@@ -57,9 +57,37 @@ The image jobs build but do not push — Coolify builds from the repository itse
 broken Dockerfile fails in CI instead of during a deploy. If Coolify is later switched to pulling
 prebuilt images, these are where the push to GHCR goes.
 
-**Caveat on branch protection:** because both workflows are path-filtered, a docs-only PR runs
-neither. If these are made *required* status checks, such a PR will sit forever waiting for a check
-that will never start. Either leave them optional, or add a no-op job that always runs.
+Both workflows are path-filtered **on push** so branch pushes stay fast, but run **unfiltered on
+pull requests** — a required status check that never starts would block a docs-only PR forever.
+
+The image jobs run only on `main`, so they are not required checks.
+
+## Branching
+
+`main` is protected. Nobody pushes to it directly, including administrators.
+
+```bash
+git switch -c feat/fee-concession-heads
+# … work …
+git push -u origin HEAD
+gh pr create --fill
+```
+
+A pull request can be merged when:
+
+- **Backend build and test** and **Frontend build and test** are both green,
+- the branch is up to date with `main`,
+- and any review conversations are resolved.
+
+Two layers enforce this, and only one of them is real:
+
+| Layer | What it does | Can it be bypassed? |
+|---|---|---|
+| `.githooks/pre-push` | Refuses a direct push to `main` with a message explaining what to do instead | Yes — `--no-verify`, or a clone that never ran `tools/setup-dev.sh` |
+| GitHub branch protection | Rejects the push server-side and blocks merges until checks pass | No |
+
+The hook exists to catch the honest mistake early, with a useful error, instead of after a failed
+push. It is not the control.
 
 ## Coding standards
 

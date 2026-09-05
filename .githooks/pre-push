@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Refuses a direct push to main.
+#
+# This is a convenience guard, not security: it can be skipped with --no-verify and it does not
+# exist in a fresh clone until `tools/setup-dev.sh` runs. The actual enforcement is the branch
+# protection rule on GitHub, which applies to everyone including administrators.
+set -euo pipefail
+
+protected="main"
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/$protected" ]; then
+    cat >&2 <<MSG
+
+  Direct push to '$protected' is not allowed.
+
+  Open a pull request instead:
+
+      git switch -c feat/<module>-<slug>
+      git push -u origin HEAD
+      gh pr create --fill
+
+  Both CI checks must pass before the pull request can be merged.
+
+MSG
+    exit 1
+  fi
+done
