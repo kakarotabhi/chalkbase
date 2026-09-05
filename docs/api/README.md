@@ -60,7 +60,7 @@ school's broadband.
   "data": {
     "user": { "id": "…", "displayName": "…" },
     "school": { "id": "…", "name": "…" },
-    "permissionsVersion": 17,
+    "permissionsVersion": "3f7a1c9e04b2d5a8",
     "permissions": ["fee:invoice:create", "attendance:mark:write"],
     "navigation": [
       { "id": "fees", "labelKey": "nav.fees", "icon": "receipt", "order": 30,
@@ -72,6 +72,10 @@ school's broadband.
 Navigation carries stable **ids**, never URLs — the client maps ids to its own routes
 ([ADR-0008](../architecture/adr/0008-server-driven-navigation.md)). A `403` tells the client its
 view is stale: refetch this endpoint before showing the error.
+
+`permissionsVersion` is a **hash of the permission set, not a revision number.** It changes exactly
+when the set changes and is identical for two users holding the same permissions, even at different
+schools. Compare it for equality; never treat it as ordered or increasing.
 
 ## Error codes
 

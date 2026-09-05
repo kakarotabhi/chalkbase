@@ -12,6 +12,12 @@ import { unwrap, unwrapVoid } from './unwrap';
 export const AUTH_ERROR = {
   /** 401. Wrong username *or* wrong password — the backend deliberately does not say which. */
   INVALID_CREDENTIALS: 'AUTH_001',
+  /**
+   * 401 from any endpoint that needs a session, `GET /api/me` included: there is no session, or
+   * the one there was has expired. On the bootstrap call this is the ordinary signed-out answer
+   * rather than a failure.
+   */
+  NO_SESSION: 'AUTH_002',
   /** 401. Too many failed attempts; the account is temporarily locked. */
   ACCOUNT_LOCKED: 'AUTH_003',
   /** 404. No school with that code. */

@@ -22,13 +22,40 @@
     One <nav> for all three layouts, not one per breakpoint. Rendering the menu three times and
     hiding two would give screen readers three navigation landmarks and triple the DOM on the
     cheapest devices. CSS moves and restyles this single element instead.
+
+    Its contents come from the server (ADR-0008). Items the server sent but this build has no route
+    for were already dropped in NavigationStore, so everything here resolves.
   -->
   <nav class="shell__nav" aria-label="Primary">
-    @for (item of navItems; track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="is-active" class="nav-item">
-        <span class="nav-item__icon" aria-hidden="true">{{ item.icon }}</span>
-        <span class="nav-item__label">{{ item.label }}</span>
+    @for (entry of navEntries(); track entry.link.id) {
+      <a
+        class="nav-item"
+        [class.nav-item--overflow]="!entry.inCompactBar"
+        [routerLink]="entry.link.path"
+        routerLinkActive="is-active"
+      >
+        <cb-icon class="nav-item__icon" [name]="entry.link.icon" />
+        <span class="nav-item__label">{{ entry.link.label }}</span>
       </a>
+    }
+
+    <!--
+      The overflow entry, shown only in the bottom bar and only when there is more than a bar can
+      hold. The rail and the sidebar have room for every item, so CSS hides this above 600px
+      rather than the component rebuilding the list per breakpoint.
+    -->
+    @if (needsMore()) {
+      <button
+        #moreTrigger
+        type="button"
+        class="nav-item nav-item--more"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="moreOpen()"
+        (click)="openMore()"
+      >
+        <cb-icon class="nav-item__icon" name="more" />
+        <span class="nav-item__label">{{ moreLabel }}</span>
+      </button>
     }
   </nav>
 
@@ -36,3 +63,36 @@
     <router-outlet />
   </main>
 </div>
+
+@if (moreOpen()) {
+  <cb-bottom-sheet [heading]="sheetHeading" [closeLabel]="sheetCloseLabel" (closed)="closeMore()">
+    <!--
+      The full tree, not just the overflow: someone who opened this to find Reports should not have
+      to remember whether Students was in the bar. Children are listed under their parent rather
+      than flattened, because "Collect fees" means something different under Fees.
+    -->
+    <ul class="sheet-nav">
+      @for (item of navItems(); track item.id) {
+        <li>
+          <a class="sheet-nav__link" [routerLink]="item.path" (click)="closeMore()">
+            <cb-icon [name]="item.icon" />
+            <span>{{ item.label }}</span>
+          </a>
+
+          @if (item.children.length) {
+            <ul class="sheet-nav__children">
+              @for (child of item.children; track child.id) {
+                <li>
+                  <a class="sheet-nav__link" [routerLink]="child.path" (click)="closeMore()">
+                    <cb-icon [name]="child.icon" />
+                    <span>{{ child.label }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  </cb-bottom-sheet>
+}

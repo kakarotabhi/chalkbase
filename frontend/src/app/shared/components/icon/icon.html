@@ -1,0 +1,28 @@
+<svg
+  [attr.width]="size()"
+  [attr.height]="size()"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  @for (rect of glyph().rects ?? []; track $index) {
+    <svg:rect
+      [attr.x]="rect.x"
+      [attr.y]="rect.y"
+      [attr.width]="rect.width"
+      [attr.height]="rect.height"
+      [attr.rx]="rect.rx"
+    />
+  }
+  @for (circle of glyph().circles ?? []; track $index) {
+    <svg:circle [attr.cx]="circle.cx" [attr.cy]="circle.cy" [attr.r]="circle.r" />
+  }
+  @for (path of glyph().paths ?? []; track $index) {
+    <svg:path [attr.d]="path" />
+  }
+</svg>

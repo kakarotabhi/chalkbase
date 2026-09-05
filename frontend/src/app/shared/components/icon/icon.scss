@@ -1,0 +1,8 @@
+:host {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  // Icons sit beside text and take its colour, so a disabled or muted parent dims them with it.
+  color: inherit;
+}

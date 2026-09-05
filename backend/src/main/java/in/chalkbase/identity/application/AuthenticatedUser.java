@@ -1,5 +1,6 @@
 package in.chalkbase.identity.application;
 
+import in.chalkbase.identity.api.SchoolSummary;
 import in.chalkbase.platform.security.AccessScope;
 import java.io.Serializable;
 import java.security.Principal;
@@ -15,6 +16,11 @@ import java.util.UUID;
  * session, which Spring Session serialises into {@code public.spring_session_attributes}.
  *
  * <p>Carries the schema as well as the id: a user id is only meaningful inside one school's schema.
+ * It carries the school's code and name too, which are not the same thing — the schema says where
+ * this user's rows live, the {@link SchoolSummary} says what to put on screen. Keeping the second
+ * here means {@code /api/me} can name the school without reading {@code public.school} on a call
+ * ADR-0008 makes the hottest path in the application, and a school cannot be renamed out from under
+ * a running session.
  *
  * <p>It also carries {@link EffectiveAccess} — the permissions and scopes resolved once at login
  * (ADR-0005). <strong>This is the session cache</strong>: the principal is part of the security
@@ -23,7 +29,8 @@ import java.util.UUID;
  * authorities the filter chain actually checks. Invalidating it is invalidating the session, which
  * is what a role change or a forced logout already does.
  */
-public record AuthenticatedUser(UUID userId, String username, String schema, EffectiveAccess access)
+public record AuthenticatedUser(
+        UUID userId, String username, String schema, SchoolSummary school, EffectiveAccess access)
         implements Principal, Serializable {
 
     public AuthenticatedUser {
