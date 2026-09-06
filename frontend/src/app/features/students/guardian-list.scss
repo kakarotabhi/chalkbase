@@ -1,0 +1,252 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-lede,
+.page-status,
+.muted,
+.guardian__count,
+.editor__warning,
+.paging__position,
+.guardian__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.filters {
+  margin-bottom: var(--cb-space-4);
+  max-width: 32rem;
+}
+
+/**
+ * The live region. Always in the DOM, so a change to it is announced rather than being a region
+ * that appears — an assistive technology has to have been watching it beforehand.
+ */
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The editor ─────────────────────────────────────────────────────────────
+
+.editor {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.editor__warning {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+}
+
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editor__field--wide {
+  @include from-medium {
+    grid-column: 1 / -1;
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-start;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+.guardians {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  max-width: 60rem;
+  list-style: none;
+}
+
+.guardian {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.guardian__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+}
+
+.guardian__name {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.guardian__count {
+  font-size: var(--cb-font-size-sm);
+}
+
+.guardian__contact {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: var(--cb-space-3) 0;
+
+  @include from-medium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.guardian__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-sm);
+  }
+}
+
+// A phone number is read digit by digit off a screen at a counter.
+.guardian__number {
+  font-family: var(--cb-font-numeric);
+}
+
+// An email address is one long unbroken token: it wraps inside its own box, or the page scrolls
+// sideways, which ADR-0010 does not allow.
+.guardian__wrap {
+  overflow-wrap: anywhere;
+}
+
+.guardian__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-2);
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paging__position {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.paging__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}

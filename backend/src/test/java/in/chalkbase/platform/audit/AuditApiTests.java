@@ -170,6 +170,43 @@ class AuditApiTests {
                 .isEqualTo(librarian);
     }
 
+    /**
+     * A refused search must not write what was searched for into the audit log.
+     *
+     * <p>A denial records the endpoint, and the endpoint of a search carries the search term:
+     * {@code GET /api/students?q=Meera} names a child. Every list endpoint in the product filters
+     * by something a person typed, and on the student and guardian lists that something is
+     * Confidential under ADR-0014 — a name, an admission number, a parent's phone number.
+     *
+     * <p>{@code CurrentRequest.endpoint()} uses {@code getRequestURI()}, which excludes the query
+     * string, so this holds today. It is one plausible "improvement" away from not holding —
+     * {@code getRequestURL()} plus the query string reads like a more useful audit entry and would
+     * quietly turn the log into a record of everything anyone has ever searched for. This test is
+     * what stops that being a silent change.
+     */
+    @Test
+    void neverRecordsTheQueryStringOfARefusedRequest() throws Exception {
+        UUID librarian = createAccount(WILLOWBANK_SCHEMA, "librarian", "Farida Khan");
+        grant(WILLOWBANK_SCHEMA, librarian, "LIBRARIAN");
+        Cookie session = signIn(WILLOWBANK_CODE, "librarian");
+        jdbc.sql("delete from " + WILLOWBANK_SCHEMA + ".audit_event").update();
+
+        mockMvc.perform(get("/api/audit")
+                        .param("action", "SOMETHING_SENSITIVE")
+                        .param("actorId", UUID.randomUUID().toString())
+                        .cookie(session))
+                .andExpect(status().isForbidden());
+
+        String recorded = jdbc.sql("select entity_id from " + WILLOWBANK_SCHEMA + ".audit_event"
+                        + " where action = ? and outcome = 'DENIED'")
+                .param(AuditAction.PERMISSION_DENIED)
+                .query(String.class)
+                .single();
+
+        assertThat(recorded).isEqualTo("GET /api/audit");
+        assertThat(recorded).doesNotContain("?").doesNotContain("SOMETHING_SENSITIVE");
+    }
+
     // ── Reading ──────────────────────────────────────────────────────────────────────────────
 
     @Test

@@ -1,0 +1,249 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+:host {
+  display: block;
+}
+
+.attach {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.attach__heading {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.attach__lede,
+.attach__status,
+.attach__hint,
+.result__count,
+.result__contact,
+.chosen__note {
+  color: var(--cb-text-muted);
+}
+
+.attach__lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.attach__status {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+}
+
+.attach__hint {
+  margin: var(--cb-space-1) 0 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.attach__search {
+  margin-bottom: var(--cb-space-4);
+  max-width: 32rem;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── The results ────────────────────────────────────────────────────────────
+
+/**
+ * The existing guardians, listed before anything is typed.
+ *
+ * Capped and scrolled inside its own box rather than growing the page: the panel sits inside a
+ * record that already has guardians and enrolments below it, and a list that pushed those off
+ * screen would make "choose one of these" feel like leaving the page. The page itself never scrolls
+ * sideways (ADR-0010) and this does not change that.
+ */
+.results {
+  display: grid;
+  gap: var(--cb-space-2);
+  max-height: 22rem;
+  overflow-y: auto;
+  margin: 0 0 var(--cb-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-2);
+  padding: var(--cb-space-3);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-sm);
+}
+
+// Already on this child: still shown, because hiding them would make somebody wonder whether the
+// search is working and reach for "add a new one".
+.result--linked {
+  background: var(--cb-surface);
+}
+
+.result__who {
+  min-width: 0;
+}
+
+.result__name {
+  display: block;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.result__count {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.result__contact {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.result__phone + .result__occupation::before {
+  content: ' · ';
+}
+
+.result__already {
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+}
+
+/**
+ * The one moment when creating a guardian is the right answer: a search that ran and matched
+ * nobody. Tinted so it reads as the next step rather than as an error.
+ */
+.nobody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-info-surface);
+  color: var(--cb-info);
+}
+
+.nobody__line {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.attach__create {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+/// A text button: it changes what this panel shows rather than navigating, and it is deliberately
+/// quieter than the list above it.
+.linklike {
+  min-height: var(--cb-touch-target-min);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--cb-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+
+  &:disabled {
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+// ── The chosen guardian ────────────────────────────────────────────────────
+
+.chosen {
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+}
+
+.chosen__name {
+  display: block;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.chosen__count,
+.chosen__line {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.chosen__note {
+  margin: var(--cb-space-2) 0 0;
+  font-size: var(--cb-font-size-sm);
+  color: inherit;
+}
+
+// ── The two forms ──────────────────────────────────────────────────────────
+
+.attach__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.attach__field--wide {
+  @include from-medium {
+    grid-column: 1 / -1;
+  }
+}
+
+.attach__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}

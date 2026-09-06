@@ -9,7 +9,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
-| `student` | students, guardians, documents, alumni | `/api/students` | yes | planned |
+| `student` | `student`, `guardian`, `student_guardian`, `student_enrolment` (per tenant); documents and alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians and enrolment built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
 | `academics` | `academic_session`, `school_class`, `section` (per tenant); subjects, timetable and syllabus still planned | `/api/academics/**` | yes | sessions and classes built |
 | `attendance` | student and staff attendance | `/api/attendance` | yes | planned |
@@ -56,6 +56,13 @@ importing the other. Each is a `@Bean` inside the module, collected by the platf
 | `NavigationProvider` | where this module's screens sit in the menu | e.g. `SchoolNavigation` |
 | `ConstraintMappingProvider` | how this module's database constraints read to a user | e.g. `SchoolConstraintMappings` |
 | `AuditActorResolver` | who is acting, for the audit log's actor snapshot | `IdentityAuditActorResolver` |
+
+The first dependency between two **feature** modules is `student` → `academics`, and it goes through
+a named interface rather than a package import: `academics.api.AcademicsLookup` answers "which
+session is current", "what class is this section in". It is read-only by design — a module that
+needs the academic structure *changed* asks a person, not another module. `student_enrolment` holds
+`academic_session_id` and `section_id` as plain UUIDs rather than JPA associations, so the foreign
+keys live in the database and the Java coupling does not exist at all.
 
 Navigation adds one rule worth knowing: a module contributes a screen to **another** module's
 section by declaring it at the top level under its dotted id — `school` declares `settings.profile`

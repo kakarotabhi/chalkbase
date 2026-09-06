@@ -1,0 +1,357 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  // One line of context is not worth the vertical space on a 360px screen, where the navigation
+  // already says where you are.
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-lede,
+.page-status,
+.muted,
+.gender,
+.session,
+.cell__label,
+.paging__position {
+  color: var(--cb-text-muted);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+
+.filters {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 52rem;
+  }
+
+  @include from-expanded {
+    // The search box is the control this screen is actually used through, so it gets the room.
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+}
+
+.filters__search {
+  @include from-medium {
+    grid-column: 1 / -1;
+  }
+
+  @include from-expanded {
+    grid-column: auto;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  // The one action on the screen: full width where the screen is a thumb wide.
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+.panel {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+// Cards first, a table from expanded up (ADR-0010). The same elements do both: `display` switches
+// at the breakpoint rather than a second copy of every row being rendered and hidden.
+.list__table {
+  display: block;
+  width: 100%;
+}
+
+.list__caption {
+  @include visually-hidden;
+}
+
+.list__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name status'
+    'admission admission'
+    'placement roll';
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--name {
+  grid-area: name;
+}
+
+.cell--status {
+  grid-area: status;
+  text-align: right;
+}
+
+.cell--admission {
+  grid-area: admission;
+}
+
+.cell--placement {
+  grid-area: placement;
+}
+
+.cell--roll {
+  grid-area: roll;
+  text-align: right;
+}
+
+.cell__label {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+/// The name, and the way into the record. A link because it navigates — the whole row is not one,
+/// so the card can hold a status badge and a roll number without them all being link text.
+.name {
+  display: inline-block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-1) 0;
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.gender {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+// Admission and roll numbers line up in a column when they are tabular figures, which is the one
+// thing anybody scanning a class list is doing with them.
+.admission,
+.roll {
+  font-family: var(--cb-font-numeric);
+}
+
+.placement {
+  font-weight: 600;
+}
+
+.session {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.status {
+  display: inline-block;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status--active {
+  background: var(--cb-success-surface);
+  color: var(--cb-success);
+}
+
+// The three ways a student leaves. Not danger — none of them is a fault, and colouring "Graduated"
+// red would say something about a child that the school does not mean.
+.status--transferred,
+.status--graduated,
+.status--withdrawn {
+  background: var(--cb-info-surface);
+  color: var(--cb-info);
+}
+
+.status--inactive {
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paging__position {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.paging__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The table, from expanded up ────────────────────────────────────────────
+
+@include from-expanded {
+  .list {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .list__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .list__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-top: 1px solid var(--cb-border);
+    vertical-align: top;
+  }
+
+  .cell--status,
+  .cell--roll {
+    text-align: left;
+  }
+
+  .cell--admission {
+    white-space: nowrap;
+  }
+
+  // The head says it; repeating it in every cell would be noise.
+  .cell__label {
+    @include visually-hidden;
+  }
+
+  .name {
+    min-height: 0;
+    padding: 0;
+  }
+}

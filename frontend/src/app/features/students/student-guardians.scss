@@ -1,0 +1,193 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+:host {
+  display: block;
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-3);
+}
+
+.section__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.section__status,
+.guardian__relation,
+.guardian__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.section__status {
+  margin: 0;
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+cb-guardian-attach {
+  display: block;
+  margin-bottom: var(--cb-space-4);
+}
+
+/// Somebody is on the record but nobody is the main contact — a gap in the answer to "who do we
+/// ring", so a warning tone rather than a neutral one.
+.no-primary {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-2);
+  margin: 0 0 var(--cb-space-3);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+  font-size: var(--cb-font-size-sm);
+
+  svg {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+.guardians {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guardian {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+/// The main contact, marked three ways so no one of them has to carry it: a tinted surface, a rule
+/// down the leading edge that survives a black-and-white printout, and the badge that says the word.
+.guardian--primary {
+  background: var(--cb-primary-surface);
+  border-color: var(--cb-primary);
+  border-inline-start: 4px solid var(--cb-primary);
+}
+
+.guardian__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+}
+
+.guardian__name {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.guardian__relation {
+  font-size: var(--cb-font-size-sm);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-primary);
+  color: var(--cb-primary-contrast);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.guardian__contact {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: var(--cb-space-3) 0;
+
+  @include from-medium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.guardian__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-sm);
+  }
+}
+
+// A phone number is read digit by digit off a screen at a counter, so it gets the tabular face.
+.guardian__number {
+  font-family: var(--cb-font-numeric);
+}
+
+// An email address is one long unbroken token: it wraps inside its own box, or the page scrolls
+// sideways, which ADR-0010 does not allow.
+.guardian__wrap {
+  overflow-wrap: anywhere;
+}
+
+.guardian__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-2);
+}
+
+// ── The relation editor, in place in the row ───────────────────────────────
+
+.link-form__heading {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.link-form__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+}
+
+.link-form__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}

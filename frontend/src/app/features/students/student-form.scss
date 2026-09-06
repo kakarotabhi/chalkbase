@@ -1,0 +1,64 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+:host {
+  display: block;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+/**
+ * One column on a phone (ADR-0010), two from tablet portrait up.
+ *
+ * `minmax(0, 1fr)` because a grid track's default minimum is its content, and a date input on
+ * Android is wider than it looks.
+ */
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// The name is the longest thing on the form and the one most often mis-read when it wraps, so it
+// takes the full width wherever there is more than one column.
+.editor__field--wide {
+  @include from-medium {
+    grid-column: 1 / -1;
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-start;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}

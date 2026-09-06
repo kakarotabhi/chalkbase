@@ -365,3 +365,206 @@ export interface UpdateSectionRequest {
   readonly name: string;
   readonly active: boolean;
 }
+
+/* ── Students and guardians (ADR-0020) ───────────────────────────────────── */
+
+/**
+ * Everything in this section is **Confidential** under ADR-0014: a child's name, their date of
+ * birth, their admission number, and a guardian's phone number and address. None of it may reach a
+ * log, an analytics call, or a URL this app constructs. `?q=` is the one exception and it is not
+ * really one — it is a search box the user typed into, and typing it was their choice.
+ */
+
+/** As recorded on the documents the school is held to. A closed set on the backend. */
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
+
+/**
+ * Where a student stands with the school.
+ *
+ * This field is how a school records that somebody left (ADR-0020 §6) — there is no delete, and
+ * nothing in this app may offer one. Fees, attendance and marks all point at a student, and a
+ * school that removed one would leave those pointing at nothing.
+ */
+export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'TRANSFERRED' | 'GRADUATED' | 'WITHDRAWN';
+
+/** What a guardian is to a student. Carried by the link, not by the guardian (ADR-0020 §5). */
+export type GuardianRelation = 'FATHER' | 'MOTHER' | 'GUARDIAN' | 'LOCAL_GUARDIAN' | 'OTHER';
+
+/**
+ * Where a student sits right now — the answer to the question the office is actually asking.
+ *
+ * Names rather than ids, because a list row shows them and nothing on a list navigates by class.
+ * Null on a student who has been admitted but not yet enrolled, which is a real state between
+ * admission and the class lists settling, not a data fault.
+ */
+export interface CurrentEnrolment {
+  readonly sessionName: string;
+  readonly className: string;
+  readonly sectionName: string;
+  /** Assigned after admission, so absent for longer than you would think (ADR-0020 §4). */
+  readonly rollNumber?: string;
+}
+
+/**
+ * One row of the student list.
+ *
+ * ## One name field, not three
+ *
+ * `fullName` is the name as it appears on the records the school will be held to, and there is no
+ * first/middle/last split to reassemble (ADR-0020 §1). A great many Indian students have no
+ * surname; a required "Last name" box forces a clerk to invent one, and what they invent goes on
+ * the certificate. Nothing in this app may sort by, group by, or display a surname, because there
+ * is not one.
+ */
+export interface StudentSummary {
+  readonly id: string;
+  readonly admissionNumber: string;
+  readonly fullName: string;
+  readonly gender: Gender;
+  readonly status: StudentStatus;
+  /** Absent for a student who has been admitted but is not in a class yet — a real state. */
+  readonly currentEnrolment?: CurrentEnrolment;
+}
+
+/**
+ * One guardian as seen from a student — the link and the person in one shape.
+ *
+ * `linkId` addresses the link and `guardianId` addresses the person, and the difference is the
+ * whole of ADR-0020 §5. Ending the link detaches this guardian from this child; the guardian
+ * record survives, because their other children still point at it.
+ */
+export interface StudentGuardian {
+  /** The `student_guardian` row. What `PUT`/`DELETE …/guardians/{linkId}` addresses. */
+  readonly linkId: string;
+  /** The person. Shared with every sibling at this school. */
+  readonly guardianId: string;
+  readonly fullName: string;
+  readonly relation: GuardianRelation;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly occupation?: string;
+  /** At most one per student. The server clears the previous one when a new one is set. */
+  readonly primary: boolean;
+}
+
+/**
+ * One year of a student's schooling.
+ *
+ * Its own record, and it is what carries the session (ADR-0020 §4) — so promotion is a new row
+ * rather than an edit, and a student's history is readable without an audit log. At most one
+ * enrolment per session is `active`.
+ */
+export interface Enrolment {
+  readonly id: string;
+  readonly sessionId: string;
+  readonly sessionName: string;
+  readonly classId: string;
+  readonly className: string;
+  readonly sectionId: string;
+  readonly sectionName: string;
+  /** Absent until assigned, which is often after the class list settles (ADR-0020 §4). */
+  readonly rollNumber?: string;
+  readonly active: boolean;
+  /** `yyyy-MM-dd`. */
+  readonly enrolledOn: string;
+}
+
+/** The whole record: the summary, the two dates, the guardians and the enrolment history. */
+export interface StudentDetail extends StudentSummary {
+  /** `yyyy-MM-dd`, in the past. Confidential — never a URL parameter, never a log line. */
+  readonly dateOfBirth: string;
+  /** `yyyy-MM-dd`. Nullable in the database, so absent on a record where nobody recorded it. */
+  readonly admittedOn?: string;
+  /**
+   * Read these with `?? []`.
+   *
+   * An empty list serialises as `[]` rather than being dropped, so in practice they are here — but
+   * the cost of being wrong is a `TypeError` from `.map` on the one record that disagrees, and the
+   * cost of being careful is two characters.
+   */
+  readonly guardians?: readonly StudentGuardian[];
+  readonly enrolments?: readonly Enrolment[];
+}
+
+/**
+ * Creating or replacing a student.
+ *
+ * Deliberately not here: guardians and enrolments. Both are their own records with their own
+ * endpoints, and folding them into this body would make "fix a spelling in a name" a request that
+ * could also silently move a child to a different class.
+ */
+export interface SaveStudentRequest {
+  /** ≤ 40, required, unique within this school (ADR-0020 §3). */
+  readonly admissionNumber: string;
+  /** ≤ 200, required. One field — see `StudentSummary`. */
+  readonly fullName: string;
+  /** `yyyy-MM-dd`, required, in the past. */
+  readonly dateOfBirth: string;
+  readonly gender: Gender;
+  readonly status: StudentStatus;
+  /** `yyyy-MM-dd`. Optional: it is nullable, so an unknown admission date is simply not sent. */
+  readonly admittedOn?: string;
+}
+
+/** Putting a student into a section for a session. Roll number is optional and often unknown. */
+export interface CreateEnrolmentRequest {
+  readonly academicSessionId: string;
+  readonly sectionId: string;
+  readonly rollNumber: string | null;
+}
+
+/**
+ * Correcting an enrolment: the section, the roll number, whether it still stands.
+ *
+ * The session is absent on purpose — it is what the enrolment *is*, so changing it would be a
+ * different enrolment. Moving a student to the next year is a new record (ADR-0020 §4).
+ */
+export interface UpdateEnrolmentRequest {
+  readonly sectionId: string;
+  readonly rollNumber: string | null;
+  readonly active: boolean;
+}
+
+/**
+ * One guardian as a person, with how many children at this school point at them.
+ *
+ * `linkedStudentCount` is the number that makes the shared model visible: a father with four
+ * children here is one record showing "4", and correcting his phone number corrects it for all
+ * four. A screen that let someone create a fifth copy of him would silently lose that.
+ */
+export interface GuardianSummary {
+  readonly id: string;
+  readonly fullName: string;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly occupation?: string;
+  readonly linkedStudentCount: number;
+}
+
+/** Creating or replacing a guardian record. The relationship is not here — it is on the link. */
+export interface SaveGuardianRequest {
+  readonly fullName: string;
+  readonly phone: string;
+  readonly email: string;
+  readonly occupation: string;
+}
+
+/**
+ * Linking a guardian that already exists to a student.
+ *
+ * There is no "create a guardian and link them" endpoint, and that is the model working as
+ * intended: the guardian has to be found or created as a person first, so siblings end up sharing
+ * one record instead of each holding a copy (ADR-0020 §5).
+ */
+export interface LinkGuardianRequest {
+  readonly guardianId: string;
+  readonly relation: GuardianRelation;
+  /** Setting this clears the previous primary for this student, server-side, in one transaction. */
+  readonly primary: boolean;
+}
+
+/** Correcting a link: what this person is to this child, and whether they are the main contact. */
+export interface UpdateStudentGuardianRequest {
+  readonly relation: GuardianRelation;
+  readonly primary: boolean;
+}

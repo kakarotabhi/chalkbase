@@ -75,6 +75,10 @@ class MeApiTests {
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String CLASS_READ = "academics:class:read";
     private static final String CLASS_MANAGE = "academics:class:manage";
+    private static final String STUDENT_READ = "student:student:read";
+    private static final String STUDENT_MANAGE = "student:student:manage";
+    private static final String GUARDIAN_READ = "student:guardian:read";
+    private static final String GUARDIAN_MANAGE = "student:guardian:manage";
 
     /**
      * Anything that would make a navigation node say <em>where</em> to go rather than <em>what</em>
@@ -169,21 +173,31 @@ class MeApiTests {
                                 SESSION_MANAGE,
                                 CLASS_READ,
                                 CLASS_MANAGE,
+                                STUDENT_READ,
+                                STUDENT_MANAGE,
+                                GUARDIAN_READ,
+                                GUARDIAN_MANAGE,
                                 USER_READ,
                                 ROLE_MANAGE)))
                 .andExpect(jsonPath("$.data.navigation[0].id").value("schools"))
                 .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.schools"))
-                // The academics container, between the register (20) and settings (90). It has no
-                // screen of its own; both of its children are declared inline by the module that
-                // owns them, which is what makes it a container rather than a leaf.
-                .andExpect(jsonPath("$.data.navigation[1].id").value("academics"))
-                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("academics.sessions"))
-                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("academics.classes"))
-                .andExpect(jsonPath("$.data.navigation[2].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("settings.access"))
+                // The students container at 25, between the register (20) and academics (30):
+                // the class ladder is set up once and revisited rarely, the student list is opened
+                // every day. Both of its children are declared inline by the module that owns them.
+                .andExpect(jsonPath("$.data.navigation[1].id").value("students"))
+                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("students.all"))
+                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("students.guardians"))
+                // The academics container. It has no screen of its own; both of its children are
+                // declared inline by the module that owns them, which is what makes it a container
+                // rather than a leaf.
+                .andExpect(jsonPath("$.data.navigation[2].id").value("academics"))
+                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
+                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
+                .andExpect(jsonPath("$.data.navigation[3].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("settings.access"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees both children.
-                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
@@ -191,7 +205,7 @@ class MeApiTests {
                 // permission the caller holds, so sending it would only invite a second copy of the
                 // authorization model on the client (ADR-0008).
                 .andExpect(jsonPath("$.data.navigation[0].requiredPermission").doesNotExist())
-                .andExpect(jsonPath("$.data.navigation[2].children[0].requiredPermission")
+                .andExpect(jsonPath("$.data.navigation[3].children[0].requiredPermission")
                         .doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
     }
@@ -301,25 +315,34 @@ class MeApiTests {
      * It identifies the permission set and nothing else. Two different roles that happen to grant
      * the same thing are the same version — including across schools, because "which permissions"
      * is not "whose".
+     *
+     * <p><strong>The two roles are made here rather than picked from the shipped templates.</strong>
+     * This test previously leaned on two templates that happened to grant identical sets, and it
+     * broke twice — each time a slice widened one of them and not the other, which is a true change
+     * to the product and a false failure here. Roles are data (ADR-0005), so a test that needs two
+     * roles granting the same thing can simply make two, and then says what it means for as long as
+     * the hash does.
      */
     @Test
     void isTheSameVersionForTwoUsersHoldingTheSamePermissions() throws Exception {
-        createAccount(ORCHARD_SCHEMA, "classteacher", "Priya Menon");
-        grant(ORCHARD_SCHEMA, "classteacher", "CLASS_TEACHER");
-        createAccount(ORCHARD_SCHEMA, "subjectteacher", "Farida Khan");
-        grant(ORCHARD_SCHEMA, "subjectteacher", "SUBJECT_TEACHER");
-        createAccount(MEADOW_SCHEMA, "subjectteacher", "Nisha Kurup");
-        grant(MEADOW_SCHEMA, "subjectteacher", "SUBJECT_TEACHER");
+        // Two differently named roles, deliberately granting exactly the same one permission.
+        createRole(ORCHARD_SCHEMA, "MORNING_TUTOR", SCHOOL_READ);
+        createRole(ORCHARD_SCHEMA, "EVENING_TUTOR", SCHOOL_READ);
+        createRole(MEADOW_SCHEMA, "MORNING_TUTOR", SCHOOL_READ);
 
-        String classTeacher = versionOf(bootstrap(ORCHARD_CODE, "classteacher"));
-        String subjectTeacher = versionOf(bootstrap(ORCHARD_CODE, "subjectteacher"));
-        String teacherElsewhere = versionOf(bootstrap(MEADOW_CODE, "subjectteacher"));
+        createAccount(ORCHARD_SCHEMA, "morning", "Priya Menon");
+        grant(ORCHARD_SCHEMA, "morning", "MORNING_TUTOR");
+        createAccount(ORCHARD_SCHEMA, "evening", "Farida Khan");
+        grant(ORCHARD_SCHEMA, "evening", "EVENING_TUTOR");
+        createAccount(MEADOW_SCHEMA, "morning", "Nisha Kurup");
+        grant(MEADOW_SCHEMA, "morning", "MORNING_TUTOR");
 
-        // The class teacher and the subject teacher are two different roles granting the same three
-        // permissions — school:school:read plus the two academics reads — and the third is that set
-        // held at another school entirely.
-        assertThat(subjectTeacher).isEqualTo(classTeacher);
-        assertThat(teacherElsewhere).isEqualTo(classTeacher);
+        String morning = versionOf(bootstrap(ORCHARD_CODE, "morning"));
+        String evening = versionOf(bootstrap(ORCHARD_CODE, "evening"));
+        String elsewhere = versionOf(bootstrap(MEADOW_CODE, "morning"));
+
+        assertThat(evening).as("two different roles granting the same set").isEqualTo(morning);
+        assertThat(elsewhere).as("the same set held at another school").isEqualTo(morning);
     }
 
     @Test
@@ -512,6 +535,21 @@ class MeApiTests {
                 .param(username)
                 .query(UUID.class)
                 .single();
+    }
+
+    /** A role this test owns, so the assertion does not depend on two shipped templates matching. */
+    private void createRole(String schema, String code, String... permissions) {
+        UUID roleId = UUID.randomUUID();
+        jdbc.sql("insert into " + schema + ".role (id, code, name, description, template_code)"
+                        + " values (?, ?, ?, 'Made by a test', null)")
+                .params(roleId, code, code)
+                .update();
+        for (String permission : permissions) {
+            jdbc.sql("insert into " + schema + ".role_permission (role_id, permission_code) values (?, ?)"
+                            + " on conflict do nothing")
+                    .params(roleId, permission)
+                    .update();
+        }
     }
 
     private UUID roleId(String schema, String code) {

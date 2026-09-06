@@ -1,0 +1,223 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+:host {
+  display: block;
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.section__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.section__lede,
+.section__status,
+.editor__hint,
+.editor__fixed-label,
+.muted,
+.enrolment__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.section__lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.section__status {
+  margin: 0;
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── The editor ─────────────────────────────────────────────────────────────
+
+.editor {
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/// The session on an enrolment being corrected: shown, never editable. Styled as a field so the
+/// row reads as part of the form rather than as a stray sentence above it.
+.editor__fixed {
+  margin: 0;
+}
+
+.editor__fixed-label {
+  display: block;
+  margin-bottom: var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+}
+
+.editor__fixed-value {
+  display: block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-3) 0;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.editor__active {
+  @include from-medium {
+    grid-column: 1 / -1;
+  }
+}
+
+.editor__hint {
+  margin: var(--cb-space-1) 0 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The history ────────────────────────────────────────────────────────────
+
+.enrolments {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enrolment {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+/// Where the student sits now. Tint, edge rule and badge, so no single signal carries it.
+.enrolment--active {
+  background: var(--cb-primary-surface);
+  border-color: var(--cb-primary);
+  border-inline-start: 4px solid var(--cb-primary);
+}
+
+.enrolment__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+}
+
+.enrolment__session {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-primary);
+  color: var(--cb-primary-contrast);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// An ended year is not a failure and is not coloured like one.
+.badge--past {
+  background: var(--cb-surface);
+  color: var(--cb-text-muted);
+  border: 1px solid var(--cb-border);
+}
+
+.enrolment__placement {
+  margin: var(--cb-space-1) 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+}
+
+.enrolment__facts {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: 0 0 var(--cb-space-3);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.enrolment__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-sm);
+  }
+}
+
+// Roll numbers are scanned down a column on a class list, which is what tabular figures are for.
+.enrolment__number {
+  font-family: var(--cb-font-numeric);
+}
+
+.enrolment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-2);
+}

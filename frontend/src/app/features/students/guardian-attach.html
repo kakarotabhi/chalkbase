@@ -1,0 +1,436 @@
+<section class="attach" aria-labelledby="guardian-attach-heading">
+  <h3 class="attach__heading" id="guardian-attach-heading">Add a guardian</h3>
+
+  <!--
+    Said at the top, before anything is typed, because it is the reason the search comes first.
+    A clerk who does not know that guardians are shared has no way to tell that adding a second
+    "Suresh Kumar" costs anything — and by the time anybody notices, four of his children have
+    four phone numbers that disagree (ADR-0020 §5).
+  -->
+  <p class="attach__lede">
+    A guardian is one record shared by all their children here. Search for them first — if they
+    already have a child at this school, use the same record, and correcting their phone number once
+    corrects it for every one of their children.
+  </p>
+
+  @if (step() === 'search') {
+    <!--
+      `(submit)`, not `(ngSubmit)`: there is no `formGroup` on this element, so no
+      `FormGroupDirective` exists to emit `ngSubmit` — the binding would silently never fire and
+      Enter in the search box would submit the form natively and reload the whole page.
+    -->
+    <form class="attach__search" (submit)="$event.preventDefault()">
+      <cb-form-field
+        #searchField
+        label="Search guardians already at this school"
+        controlId="guardian-search"
+        hint="Name, phone number or email."
+      >
+        <!-- `autocomplete="off"`: see the class comment. This is a counter machine. -->
+        <cb-text-input
+          [formControl]="search"
+          autocomplete="off"
+          placeholder="Search guardians"
+          [id]="searchField.controlId()"
+          [describedBy]="searchField.describedById()"
+        />
+      </cb-form-field>
+    </form>
+
+    @if (searchForbidden()) {
+      <div class="banner banner--info" role="status">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">You do not have permission to view guardians</strong>
+          <span>Ask your principal to add "View guardians" to your role.</span>
+        </div>
+      </div>
+    } @else if (searchFailed()) {
+      <div class="banner banner--danger" role="alert">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">Could not search the guardians</strong>
+          <!--
+            Deliberately not offering "add a new one" as the way out of a failed search: a search
+            that did not run has not established that anybody is missing, and taking that exit
+            creates the duplicate.
+          -->
+          <span>
+            Try again before adding anybody — until this list loads there is no way to tell whether
+            the guardian is already here.
+          </span>
+          <p class="banner__action">
+            <cb-button variant="secondary" (click)="retrySearch()">Try again</cb-button>
+          </p>
+        </div>
+      </div>
+    } @else if (searching()) {
+      <p class="attach__status" role="status">Searching guardians…</p>
+    } @else if (foundNobody()) {
+      <!--
+        The one moment when creating is the right answer, so it is said plainly and offered by
+        name. Everywhere else it is the quieter option below the list.
+      -->
+      <div class="nobody">
+        @if (searchText()) {
+          <p class="nobody__line">
+            No guardian here matches <strong>{{ searchText() }}</strong
+            >.
+          </p>
+        } @else {
+          <p class="nobody__line">There are no guardians at this school yet.</p>
+        }
+        <cb-button (click)="startCreate()">Add a new guardian</cb-button>
+      </div>
+    } @else {
+      <ul class="results">
+        @for (row of resultRows(); track row.id) {
+          <li class="result" [class.result--linked]="row.alreadyLinked">
+            <div class="result__who">
+              <span class="result__name">{{ row.fullName }}</span>
+              <!--
+                The count is the whole argument for reusing this record rather than making a new
+                one, so it is on the row and not hidden behind the guardian list.
+              -->
+              <span class="result__count">{{ row.linkedTo }}</span>
+              <span class="result__contact">
+                @if (row.phone) {
+                  <span class="result__phone">{{ row.phone }}</span>
+                }
+                @if (row.occupation) {
+                  <span class="result__occupation">{{ row.occupation }}</span>
+                }
+              </span>
+            </div>
+
+            @if (row.alreadyLinked) {
+              <span class="result__already">Already on this student</span>
+            } @else {
+              <cb-button
+                variant="secondary"
+                [id]="row.chooseButtonId"
+                [disabled]="busy()"
+                (click)="choose(row)"
+              >
+                Choose
+              </cb-button>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (moreThanShown(); as note) {
+        <p class="attach__status" role="status">{{ note }}</p>
+      }
+
+      <!--
+        Present, always, and quieter than the list above it. A family whose first child is being
+        admitted is a real case, and hiding this would make the screen dishonest in the other
+        direction — but it is the second thing on the page, not the first.
+      -->
+      <p class="attach__create">
+        Not one of these?
+        <button type="button" class="linklike" [disabled]="busy()" (click)="startCreate()">
+          Add a new guardian
+        </button>
+      </p>
+    }
+
+    <div class="attach__actions">
+      <cb-button variant="secondary" (click)="cancel()">Cancel</cb-button>
+    </div>
+  } @else if (step() === 'link') {
+    @if (chosen(); as guardian) {
+      <div class="chosen">
+        <span class="chosen__name">{{ guardian.fullName }}</span>
+        <span class="chosen__count">{{ chosenLinkedTo() }}</span>
+        @if (guardian.phone) {
+          <span class="chosen__line">{{ guardian.phone }}</span>
+        }
+        @if (guardian.email) {
+          <span class="chosen__line">{{ guardian.email }}</span>
+        }
+        @if (guardian.occupation) {
+          <span class="chosen__line">{{ guardian.occupation }}</span>
+        }
+        <!--
+          Said here rather than left to be discovered: this is the shared person record, so editing
+          their phone number is not a per-child edit and is not offered on a per-child screen.
+        -->
+        <p class="chosen__note">
+          This is the same record their other children use. Their name and contact details are
+          edited on the Guardians screen, once, for all of them.
+        </p>
+      </div>
+
+      <form class="attach__form" [formGroup]="link" (ngSubmit)="linkChosen()" novalidate>
+        <div class="attach__fields">
+          <cb-form-field
+            #relationField
+            label="Relation to this student"
+            controlId="guardian-relation"
+            [required]="true"
+            [error]="relationError()"
+          >
+            <cb-select
+              formControlName="relation"
+              placeholder="Choose one"
+              [id]="relationField.controlId()"
+              [options]="relationOptions"
+              [describedBy]="relationField.describedById()"
+              [invalid]="relationField.hasError()"
+              [readOnly]="busy()"
+            />
+          </cb-form-field>
+
+          <cb-checkbox
+            formControlName="primary"
+            label="Main contact for this student"
+            [id]="'guardian-primary'"
+          />
+          <p class="attach__hint">
+            One guardian per student is the main contact. Ticking this moves it from whoever holds
+            it now.
+          </p>
+        </div>
+
+        @if (writeFailure(); as message) {
+          <div class="banner banner--danger" role="alert">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9.5" />
+              <path d="M12 7.5v5" />
+              <path d="M12 16.2v.1" />
+            </svg>
+            <div>
+              <strong class="banner__title">{{ message.title }}</strong>
+              <span>{{ message.detail }}</span>
+            </div>
+          </div>
+        }
+
+        <div class="attach__actions">
+          <cb-button variant="secondary" [disabled]="busy()" (click)="backToSearch()">
+            Choose someone else
+          </cb-button>
+          <cb-button type="submit" [loading]="busy()" loadingLabel="Attaching…">
+            Attach to this student
+          </cb-button>
+        </div>
+      </form>
+    }
+  } @else {
+    <p class="attach__status">
+      New guardian. If they already have a child at this school,
+      <button type="button" class="linklike" [disabled]="busy()" (click)="backToSearch()">
+        go back and search
+      </button>
+      instead — a second record for the same person is what makes phone numbers disagree.
+    </p>
+
+    <!--
+      Two groups on one form: the person, and what they are to this child. `formGroup` has to be on
+      the `<form>` itself — that directive is what turns a native submit into `ngSubmit` — and the
+      second group is bound on the block below, which `FormGroupDirective` supports because it is a
+      root binding rather than a nested control name.
+    -->
+    <form class="attach__form" [formGroup]="newGuardian" (ngSubmit)="createAndLink()" novalidate>
+      <div class="attach__fields">
+        <cb-form-field
+          #newNameField
+          class="attach__field--wide"
+          label="Full name"
+          controlId="guardian-new-name"
+          [required]="true"
+          [error]="nameError()"
+        >
+          <cb-text-input
+            formControlName="fullName"
+            autocapitalize="words"
+            autocomplete="off"
+            [id]="newNameField.controlId()"
+            [describedBy]="newNameField.describedById()"
+            [invalid]="newNameField.hasError()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #phoneField
+          label="Phone"
+          controlId="guardian-new-phone"
+          hint="The number the school will actually ring."
+          [error]="phoneError()"
+        >
+          <cb-text-input
+            formControlName="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="off"
+            [id]="phoneField.controlId()"
+            [describedBy]="phoneField.describedById()"
+            [invalid]="phoneField.hasError()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #emailField
+          label="Email"
+          controlId="guardian-new-email"
+          [error]="emailError()"
+        >
+          <cb-text-input
+            formControlName="email"
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            [id]="emailField.controlId()"
+            [describedBy]="emailField.describedById()"
+            [invalid]="emailField.hasError()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+
+        <cb-form-field #occupationField label="Occupation" controlId="guardian-new-occupation">
+          <cb-text-input
+            formControlName="occupation"
+            autocomplete="off"
+            [id]="occupationField.controlId()"
+            [describedBy]="occupationField.describedById()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+      </div>
+
+      <div class="attach__fields" [formGroup]="link">
+        <cb-form-field
+          #newRelationField
+          label="Relation to this student"
+          controlId="guardian-new-relation"
+          [required]="true"
+          [error]="relationError()"
+        >
+          <cb-select
+            formControlName="relation"
+            placeholder="Choose one"
+            [id]="newRelationField.controlId()"
+            [options]="relationOptions"
+            [describedBy]="newRelationField.describedById()"
+            [invalid]="newRelationField.hasError()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+
+        <cb-checkbox
+          formControlName="primary"
+          label="Main contact for this student"
+          [id]="'guardian-new-primary'"
+        />
+      </div>
+
+      <!--
+        The half-failure gets its own sentence. "Could not save" would send the user back to the
+        top of this form, and pressing the button again would create the person a second time —
+        which is the exact duplicate this screen exists to prevent.
+      -->
+      @if (orphanedGuardian(); as name) {
+        <div class="banner banner--danger" role="alert">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+          <div>
+            <strong class="banner__title">{{ name }} was added, but not attached</strong>
+            <span>
+              The guardian record now exists. Do not add them again — go back and search for them,
+              then attach them to this student.
+            </span>
+            <p class="banner__action">
+              <cb-button variant="secondary" (click)="backToSearch()">Back to search</cb-button>
+            </p>
+          </div>
+        </div>
+      } @else if (writeFailure(); as message) {
+        <div class="banner banner--danger" role="alert">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+          <div>
+            <strong class="banner__title">{{ message.title }}</strong>
+            <span>{{ message.detail }}</span>
+          </div>
+        </div>
+      }
+
+      <div class="attach__actions">
+        <cb-button variant="secondary" [disabled]="busy()" (click)="backToSearch()">
+          Back to search
+        </cb-button>
+        <cb-button type="submit" [loading]="busy()" loadingLabel="Adding…">
+          Add and attach
+        </cb-button>
+      </div>
+    </form>
+  }
+</section>

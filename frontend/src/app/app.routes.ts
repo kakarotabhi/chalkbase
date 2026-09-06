@@ -66,6 +66,35 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/academics/school-classes').then((m) => m.SchoolClasses),
       },
+      // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
+      // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
+      // `canActivate` checking `student:student:read` would be a second copy of it.
+      //
+      // **Order matters here.** `students/guardians` is declared before `students/:id`, because the
+      // router matches in order and `:id` would otherwise swallow the word "guardians" and try to
+      // load a student whose id is that. This is the kind of thing that works until somebody
+      // reorders the file for tidiness, so it is written down.
+      {
+        path: 'students',
+        pathMatch: 'full',
+        title: 'Students · Chalkbase',
+        loadComponent: () => import('./features/students/student-list').then((m) => m.StudentList),
+      },
+      {
+        path: 'students/guardians',
+        title: 'Guardians · Chalkbase',
+        loadComponent: () =>
+          import('./features/students/guardian-list').then((m) => m.GuardianList),
+      },
+      {
+        path: 'students/:id',
+        // "Student record", never the child's name. A title goes into the window manager, the
+        // browser history and every screenshot of this screen, and a name is Confidential
+        // (ADR-0014). The route carries a UUID for the same reason.
+        title: 'Student record · Chalkbase',
+        loadComponent: () =>
+          import('./features/students/student-detail').then((m) => m.StudentDetail),
+      },
       // Settings has no index of its own yet, so the section lands on the one screen it has. When
       // a second settings screen ships this becomes a real index and the redirect goes.
       { path: 'settings', pathMatch: 'full', redirectTo: 'settings/school-profile' },

@@ -73,6 +73,18 @@ class AccessControlTests {
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String SESSION_READ = "academics:session:read";
 
+    /**
+     * The student permissions, ordered as {@code order by permission_code} returns them — after both
+     * {@code school:} codes, because {@code sc} sorts before {@code st}. A principal now holds four
+     * more again, and the assertions below stay exact for the same reason: a release that widens a
+     * shipped template has to say so here.
+     */
+    private static final String GUARDIAN_MANAGE = "student:guardian:manage";
+
+    private static final String GUARDIAN_READ = "student:guardian:read";
+    private static final String STUDENT_MANAGE = "student:student:manage";
+    private static final String STUDENT_READ = "student:student:read";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -144,7 +156,11 @@ class AccessControlTests {
                             ROLE_MANAGE,
                             USER_READ,
                             SCHOOL_READ,
-                            SCHOOL_UPDATE);
+                            SCHOOL_UPDATE,
+                            GUARDIAN_MANAGE,
+                            GUARDIAN_READ,
+                            STUDENT_MANAGE,
+                            STUDENT_READ);
         }
     }
 
@@ -172,7 +188,17 @@ class AccessControlTests {
 
         assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL"))
                 .containsExactly(
-                        CLASS_MANAGE, CLASS_READ, SESSION_MANAGE, SESSION_READ, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+                        CLASS_MANAGE,
+                        CLASS_READ,
+                        SESSION_MANAGE,
+                        SESSION_READ,
+                        USER_READ,
+                        SCHOOL_READ,
+                        SCHOOL_UPDATE,
+                        GUARDIAN_MANAGE,
+                        GUARDIAN_READ,
+                        STUDENT_MANAGE,
+                        STUDENT_READ);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "PRINCIPAL"))
                 .containsExactly(
                         CLASS_MANAGE,
@@ -182,7 +208,11 @@ class AccessControlTests {
                         ROLE_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
-                        SCHOOL_UPDATE);
+                        SCHOOL_UPDATE,
+                        GUARDIAN_MANAGE,
+                        GUARDIAN_READ,
+                        STUDENT_MANAGE,
+                        STUDENT_READ);
 
         assertThat(permissionsOf(HILLVIEW_SCHEMA, "LIBRARIAN")).containsExactly(USER_READ, SCHOOL_READ);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "LIBRARIAN")).containsExactly(SCHOOL_READ);
@@ -200,7 +230,17 @@ class AccessControlTests {
 
         assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL"))
                 .containsExactly(
-                        CLASS_MANAGE, CLASS_READ, SESSION_MANAGE, SESSION_READ, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+                        CLASS_MANAGE,
+                        CLASS_READ,
+                        SESSION_MANAGE,
+                        SESSION_READ,
+                        USER_READ,
+                        SCHOOL_READ,
+                        SCHOOL_UPDATE,
+                        GUARDIAN_MANAGE,
+                        GUARDIAN_READ,
+                        STUDENT_MANAGE,
+                        STUDENT_READ);
         assertThat(jdbc.sql("select count(*) from " + HILLVIEW_SCHEMA + ".role")
                         .query(Integer.class)
                         .single())
@@ -217,14 +257,21 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "LIBRARIAN", "SCHOOL", null, null, null);
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
-        // school:school:read comes from all three; the two academics reads only from the class
-        // teacher grant; identity:user:read and platform:audit:read only from the auditor grant.
-        // identity:role:manage comes from none of them, and no union of allows can produce it.
+        // school:school:read comes from all three; the two academics reads and the two student
+        // reads only from the class teacher grant; identity:user:read and platform:audit:read only
+        // from the auditor grant. identity:role:manage comes from none of them, and no union of
+        // allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
                         .value(org.hamcrest.Matchers.containsInAnyOrder(
-                                SCHOOL_READ, SESSION_READ, CLASS_READ, USER_READ, AUDIT_READ)));
+                                SCHOOL_READ,
+                                SESSION_READ,
+                                CLASS_READ,
+                                STUDENT_READ,
+                                GUARDIAN_READ,
+                                USER_READ,
+                                AUDIT_READ)));
     }
 
     @Test
@@ -288,6 +335,10 @@ class AccessControlTests {
                                 SESSION_MANAGE,
                                 CLASS_READ,
                                 CLASS_MANAGE,
+                                STUDENT_READ,
+                                STUDENT_MANAGE,
+                                GUARDIAN_READ,
+                                GUARDIAN_MANAGE,
                                 USER_READ,
                                 ROLE_MANAGE)));
     }

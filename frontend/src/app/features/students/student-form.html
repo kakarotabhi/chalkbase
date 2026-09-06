@@ -1,0 +1,163 @@
+<form class="editor" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <h2 class="editor__heading">{{ heading() }}</h2>
+
+  @if (failure(); as message) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">{{ message.title }}</strong>
+        <span>{{ message.detail }}</span>
+      </div>
+    </div>
+  }
+
+  <!--
+    `autocomplete="off"` on the name and the admission number, and it is not boilerplate. These
+    forms are filled in on the machine at the front counter, and a browser that remembers what was
+    typed offers the last six children's names to the next person who clicks into the box —
+    Confidential data (ADR-0014) disclosed to somebody standing at a desk, with no request behind it
+    and no log line anywhere.
+  -->
+  <div class="editor__fields">
+    <cb-form-field
+      #admissionField
+      label="Admission number"
+      [controlId]="controlId.admissionNumber"
+      [required]="true"
+      hint="Used once at this school. Whatever is printed on the register."
+      [error]="fieldErrors().admissionNumber"
+    >
+      <cb-text-input
+        formControlName="admissionNumber"
+        autocapitalize="characters"
+        autocomplete="off"
+        [id]="admissionField.controlId()"
+        [describedBy]="admissionField.describedById()"
+        [invalid]="admissionField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <!--
+      One name field, not three (ADR-0020 §1). A required "Last name" box makes a clerk invent a
+      surname for a student who has none, and what they invent goes on the certificate. The hint
+      says what to type so nobody reformats a name to fit a shape this form is not asking for.
+    -->
+    <cb-form-field
+      #nameField
+      class="editor__field--wide"
+      label="Full name"
+      [controlId]="controlId.fullName"
+      [required]="true"
+      hint="Exactly as it appears on the student's records, in one field."
+      [error]="fieldErrors().fullName"
+    >
+      <cb-text-input
+        formControlName="fullName"
+        autocapitalize="words"
+        autocomplete="off"
+        [id]="nameField.controlId()"
+        [describedBy]="nameField.describedById()"
+        [invalid]="nameField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #dobField
+      label="Date of birth"
+      [controlId]="controlId.dateOfBirth"
+      [required]="true"
+      [error]="fieldErrors().dateOfBirth"
+    >
+      <cb-text-input
+        formControlName="dateOfBirth"
+        type="date"
+        [id]="dobField.controlId()"
+        [describedBy]="dobField.describedById()"
+        [invalid]="dobField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #genderField
+      label="Gender"
+      [controlId]="controlId.gender"
+      [required]="true"
+      [error]="fieldErrors().gender"
+    >
+      <cb-select
+        formControlName="gender"
+        placeholder="Choose one"
+        [id]="genderField.controlId()"
+        [options]="genderOptions"
+        [describedBy]="genderField.describedById()"
+        [invalid]="genderField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #admittedField
+      label="Admitted on"
+      [controlId]="controlId.admittedOn"
+      [required]="true"
+      hint="The day this student joined the school."
+      [error]="fieldErrors().admittedOn"
+    >
+      <cb-text-input
+        formControlName="admittedOn"
+        type="date"
+        [id]="admittedField.controlId()"
+        [describedBy]="admittedField.describedById()"
+        [invalid]="admittedField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <!--
+      There is no delete anywhere on these screens, deliberately (ADR-0020 §6) — this field is how a
+      school records that somebody left, and the hint says so where someone looking for a delete
+      button would be looking.
+    -->
+    <cb-form-field
+      #statusField
+      label="Status"
+      [controlId]="controlId.status"
+      [required]="true"
+      hint="A student is never removed. This is how the school records that one has left."
+      [error]="fieldErrors().status"
+    >
+      <cb-select
+        formControlName="status"
+        [id]="statusField.controlId()"
+        [options]="statusOptions"
+        [describedBy]="statusField.describedById()"
+        [invalid]="statusField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+  </div>
+
+  <div class="editor__actions">
+    <cb-button variant="secondary" [disabled]="saving()" (click)="cancel()">Cancel</cb-button>
+    <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">
+      {{ submitLabel() }}
+    </cb-button>
+  </div>
+</form>
