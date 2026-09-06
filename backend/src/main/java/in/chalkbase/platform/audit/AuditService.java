@@ -103,7 +103,50 @@ public class AuditService {
                         + " if this one was not, the change itself went to `public`."));
 
         AuditEvent event = build(
-                action, AuditOutcome.SUCCESS, entityType, entityId, fieldNames(changedFields), currentActor(schema));
+                action,
+                AuditOutcome.SUCCESS,
+                entityType,
+                entityId,
+                fieldNames(changedFields),
+                currentActor(schema),
+                null);
+        writer.writeJoiningCaller(event);
+    }
+
+    /**
+     * Records one bulk action — an import, a mass promotion — as a single event carrying how many
+     * records it touched.
+     *
+     * <p>One row, not one per record. Six hundred {@code ENTITY_CREATED} rows would bury every
+     * other thing that happened that day in the one log a principal reads to find out what happened
+     * that day, and the individual records are recoverable from their own {@code created_at}
+     * anyway.
+     *
+     * <p>{@code recordCount} is a property of the event and not a value of a field, which is why it
+     * has a column of its own rather than being written into {@code changedFields}. Encoding it
+     * there as {@code imported_600} would pass the field-name check and would be smuggling a value
+     * past a rule built to stop exactly that.
+     *
+     * <p>Joins the caller's transaction, like {@link #recordChange} and for the same reason: if the
+     * import rolls back, the log must not claim it happened.
+     */
+    public void recordBulkChange(
+            String action, String entityType, String entityId, Collection<String> changedFields, int recordCount) {
+        String schema = TenantContext.currentSchema()
+                .orElseThrow(() -> new IllegalStateException("recordBulkChange(" + action
+                        + ") with no tenant bound. A bulk change is always inside one school's schema."));
+        if (recordCount < 0) {
+            throw new IllegalArgumentException("A bulk action cannot have touched " + recordCount + " records");
+        }
+
+        AuditEvent event = build(
+                action,
+                AuditOutcome.SUCCESS,
+                entityType,
+                entityId,
+                fieldNames(changedFields),
+                currentActor(schema),
+                recordCount);
         writer.writeJoiningCaller(event);
     }
 
@@ -159,7 +202,7 @@ public class AuditService {
                 return;
             }
 
-            AuditEvent event = build(action, outcome, entityType, entityId, null, resolved);
+            AuditEvent event = build(action, outcome, entityType, entityId, null, resolved, null);
             inSchema(schema, () -> {
                 writer.writeInOwnTransaction(event);
                 return null;
@@ -218,7 +261,8 @@ public class AuditService {
             String entityType,
             String entityId,
             String changedFields,
-            AuditActor actor) {
+            AuditActor actor,
+            Integer recordCount) {
         if (action == null || action.isBlank()) {
             throw new IllegalArgumentException("An audit event needs an action");
         }
@@ -236,7 +280,8 @@ public class AuditService {
                 changedFields,
                 CurrentRequest.ipAddress(),
                 truncate(CurrentRequest.userAgent(), MAX_USER_AGENT),
-                truncate(RequestId.current(), MAX_TRACE_ID));
+                truncate(RequestId.current(), MAX_TRACE_ID),
+                recordCount);
     }
 
     /**

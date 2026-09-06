@@ -41,4 +41,19 @@ public interface StudentEnrolmentRepository extends JpaRepository<StudentEnrolme
             UUID studentId, UUID academicSessionId);
 
     Optional<StudentEnrolment> findByIdAndStudentId(UUID id, UUID studentId);
+
+    /**
+     * Which of these roll numbers are already taken in a given year, wherever they are taken.
+     *
+     * <p>For the bulk import. The section is not a parameter because the answer has to cover every
+     * section at once — the file names its sections by name and the import has to check all of them
+     * in one statement — so the caller pairs each result's {@code sectionId} with its roll number
+     * itself.
+     *
+     * <p>Not narrowed to active enrolments, deliberately: {@code uq_student_enrolment_roll} is a
+     * plain unique constraint rather than a partial index, so an ended placement still holds its
+     * roll number and an import that ignored one would be refused at the flush.
+     */
+    List<StudentEnrolment> findByAcademicSessionIdAndRollNumberIn(
+            UUID academicSessionId, Collection<String> rollNumbers);
 }

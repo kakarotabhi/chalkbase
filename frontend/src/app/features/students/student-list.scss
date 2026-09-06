@@ -93,9 +93,12 @@
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
   margin-bottom: var(--cb-space-4);
 
-  // The one action on the screen: full width where the screen is a thumb wide.
+  // The main action on the screen: full width where the screen is a thumb wide.
   cb-button {
     flex: 1;
   }
@@ -104,6 +107,22 @@
     cb-button {
       flex: none;
     }
+  }
+}
+
+// The second way in, and deliberately the quieter one: a school imports once and adds students
+// every week. On its own line at compact width, where the button beside it already fills the row.
+.toolbar__link {
+  @include link-button;
+
+  flex: 1 0 100%;
+  display: inline-block;
+  line-height: var(--cb-touch-target-min);
+  text-align: center;
+
+  @include from-medium {
+    flex: none;
+    text-align: left;
   }
 }
 

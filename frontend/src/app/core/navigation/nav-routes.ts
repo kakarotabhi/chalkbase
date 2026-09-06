@@ -66,6 +66,11 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['students', { path: '/students', icon: 'students' }],
   ['students.all', { path: '/students', icon: 'students' }],
   ['students.guardians', { path: '/students/guardians', icon: 'students' }],
+  // Bulk import (ADR-0021). Registered before the backend is known to emit the id — which costs
+  // nothing, because the registry is a map from ids the server sends to routes this app owns, and
+  // an entry nobody asks for is simply never looked up. The risk this file exists to prevent runs
+  // the other way: an id emitted with no entry here, which is dropped and logged.
+  ['students.import', { path: '/students/import', icon: 'students' }],
   // `/students/:id` is deliberately not here and never will be. The registry maps ids the *server*
   // sends to menu destinations, and a student's record is reached from the list, not from a menu.
   // `settings.access` is deliberately absent. The backend emits it, it has no screen in this

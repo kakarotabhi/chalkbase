@@ -1,0 +1,459 @@
+<!--
+  The icon every banner on this screen uses. One copy rather than four: the glyph is the same in
+  all of them and the tone comes from `currentColor`, so four copies would only be four chances to
+  change one of them and not the others.
+-->
+<ng-template #alertIcon>
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.9"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="M12 7.5v5" />
+    <path d="M12 16.2v.1" />
+  </svg>
+</ng-template>
+
+<p class="crumbs">Students <span aria-hidden="true">›</span> Import</p>
+<h1 class="page-title">Import students</h1>
+
+<p class="page-lede">
+  Bring a whole class list in from a spreadsheet. The file is checked first and nothing is written
+  until you say so — and if one row is wrong, nothing is imported at all, so the register is never
+  left half-filled.
+</p>
+
+<!--
+  ADR-0010 lists bulk import as a desktop-first task and asks for a clear message on small screens
+  rather than a broken layout. The screen works here — the file picker is the phone's own, and the
+  problem list is a list of cards, not a table to scroll sideways — but the file is nearly always
+  on the computer the office types on, so it says so and gets out of the way.
+-->
+<p class="compact-note">This is easier on a computer, where the spreadsheet usually lives.</p>
+
+@if (forbidden()) {
+  <!--
+    Not a redirect and not a crash. There is deliberately no client-side permission guard on this
+    route (ADR-0008): the server hides the menu item, both endpoints enforce the permission, and
+    re-deriving that here would be a second copy of the authorization model.
+  -->
+  <div class="banner banner--info" role="status">
+    <ng-container [ngTemplateOutlet]="alertIcon" />
+    <div>
+      <strong class="banner__title">You do not have permission to import students</strong>
+      <span>
+        Ask your principal to add "Manage students" to your role. Nothing has been changed.
+      </span>
+    </div>
+  </div>
+} @else if (imported(); as result) {
+  <!-- ── Step five: it landed ────────────────────────────────────────────────────────────── -->
+  <div class="banner banner--success" id="import-result" tabindex="-1" role="status">
+    <ng-container [ngTemplateOutlet]="alertIcon" />
+    <div>
+      <strong class="banner__title">
+        {{ count(result.imported, 'student') }} imported
+        @if (importedInto()) {
+          <span> into {{ importedInto() }}</span>
+        }
+      </strong>
+      <span>
+        They are on the student list now, with their classes and sections. Anything the file did not
+        carry — guardians, for instance — is added from each child's record.
+      </span>
+      <p class="banner__action">
+        <a class="linklike" routerLink="/students">Go to the student list</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <cb-button variant="secondary" (click)="startAgain()">Import another file</cb-button>
+  </div>
+} @else {
+  <ol class="steps">
+    <!-- ── Before you start ──────────────────────────────────────────────────────────────── -->
+    <li class="step">
+      <h2 class="step__title">Start from the template</h2>
+      <p class="step__lede">
+        The file is a CSV — in Excel, that is <em>Save as</em> and then <em>CSV</em>. The template
+        below has the column names the import expects, which is the one thing that is easiest to get
+        wrong and hardest to spot.
+      </p>
+
+      <cb-button variant="secondary" (click)="downloadTemplate()">
+        Download the template
+      </cb-button>
+
+      <details class="columns">
+        <summary class="columns__summary">What each column is for</summary>
+        <p class="columns__note">
+          The header row is required. Capitals do not matter and the order does not matter.
+        </p>
+        <dl class="columns__list">
+          @for (column of columnNotes; track column.name) {
+            <div class="column">
+              <dt class="column__name">
+                <code>{{ column.name }}</code>
+                @if (!column.required) {
+                  <span class="column__optional">optional</span>
+                }
+              </dt>
+              <dd class="column__note">{{ column.note }}</dd>
+            </div>
+          }
+        </dl>
+        <!--
+          Deliberately "a couple of thousand" and not the number. ADR-0021 §6 fixes the cap at
+          2,000 today; printing it here would be a backend constant copied into a template, wrong
+          the first time it moves and wrong silently. The sentence stays true either way, and the
+          file that actually hits the cap comes back with a problem that says so.
+        -->
+        <p class="columns__note">
+          One file at a time, and a file of more than a couple of thousand students is refused —
+          split it and import the parts one after another.
+        </p>
+        <p class="columns__note">
+          <strong>class</strong> and <strong>section</strong> are the names you gave them under
+          Academics — "Class 5", "A" — not codes. Set the class list up first, or every row will
+          come back saying the class could not be found.
+        </p>
+      </details>
+    </li>
+
+    <!-- ── Step one: the year and the file ───────────────────────────────────────────────── -->
+    <li class="step">
+      <h2 class="step__title">Choose the year and the file</h2>
+
+      @if (sessionsForbidden()) {
+        <div class="banner banner--info" role="status">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">You cannot see this school's academic years</strong>
+            <span>
+              An import has to go into one, so there is nothing to do here until "View academic
+              sessions" is on your role.
+            </span>
+          </div>
+        </div>
+      } @else if (sessionsFailed()) {
+        <div class="banner banner--danger" role="alert">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">Could not load the academic years</strong>
+            <span>Check your connection and try again. Nothing has been changed.</span>
+            <p class="banner__action">
+              <cb-button variant="secondary" (click)="reloadSessions()">Try again</cb-button>
+            </p>
+          </div>
+        </div>
+      } @else if (noSessions()) {
+        <div class="banner banner--info" role="status">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">This school has no academic year yet</strong>
+            <span>
+              Every student is admitted into a year, so add one under Academics before importing.
+            </span>
+            <p class="banner__action">
+              <a class="linklike" routerLink="/academics/sessions">Go to academic sessions</a>
+            </p>
+          </div>
+        </div>
+      } @else {
+        <form class="choices" [formGroup]="form" (ngSubmit)="$event.preventDefault()">
+          <cb-form-field
+            #sessionField
+            label="Academic year"
+            controlId="import-session"
+            [required]="true"
+            hint="The year these students are being admitted into."
+          >
+            <cb-select
+              formControlName="sessionId"
+              [id]="sessionField.controlId()"
+              [options]="sessionOptions()"
+              [readOnly]="busy() || sessionsLoading()"
+              [describedBy]="sessionField.describedById()"
+            />
+          </cb-form-field>
+
+          <!--
+            A plain `<input type="file">`, and it stays plain on purpose. The browser's own picker
+            is the one the user's phone or desktop replaces with something better than anything
+            drawn here, and it is the only control that can hold a file without this app holding
+            one. Nothing reads it: the name and the size below are the whole of what this screen
+            learns (ADR-0014).
+          -->
+          <cb-form-field
+            #fileField
+            label="The file"
+            controlId="import-file"
+            [required]="true"
+            hint="A CSV saved from your spreadsheet."
+          >
+            <input
+              #fileInput
+              class="file"
+              type="file"
+              accept=".csv,text/csv"
+              [id]="fileField.controlId()"
+              [attr.aria-describedby]="fileField.describedById()"
+              [disabled]="busy()"
+              (change)="chooseFile($event)"
+            />
+          </cb-form-field>
+        </form>
+
+        @if (fileName(); as name) {
+          <p class="chosen" role="status">
+            Chosen: <strong class="chosen__name">{{ name }}</strong>
+            <span class="chosen__size">{{ fileSize() }}</span>
+          </p>
+        }
+      }
+    </li>
+
+    <!-- ── Step two: check ───────────────────────────────────────────────────────────────── -->
+    <li class="step">
+      <h2 class="step__title">Check the file</h2>
+      <p class="step__lede">
+        This reads the file and reports everything wrong with it.
+        <strong>Nothing is written.</strong>
+      </p>
+
+      <cb-button
+        [disabled]="!canCheck()"
+        [loading]="checking()"
+        loadingLabel="Checking the file…"
+        (click)="check()"
+      >
+        Check the file
+      </cb-button>
+
+      @if (!hasFile()) {
+        <p class="step__why">Choose a file above first.</p>
+      }
+    </li>
+
+    <!-- ── Step three: what came back ────────────────────────────────────────────────────── -->
+    <li class="step">
+      <h2 class="step__title">Read what came back</h2>
+
+      @if (checkTooLarge()) {
+        <div class="banner banner--danger" id="import-result" tabindex="-1" role="alert">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">That file is larger than the limit</strong>
+            <span>
+              It was not read at all, so nothing has been changed. Split the spreadsheet — a few
+              hundred rows at a time is comfortable — and import the parts one after another, or ask
+              whoever runs Chalkbase for this school to raise the limit.
+            </span>
+          </div>
+        </div>
+      } @else if (checkFailed()) {
+        <div class="banner banner--danger" id="import-result" tabindex="-1" role="alert">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">The file could not be checked</strong>
+            <span>
+              Nothing has been changed. Make sure it is a CSV saved from your spreadsheet, with the
+              header row the template has, and try again.
+            </span>
+            <p class="banner__action">
+              <cb-button variant="secondary" [disabled]="!canCheck()" (click)="check()">
+                Try again
+              </cb-button>
+            </p>
+          </div>
+        </div>
+      } @else if (report(); as result) {
+        <div class="summary" id="import-result" tabindex="-1" role="status">
+          <p class="summary__counts">
+            <strong>{{ count(result.totalRows, 'row') }}</strong> checked ·
+            <strong>{{ count(result.validRows, 'row') }}</strong> ready
+            @if (errorCount() > 0) {
+              ·
+              <strong class="summary__bad">{{ count(errorCount(), 'problem') }}</strong>
+              in {{ count(affectedRowCount(), 'row') }}
+            }
+          </p>
+          @if (fileName(); as name) {
+            <p class="summary__file">in {{ name }}</p>
+          }
+        </div>
+
+        @if (emptyFile()) {
+          <div class="banner banner--info" role="status">
+            <ng-container [ngTemplateOutlet]="alertIcon" />
+            <div>
+              <strong class="banner__title">There are no students in this file</strong>
+              <span>
+                It has the header row and nothing under it. Add the rows and check it again.
+              </span>
+            </div>
+          </div>
+        } @else if (errorCount() === 0) {
+          <div class="banner banner--success" role="status">
+            <ng-container [ngTemplateOutlet]="alertIcon" />
+            <div>
+              <strong class="banner__title">Nothing wrong with this file</strong>
+              <span>Still nothing written. The import below is what writes it.</span>
+            </div>
+          </div>
+        } @else {
+          <!--
+            Every problem, not the first one and not a page of them. A school with a six-hundred
+            row file and twenty-seven problems has to be able to fix all twenty-seven in one pass;
+            a list that made them come back for each one is how an import gets abandoned.
+
+            A list rather than a table (ADR-0010): three short fields per problem read as a card at
+            360px and as two columns on a laptop, and neither ever scrolls sideways.
+          -->
+          <div class="problems">
+            @if (errorsTruncated()) {
+              <!--
+                Said plainly, because the alternative is a school fixing 200 problems, re-uploading,
+                and being told there are 200 more. They need to know the list is a sample before they
+                start, not after.
+              -->
+              <p class="problems__truncated" role="status">
+                Showing the first {{ errorsShown() }} of {{ count(errorCount(), 'problem') }}. Fix
+                these and check the file again — the rest will be listed then.
+              </p>
+            }
+            <div class="problems__bar">
+              <div class="grouping" role="group" aria-label="Arrange the problems">
+                <button
+                  type="button"
+                  class="grouping__option"
+                  [attr.aria-pressed]="grouping() === 'row'"
+                  (click)="setGrouping('row')"
+                >
+                  By row
+                </button>
+                <button
+                  type="button"
+                  class="grouping__option"
+                  [attr.aria-pressed]="grouping() === 'column'"
+                  (click)="setGrouping('column')"
+                >
+                  By column
+                </button>
+              </div>
+              <!--
+                Safe to write, and it is ADR-0021 §6 that makes it safe: a problem is a row number,
+                a column name and a sentence, never the cell. Nothing in this file identifies a
+                child to anyone who does not already have the spreadsheet it describes.
+              -->
+              <button type="button" class="linklike" (click)="downloadProblems()">
+                Download this list
+              </button>
+            </div>
+
+            <p class="problems__hint">
+              @if (grouping() === 'row') {
+                Row 1 is the header, so the first student is row 2. Work down the list, fix each row
+                in your spreadsheet, save it as CSV again, and check the new file.
+              } @else {
+                Grouped by column, largest first. One column wrong in many rows is usually one
+                mistake — dates written the other way round, or class names that do not match.
+              }
+            </p>
+
+            @for (group of errorGroups(); track group.key) {
+              <section class="group">
+                <h3 class="group__heading">
+                  <span class="group__name">{{ group.heading }}</span>
+                  <span class="group__caption">{{ group.caption }}</span>
+                </h3>
+                <ul class="group__items">
+                  @for (problem of group.items; track $index) {
+                    <li class="problem">
+                      <span class="problem__where">
+                        @if (grouping() === 'row') {
+                          {{ problem.column }}
+                        } @else {
+                          Row {{ problem.row }}
+                        }
+                      </span>
+                      <span class="problem__what">{{ problem.message }}</span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        }
+      } @else {
+        <p class="step__why">Nothing checked yet.</p>
+      }
+    </li>
+
+    <!-- ── Step four: import ─────────────────────────────────────────────────────────────── -->
+    <li class="step">
+      <h2 class="step__title">Import</h2>
+
+      @if (importTooLarge()) {
+        <div class="banner banner--danger" role="alert">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">That file is larger than the limit</strong>
+            <span
+              >Nothing was imported. Split the spreadsheet and import the parts one by one.</span
+            >
+          </div>
+        </div>
+      } @else if (importFailed()) {
+        <div class="banner banner--danger" role="alert">
+          <ng-container [ngTemplateOutlet]="alertIcon" />
+          <div>
+            <strong class="banner__title">Nothing was imported</strong>
+            <span>
+              The import brings in the whole file or none of it, so no student was added and the
+              register is exactly as it was. Check the file again and retry.
+            </span>
+          </div>
+        </div>
+      }
+
+      <cb-button
+        [disabled]="!canImport()"
+        [loading]="importing()"
+        loadingLabel="Importing…"
+        (click)="runImport()"
+      >
+        Import these students
+      </cb-button>
+
+      <!--
+        Why it is greyed out, said where the button is. ADR-0021 §2 is the whole reason: with one
+        bad row this button would be a guaranteed failure, so it is not offered as if it might work.
+      -->
+      @if (!canImport()) {
+        <p class="step__why">
+          @if (errorCount() > 0) {
+            {{ count(errorCount(), 'problem') }} above, so this would import nothing at all — the
+            file comes in whole or not at all. Fix them, save the spreadsheet as CSV again, and
+            check the new file.
+          } @else if (emptyFile()) {
+            There are no student rows in this file.
+          } @else if (importing()) {
+            Writing the students. This can take a moment for a long file.
+          } @else {
+            Check the file first. Import stays unavailable until a check on the file you have chosen
+            comes back with nothing wrong.
+          }
+        </p>
+      }
+    </li>
+  </ol>
+}

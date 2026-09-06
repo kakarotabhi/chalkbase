@@ -27,6 +27,15 @@ public interface SchoolClassRepository extends JpaRepository<SchoolClass, UUID> 
     List<SchoolClass> findAllWithSections();
 
     /**
+     * The ladder without its sections, in the order the school reads it.
+     *
+     * <p>Deliberately not {@link #findAllWithSections()}: the caller for this resolves class names
+     * in bulk and joins the sections itself, and fetching a collection it is going to ignore would
+     * multiply the rows for nothing.
+     */
+    List<SchoolClass> findAllByOrderBySequenceAsc();
+
+    /**
      * The last rung, so a new class can be appended after it.
      *
      * <p>Empty for a school that has no classes yet — no ladder is seeded, because schools

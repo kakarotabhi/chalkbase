@@ -54,6 +54,27 @@ spring:
         # this silently shifts every existing client by one page.
         one-indexed-parameters: false
 
+  # The only upload this product accepts is the student import (ADR-0021). These two numbers are the
+  # guard that runs before any of our code does: the multipart resolver refuses an oversized request
+  # while parsing it, and GlobalExceptionHandler maps that to VAL_003 inside the usual envelope.
+  #
+  # They are deliberately SMALL, and the reason is not memory. `ops/docker/nginx.conf` proxies /api/
+  # to this service and sets no `client_max_body_size`, so nginx's own default of 1 MB is the real
+  # ceiling — and a request that trips nginx comes back as nginx's HTML error page rather than an
+  # ADR-0007 envelope, which a client cannot read and which a browser may report as a network
+  # failure rather than a 413. Keeping the whole request under 1 MB means *this* service is always
+  # the one that refuses, in the one shape every client already parses. Raising these needs
+  # `client_max_body_size` raised in that nginx config first, in the same change.
+  #
+  # 512 KB is around three times the largest file the row cap allows: 2,000 students across the nine
+  # columns the import reads is roughly 170 KB. A school whose export carries thirty columns of its
+  # own may exceed it — the answer for them is to delete the columns the import ignores anyway, and
+  # the row cap in StudentImportService remains the limit that is actually about students.
+  servlet:
+    multipart:
+      max-file-size: 512KB
+      max-request-size: 768KB
+
   threads:
     virtual:
       enabled: true

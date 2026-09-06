@@ -35,4 +35,15 @@ public interface SectionRepository extends JpaRepository<Section, UUID> {
      */
     @Query("select s from Section s join fetch s.schoolClass where s.id in :ids")
     List<Section> findAllWithClassByIdIn(Collection<UUID> ids);
+
+    /**
+     * Every section of this school with its class, in one query.
+     *
+     * <p>For a caller resolving <em>names</em> rather than ids — the bulk import, which holds "Class
+     * 5" and "A" and has to turn six hundred of those into section ids. Whole rather than paged
+     * because a school's ladder is tens of rows, and reading it once is what stops the import
+     * issuing one lookup per student.
+     */
+    @Query("select s from Section s join fetch s.schoolClass order by s.schoolClass.sequence, s.name")
+    List<Section> findAllWithClass();
 }

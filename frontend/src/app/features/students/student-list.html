@@ -92,6 +92,12 @@
   @if (!adding()) {
     <div class="toolbar">
       <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
+      <!--
+        The way in to the bulk import (ADR-0021). Quieter than the button beside it on purpose:
+        typing one child in is the daily act, and importing six hundred happens once, when the
+        school is onboarding.
+      -->
+      <a class="toolbar__link" routerLink="/students/import">Import from a spreadsheet</a>
     </div>
   } @else {
     <div class="panel">

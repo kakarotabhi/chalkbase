@@ -34,3 +34,20 @@ export function apiErrorDetails(error: unknown): Readonly<Record<string, string>
   }
   return {};
 }
+
+/**
+ * The HTTP status a failure came back with, or 0 if the request never got an answer.
+ *
+ * **A deliberate exception to "branch on the code, never the message"** (ADR-0007), and a narrow
+ * one. Some failures never reach a controller and so never get an envelope to carry a code: an
+ * upload larger than the servlet container's cap is refused by the container itself, and what
+ * arrives is a bare `413` with a body this app cannot parse. A screen that only read `error.code`
+ * would call that "something went wrong" and leave the user to guess, when the one thing they need
+ * to be told is that the file is too big.
+ *
+ * Use it for exactly that kind of outcome. Anything the backend can put a code on should still be
+ * branched on by code, because a status is shared by a dozen unrelated failures and a code is not.
+ */
+export function apiErrorStatus(error: unknown): number {
+  return error instanceof HttpErrorResponse ? error.status : 0;
+}

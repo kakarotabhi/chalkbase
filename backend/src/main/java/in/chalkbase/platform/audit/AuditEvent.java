@@ -86,6 +86,16 @@ public class AuditEvent {
     @Column(name = "trace_id", length = 64)
     private String traceId;
 
+    /**
+     * How many records a bulk action touched, or null for a single-record action.
+     *
+     * <p>Not a breach of the names-not-values rule above. That rule keeps personal data out of the
+     * log — the values a field took are a child's name and date of birth. A count is a property of
+     * the event, like {@link #occurredAt}, and is not personal data.
+     */
+    @Column(name = "record_count")
+    private Integer recordCount;
+
     protected AuditEvent() {
         // for JPA
     }
@@ -100,7 +110,8 @@ public class AuditEvent {
             String changedFields,
             String ipAddress,
             String userAgent,
-            String traceId) {
+            String traceId,
+            Integer recordCount) {
         this.occurredAt = occurredAt;
         this.actorId = actor == null ? null : actor.id();
         this.actorName = actor == null ? null : actor.name();
@@ -113,6 +124,7 @@ public class AuditEvent {
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.traceId = traceId;
+        this.recordCount = recordCount;
     }
 
     public UUID getId() {
@@ -165,5 +177,10 @@ public class AuditEvent {
 
     public String getTraceId() {
         return traceId;
+    }
+
+    /** How many records a bulk action touched, or null when it touched one. */
+    public Integer getRecordCount() {
+        return recordCount;
     }
 }

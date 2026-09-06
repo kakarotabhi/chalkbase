@@ -592,3 +592,56 @@ export interface UpdateStudentGuardianRequest {
   readonly relation: GuardianRelation;
   readonly primary: boolean;
 }
+
+/* ── Bulk import (ADR-0021) ────────────────────────────────────────────── */
+
+/**
+ * One thing wrong with one cell of the uploaded file.
+ *
+ * **`message` never quotes the cell** (ADR-0021 §6, ADR-0014). The row and the column are enough
+ * to find the mistake in the spreadsheet, and the value is a child's name or date of birth — which
+ * would otherwise travel back over HTTP, into this app, and into whatever screenshot of this
+ * screen ends up in a support ticket. Nothing on this screen may reconstruct it either.
+ */
+export interface ImportError {
+  /**
+   * The spreadsheet line number the person sees: the header is row 1, so the first data row is 2.
+   *
+   * Not a zero-based index into the parsed rows. The whole value of this number is that it matches
+   * what the row is called in the tool the user is about to go and fix it in.
+   */
+  readonly row: number;
+  /** The CSV column name, as it appears in the header. */
+  readonly column: string;
+  /** What is wrong, said without the value. Displayed as-is — this one is user-facing copy. */
+  readonly message: string;
+}
+
+/**
+ * What both import endpoints answer with.
+ *
+ * The same shape from `validate` and from the commit, deliberately, so the screen reads one
+ * answer rather than two — the only difference is that `imported` is always 0 from `validate`,
+ * which writes nothing.
+ *
+ * `imported` is 0 or `validRows` and never anything between, because the commit is all-or-nothing
+ * (ADR-0021 §2): one bad row and the whole file is rejected.
+ */
+export interface ImportReport {
+  /** Data rows found in the file, not counting the header. */
+  readonly totalRows: number;
+  /** How many of them would import cleanly. */
+  readonly validRows: number;
+  /** How many were actually written. Always 0 from `validate`. */
+  readonly imported: number;
+  /**
+   * How many problems were found in total.
+   *
+   * `errors` carries at most 200 of them, so a pathological file cannot make the response — or this
+   * page — unusable. Compare the two to know whether the list is complete, and say so if it is not:
+   * a screen that silently shows 200 of 1,800 problems sends a school round the fix-and-re-upload
+   * loop believing it is nearly done.
+   */
+  readonly errorCount: number;
+  readonly errors: readonly ImportError[];
+}

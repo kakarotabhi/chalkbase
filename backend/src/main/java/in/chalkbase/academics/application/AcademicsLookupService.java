@@ -2,10 +2,13 @@ package in.chalkbase.academics.application;
 
 import in.chalkbase.academics.api.AcademicSessionRef;
 import in.chalkbase.academics.api.AcademicsLookup;
+import in.chalkbase.academics.api.SchoolClassRef;
 import in.chalkbase.academics.api.SectionRef;
 import in.chalkbase.academics.infrastructure.AcademicSessionRepository;
+import in.chalkbase.academics.infrastructure.SchoolClassRepository;
 import in.chalkbase.academics.infrastructure.SectionRepository;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class AcademicsLookupService implements AcademicsLookup {
 
     private final AcademicSessionRepository sessions;
+    private final SchoolClassRepository classes;
     private final SectionRepository sections;
 
-    public AcademicsLookupService(AcademicSessionRepository sessions, SectionRepository sections) {
+    public AcademicsLookupService(
+            AcademicSessionRepository sessions, SchoolClassRepository classes, SectionRepository sections) {
         this.sessions = sessions;
+        this.classes = classes;
         this.sections = sections;
     }
 
@@ -60,6 +66,23 @@ public class AcademicsLookupService implements AcademicsLookup {
         return sectionId == null
                 ? Optional.empty()
                 : sections.findWithClassById(sectionId).map(SectionRef::of);
+    }
+
+    @Override
+    public List<SchoolClassRef> classes() {
+        return classes.findAllByOrderBySequenceAsc().stream()
+                .map(SchoolClassRef::of)
+                .toList();
+    }
+
+    /**
+     * One query, with the class fetched alongside: a section without its class name is unusable to
+     * every caller of this interface, and a lazy proxy per row would turn one statement into as many
+     * as the school has sections.
+     */
+    @Override
+    public List<SectionRef> sections() {
+        return sections.findAllWithClass().stream().map(SectionRef::of).toList();
     }
 
     @Override
