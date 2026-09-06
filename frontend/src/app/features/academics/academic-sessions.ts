@@ -21,6 +21,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { AcademicSession } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -91,6 +93,15 @@ export class AcademicSessions {
     },
     { validators: endsAfterStart },
   );
+
+  /**
+   * Whether to offer adding a year, editing one, or moving the school into one.
+   *
+   * All three endpoints are gated on `academics:session:manage`, so all three controls share one
+   * check. Someone with the read alone still sees the list and which year is current — which is
+   * the whole of what the read entitles them to.
+   */
+  protected readonly canManageSessions = permitted(Permissions.SESSION_MANAGE);
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */

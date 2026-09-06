@@ -18,6 +18,8 @@ import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { AcademicSession, Enrolment, SchoolClass } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -88,6 +90,15 @@ export class StudentEnrolments {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Whether this user may place a child in a class or correct a placement.
+   *
+   * The same permission as editing the student, deliberately: the backend gates
+   * `POST/PUT …/enrolments` on `student:student:manage` because a role that may admit a child but
+   * not enrol them cannot finish its own job.
+   */
+  protected readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
 
   protected readonly form = this.formBuilder.group({
     academicSessionId: ['', Validators.required],

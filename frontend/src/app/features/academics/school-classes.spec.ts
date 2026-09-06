@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SchoolClass } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { SchoolClasses } from './school-classes';
 
 const CLASSES_URL = '/api/academics/classes';
@@ -105,6 +107,10 @@ describe('SchoolClasses', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.CLASS_READ, Permissions.CLASS_MANAGE);
   });
 
   afterEach(() => {
@@ -534,5 +540,45 @@ describe('SchoolClasses', () => {
     fixture.detectChanges();
 
     expect(rungNames()).toEqual(['Class 1', 'Class 2', 'Nursery']);
+  });
+
+  // ── What the ladder's write actions are gated on ─────────────────────────────────────────
+
+  describe('write actions', () => {
+    it('offers the whole set to somebody who may manage classes', () => {
+      arrive();
+
+      expect(control('class-add')).not.toBeNull();
+      expect(control('class-rename-cls-one')).not.toBeNull();
+      expect(control('class-active-cls-one')).not.toBeNull();
+      expect(control('class-up-cls-one')).not.toBeNull();
+      expect(control('class-add-section-cls-one')).not.toBeNull();
+      expect(control('section-rename-sec-1-a')).not.toBeNull();
+    });
+
+    it('offers none of it to somebody who may only read the ladder', () => {
+      signInWith(Permissions.CLASS_READ);
+      arrive();
+
+      expect(control('class-add')).toBeNull();
+      expect(control('class-rename-cls-one')).toBeNull();
+      expect(control('class-active-cls-one')).toBeNull();
+      expect(control('class-up-cls-one')).toBeNull();
+      expect(control('class-add-section-cls-one')).toBeNull();
+      expect(control('section-rename-sec-1-a')).toBeNull();
+      // The ladder itself still reads, which is what the read is for.
+      expect(rungNames()).toContain('Class 1');
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.CLASS_READ);
+      arrive();
+      expect(control('class-add')).toBeNull();
+
+      signInWith(Permissions.CLASS_READ, Permissions.CLASS_MANAGE);
+      fixture.detectChanges();
+
+      expect(control('class-add')).not.toBeNull();
+    });
   });
 });

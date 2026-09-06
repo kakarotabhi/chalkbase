@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { GuardianStudent, GuardianSummary } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { GuardianList } from './guardian-list';
 
 const GUARDIANS = '/api/guardians';
@@ -107,6 +109,10 @@ describe('GuardianList', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.GUARDIAN_READ, Permissions.GUARDIAN_MANAGE);
   });
 
   afterEach(() => {
@@ -458,5 +464,36 @@ describe('GuardianList', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // ── What the directory's actions are gated on ────────────────────────────────────────────
+
+  describe('write actions', () => {
+    it('offers adding and editing to somebody who may manage guardians', () => {
+      arrive();
+
+      expect(button('Add a guardian')).toBeTruthy();
+      expect(button('Edit')).toBeTruthy();
+    });
+
+    it('offers neither to somebody who may only read the directory', () => {
+      signInWith(Permissions.GUARDIAN_READ);
+      arrive();
+
+      expect(button('Add a guardian')).toBeUndefined();
+      expect(button('Edit')).toBeUndefined();
+      expect(text()).toContain('Test Parent One');
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.GUARDIAN_READ);
+      arrive();
+      expect(button('Add a guardian')).toBeUndefined();
+
+      signInWith(Permissions.GUARDIAN_READ, Permissions.GUARDIAN_MANAGE);
+      fixture.detectChanges();
+
+      expect(button('Add a guardian')).toBeTruthy();
+    });
   });
 });

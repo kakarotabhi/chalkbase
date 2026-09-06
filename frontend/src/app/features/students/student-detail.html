@@ -111,7 +111,7 @@
   <section class="card" aria-labelledby="record-details-heading">
     <div class="section__head">
       <h2 class="section__heading" id="record-details-heading">Details</h2>
-      @if (!editing()) {
+      @if (!editing() && canManageStudents()) {
         <cb-button [id]="'student-edit'" variant="secondary" (click)="startEdit()">
           Edit details
         </cb-button>
