@@ -12,6 +12,10 @@
 > **Just want to see it running?** [Running locally](running-locally.md) has the step-by-step,
 > including IntelliJ and WebStorm setup, what the demo school contains, and what to check once you
 > are signed in. The rest of this page is standards and workflow.
+>
+> **Changing the API?** The contract between the two sides is generated, and the two files in
+> `contracts/` are committed. [`contracts/README.md`](../../contracts/README.md) has the recipe for
+> adding a field, a record or an endpoint — the nullable-response case is the one with a trap in it.
 
 ## Setup
 

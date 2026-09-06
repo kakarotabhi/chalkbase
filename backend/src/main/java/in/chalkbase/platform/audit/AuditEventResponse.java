@@ -3,6 +3,7 @@ package in.chalkbase.platform.audit;
 import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -24,24 +25,41 @@ import java.util.UUID;
 public record AuditEventResponse(
         @Classification(Tier.INTERNAL) UUID id,
         @Classification(Tier.INTERNAL) Instant occurredAt,
-        @Classification(Tier.INTERNAL) UUID actorId,
-        @Classification(Tier.CONFIDENTIAL) String actorName,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        UUID actorId,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String actorName,
+
         @Classification(Tier.INTERNAL) List<String> actorRoles,
         @Classification(Tier.INTERNAL) String action,
         @Classification(Tier.INTERNAL) AuditOutcome outcome,
-        @Classification(Tier.INTERNAL) String entityType,
-        @Classification(Tier.INTERNAL) String entityId,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String entityType,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String entityId,
+
         @Classification(Tier.INTERNAL) List<String> changedFields,
-        @Classification(Tier.CONFIDENTIAL) String ipAddress,
-        @Classification(Tier.INTERNAL) String userAgent,
-        @Classification(Tier.INTERNAL) String traceId,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String ipAddress,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String userAgent,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String traceId,
         /**
          * How many records a bulk action touched, or null when it touched one.
          *
          * <p>Absent on almost every row, and that is the point: an import of six hundred students
          * is one event, and this is the number that makes it legible as one.
          */
-        @Classification(Tier.INTERNAL) Integer recordCount) {
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        Integer recordCount) {
 
     static AuditEventResponse of(AuditEvent event) {
         return new AuditEventResponse(

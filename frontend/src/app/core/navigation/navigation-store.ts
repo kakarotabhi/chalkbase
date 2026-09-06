@@ -79,7 +79,7 @@ export class NavigationStore {
 
     return {
       id: item.id,
-      label: navLabel(item.labelKey, item.label),
+      label: navLabel(item.labelKey),
       path: route.path,
       // The server's `icon` is a hint we deliberately ignore: icons, spacing and animation are the
       // frontend's side of the line (ADR-0008), and honouring a name the design never drew would

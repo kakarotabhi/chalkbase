@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.GuardianRelation;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentGuardianLink;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /**
@@ -33,7 +34,9 @@ public record GuardianStudent(
         @Classification(Tier.CONFIDENTIAL) String admissionNumber,
         @Classification(Tier.INTERNAL) GuardianRelation relation,
         @Classification(Tier.INTERNAL) boolean primary,
-        @Classification(Tier.CONFIDENTIAL) CurrentEnrolment currentEnrolment) {
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        CurrentEnrolment currentEnrolment) {
 
     public static GuardianStudent of(StudentGuardianLink link, CurrentEnrolment currentEnrolment) {
         Student student = link.getStudent();

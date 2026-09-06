@@ -22,9 +22,7 @@ const ME: MeResponse = {
       labelKey: 'nav.fees',
       icon: 'receipt',
       order: 20,
-      children: [
-        { id: 'fees.collect', labelKey: 'nav.fees.collect', icon: null, order: 10, children: [] },
-      ],
+      children: [{ id: 'fees.collect', labelKey: 'nav.fees.collect', order: 10, children: [] }],
     },
   ],
 };

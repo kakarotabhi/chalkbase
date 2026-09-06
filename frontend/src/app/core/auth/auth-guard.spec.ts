@@ -23,7 +23,7 @@ const ME: MeResponse = {
   school: { code: 'GPS-S12', name: 'Greenfield Public School' },
   permissionsVersion: '7',
   permissions: ['school:school:read'],
-  navigation: [{ id: 'schools', labelKey: 'nav.schools', icon: null, order: 10, children: [] }],
+  navigation: [{ id: 'schools', labelKey: 'nav.schools', order: 10, children: [] }],
 };
 
 describe('authGuard', () => {

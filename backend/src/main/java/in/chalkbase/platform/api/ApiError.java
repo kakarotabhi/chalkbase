@@ -3,6 +3,7 @@ package in.chalkbase.platform.api;
 import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 
 /**
@@ -17,7 +18,9 @@ import java.util.Map;
 public record ApiError(
         @Classification(Tier.INTERNAL) String code,
         @Classification(Tier.INTERNAL) String message,
-        @Classification(Tier.INTERNAL) Map<String, String> details) {
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        Map<String, String> details) {
 
     public static ApiError of(String code, String message) {
         return new ApiError(code, message, null);

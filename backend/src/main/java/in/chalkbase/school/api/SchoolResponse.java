@@ -5,6 +5,7 @@ import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.school.domain.Board;
 import in.chalkbase.school.domain.School;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /** Public read model of a school. Never expose the JPA entity across a module or HTTP boundary. */
@@ -14,8 +15,13 @@ public record SchoolResponse(
         @Classification(Tier.PUBLIC) String name,
         @Classification(Tier.INTERNAL) String schemaName,
         @Classification(Tier.PUBLIC) Board board,
-        @Classification(Tier.PUBLIC) String city,
-        @Classification(Tier.PUBLIC) String state,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String city,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String state,
+
         @Classification(Tier.INTERNAL) boolean active) {
 
     public static SchoolResponse from(School school) {

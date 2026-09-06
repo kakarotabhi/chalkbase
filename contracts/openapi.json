@@ -1,0 +1,3318 @@
+{
+  "components": {
+    "schemas": {
+      "AcademicSessionResponse": {
+        "properties": {
+          "current": {
+            "type": "boolean"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current",
+          "endsOn",
+          "id",
+          "name",
+          "startsOn"
+        ],
+        "type": "object"
+      },
+      "ApiError": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "ApiResponseAcademicSessionResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AcademicSessionResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseEnrolment": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Enrolment"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseGuardianSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GuardianSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseImportReport": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ImportReport"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListAcademicSessionResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AcademicSessionResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListGuardianStudent": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GuardianStudent"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListPermissionDefinition": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionDefinition"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListRoleResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/RoleResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListSchoolClassResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SchoolClassResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListSchoolResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SchoolResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListUserSummary": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseLoginResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LoginResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseMeResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MeResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseAuditEventResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseAuditEventResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseGuardianSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseGuardianSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseStudentSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseStudentSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseSchoolClassResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SchoolClassResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseSchoolProfileResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SchoolProfileResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseSchoolResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SchoolResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseSectionResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SectionResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseStudentDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StudentDetail"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseStudentGuardian": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StudentGuardian"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseVoid": {
+        "properties": {
+          "data": {},
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "AuditEventResponse": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRoles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "changedFields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "SUCCESS",
+              "FAILURE",
+              "DENIED"
+            ],
+            "type": "string"
+          },
+          "recordCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actorRoles",
+          "changedFields",
+          "id",
+          "occurredAt",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "ChangePasswordRequest": {
+        "properties": {
+          "currentPassword": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "CreateEnrolmentRequest": {
+        "properties": {
+          "academicSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rollNumber": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "academicSessionId",
+          "sectionId"
+        ],
+        "type": "object"
+      },
+      "CreateSchoolClassRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateSchoolRequest": {
+        "properties": {
+          "board": {
+            "enum": [
+              "CBSE",
+              "CISCE",
+              "STATE",
+              "IB",
+              "CAIE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "schemaName": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]{2,62}$",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "code",
+          "name",
+          "schemaName"
+        ],
+        "type": "object"
+      },
+      "CreateSectionRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CurrentEnrolment": {
+        "properties": {
+          "className": {
+            "type": "string"
+          },
+          "rollNumber": {
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          },
+          "sessionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "className",
+          "sectionName",
+          "sessionName"
+        ],
+        "type": "object"
+      },
+      "Enrolment": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "classId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "enrolledOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rollNumber": {
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sessionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "enrolledOn",
+          "id",
+          "sectionId",
+          "sessionId"
+        ],
+        "type": "object"
+      },
+      "GuardianStudent": {
+        "properties": {
+          "admissionNumber": {
+            "type": "string"
+          },
+          "currentEnrolment": {
+            "$ref": "#/components/schemas/CurrentEnrolment"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "relation": {
+            "enum": [
+              "FATHER",
+              "MOTHER",
+              "GUARDIAN",
+              "LOCAL_GUARDIAN",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "fullName",
+          "primary",
+          "relation",
+          "studentId"
+        ],
+        "type": "object"
+      },
+      "GuardianSummary": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "linkedStudentCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "occupation": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "id",
+          "linkedStudentCount"
+        ],
+        "type": "object"
+      },
+      "ImportError": {
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "row": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "column",
+          "message",
+          "row"
+        ],
+        "type": "object"
+      },
+      "ImportReport": {
+        "properties": {
+          "errorCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportError"
+            },
+            "type": "array"
+          },
+          "imported": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalRows": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "validRows": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "errorCount",
+          "errors",
+          "imported",
+          "totalRows",
+          "validRows"
+        ],
+        "type": "object"
+      },
+      "LinkGuardianRequest": {
+        "properties": {
+          "guardianId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "relation": {
+            "enum": [
+              "FATHER",
+              "MOTHER",
+              "GUARDIAN",
+              "LOCAL_GUARDIAN",
+              "OTHER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "guardianId",
+          "primary",
+          "relation"
+        ],
+        "type": "object"
+      },
+      "LoginRequest": {
+        "properties": {
+          "password": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "rememberMe": {
+            "type": "boolean"
+          },
+          "remembered": {
+            "type": "boolean"
+          },
+          "schoolCode": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 320,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "schoolCode",
+          "username"
+        ],
+        "type": "object"
+      },
+      "LoginResponse": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "school": {
+            "$ref": "#/components/schemas/SchoolSummary"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "mustChangePassword",
+          "permissions",
+          "school",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "MeResponse": {
+        "properties": {
+          "navigation": {
+            "items": {
+              "$ref": "#/components/schemas/NavigationItem"
+            },
+            "type": "array"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "permissionsVersion": {
+            "type": "string"
+          },
+          "school": {
+            "$ref": "#/components/schemas/SchoolSummary"
+          },
+          "user": {
+            "$ref": "#/components/schemas/MeUser"
+          }
+        },
+        "required": [
+          "navigation",
+          "permissions",
+          "permissionsVersion",
+          "school",
+          "user"
+        ],
+        "type": "object"
+      },
+      "MeUser": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "displayName",
+          "id",
+          "mustChangePassword"
+        ],
+        "type": "object"
+      },
+      "NavigationItem": {
+        "properties": {
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/NavigationItem"
+            },
+            "type": "array"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "labelKey": {
+            "type": "string"
+          },
+          "order": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "children",
+          "id",
+          "labelKey",
+          "order"
+        ],
+        "type": "object"
+      },
+      "PageResponseAuditEventResponse": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEventResponse"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseGuardianSummary": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/GuardianSummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseStudentSummary": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/StudentSummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "Pageable": {
+        "properties": {
+          "page": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sort": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PermissionDefinition": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "description",
+          "label",
+          "module"
+        ],
+        "type": "object"
+      },
+      "ReorderSchoolClassesRequest": {
+        "properties": {
+          "classIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "classIds"
+        ],
+        "type": "object"
+      },
+      "RoleResponse": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "templateCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "id",
+          "name",
+          "permissions"
+        ],
+        "type": "object"
+      },
+      "SaveAcademicSessionRequest": {
+        "properties": {
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endsOn",
+          "name",
+          "startsOn"
+        ],
+        "type": "object"
+      },
+      "SaveGuardianRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0,
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "occupation": {
+            "maxLength": 120,
+            "minLength": 0,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "SaveStudentRequest": {
+        "properties": {
+          "admissionNumber": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "admittedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "format": "date",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "TRANSFERRED",
+              "GRADUATED",
+              "WITHDRAWN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "dateOfBirth",
+          "fullName",
+          "gender",
+          "status"
+        ],
+        "type": "object"
+      },
+      "SchoolClassResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionResponse"
+            },
+            "type": "array"
+          },
+          "sequence": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active",
+          "id",
+          "name",
+          "sections",
+          "sequence"
+        ],
+        "type": "object"
+      },
+      "SchoolProfileResponse": {
+        "properties": {
+          "addressLine1": {
+            "type": "string"
+          },
+          "addressLine2": {
+            "type": "string"
+          },
+          "affiliationNumber": {
+            "type": "string"
+          },
+          "board": {
+            "enum": [
+              "CBSE",
+              "CISCE",
+              "STATE",
+              "IB",
+              "CAIE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "principalName": {
+            "type": "string"
+          },
+          "schemaName": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "board",
+          "code",
+          "configured",
+          "name",
+          "schemaName"
+        ],
+        "type": "object"
+      },
+      "SchoolResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "board": {
+            "enum": [
+              "CBSE",
+              "CISCE",
+              "STATE",
+              "IB",
+              "CAIE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "schemaName": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "board",
+          "code",
+          "id",
+          "name",
+          "schemaName"
+        ],
+        "type": "object"
+      },
+      "SchoolSummary": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
+      "SectionResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "StudentDetail": {
+        "properties": {
+          "admissionNumber": {
+            "type": "string"
+          },
+          "admittedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "currentEnrolment": {
+            "$ref": "#/components/schemas/CurrentEnrolment"
+          },
+          "dateOfBirth": {
+            "format": "date",
+            "type": "string"
+          },
+          "enrolments": {
+            "items": {
+              "$ref": "#/components/schemas/Enrolment"
+            },
+            "type": "array"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "guardians": {
+            "items": {
+              "$ref": "#/components/schemas/StudentGuardian"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "TRANSFERRED",
+              "GRADUATED",
+              "WITHDRAWN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "dateOfBirth",
+          "enrolments",
+          "fullName",
+          "gender",
+          "guardians",
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "StudentGuardian": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "guardianId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "linkId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "occupation": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "primary": {
+            "type": "boolean"
+          },
+          "relation": {
+            "enum": [
+              "FATHER",
+              "MOTHER",
+              "GUARDIAN",
+              "LOCAL_GUARDIAN",
+              "OTHER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName",
+          "guardianId",
+          "linkId",
+          "primary",
+          "relation"
+        ],
+        "type": "object"
+      },
+      "StudentSummary": {
+        "properties": {
+          "admissionNumber": {
+            "type": "string"
+          },
+          "currentEnrolment": {
+            "$ref": "#/components/schemas/CurrentEnrolment"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "TRANSFERRED",
+              "GRADUATED",
+              "WITHDRAWN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "fullName",
+          "gender",
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "UpdateEnrolmentRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "rollNumber": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "sectionId"
+        ],
+        "type": "object"
+      },
+      "UpdateSchoolClassRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "name"
+        ],
+        "type": "object"
+      },
+      "UpdateSchoolProfileRequest": {
+        "properties": {
+          "addressLine1": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "addressLine2": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "affiliationNumber": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "board": {
+            "enum": [
+              "CBSE",
+              "CISCE",
+              "STATE",
+              "IB",
+              "CAIE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "phone": {
+            "minLength": 1,
+            "pattern": "^[+0-9][0-9 ()-]{6,19}$",
+            "type": "string"
+          },
+          "pincode": {
+            "minLength": 1,
+            "pattern": "^[1-9][0-9]{5}$",
+            "type": "string"
+          },
+          "principalName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "schemaName": {
+            "maxLength": 63,
+            "minLength": 0,
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "website": {
+            "maxLength": 200,
+            "minLength": 0,
+            "pattern": "^https?://\\S+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "addressLine1",
+          "board",
+          "city",
+          "email",
+          "name",
+          "phone",
+          "pincode",
+          "principalName",
+          "state"
+        ],
+        "type": "object"
+      },
+      "UpdateSectionRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "name"
+        ],
+        "type": "object"
+      },
+      "UpdateStudentGuardianRequest": {
+        "properties": {
+          "primary": {
+            "type": "boolean"
+          },
+          "relation": {
+            "enum": [
+              "FATHER",
+              "MOTHER",
+              "GUARDIAN",
+              "LOCAL_GUARDIAN",
+              "OTHER"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "primary",
+          "relation"
+        ],
+        "type": "object"
+      },
+      "UserSummary": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "id",
+          "status"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "School management system for Indian K-12 schools",
+    "license": {
+      "name": "Proprietary"
+    },
+    "title": "Chalkbase API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/academics/classes": {
+      "get": {
+        "operationId": "list_4",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListSchoolClassResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolClassRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolClassResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      }
+    },
+    "/api/academics/classes/order": {
+      "put": {
+        "operationId": "reorder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderSchoolClassesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListSchoolClassResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      }
+    },
+    "/api/academics/classes/{id}": {
+      "put": {
+        "operationId": "update_5",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolClassRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolClassResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      }
+    },
+    "/api/academics/classes/{id}/sections": {
+      "post": {
+        "operationId": "addSection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSectionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      }
+    },
+    "/api/academics/sections/{id}": {
+      "put": {
+        "operationId": "updateSection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSectionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-class-controller"
+        ]
+      }
+    },
+    "/api/academics/sessions": {
+      "get": {
+        "operationId": "list_3",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListAcademicSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "academic-session-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAcademicSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseAcademicSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "academic-session-controller"
+        ]
+      }
+    },
+    "/api/academics/sessions/{id}": {
+      "put": {
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAcademicSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseAcademicSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "academic-session-controller"
+        ]
+      }
+    },
+    "/api/academics/sessions/{id}/current": {
+      "post": {
+        "operationId": "makeCurrent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListAcademicSessionResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "academic-session-controller"
+        ]
+      }
+    },
+    "/api/access/permissions": {
+      "get": {
+        "operationId": "permissions",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListPermissionDefinition"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/roles": {
+      "get": {
+        "operationId": "roles",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListRoleResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/users": {
+      "get": {
+        "operationId": "users",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListUserSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "operationId": "search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "actorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseAuditEventResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "audit-controller"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLoginResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/auth/password": {
+      "post": {
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "auth-controller"
+        ]
+      }
+    },
+    "/api/guardians": {
+      "get": {
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseGuardianSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "guardian-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveGuardianRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseGuardianSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "guardian-controller"
+        ]
+      }
+    },
+    "/api/guardians/{id}": {
+      "put": {
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveGuardianRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseGuardianSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "guardian-controller"
+        ]
+      }
+    },
+    "/api/guardians/{id}/students": {
+      "get": {
+        "operationId": "students",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListGuardianStudent"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "guardian-controller"
+        ]
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "me-controller"
+        ]
+      }
+    },
+    "/api/school/profile": {
+      "get": {
+        "operationId": "profile",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolProfileResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-profile-controller"
+        ]
+      },
+      "put": {
+        "operationId": "update_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolProfileResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-profile-controller"
+        ]
+      }
+    },
+    "/api/schools": {
+      "get": {
+        "operationId": "list_1",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListSchoolResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-controller"
+        ]
+      }
+    },
+    "/api/schools/{id}": {
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-controller"
+        ]
+      }
+    },
+    "/api/students": {
+      "get": {
+        "operationId": "list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "TRANSFERRED",
+                "GRADUATED",
+                "WITHDRAWN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectionId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseStudentSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStudentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStudentDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/import": {
+      "post": {
+        "operationId": "importStudents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "academicSessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseImportReport"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-import-controller"
+        ]
+      }
+    },
+    "/api/students/import/validate": {
+      "post": {
+        "operationId": "validate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "academicSessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseImportReport"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-import-controller"
+        ]
+      }
+    },
+    "/api/students/{id}": {
+      "get": {
+        "operationId": "find",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStudentDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      },
+      "put": {
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStudentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStudentDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/{id}/enrolments": {
+      "post": {
+        "operationId": "enrol",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrolmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnrolment"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/{id}/enrolments/{enrolmentId}": {
+      "put": {
+        "operationId": "updateEnrolment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "enrolmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEnrolmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnrolment"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/guardians": {
+      "post": {
+        "operationId": "link",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkGuardianRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStudentGuardian"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-guardian-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/guardians/{linkId}": {
+      "delete": {
+        "operationId": "unlink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-guardian-controller"
+        ]
+      },
+      "put": {
+        "operationId": "update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentGuardianRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStudentGuardian"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-guardian-controller"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Generated server url",
+      "url": "http://localhost"
+    }
+  ]
+}

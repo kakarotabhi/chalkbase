@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.school.domain.Board;
 import in.chalkbase.school.domain.School;
 import in.chalkbase.school.domain.SchoolProfile;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
@@ -31,18 +32,41 @@ public record SchoolProfileResponse(
         @Classification(Tier.INTERNAL) String schemaName,
         @Classification(Tier.PUBLIC) String name,
         @Classification(Tier.PUBLIC) Board board,
-        @Classification(Tier.PUBLIC) String addressLine1,
-        @Classification(Tier.PUBLIC) String addressLine2,
-        @Classification(Tier.PUBLIC) String city,
-        @Classification(Tier.PUBLIC) String state,
-        @Classification(Tier.PUBLIC) String pincode,
-        @Classification(Tier.CONFIDENTIAL) String principalName,
-        @Classification(Tier.CONFIDENTIAL) String phone,
-        @Classification(Tier.CONFIDENTIAL) String email,
-        @Classification(Tier.PUBLIC) String website,
-        @Classification(Tier.PUBLIC) String affiliationNumber,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String addressLine1,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String addressLine2,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String city,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String state,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String pincode,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String principalName,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String phone,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String email,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String website,
+
+        @Schema(nullable = true) @Classification(Tier.PUBLIC)
+        String affiliationNumber,
+
         @Classification(Tier.INTERNAL) boolean configured,
-        @Classification(Tier.INTERNAL) Instant updatedAt) {
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        Instant updatedAt) {
 
     public static SchoolProfileResponse of(School school, SchoolProfile profile) {
         if (profile == null) {

@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.StudentEnrolment;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -29,12 +30,24 @@ import java.util.UUID;
 public record Enrolment(
         @Classification(Tier.INTERNAL) UUID id,
         @Classification(Tier.INTERNAL) UUID sessionId,
-        @Classification(Tier.INTERNAL) String sessionName,
-        @Classification(Tier.INTERNAL) UUID classId,
-        @Classification(Tier.INTERNAL) String className,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String sessionName,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        UUID classId,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String className,
+
         @Classification(Tier.INTERNAL) UUID sectionId,
-        @Classification(Tier.INTERNAL) String sectionName,
-        @Classification(Tier.CONFIDENTIAL) String rollNumber,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String sectionName,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String rollNumber,
+
         @Classification(Tier.INTERNAL) boolean active,
         @Classification(Tier.CONFIDENTIAL) LocalDate enrolledOn) {
 
