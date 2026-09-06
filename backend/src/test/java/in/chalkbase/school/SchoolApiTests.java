@@ -1,6 +1,7 @@
 package in.chalkbase.school;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -53,10 +54,52 @@ class SchoolApiTests {
         schools.deleteAll();
     }
 
+    /**
+     * A caller holding {@code school:school:create} — the platform operator.
+     *
+     * <p>These tests used to send no identity at all, because the register was {@code permitAll()}.
+     * That is what made {@code GET /api/schools} world-readable: every school's name, code and
+     * PostgreSQL schema name, to anyone who asked. Signing the requests as an operator is not
+     * ceremony added to keep the tests passing — it is the tests finally describing who may do this.
+     */
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor operator() {
+        return user("platform-operator")
+                .authorities(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("school:school:create"));
+    }
+
+    /**
+     * The register is not readable by a school's own users, and this is the assertion that matters.
+     *
+     * <p>No shipped role template holds {@code school:school:create} ({@code RoleTemplates} says so
+     * and a test there pins it), so a principal, a class teacher and a parent all land here. A
+     * signed-in user of one school being able to enumerate every other school is the one thing
+     * schema-per-tenant exists to prevent.
+     */
+    @Test
+    void refusesTheRegisterToAnyoneWithoutTheOperatorPermission() throws Exception {
+        mockMvc.perform(get("/api/schools")
+                        .with(user("principal")
+                                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                        "school:school:read"))))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/schools")
+                        .with(csrf())
+                        .with(operator())
+                        .with(user("principal")
+                                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                        "school:school:read")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DPS))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void createsAndReadsBackASchool() throws Exception {
         mockMvc.perform(post("/api/schools")
                         .with(csrf())
+                        .with(operator())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated())
@@ -66,7 +109,7 @@ class SchoolApiTests {
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
 
-        mockMvc.perform(get("/api/schools"))
+        mockMvc.perform(get("/api/schools").with(operator()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].name").value("Greenfield Public School"));
@@ -76,6 +119,7 @@ class SchoolApiTests {
     void reportsFieldLevelValidationFailures() throws Exception {
         mockMvc.perform(post("/api/schools")
                         .with(csrf())
+                        .with(operator())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"\", \"name\": \"\", \"schemaName\": \"\", \"board\": \"CBSE\"}"))
                 .andExpect(status().isBadRequest())
@@ -91,12 +135,14 @@ class SchoolApiTests {
     void translatesADuplicateCodeIntoTheModulesOwnErrorCode() throws Exception {
         mockMvc.perform(post("/api/schools")
                         .with(csrf())
+                        .with(operator())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/schools")
                         .with(csrf())
+                        .with(operator())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DPS))
                 .andExpect(status().isConflict())
@@ -109,6 +155,7 @@ class SchoolApiTests {
     void rejectsAMalformedBodyWithoutEchoingIt() throws Exception {
         mockMvc.perform(post("/api/schools")
                         .with(csrf())
+                        .with(operator())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\": \"SECRET-VALUE\", not json"))
                 .andExpect(status().isBadRequest())
@@ -119,7 +166,8 @@ class SchoolApiTests {
 
     @Test
     void returnsTheEnvelopeForAnUnknownId() throws Exception {
-        mockMvc.perform(get("/api/schools/{id}", "11111111-1111-1111-1111-111111111111"))
+        mockMvc.perform(get("/api/schools/{id}", "11111111-1111-1111-1111-111111111111")
+                        .with(operator()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("NF_001"));
@@ -134,12 +182,12 @@ class SchoolApiTests {
 
     @Test
     void putsATraceIdOnEveryResponse() throws Exception {
-        mockMvc.perform(get("/api/schools")).andExpect(header().exists("X-Request-Id"));
+        mockMvc.perform(get("/api/schools").with(operator())).andExpect(header().exists("X-Request-Id"));
     }
 
     @Test
     void honoursAnInboundTraceId() throws Exception {
-        mockMvc.perform(get("/api/schools").header("X-Request-Id", "abc-123"))
+        mockMvc.perform(get("/api/schools").with(operator()).header("X-Request-Id", "abc-123"))
                 .andExpect(header().string("X-Request-Id", "abc-123"))
                 .andExpect(jsonPath("$.traceId").value("abc-123"));
     }

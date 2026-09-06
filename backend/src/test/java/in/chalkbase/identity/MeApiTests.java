@@ -179,33 +179,35 @@ class MeApiTests {
                                 GUARDIAN_MANAGE,
                                 USER_READ,
                                 ROLE_MANAGE)))
-                .andExpect(jsonPath("$.data.navigation[0].id").value("schools"))
-                .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.schools"))
+                // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
+                // on the deployment — which no school user may read; leaving it in the menu meant
+                // every user was shown a link to a list of every other school.
+                .andExpect(jsonPath("$.data.navigation[0].id").value("students"))
+                .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.students"))
                 // The students container at 25, between the register (20) and academics (30):
                 // the class ladder is set up once and revisited rarely, the student list is opened
                 // every day. Both of its children are declared inline by the module that owns them.
-                .andExpect(jsonPath("$.data.navigation[1].id").value("students"))
-                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("students.all"))
-                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("students.guardians"))
+                .andExpect(jsonPath("$.data.navigation[0].children[0].id").value("students.all"))
+                .andExpect(jsonPath("$.data.navigation[0].children[1].id").value("students.guardians"))
                 // The academics container. It has no screen of its own; both of its children are
                 // declared inline by the module that owns them, which is what makes it a container
                 // rather than a leaf.
-                .andExpect(jsonPath("$.data.navigation[2].id").value("academics"))
-                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
-                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
-                .andExpect(jsonPath("$.data.navigation[3].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("settings.access"))
+                .andExpect(jsonPath("$.data.navigation[1].id").value("academics"))
+                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("academics.sessions"))
+                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("academics.classes"))
+                .andExpect(jsonPath("$.data.navigation[2].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("settings.access"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees both children.
-                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
-                .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
+                .andExpect(jsonPath("$.data.navigation[0].children[0].children").isEmpty())
                 // The gate is not on the wire. Every item that survived filtering is one whose
                 // permission the caller holds, so sending it would only invite a second copy of the
                 // authorization model on the client (ADR-0008).
                 .andExpect(jsonPath("$.data.navigation[0].requiredPermission").doesNotExist())
-                .andExpect(jsonPath("$.data.navigation[3].children[0].requiredPermission")
+                .andExpect(jsonPath("$.data.navigation[2].children[0].requiredPermission")
                         .doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
     }
@@ -258,18 +260,22 @@ class MeApiTests {
         JsonNode parent = bootstrap("parent");
 
         assertThat(idsIn(parent)).isNotEqualTo(idsIn(principal));
-        assertThat(idsIn(principal)).contains("schools", "settings", "settings.access");
+        assertThat(idsIn(principal)).contains("students", "settings", "settings.access");
 
         assertEveryItemIsOneTheCallerMayUse(parent);
         assertEveryItemIsOneTheCallerMayUse(principal);
     }
 
     /**
-     * The auditor holds {@code school:school:read} and {@code platform:audit:read} but not
-     * {@code identity:role:manage}. Settings has no permission of its own, so it survives on its own
-     * account and is then dropped because the only thing inside it is gone — a section that opens
-     * onto nothing is worse than no section. The two leaves the auditor may open are still there,
-     * which is what makes the dropped section a decision rather than an empty menu.
+     * The auditor holds {@code platform:audit:read} but not {@code identity:role:manage}. Settings
+     * has no permission of its own, so it survives on its own account and is then dropped because
+     * the only thing inside it is gone — a section that opens onto nothing is worse than no section.
+     * The one leaf the auditor may open is still there, which is what makes the dropped section a
+     * decision rather than an empty menu.
+     *
+     * <p>The auditor's menu is now a single item, and that is the honest answer: an auditor reads
+     * the audit log and nothing else. It used to be two, the other being the platform register,
+     * which no school user may read.
      */
     @Test
     void dropsASectionWhoseOnlyChildTheUserMayNotOpen() throws Exception {
@@ -278,7 +284,7 @@ class MeApiTests {
 
         JsonNode auditor = bootstrap("auditor");
 
-        assertThat(idsIn(auditor)).containsExactly("schools", "audit");
+        assertThat(idsIn(auditor)).containsExactly("audit");
         assertEveryItemIsOneTheCallerMayUse(auditor);
     }
 

@@ -16,28 +16,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The school register: which campuses exist, and onboarding a new one.
+ * The school register: which campuses exist on this deployment (ADR-0011).
  *
- * <p><strong>Every method here is deliberately open</strong>, and each says so with an explicit
- * {@code @PreAuthorize("permitAll()")} rather than by being absent from the check. Onboarding a
- * campus is a platform-operator action performed before any account exists inside the school, and
- * there are no platform-operator accounts yet — a support user is its own thing, a platform-level
- * role outside any school, audited and time-boxed (ADR-0005), and building it is not this change.
+ * <p><strong>This is a platform-operator view, not a school one, and it took a test pass against a
+ * deployed instance to notice that it was neither.</strong> These endpoints were
+ * {@code permitAll()} — a leftover from before identity existed, when onboarding had no caller to
+ * authenticate. That made {@code GET /api/schools} world-readable: every school's name, code and
+ * PostgreSQL schema name, to anyone who asked. A signed-in principal of one school could enumerate
+ * every other school on the deployment, which is the one thing schema-per-tenant exists to prevent.
  *
- * <p>The permissions the register will be guarded by are already declared, in
- * {@code SchoolPermissions}, and the shipped role templates already hold {@code school:school:read}.
- * What is missing is only the principal to check them against.
+ * <p>They now require {@code school:school:create}, which <strong>no shipped role template
+ * holds</strong> ({@code RoleTemplates} says so explicitly). That permission is standing in for a
+ * platform-operator role that does not exist yet — the {@code TODO(identity)} in
+ * {@code SecurityConfig} is the real answer, and when it lands these move onto it.
  *
- * <p>On the {@code prod} profile these methods are not reachable without the
- * {@code X-Chalkbase-Setup-Key} header — {@code platform.config.SetupKeyFilter} answers 404 to
- * anything else. That is a stopgap added because the application now has a public URL and
- * {@code create} provisions a PostgreSQL schema; a single shared secret names nobody and audits as
- * nobody, so it is not the operator account and does not close the TODO below.
- *
- * <p>TODO(identity): replace {@code permitAll()} with
- * {@code hasAuthority(SchoolPermissions.SCHOOL_READ)} and {@code ...SCHOOL_CREATE} in the same
- * change that introduces platform-operator accounts, and remove the matching exemptions from
- * {@code SecurityConfig} — and the setup key with them.
+ * <p>The setup key on the {@code prod} profile is a second lock on the same door, not the only one.
+ * It was added when the application got a public URL, and defending a cross-tenant read with a
+ * filter alone would mean removing the filter re-opens the leak silently.
  */
 @RestController
 @RequestMapping("/api/schools")
@@ -49,19 +44,19 @@ public class SchoolController {
         this.schoolService = schoolService;
     }
 
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAuthority('school:school:create')")
     @GetMapping
     public ApiResponse<List<SchoolResponse>> list() {
         return ApiResponse.success(schoolService.findAll());
     }
 
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAuthority('school:school:create')")
     @GetMapping("/{id}")
     public ApiResponse<SchoolResponse> get(@PathVariable UUID id) {
         return ApiResponse.success(schoolService.findById(id));
     }
 
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAuthority('school:school:create')")
     @PostMapping
     public ResponseEntity<ApiResponse<SchoolResponse>> create(@Valid @RequestBody CreateSchoolRequest request) {
         SchoolResponse created = schoolService.create(request);
