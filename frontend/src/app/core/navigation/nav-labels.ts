@@ -30,6 +30,7 @@ const NAV_LABELS: Readonly<Record<string, string>> = {
   'nav.reports': 'Reports',
   'nav.settings': 'Settings',
   'nav.settings.access': 'Roles and access',
+  'nav.settings.profile': 'School profile',
   /** Not a server item. The compact bar's own overflow entry (ADR-0010). */
   'nav.more': 'More',
   /** The heading on the More sheet. */

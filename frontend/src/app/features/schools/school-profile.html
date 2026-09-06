@@ -1,0 +1,402 @@
+<p class="crumbs">Settings <span aria-hidden="true">›</span> School profile</p>
+<h1 class="page-title">School profile</h1>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading the school profile…</p>
+} @else if (loadFailed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load the school profile</strong>
+      <span>Check your connection and try again.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else {
+  <form class="profile" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (!configured()) {
+      <div class="banner banner--info">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">This school's profile is not filled in yet</strong>
+          <span>These details print on receipts, report cards and statutory returns.</span>
+        </div>
+      </div>
+    }
+
+    @if (failure(); as message) {
+      <div class="banner banner--danger" role="alert">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">{{ message.title }}</strong>
+          <span>{{ message.detail }}</span>
+        </div>
+      </div>
+    }
+
+    @if (savedJustNow()) {
+      <div class="banner banner--success" role="status">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 6.5 9.4 17.5 4 12.3" />
+        </svg>
+        <div>
+          <strong class="banner__title">School profile saved</strong>
+          <span>Everyone at this school sees the new details.</span>
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      <section class="section">
+        <h2 class="section__title">Identity</h2>
+        <p class="section__lede">
+          How the school is named on receipts, report cards and statutory returns.
+        </p>
+
+        <div class="fields">
+          <cb-form-field
+            #nameField
+            label="School name"
+            [controlId]="fieldIds.name"
+            [required]="true"
+            [error]="fieldErrors().name"
+          >
+            <cb-text-input
+              formControlName="name"
+              [id]="nameField.controlId()"
+              [describedBy]="nameField.describedById()"
+              [invalid]="nameField.hasError()"
+              [readOnly]="saving()"
+              autocomplete="organization"
+            />
+          </cb-form-field>
+
+          <!--
+            Read-only, unlike the mockup, and deliberately. The code addresses the tenant: it is
+            what a parent types to sign in and what every row this school owns hangs off
+            (ADR-0011). The design's "code already exists" error belongs to onboarding, which is
+            the one place a code is chosen.
+          -->
+          <cb-form-field
+            #codeField
+            label="School code"
+            [controlId]="codeFieldId"
+            hint="Fixed when the school was onboarded. Ask Chalkbase support if it is wrong."
+          >
+            <cb-text-input
+              formControlName="code"
+              [id]="codeField.controlId()"
+              [describedBy]="codeField.describedById()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #boardField
+            label="Board"
+            [controlId]="fieldIds.board"
+            [required]="true"
+            [error]="fieldErrors().board"
+          >
+            <cb-select
+              formControlName="board"
+              [id]="boardField.controlId()"
+              [options]="boards"
+              placeholder="Choose a board"
+              [describedBy]="boardField.describedById()"
+              [invalid]="boardField.hasError()"
+              [readOnly]="saving()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #affiliationField
+            label="Affiliation number"
+            [controlId]="fieldIds.affiliationNumber"
+            hint="As printed on the affiliation certificate."
+            [error]="fieldErrors().affiliationNumber"
+          >
+            <cb-text-input
+              formControlName="affiliationNumber"
+              [id]="affiliationField.controlId()"
+              [describedBy]="affiliationField.describedById()"
+              [invalid]="affiliationField.hasError()"
+              [readOnly]="saving()"
+            />
+          </cb-form-field>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Location</h2>
+        <p class="section__lede">Used on certificates and in UDISE+ returns.</p>
+
+        <div class="fields">
+          <cb-form-field
+            #address1Field
+            label="Address line 1"
+            [controlId]="fieldIds.addressLine1"
+            [required]="true"
+            [error]="fieldErrors().addressLine1"
+          >
+            <cb-text-input
+              formControlName="addressLine1"
+              [id]="address1Field.controlId()"
+              [describedBy]="address1Field.describedById()"
+              [invalid]="address1Field.hasError()"
+              [readOnly]="saving()"
+              autocomplete="address-line1"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #address2Field
+            label="Address line 2"
+            [controlId]="fieldIds.addressLine2"
+            [error]="fieldErrors().addressLine2"
+          >
+            <cb-text-input
+              formControlName="addressLine2"
+              [id]="address2Field.controlId()"
+              [describedBy]="address2Field.describedById()"
+              [invalid]="address2Field.hasError()"
+              [readOnly]="saving()"
+              placeholder="Optional"
+              autocomplete="address-line2"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #cityField
+            label="City"
+            [controlId]="fieldIds.city"
+            [required]="true"
+            [error]="fieldErrors().city"
+          >
+            <cb-text-input
+              formControlName="city"
+              [id]="cityField.controlId()"
+              [describedBy]="cityField.describedById()"
+              [invalid]="cityField.hasError()"
+              [readOnly]="saving()"
+              autocomplete="address-level2"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #stateField
+            label="State"
+            [controlId]="fieldIds.state"
+            [required]="true"
+            [error]="fieldErrors().state"
+          >
+            <cb-select
+              formControlName="state"
+              [id]="stateField.controlId()"
+              [options]="states"
+              placeholder="Choose a state"
+              [describedBy]="stateField.describedById()"
+              [invalid]="stateField.hasError()"
+              [readOnly]="saving()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #pincodeField
+            label="PIN code"
+            [controlId]="fieldIds.pincode"
+            [required]="true"
+            [error]="fieldErrors().pincode"
+          >
+            <cb-text-input
+              formControlName="pincode"
+              [id]="pincodeField.controlId()"
+              [describedBy]="pincodeField.describedById()"
+              [invalid]="pincodeField.hasError()"
+              [readOnly]="saving()"
+              inputmode="numeric"
+              autocomplete="postal-code"
+            />
+          </cb-form-field>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Contact</h2>
+        <p class="section__lede">Where parents and the board reach the school.</p>
+
+        <div class="fields">
+          <cb-form-field
+            #principalField
+            label="Principal"
+            [controlId]="fieldIds.principalName"
+            [required]="true"
+            [error]="fieldErrors().principalName"
+          >
+            <cb-text-input
+              formControlName="principalName"
+              [id]="principalField.controlId()"
+              [describedBy]="principalField.describedById()"
+              [invalid]="principalField.hasError()"
+              [readOnly]="saving()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #phoneField
+            label="Phone"
+            [controlId]="fieldIds.phone"
+            [required]="true"
+            [error]="fieldErrors().phone"
+          >
+            <cb-text-input
+              formControlName="phone"
+              type="tel"
+              [id]="phoneField.controlId()"
+              [describedBy]="phoneField.describedById()"
+              [invalid]="phoneField.hasError()"
+              [readOnly]="saving()"
+              inputmode="tel"
+              autocomplete="tel"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #emailField
+            label="Email"
+            [controlId]="fieldIds.email"
+            [required]="true"
+            [error]="fieldErrors().email"
+          >
+            <cb-text-input
+              formControlName="email"
+              type="email"
+              [id]="emailField.controlId()"
+              [describedBy]="emailField.describedById()"
+              [invalid]="emailField.hasError()"
+              [readOnly]="saving()"
+              inputmode="email"
+              autocapitalize="none"
+              autocomplete="email"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #websiteField
+            label="Website"
+            [controlId]="fieldIds.website"
+            hint="Include the https:// at the front."
+            [error]="fieldErrors().website"
+          >
+            <cb-text-input
+              formControlName="website"
+              [id]="websiteField.controlId()"
+              [describedBy]="websiteField.describedById()"
+              [invalid]="websiteField.hasError()"
+              [readOnly]="saving()"
+              placeholder="Optional"
+              autocapitalize="none"
+              autocomplete="url"
+            />
+          </cb-form-field>
+        </div>
+      </section>
+
+      <!--
+        The action bar. It says what state the form is in before it offers the buttons: unsaved
+        changes while something is edited, and nothing while there is nothing to save — so Save is
+        never a button whose effect the user has to guess at.
+      -->
+      <div class="actions" [class.actions--dirty]="dirty() && !saving()">
+        @if (dirty() && !saving()) {
+          <p class="actions__state" role="status">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9.5" />
+              <path d="M12 7.5v5" />
+              <path d="M12 16.2v.1" />
+            </svg>
+            <span>Unsaved changes</span>
+          </p>
+        }
+
+        <div class="actions__buttons">
+          <cb-button variant="secondary" [disabled]="saving() || !dirty()" (click)="cancel()">
+            Cancel
+          </cb-button>
+          <cb-button
+            type="submit"
+            variant="primary"
+            [disabled]="!dirty()"
+            [loading]="saving()"
+            loadingLabel="Saving…"
+          >
+            Save changes
+          </cb-button>
+        </div>
+      </div>
+    </div>
+  </form>
+}

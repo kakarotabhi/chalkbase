@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth-guard';
+import { unsavedChangesGuard } from './core/forms/unsaved-changes-guard';
 
 /**
  * Top-level routes.
@@ -35,6 +36,18 @@ export const routes: Routes = [
         path: 'schools',
         title: 'Schools',
         loadComponent: () => import('./features/schools/school-list').then((m) => m.SchoolList),
+      },
+      // Settings has no index of its own yet, so the section lands on the one screen it has. When
+      // a second settings screen ships this becomes a real index and the redirect goes.
+      { path: 'settings', pathMatch: 'full', redirectTo: 'settings/school-profile' },
+      {
+        path: 'settings/school-profile',
+        title: 'School profile · Chalkbase',
+        // The only guard on a child of the shell, and it earns its place: this is the first screen
+        // in Chalkbase where navigating away loses typed work.
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./features/schools/school-profile').then((m) => m.SchoolProfile),
       },
     ],
   },

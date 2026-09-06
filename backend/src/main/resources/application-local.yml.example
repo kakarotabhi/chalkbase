@@ -4,6 +4,11 @@
 #
 # application-local.yml is gitignored. This repository is PUBLIC — never put a real password in a
 # committed file. Prefer exporting CHALKBASE_DB_PASSWORD in your shell over typing it here.
+#
+# The project ref and region below are placeholders for the same reason. They are not secrets on
+# their own, but publishing them leaves only the password between the internet and the database,
+# and half a credential is worth more to an attacker than none. Both are on the project's Supabase
+# dashboard, which is where anyone entitled to them already is.
 spring:
   datasource:
     # Supabase pooler (Supavisor), session mode on 5432.
@@ -11,8 +16,8 @@ spring:
     # The direct host db.<ref>.supabase.co resolves to IPv6 ONLY, which most machines (WSL2
     # included) cannot reach. The pooler host is dual-stack, so use it. Session mode rather than
     # transaction mode (6543) because the tenant schema is selected with SET search_path (ADR-0011).
-    url: jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
-    username: postgres.zmnlyttpcirpurzdqwbb
+    url: jdbc:postgresql://aws-0-<your-region>.pooler.supabase.com:5432/postgres?sslmode=require
+    username: postgres.<your-project-ref>
     password: ${CHALKBASE_DB_PASSWORD:REPLACE_ME}
     hikari:
       # The free tier has a small connection budget and it is shared by everyone using this project.

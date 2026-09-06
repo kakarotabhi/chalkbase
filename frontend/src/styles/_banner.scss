@@ -28,6 +28,13 @@
     background: var(--cb-info-surface);
     color: var(--cb-info);
   }
+
+  /// Confirmation that something was saved. Sparingly: a banner after every action is one users
+  /// stop reading, and then they stop reading the ones that matter.
+  &.banner--success {
+    background: var(--cb-success-surface);
+    color: var(--cb-success);
+  }
 }
 
 /// The bold first line inside a banner.

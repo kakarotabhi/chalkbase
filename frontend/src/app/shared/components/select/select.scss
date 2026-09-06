@@ -1,0 +1,38 @@
+@use '../../../../styles/controls' as *;
+
+:host {
+  display: block;
+  position: relative;
+}
+
+.select {
+  @include control-surface;
+
+  // Room for the chevron, which sits over the control's right-hand end.
+  padding-right: var(--cb-space-8);
+
+  // The platform's arrow is replaced by ours so the control matches the text inputs beside it.
+  appearance: none;
+  cursor: pointer;
+}
+
+.select--invalid {
+  @include control-invalid;
+}
+
+.select__chevron {
+  position: absolute;
+  top: 0;
+  right: var(--cb-space-3);
+  display: flex;
+  align-items: center;
+  height: var(--cb-touch-target-min);
+  color: var(--cb-text-muted);
+
+  // Clicks belong to the select underneath, including on the chevron itself.
+  pointer-events: none;
+}
+
+.select:disabled + .select__chevron {
+  opacity: 0.6;
+}

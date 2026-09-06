@@ -41,6 +41,19 @@ spring:
     # Dates are ISO-8601 strings. Not configured here because Jackson 3 already defaults to that —
     # WRITE_DATES_AS_TIMESTAMPS moved from SerializationFeature to DateTimeFeature and defaults off.
 
+  # Paging for every list endpoint (platform.api.PageResponse).
+  data:
+    web:
+      pageable:
+        default-page-size: 25
+        # Spring's own default is 2000, which nobody chose and which lets `?size=2000` pull a
+        # school's whole audit log in one response. 100 is the largest page an admin table has a
+        # use for; a caller wanting more asks for more pages.
+        max-page-size: 100
+        # Pages are zero-based, as the API contract says. Stated rather than inherited: flipping
+        # this silently shifts every existing client by one page.
+        one-indexed-parameters: false
+
   threads:
     virtual:
       enabled: true

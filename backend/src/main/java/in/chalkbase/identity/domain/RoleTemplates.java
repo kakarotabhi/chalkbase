@@ -25,12 +25,18 @@ import java.util.stream.Collectors;
 public final class RoleTemplates {
 
     private static final String SCHOOL_READ = "school:school:read";
+    private static final String SCHOOL_UPDATE = "school:school:update";
     private static final String USER_READ = "identity:user:read";
     private static final String ROLE_MANAGE = "identity:role:manage";
+    private static final String AUDIT_READ = "platform:audit:read";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
      * database schema and is a platform-operator action, not a school one (ADR-0005).
+     *
+     * <p>{@code school:school:update} is the other half of that distinction and two templates do
+     * hold it: correcting your own school's address is school work, and the head of the school is
+     * who does it.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -38,6 +44,7 @@ public final class RoleTemplates {
                     "Principal",
                     "Head of the school. Sees everything and decides who else may.",
                     SCHOOL_READ,
+                    SCHOOL_UPDATE,
                     USER_READ,
                     ROLE_MANAGE),
             new RoleTemplate(
@@ -45,6 +52,7 @@ public final class RoleTemplates {
                     "Vice Principal",
                     "Deputises for the principal on the academic side, without control of access.",
                     SCHOOL_READ,
+                    SCHOOL_UPDATE,
                     USER_READ),
             new RoleTemplate(
                     "CLASS_TEACHER",
@@ -72,12 +80,17 @@ public final class RoleTemplates {
             // SELF scope, never from an administrator assigning them a class (ADR-0005).
             new RoleTemplate("PARENT", "Parent", "A guardian, who sees their own children and nothing else."),
             new RoleTemplate("STUDENT", "Student", "A student, who sees their own record and nothing else."),
+            // The audit log is the auditor's, and until now this template held nothing at all —
+            // honest, and useless (ADR-0018). platform:audit:read is deliberately on this template
+            // only: reading who did what to which record is oversight, not a convenience, and a
+            // school that wants its principal to have it adds it to that role itself.
             new RoleTemplate(
                     "AUDITOR",
                     "Auditor",
                     "Read-only oversight for an inspection or an internal audit. Changes nothing.",
                     SCHOOL_READ,
-                    USER_READ));
+                    USER_READ,
+                    AUDIT_READ));
 
     private RoleTemplates() {}
 

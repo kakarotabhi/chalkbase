@@ -1,0 +1,155 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  // One line of context is not worth the vertical space on a 360px screen, where the navigation
+  // already says where you are.
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  margin: 0 0 var(--cb-space-6);
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+
+  @include from-medium {
+    font-size: var(--cb-font-size-xl);
+  }
+}
+
+.page-status {
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.profile {
+  // Wide enough for two columns of form controls and no wider: a line of text that runs the width
+  // of a 27-inch monitor is one nobody reads twice.
+  max-width: 54rem;
+}
+
+.card {
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  box-shadow: var(--cb-shadow-1);
+}
+
+.section {
+  padding: var(--cb-space-4);
+  border-bottom: 1px solid var(--cb-border);
+
+  @include from-medium {
+    padding: var(--cb-space-6);
+  }
+}
+
+.section__title {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.section__lede {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+/**
+ * One column on a phone, two from tablet portrait up. `minmax(0, 1fr)` rather than `1fr` because a
+ * grid track's default minimum is its content, and a long e-mail address would otherwise widen the
+ * column instead of ellipsing inside it — which is how a page ends up scrolling sideways.
+ */
+.fields {
+  display: grid;
+  gap: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--cb-space-4) var(--cb-space-6);
+  }
+}
+
+/**
+ * The action bar.
+ *
+ * Sticky, not fixed: it belongs to the form, so it stays with the card when the form is short and
+ * follows the bottom of the window when the form is longer than the screen. On a phone it has to
+ * clear the shell's fixed bottom navigation, or Save sits underneath Dashboard.
+ */
+.actions {
+  position: sticky;
+  bottom: calc(var(--cb-bottom-nav-height) + var(--cb-safe-bottom));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface);
+  border-top: 1px solid var(--cb-border);
+  border-radius: 0 0 var(--cb-radius-md) var(--cb-radius-md);
+
+  @include from-medium {
+    bottom: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--cb-space-3) var(--cb-space-6);
+  }
+}
+
+// While there is something to lose, the bar says so in colour as well as in words.
+.actions--dirty {
+  background: var(--cb-warning-surface);
+}
+
+.actions__state {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-warning);
+
+  svg {
+    flex: none;
+  }
+}
+
+.actions__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  // Two equal halves on a phone, where they are the full width of the screen.
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}

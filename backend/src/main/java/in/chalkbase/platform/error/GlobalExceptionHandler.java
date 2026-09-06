@@ -2,6 +2,7 @@ package in.chalkbase.platform.error;
 
 import in.chalkbase.platform.api.ApiError;
 import in.chalkbase.platform.api.ApiResponse;
+import in.chalkbase.platform.audit.AuditService;
 import in.chalkbase.platform.web.RequestId;
 import jakarta.validation.ConstraintViolationException;
 import java.util.LinkedHashMap;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -48,9 +50,11 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final ConstraintViolationResolver constraintViolations;
+    private final AuditService audit;
 
-    public GlobalExceptionHandler(ConstraintViolationResolver constraintViolations) {
+    public GlobalExceptionHandler(ConstraintViolationResolver constraintViolations, AuditService audit) {
         this.constraintViolations = constraintViolations;
+        this.audit = audit;
     }
 
     // ── Deliberate application failures ──────────────────────────────────────────────────────
@@ -80,9 +84,19 @@ public class GlobalExceptionHandler {
         return respond(PlatformErrorCode.AUTHENTICATION_REQUIRED);
     }
 
+    /**
+     * The 403 raised by a method-level {@code @PreAuthorize}, once the request has already reached
+     * a controller.
+     *
+     * <p>Audited here as well as in {@link SecurityErrorResponder}, and that is not a duplicate: a
+     * denial that reaches this advice never reaches the filter chain's handler, because this one
+     * writes the response and the exception stops here. The two together cover both ways a 403 is
+     * produced, and exactly one of them runs per request (ADR-0018).
+     */
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
+        audit.recordPermissionDenied();
         return respond(PlatformErrorCode.ACCESS_DENIED);
     }
 
@@ -161,6 +175,28 @@ public class GlobalExceptionHandler {
                 ApiError.of(
                         PlatformErrorCode.VALIDATION_FAILED.code(),
                         "Parameter '" + ex.getName() + "' is not a valid " + expected));
+    }
+
+    /**
+     * An unknown property in a {@code ?sort=} parameter.
+     *
+     * <p>Spring Data resolves sort properties against the entity when the query runs, so a typo
+     * arrives here as a repository failure rather than as bound-parameter validation — and without
+     * this it would reach {@code handleUnexpected} and be answered with a 500. A caller's own typo
+     * is a 400: the request was wrong, nothing at our end was.
+     *
+     * <p>The property name is echoed because the caller supplied it. What is <em>not</em> echoed is
+     * {@code ex.getMessage()}, which lists every property the entity has — a free schema dump for
+     * anyone who can call a list endpoint.
+     */
+    @ExceptionHandler(PropertyReferenceException.class)
+    ResponseEntity<ApiResponse<Void>> handleUnknownSortProperty(PropertyReferenceException ex) {
+        log.warn("Unknown sort property '{}'", ex.getPropertyName());
+        return respond(
+                HttpStatus.BAD_REQUEST,
+                ApiError.of(
+                        PlatformErrorCode.VALIDATION_FAILED.code(),
+                        "'" + ex.getPropertyName() + "' is not a field this list can be sorted by"));
     }
 
     /**
