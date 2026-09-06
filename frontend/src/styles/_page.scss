@@ -1,0 +1,34 @@
+@use 'mixins' as *;
+
+/// The scaffolding every screen inside the shell repeats: its heading, and the muted line under it
+/// that says what is loading, missing or wrong.
+///
+/// Extracted once three screens had their own copy and the copies had already drifted — the school
+/// list's heading skipped the responsive step the other two had, so the same title was a different
+/// size on the same phone depending on which screen you were on. That is the failure mode a
+/// four-line duplication produces: not bytes, but a product that looks assembled from parts.
+///
+/// A mixin rather than a global class, matching `banner` and `controls`: component styles are
+/// scoped, and a screen still names its own elements.
+
+/// The screen's heading. One per screen, and it is an `<h1>`.
+@mixin page-title {
+  margin: 0 0 var(--cb-space-6);
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+
+  @include from-medium {
+    font-size: var(--cb-font-size-xl);
+  }
+}
+
+/// The line under the heading: "Loading…", "Nothing has been recorded yet", "Could not load".
+/// The error tone is a modifier rather than a separate class so a screen can swap tone without
+/// swapping element.
+@mixin page-status {
+  color: var(--cb-text-muted);
+
+  &--error {
+    color: var(--cb-danger);
+  }
+}

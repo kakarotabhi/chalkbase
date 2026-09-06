@@ -23,7 +23,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Permissions, roles, scoped grants | ✅ Done |
 | Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
-| Audit log (FR-008) — table, service, `GET /api/audit` | ✅ Backend; no screen yet |
+| Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
 | Academic session and classes | ⬜ Not started |
@@ -51,6 +51,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Audit log: one generic table per school, field NAMES only, two transaction semantics | [ADR-0018](architecture/adr/0018-audit-log.md) |
 | School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
 | Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
+| Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
 
 ## Next, in order
 
@@ -69,15 +70,20 @@ Each line says what it unblocks, because the order is not arbitrary.
 4. ~~**Tenant resolution from the session.**~~ ✅ Done. `SessionTenantFilter` binds `TenantContext`
    per request and unbinds it in a `finally`; a rejected tenant name no longer leaks its pooled
    connection (ADR-0011).
-5. ~~**Audit log (FR-008).**~~ ✅ Done, backend only. One `audit_event` table per school, field
-   names and never values, data changes in the caller's transaction and security events in their
-   own (ADR-0018). **Its screen is the next slice** — the backend emits the `audit` menu id today
-   and the frontend drops it, which is ADR-0008's designed behaviour and costs a log line.
+5. ~~**Audit log (FR-008).**~~ ✅ Done, end to end. One `audit_event` table per school, field names
+   and never values, data changes in the caller's transaction and security events in their own
+   (ADR-0018), and the screen at `/audit`. **The screen landed with zero backend changes**, which
+   was the real test of ADR-0008: the backend had been emitting the `audit` id since the previous
+   PR and the frontend was dropping it with a log line until a route resolved it.
 6. ~~**School profile.**~~ ✅ Done. `GET`/`PUT /api/school/profile` and `/settings/school-profile`,
    with the registry row written back on save so the register cannot disagree with the school.
 7. **Shared components** as the admin screens need them: dialog and toast remain (ADR-0009).
    Designed already — see [`docs/artifacts`](artifacts/README.md).
 8. **Academic session and classes** — the next real admin screens.
+9. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
+   it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
+   showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
+   interceptor does this for 401 only.
 
 Also queued, not blocking:
 
@@ -138,7 +144,21 @@ Recorded so they are decided rather than discovered.
   question for the board and the DPDP rules rather than an engineering choice. Needed before the
   first school completes a full session, since nothing bounds the table until then.
 - Indian states are a hardcoded list in the school-profile form (`TODO(reference-data)`). They are
-  Tier-1 master data and belong in `public` behind an endpoint (ADR-0006).
+  Tier-1 master data and belong in `public` behind an endpoint (ADR-0006). The audit screen's action
+  filter is the same case: it lists the actions this build ships, so a verb a future module invents
+  is filterable by neither name nor dropdown — those rows still list, label legibly and are
+  reachable by actor or date. Closing it needs the distinct actions in a school's own log.
+- **A school has no timezone**, so the audit screen renders times in the reader's own device zone.
+  India is one zone, so this is right for everyone in the country and wrong only for someone reading
+  from abroad — the row detail names the zone so they are not misled. A `timezone` on the school
+  closes it properly, and is a contract change rather than a screen fix.
+- The per-component style budget was raised from 4 kB / 8 kB to **8 kB / 12 kB**. The old warning
+  threshold was calibrated when every screen was a simple form; a screen that honours ADR-0010 with
+  a table above the wide breakpoint and cards below legitimately costs more, and the audit log is
+  the first of those at 6.3 kB. Raised deliberately rather than left as a permanent warning, because
+  a build that always warns is a build nobody reads. The shared page scaffolding was extracted to
+  `styles/_page.scss` in the same change — three screens had their own copy and the copies had
+  already drifted.
 
 ## Keeping this honest
 

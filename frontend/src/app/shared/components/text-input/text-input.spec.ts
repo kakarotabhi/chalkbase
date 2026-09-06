@@ -10,6 +10,7 @@ import { TextInput } from './text-input';
     <cb-text-input
       [formControl]="control"
       id="username"
+      [type]="type()"
       [invalid]="invalid()"
       [readOnly]="readOnly()"
       describedBy="username-hint"
@@ -19,6 +20,7 @@ import { TextInput } from './text-input';
 })
 class TextInputHost {
   readonly control = new FormControl('', { nonNullable: true });
+  readonly type = signal<'text' | 'email' | 'tel' | 'date'>('text');
   readonly invalid = signal(false);
   readonly readOnly = signal(false);
 }
@@ -47,6 +49,18 @@ describe('TextInput', () => {
     expect(input().getAttribute('autocomplete')).toBe('username');
     expect(input().getAttribute('aria-describedby')).toBe('username-hint');
     expect(input().getAttribute('aria-invalid')).toBeNull();
+  });
+
+  /**
+   * A day, not an instant: the control hands the form a `yyyy-MM-dd` string and leaves the picker
+   * to the platform, which on Android and iOS is a full-screen one far easier to hit than anything
+   * drawn here.
+   */
+  it('borrows the platform picker for a date', () => {
+    host.type.set('date');
+    fixture.detectChanges();
+
+    expect(input().getAttribute('type')).toBe('date');
   });
 
   it('writes what the user types back to the form control', () => {

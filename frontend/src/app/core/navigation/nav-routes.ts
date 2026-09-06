@@ -42,10 +42,14 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // Contributed by the school module under the settings container the identity module owns — the
   // backend places it by its dotted id, so neither module has to reach into the other.
   ['settings.profile', { path: '/settings/school-profile', icon: 'settings' }],
-  // `settings.access` and `audit` are deliberately absent. The backend emits both, neither has a
-  // screen in this build, and so they stay dropped-and-logged — an entry here would be a menu item
-  // that 404s, which is the one thing this registry exists to prevent. The audit *API* has shipped;
-  // its screen is the next slice, and the menu entry starts working with no backend change.
+  // The audit log. The backend has emitted this id since the audit API shipped and it was being
+  // dropped-and-logged every time, because there was no screen behind it; this entry is the whole
+  // of what it took to switch the menu item on, with no backend change — which is the bargain
+  // ADR-0008 describes, arriving exactly as described.
+  ['audit', { path: '/audit', icon: 'shield-check' }],
+  // `settings.access` is deliberately absent. The backend emits it, it has no screen in this
+  // build, and so it stays dropped-and-logged — an entry here would be a menu item that 404s,
+  // which is the one thing this registry exists to prevent.
 ]);
 
 /**

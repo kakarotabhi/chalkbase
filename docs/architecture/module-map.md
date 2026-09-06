@@ -5,7 +5,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
-| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config. Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | audit log built |
+| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config. Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | built, with its screen |
 | `school` | `public.school`, `public.school_group` (registry); `school_profile`, `academic_session` (per tenant) | `/api/schools`, `/api/school/profile` | registry is not; the rest are | profile built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
