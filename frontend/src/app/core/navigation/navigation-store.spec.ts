@@ -114,4 +114,46 @@ describe('NavigationStore', () => {
     store.clear();
     expect(store.loaded()).toBe(false);
   });
+
+  describe('landingPath', () => {
+    it('is the first item of this menu, in the order the server asked for', () => {
+      store.load([item({ id: 'fees', order: 30 }), item({ id: 'students', order: 10 })]);
+
+      expect(store.landingPath()).toBe('/students');
+    });
+
+    it('descends into a container rather than landing on a heading', () => {
+      // A section is a place to look, not a screen. Landing on `fees` would land on whatever
+      // `/fees` happens to redirect to, which is a second answer to this question in a second file.
+      store.load([item({ id: 'fees', children: [item({ id: 'fees.collect' })] })]);
+
+      expect(store.landingPath()).toBe('/fees/collect');
+    });
+
+    it('skips an id this build has no route for, rather than pointing at it', () => {
+      // The whole point of reading the resolved tree: `hostel` came first, and this build cannot
+      // open it, so it is not where anybody lands.
+      store.load([item({ id: 'hostel', order: 10 }), item({ id: 'students', order: 20 })]);
+
+      expect(store.landingPath()).toBe('/students');
+    });
+
+    it('falls back to a container whose children were all dropped', () => {
+      store.load([item({ id: 'fees', children: [item({ id: 'fees.waivers' })] })]);
+
+      expect(store.landingPath()).toBe('/fees');
+    });
+
+    it('is null when there is nothing this build can open, rather than a guess', () => {
+      // Null is the honest answer, and the reason there is no hardcoded landing route left: a
+      // constant here would be the same bug in a different file.
+      store.load([item({ id: 'hostel' })]);
+
+      expect(store.landingPath()).toBeNull();
+    });
+
+    it('is null before the menu has arrived', () => {
+      expect(store.landingPath()).toBeNull();
+    });
+  });
 });
