@@ -40,6 +40,116 @@ cd frontend && npm run contracts:types  # rewrites contracts/api-types.ts
 Run both. The second reads what the first wrote, so a spec change that is not followed by a type
 regeneration fails the frontend job rather than the backend one.
 
+## What to do when you change the API
+
+Every recipe ends the same way — **run both commands and commit both files** — so that is stated
+once here rather than repeated five times:
+
+```bash
+cd backend  && ./mvnw verify            # rewrites contracts/openapi.json
+cd frontend && npm run contracts:types  # rewrites contracts/api-types.ts
+```
+
+The second reads what the first wrote, so the order matters.
+
+---
+
+### Adding a field to a response
+
+A field that is always present — a `not null` column, or something the mapper always computes.
+
+1. Add the component to the Java record, with its `@Classification` tier (ADR-0014, and
+   `ClassificationTests` fails the build without it).
+2. Regenerate. The field appears in `openapi.json` under both `properties` **and** `required`, and
+   in `api-types.ts` as `readonly newField: string`.
+3. Nothing to do in `models.ts` — the alias already points at the schema, so the new field is
+   simply there. If the field needs explaining, add prose to the doc comment above the alias; that
+   is what `models.ts` is for.
+4. Use it. TypeScript will not make you check for absence, because it cannot be absent.
+
+### Adding a **nullable** field to a response
+
+**This is the one with a trap in it.** Read the second load-bearing note below before doing it.
+
+1. Add the component, with its `@Classification`.
+2. **Also add `@Schema(nullable = true)`.** Without it the contract claims the field is always
+   present, the generated type promises a value, and the frontend reads `undefined` from a type
+   that says `string`. Nothing catches this — it is the single failure mode of this arrangement.
+3. Regenerate. The field appears in `properties` but **not** in `required`, and generates as
+   `readonly newField?: string`.
+4. Read it with truthiness or `??`, never `=== null` — a null field is *absent* from the JSON, so
+   `=== null` is false for exactly the case you meant to catch.
+
+**Is the field nullable?** Ask the database first — a nullable column is nullable. Then ask the
+mapper: `Enrolment.of()` passes null for four fields when the session is absent, and those are
+nullable even though their columns are not. If a factory can write `null` into it, it is nullable.
+
+### Adding a whole new response record
+
+1. Write the record under the module's `api/` package. Every component needs `@Classification`;
+   add `toString()` returning `Classified.describe(this)` or `ClassificationTests` fails.
+2. Mark the nullable components as above.
+3. Regenerate. A new schema appears in `openapi.json` and a new entry in `api-types.ts`.
+4. Add **one line** to `models.ts`:
+   ```ts
+   export type NewThing = Schemas['NewThing'];
+   ```
+   with a doc comment saying what the schema cannot: what it is for, what a field means, what
+   nothing may assume about it.
+
+### Adding a field to a **request**
+
+Requests work the other way round and need no `@Schema`: springdoc reads Jakarta validation.
+
+- `@NotBlank` / `@NotNull` → the field lands in `required`, generating `newField: string`.
+- No validation annotation → the field is optional, generating `newField?: string`.
+
+So **the annotation is the contract.** If the server needs the field, say `@NotBlank` and the
+frontend will not compile without it. Leaving it off makes the field optional to every client,
+which is a real decision and not a default to fall into. `@Size`, `@Pattern` and `@Email` also
+travel, so `maxLength` and `pattern` reach the generated type.
+
+### Renaming or removing a field
+
+There is no soft landing here, and that is the point.
+
+1. Change the Java, regenerate.
+2. The frontend **fails to compile** wherever the old name was used. Fix those.
+3. Both sides ship in the same pull request.
+
+A rename is a breaking change to every client. If a real client is deployed that you cannot update
+in the same breath, add the new field alongside, migrate, and remove the old one in a later change
+— the same expand/contract discipline migrations use.
+
+### A new endpoint
+
+Nothing extra. The path appears in `openapi.json` from the controller; its request and response
+schemas follow the recipes above. Write the `*Api` service method by hand — the generator produces
+**types, not clients**, deliberately.
+
+---
+
+### When CI fails on a `contracts/` diff
+
+It means the committed contract does not match the code. Run both commands, look at the diff, and
+**read it** — that diff is the review artifact this whole arrangement exists to produce. Then commit
+it.
+
+If the diff appears without you having changed any API, something changed the contract by accident:
+a dependency bump altering springdoc's output, a new controller picked up by scanning, an
+annotation added for another reason. That is worth understanding rather than committing blindly.
+
+### Things that will not work
+
+- **Editing `api-types.ts` or `openapi.json` by hand.** Both are regenerated; your edit disappears
+  at the next build and CI fails on the diff in between.
+- **Hand-writing a shape in `models.ts`.** If the backend does not send it, the frontend has
+  invented an API (`AGENTS.md` rule 5). This has already happened once: `NavigationItem.label` was
+  read by `navigation-store` and mocked by a spec, so an unimplemented feature looked both present
+  and tested. Generating the types is what found it.
+- **Marking a response field nullable to silence a compile error.** The compiler is reporting that
+  the frontend assumes a value the contract does not promise. Fix whichever side is wrong.
+
 ## Two things that are load-bearing
 
 **Response fields are required unless the backend says otherwise.** springdoc reads `required` from
