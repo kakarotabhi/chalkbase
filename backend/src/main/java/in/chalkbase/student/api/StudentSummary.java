@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Gender;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /**
@@ -31,7 +32,9 @@ public record StudentSummary(
         @Classification(Tier.CONFIDENTIAL) String fullName,
         @Classification(Tier.CONFIDENTIAL) Gender gender,
         @Classification(Tier.INTERNAL) StudentStatus status,
-        @Classification(Tier.CONFIDENTIAL) CurrentEnrolment currentEnrolment) {
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        CurrentEnrolment currentEnrolment) {
 
     public static StudentSummary of(Student student, CurrentEnrolment currentEnrolment) {
         return new StudentSummary(

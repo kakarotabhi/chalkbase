@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Guardian;
 import in.chalkbase.student.domain.GuardianRelation;
 import in.chalkbase.student.domain.StudentGuardianLink;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /**
@@ -29,9 +30,16 @@ public record StudentGuardian(
         @Classification(Tier.INTERNAL) UUID guardianId,
         @Classification(Tier.CONFIDENTIAL) String fullName,
         @Classification(Tier.INTERNAL) GuardianRelation relation,
-        @Classification(Tier.CONFIDENTIAL) String phone,
-        @Classification(Tier.CONFIDENTIAL) String email,
-        @Classification(Tier.CONFIDENTIAL) String occupation,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String phone,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String email,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String occupation,
+
         @Classification(Tier.INTERNAL) boolean primary) {
 
     public static StudentGuardian of(StudentGuardianLink link) {

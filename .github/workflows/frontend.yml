@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
+      - 'contracts/**'
       - 'ops/docker/Dockerfile.frontend'
       - 'ops/docker/nginx.conf'
       - '.github/workflows/frontend.yml'
@@ -49,6 +50,26 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Regenerated from the committed spec rather than from a running backend: this job never
+      # starts one. It catches the other half of the drift — a contracts/openapi.json that moved
+      # without contracts/api-types.ts being regenerated from it, and any change of generator
+      # version or flags that would silently alter every type in the app.
+      - name: Contract types are up to date
+        run: npm run contracts:types
+
+      - name: Contract is up to date
+        working-directory: ${{ github.workspace }}
+        run: |
+          if ! git diff --exit-code -- contracts/; then
+            echo
+            echo '::error::contracts/api-types.ts is not what contracts/openapi.json generates.'
+            echo 'Run this and commit what it produces:'
+            echo
+            echo '    cd frontend && npm run contracts:types'
+            echo
+            exit 1
+          fi
 
       - name: Upload bundle
         uses: actions/upload-artifact@v4

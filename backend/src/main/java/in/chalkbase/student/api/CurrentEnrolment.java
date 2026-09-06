@@ -3,6 +3,7 @@ package in.chalkbase.student.api;
 import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Where a student sits <em>this year</em>, flattened onto a list row.
@@ -23,7 +24,9 @@ public record CurrentEnrolment(
         @Classification(Tier.INTERNAL) String sessionName,
         @Classification(Tier.INTERNAL) String className,
         @Classification(Tier.INTERNAL) String sectionName,
-        @Classification(Tier.CONFIDENTIAL) String rollNumber) {
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String rollNumber) {
     /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
     @Override
     public String toString() {

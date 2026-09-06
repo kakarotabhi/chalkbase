@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'contracts/**'
       - 'ops/docker/Dockerfile.backend'
       - '.github/workflows/backend.yml'
   # No path filter on pull_request: these checks are required for merge, and a required check
@@ -41,6 +42,24 @@ jobs:
       # Spotless format check. Keep it as one step so CI and `./mvnw verify` cannot drift.
       - name: Verify
         run: ./mvnw -B verify
+
+      # `verify` runs OpenApiContractTests, which exports the live /v3/api-docs to
+      # contracts/openapi.json. If those bytes differ from the committed ones, a backend change
+      # altered the API without the contract being regenerated — which is precisely the drift the
+      # contract exists to catch, and it has to fail here rather than in somebody's browser.
+      - name: Contract is up to date
+        working-directory: ${{ github.workspace }}
+        run: |
+          if ! git diff --exit-code -- contracts/; then
+            echo
+            echo '::error::The API contract changed but contracts/ was not regenerated.'
+            echo 'Run this and commit what it produces:'
+            echo
+            echo '    cd backend  && ./mvnw verify'
+            echo '    cd frontend && npm run contracts:types'
+            echo
+            exit 1
+          fi
 
       - name: Upload test reports
         if: failure()

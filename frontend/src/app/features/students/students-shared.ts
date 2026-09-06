@@ -112,7 +112,10 @@ export function labelFor<T extends string>(
  * One string rather than two columns, because "which section is this child in" is one question and
  * the class alone is not an answer to it.
  */
-export function classAndSection(className: string, sectionName: string): string {
+export function classAndSection(
+  className: string | undefined,
+  sectionName: string | undefined,
+): string {
   const parts = [className?.trim(), sectionName?.trim()].filter(Boolean);
   return parts.join(' · ');
 }

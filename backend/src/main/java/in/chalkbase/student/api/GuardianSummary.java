@@ -4,6 +4,7 @@ import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Guardian;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /**
@@ -26,9 +27,16 @@ import java.util.UUID;
 public record GuardianSummary(
         @Classification(Tier.INTERNAL) UUID id,
         @Classification(Tier.CONFIDENTIAL) String fullName,
-        @Classification(Tier.CONFIDENTIAL) String phone,
-        @Classification(Tier.CONFIDENTIAL) String email,
-        @Classification(Tier.CONFIDENTIAL) String occupation,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String phone,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String email,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        String occupation,
+
         @Classification(Tier.INTERNAL) long linkedStudentCount) {
 
     public static GuardianSummary of(Guardian guardian, long linkedStudentCount) {

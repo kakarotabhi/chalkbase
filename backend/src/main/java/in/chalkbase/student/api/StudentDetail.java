@@ -6,6 +6,7 @@ import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Gender;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -39,9 +40,15 @@ public record StudentDetail(
         @Classification(Tier.CONFIDENTIAL) String fullName,
         @Classification(Tier.CONFIDENTIAL) Gender gender,
         @Classification(Tier.INTERNAL) StudentStatus status,
-        @Classification(Tier.CONFIDENTIAL) CurrentEnrolment currentEnrolment,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        CurrentEnrolment currentEnrolment,
+
         @Classification(Tier.CONFIDENTIAL) LocalDate dateOfBirth,
-        @Classification(Tier.CONFIDENTIAL) LocalDate admittedOn,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        LocalDate admittedOn,
+
         @Classification(Tier.CONFIDENTIAL) List<StudentGuardian> guardians,
         @Classification(Tier.CONFIDENTIAL) List<Enrolment> enrolments) {
 

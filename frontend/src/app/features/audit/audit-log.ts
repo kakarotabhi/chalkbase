@@ -168,7 +168,7 @@ export class AuditLog {
       occurredAt: formatTime(SHORT_TIME, event.occurredAt),
       occurredAtFull: formatTime(FULL_TIME, event.occurredAt),
       occurredAtIso: event.occurredAt,
-      actorId: event.actorId,
+      actorId: event.actorId ?? null,
       // A failed sign-in has no actor at all — the account was never established. Saying so beats
       // an empty cell, which reads as data we lost rather than data that never existed.
       actorName: event.actorName?.trim() || 'Not signed in',

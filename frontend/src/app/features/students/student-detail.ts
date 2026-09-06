@@ -103,7 +103,7 @@ export class StudentDetail {
     if (!student) {
       return null;
     }
-    // `?? []` because the list may be absent rather than empty — see `StudentDetail` in models.ts.
+    // `?? []` is belt and braces: the contract makes the list required — see `StudentDetail`.
     const current = (student.enrolments ?? []).find((enrolment) => enrolment.active) ?? null;
     return {
       fullName: student.fullName,

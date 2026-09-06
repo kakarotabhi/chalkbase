@@ -47,8 +47,14 @@ src/environments/ apiBaseUrl per build configuration.
   their own container — decided per screen by task, not `overflow-x: auto` everywhere.
 - **Render navigation once** and move it with CSS. Three copies means three landmarks for screen
   readers and triple the DOM on the cheapest devices.
-- **API models come from the backend contract.** Until the generated client lands, `core/api/models.ts`
-  mirrors the backend records exactly — do not invent fields.
+- **API models come from the backend contract, and are now generated.** `core/api/models.ts` is a
+  list of aliases onto `contracts/api-types.ts`, which `npm run contracts:types` generates from
+  `contracts/openapi.json`, which the backend build exports. **Never hand-write a shape there** —
+  an alias is a claim the compiler checks. What that file still owns is the prose explaining *why*
+  a field is what it is; keep it, and put a field-level note under the type it belongs to. A field
+  the backend does not send has no business in this app: if you need one, it goes in the backend
+  first. CI fails on a `contracts/` diff, so regenerate after a backend change and commit both
+  files.
 - **The response envelope is unwrapped in `core/api`,** not in components. Components receive plain
   payloads; error handling reads `error.code`, never `error.message` (ADR-0007).
 

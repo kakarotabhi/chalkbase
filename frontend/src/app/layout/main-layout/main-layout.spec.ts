@@ -27,7 +27,6 @@ const ORDERED_IDS = ['dashboard', 'students', 'fees', 'attendance', 'exams', 're
 
 const navItem = (over: Partial<NavigationItem> & Pick<NavigationItem, 'id'>): NavigationItem => ({
   labelKey: `nav.${over.id}`,
-  icon: null,
   order: 10,
   children: [],
   ...over,

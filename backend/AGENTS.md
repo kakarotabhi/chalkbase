@@ -47,6 +47,14 @@ in.chalkbase
   version segment** — the API is not versioned (ADR-0016). Never add `/v1` or a `v2` package.
 - **Add fields, never remove or rename them.** A breaking change is allowed, but it changes the
   frontend in the same pull request.
+- **A response record's fields are required in the contract unless annotated.** `verify` exports
+  `/v3/api-docs` to `contracts/openapi.json`, and `OpenApiConfig.requiredUnlessNullable` marks
+  every response property required — springdoc cannot infer it, because a response carries no
+  validation annotations. A field that can genuinely be null needs `@Schema(nullable = true)`,
+  which is read as "may be absent" and never reaches the wire as `null` (`non_null` inclusion
+  drops it). Forget the annotation and the generated TypeScript promises a value that is not
+  always there. Requests are untouched — their `required` already comes from `@NotBlank` and
+  friends. CI fails on a `contracts/` diff, so commit what `verify` writes.
 - **Navigation is data, not markup** (ADR-0008). A module contributes navigation nodes as
   stable ids plus label keys. Never send a URL, a component name, or anything visual.
 - **Responses**: controllers return `ApiResponse<T>` via `ApiResponse.success(...)` (ADR-0007).
