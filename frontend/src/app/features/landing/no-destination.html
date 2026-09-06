@@ -1,0 +1,37 @@
+<h1 class="page-title">Nothing to open yet</h1>
+
+<div class="banner banner--info" role="status">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.9"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="M12 7.5v5" />
+    <path d="M12 16.2v.1" />
+  </svg>
+
+  @if (menuLoaded()) {
+    <div>
+      <strong class="banner__title">You are signed in, but no screens are available to you</strong>
+      <span>
+        Your account has no part of Chalkbase it can open in this version. Ask your school office to
+        check which role you were given — anything it adds will appear in the menu here.
+      </span>
+    </div>
+  } @else {
+    <div>
+      <strong class="banner__title">Your menu could not be loaded</strong>
+      <span>
+        We could not reach Chalkbase to find out what you can open, so there is nowhere to send you.
+        Check the connection and reload this page; if it keeps happening, tell your school office.
+      </span>
+    </div>
+  }
+</div>

@@ -10,7 +10,8 @@ its principal to have it can add "View the audit log" to that role.
 
 ## Steps
 
-1. Open **Audit log** from the menu.
+1. Open **Audit log** from the menu. If it is the only thing your account can open, signing in
+   takes you straight to it.
 2. The newest entries are first. Each line says when something happened, who did it, what they did,
    and which record it was about.
 3. Narrow it down with the filters along the top:

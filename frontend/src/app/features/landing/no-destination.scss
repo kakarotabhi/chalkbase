@@ -1,0 +1,23 @@
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  // The one block on the screen, so it is read rather than scanned past — wide enough for the
+  // sentence to break where a sentence should, and no wider.
+  max-width: 64ch;
+}
+
+.banner__title {
+  @include banner-title;
+
+  margin-bottom: var(--cb-space-1);
+}
