@@ -1,0 +1,82 @@
+@use '../../../styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+/**
+ * Warning-toned rather than danger-toned, and that is the whole visual argument. Red says
+ * "refused"; this is not a refusal, and a box that looks like one would train the office to click
+ * past it. Amber says "look at this before you carry on", which is exactly what it is.
+ */
+.duplicate {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+  font-size: var(--cb-font-size-sm);
+
+  svg {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+.duplicate__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.duplicate__title {
+  display: block;
+  font-weight: 600;
+}
+
+.duplicate__list {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: var(--cb-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/**
+ * Stacked on a phone, because the action is a full-width tap target there and a name squeezed
+ * beside it would wrap to two lines anyway. Side by side once there is room (ADR-0010).
+ */
+.duplicate__match {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-2);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.duplicate__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+  min-width: 0;
+}
+
+.duplicate__name {
+  font-weight: 600;
+}
+
+// A phone number is read digit by digit off a screen at a counter.
+.duplicate__phone {
+  font-family: var(--cb-font-numeric);
+}
+
+.duplicate__note {
+  margin: var(--cb-space-2) 0 0;
+}

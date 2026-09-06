@@ -5,6 +5,8 @@ import in.chalkbase.platform.audit.AuditAction;
 import in.chalkbase.platform.audit.AuditService;
 import in.chalkbase.platform.error.ChalkbaseException;
 import in.chalkbase.platform.error.NotFoundException;
+import in.chalkbase.student.api.CurrentEnrolment;
+import in.chalkbase.student.api.GuardianStudent;
 import in.chalkbase.student.api.GuardianSummary;
 import in.chalkbase.student.api.LinkGuardianRequest;
 import in.chalkbase.student.api.SaveGuardianRequest;
@@ -19,6 +21,7 @@ import in.chalkbase.student.infrastructure.GuardianRepository;
 import in.chalkbase.student.infrastructure.StudentGuardianRepository;
 import in.chalkbase.student.infrastructure.StudentRepository;
 import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -54,19 +58,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class GuardianService {
 
+    /** Everything that is not 0-9. Compiled once; {@code matching} runs it on every keystroke's worth. */
+    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
+
     private final GuardianRepository guardians;
     private final StudentGuardianRepository links;
     private final StudentRepository students;
+    private final StudentService studentService;
     private final AuditService audit;
 
     public GuardianService(
             GuardianRepository guardians,
             StudentGuardianRepository links,
             StudentRepository students,
+            StudentService studentService,
             AuditService audit) {
         this.guardians = guardians;
         this.links = links;
         this.students = students;
+        this.studentService = studentService;
         this.audit = audit;
     }
 
@@ -93,6 +103,36 @@ public class GuardianService {
                 .map(guardian -> GuardianSummary.of(guardian, counts.getOrDefault(guardian.getId(), 0L)))
                 .toList();
         return PageResponse.of(page, content);
+    }
+
+    /**
+     * Which children this guardian is responsible for.
+     *
+     * <p><strong>The expansion of {@code linkedStudentCount}.</strong> "Linked to 4 students" is what
+     * makes the shared record legible, and it is also where the screen used to stop: somebody
+     * comparing two records that both say "linked to 2 students" is asking which two, and a count
+     * cannot answer that. Without the answer the safest-looking move is to create a third record,
+     * which is the duplication ADR-0020 §5 exists to prevent.
+     *
+     * <p>Not paged. A guardian has a handful of children — four is a large family, not a large page —
+     * and a page envelope round a list of four would be ceremony with nothing behind it.
+     *
+     * <p>Two queries: the links with their students, then one batch for where those children sit this
+     * year. The second goes through {@code StudentService} rather than repeating the rule for what
+     * "this year" means; a school that has declared no current session sees no class here, which is
+     * the same answer the student list gives.
+     */
+    public List<GuardianStudent> studentsOf(UUID guardianId) {
+        requireGuardian(guardianId);
+
+        List<StudentGuardianLink> linked = links.findByGuardianIdWithStudent(guardianId);
+        Map<UUID, CurrentEnrolment> placements = studentService.currentEnrolments(
+                linked.stream().map(link -> link.getStudent().getId()).toList());
+
+        return linked.stream()
+                .map(link -> GuardianStudent.of(
+                        link, placements.get(link.getStudent().getId())))
+                .toList();
     }
 
     /**
@@ -313,22 +353,53 @@ public class GuardianService {
     }
 
     /**
-     * Name, phone or email, lower-cased on both sides and escaped.
+     * Name, email or phone — with the phone compared <strong>digits to digits</strong>.
+     *
+     * <p>The phone half is the part that matters and it used to be wrong. It matched the search text
+     * against the raw stored value, so a guardian entered as {@code +91 98765 43210} was not found
+     * by a clerk typing {@code 9876543210}, and one entered as {@code +919876543210} was not found
+     * by {@code 98765 43210}. A school types the same number four different ways over four years,
+     * and the number is the one field that separates two people who share a surname — so the search
+     * failed precisely where the office was about to create a duplicate, which is the failure
+     * ADR-0020 §5 exists to prevent.
+     *
+     * <p>So the term is stripped to its digits and compared against {@code phone_digits}, which the
+     * database maintains from {@code phone}. The unanchored {@code like} then gets the case that
+     * actually comes up for free: the local ten digits are a <em>suffix</em> of the same number
+     * stored with a country code, so {@code 9876543210} finds {@code +919876543210} without either
+     * side having to know what a country code is.
+     *
+     * <p><strong>A term with no digits in it contributes no phone predicate at all.</strong> Not an
+     * empty pattern: {@code phone_digits} is {@code ''} rather than null for a guardian with no
+     * number, so {@code like '%%'} would match every one of them and a search for a name would drag
+     * in the whole school. Name and email are unchanged and still see an all-digits term — an
+     * address of the form {@code 9876543210@…} is a real thing on an admission form.
      *
      * <p>Escaped for the reason {@code StudentQueries} escapes: a clerk typing a per-cent sign should
-     * search for one, not receive every guardian in the school.
+     * search for one, not receive every guardian in the school. Digits need no escaping, but they go
+     * through the same call rather than through a second code path that could later disagree.
      */
     private static Specification<Guardian> matching(String q) {
         if (q == null || q.isBlank()) {
             return (root, criteria, builder) -> builder.conjunction();
         }
-        String pattern = "%" + escapeForLike(q.trim().toLowerCase()) + "%";
+        String text = q.trim();
+        String pattern = "%" + escapeForLike(text.toLowerCase()) + "%";
+        String digits = digitsOf(text);
         return (root, criteria, builder) -> {
-            Predicate byName = builder.like(builder.lower(root.get("fullName")), pattern, '\\');
-            Predicate byPhone = builder.like(builder.lower(root.get("phone")), pattern, '\\');
-            Predicate byEmail = builder.like(builder.lower(root.get("email")), pattern, '\\');
-            return builder.or(byName, byPhone, byEmail);
+            List<Predicate> alternatives = new ArrayList<>();
+            alternatives.add(builder.like(builder.lower(root.get("fullName")), pattern, '\\'));
+            alternatives.add(builder.like(builder.lower(root.get("email")), pattern, '\\'));
+            if (!digits.isEmpty()) {
+                alternatives.add(builder.like(root.get("phoneDigits"), "%" + escapeForLike(digits) + "%", '\\'));
+            }
+            return builder.or(alternatives.toArray(new Predicate[0]));
         };
+    }
+
+    /** Everything that is not 0-9, removed — the same rule the generated column applies to {@code phone}. */
+    private static String digitsOf(String text) {
+        return NON_DIGIT.matcher(text).replaceAll("");
     }
 
     private static String escapeForLike(String text) {

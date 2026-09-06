@@ -2,7 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, GuardianSummary, PageResponse, SaveGuardianRequest } from './models';
+import {
+  ApiResponse,
+  GuardianStudent,
+  GuardianSummary,
+  PageResponse,
+  SaveGuardianRequest,
+} from './models';
 import { unwrap } from './unwrap';
 
 /** Rows per page unless a caller says otherwise. Matches the student list, for one reading rhythm. */
@@ -62,6 +68,25 @@ export class GuardiansApi {
     return this.http
       .get<ApiResponse<PageResponse<GuardianSummary>>>(this.baseUrl, {
         params,
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  /**
+   * Which children this guardian is responsible for.
+   *
+   * The expansion of `linkedStudentCount`, and the thing that lets somebody tell two similar
+   * records apart. Not paged — a guardian has a handful of children — so this answers a plain list.
+   *
+   * **A 403 here is an ordinary answer, not a fault.** The endpoint is guarded by
+   * `student:student:read` while the directory itself is guarded by `student:guardian:read`, and a
+   * role really can hold the second without the first. A caller must show the count it already has
+   * rather than replacing the row with an error.
+   */
+  students(id: string): Observable<readonly GuardianStudent[]> {
+    return this.http
+      .get<ApiResponse<readonly GuardianStudent[]>>(`${this.baseUrl}/${id}/students`, {
         withCredentials: true,
       })
       .pipe(unwrap);

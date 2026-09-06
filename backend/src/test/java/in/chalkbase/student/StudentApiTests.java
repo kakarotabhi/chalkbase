@@ -745,6 +745,132 @@ class StudentApiTests {
                 .andExpect(jsonPath("$.data.totalPages").value(2));
     }
 
+    /**
+     * <strong>The bug this slice exists for.</strong>
+     *
+     * <p>The number is stored the way the office typed it — spaces, country code and all — and it is
+     * searched for the way the next clerk types it, which is a different way. Before the digits
+     * column, {@code phone like '%q%'} against the raw value found none of these three, and a phone
+     * number is exactly the field that separates two people who share a surname. So the search
+     * failed in the one case it had to work in, the clerk concluded the father was not here, and
+     * typed him in a second time (ADR-0020 §5).
+     *
+     * <p>The country-code case comes for free from the unanchored match: the local ten digits are a
+     * suffix of the same number stored with {@code +91} in front.
+     */
+    @Test
+    void findsAGuardianByTheirNumberHoweverEitherSideWroteIt() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        createGuardian(session, "Suresh Kulkarni", "+91 98765 43210");
+        createGuardian(session, "Anita Roy", "+91 90000 00010");
+
+        for (String typed : List.of("9876543210", "98765 43210", "+919876543210", "+91 98765 43210", "98765-43210")) {
+            mockMvc.perform(get(GUARDIANS).param("q", typed).cookie(session))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.content[0].fullName").value("Suresh Kulkarni"));
+        }
+    }
+
+    /** The number is stored exactly as the school typed it. Only the search is normalised. */
+    @Test
+    void storesTheNumberExactlyAsItWasTyped() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        createGuardian(session, "Suresh Kulkarni", "+91 98765 43210");
+
+        assertThat(guardianPhones(RIVERBANK_SCHEMA)).containsExactly("+91 98765 43210");
+        mockMvc.perform(get(GUARDIANS).param("q", "9876543210").cookie(session))
+                .andExpect(jsonPath("$.data.content[0].phone").value("+91 98765 43210"));
+    }
+
+    /**
+     * A term with no digits in it must contribute no phone predicate at all.
+     *
+     * <p>The obvious implementation — strip the term and always compare — is wrong in a way that
+     * only shows up on this row. {@code phone_digits} is {@code ''} rather than null for a guardian
+     * with no number, so {@code like '%%'} matches them, and a search for a name nobody has would
+     * quietly return every phone-less guardian in the school.
+     */
+    @Test
+    void doesNotMatchAPhonelessGuardianOnASearchWithNoDigitsInIt() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        createGuardianWithoutPhone(session, "Anita Roy");
+        createGuardian(session, "Suresh Kulkarni", "+91 98765 43210");
+
+        mockMvc.perform(get(GUARDIANS).param("q", "Zubin").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+
+        // And she is still findable by the half of the search that does apply to her.
+        mockMvc.perform(get(GUARDIANS).param("q", "Anita").cookie(session))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        // An empty search term is still "everybody", which is what the directory opens on.
+        mockMvc.perform(get(GUARDIANS).cookie(session))
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+    }
+
+    /**
+     * The endpoint that turns "linked to 2 students" into an answer.
+     *
+     * <p>A count tells a clerk the shared record is working; it does not tell them <em>which</em>
+     * two, which is the question somebody comparing two similar records is actually asking. Without
+     * the names the safest-looking move is a third record, which is the duplication the model exists
+     * to prevent.
+     */
+    @Test
+    void listsTheChildrenOneGuardianIsResponsibleFor() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        UUID year = currentSession(session, "2026-27", "2026-04-01", "2027-03-31");
+        UUID sectionA = addSection(session, createClass(session, "Class 5"), "A");
+
+        UUID elder = createStudent(session, "2026/0141", "Aarav Kulkarni");
+        UUID younger = createStudent(session, "2026/0142", "Anaya Kulkarni");
+        UUID somebodyElse = createStudent(session, "2026/0143", "Ishaan Bose");
+        UUID father = createGuardian(session, "Suresh Kulkarni", "+91 98765 43210");
+        UUID stranger = createGuardian(session, "Ritu Bose", "+91 90000 00021");
+
+        enrol(session, elder, year, sectionA, "12");
+        linkGuardian(session, elder, father, "FATHER", true);
+        linkGuardian(session, younger, father, "FATHER", true);
+        linkGuardian(session, somebodyElse, stranger, "MOTHER", true);
+
+        mockMvc.perform(get(GUARDIANS + "/" + father + "/students").cookie(session))
+                .andExpect(status().isOk())
+                // Both siblings, by name, and nobody else's child.
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].fullName").value("Aarav Kulkarni"))
+                .andExpect(jsonPath("$.data[0].studentId").value(elder.toString()))
+                .andExpect(jsonPath("$.data[0].admissionNumber").value("2026/0141"))
+                .andExpect(jsonPath("$.data[0].relation").value("FATHER"))
+                .andExpect(jsonPath("$.data[0].primary").value(true))
+                // Which is the point of including it: this is how you tell two children apart.
+                .andExpect(jsonPath("$.data[0].currentEnrolment.className").value("Class 5"))
+                .andExpect(jsonPath("$.data[0].currentEnrolment.sectionName").value("A"))
+                .andExpect(jsonPath("$.data[0].currentEnrolment.sessionName").value("2026-27"))
+                .andExpect(jsonPath("$.data[1].fullName").value("Anaya Kulkarni"))
+                // Admitted, not yet placed. A real state, and absent rather than null (ADR-0007).
+                .andExpect(jsonPath("$.data[1].currentEnrolment").doesNotExist());
+
+        // A guardian nobody points at answers with an empty list, not a 404.
+        UUID unlinked = createGuardian(session, "Zubin Wadia", "+91 90000 00009");
+        mockMvc.perform(get(GUARDIANS + "/" + unlinked + "/students").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    /** Another school's guardian is not in this schema, so it is a 404 and not a leak (ADR-0011). */
+    @Test
+    void refusesTheChildrenOfAGuardianAtAnotherSchool() throws Exception {
+        Cookie riverbank = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Cookie cloverdale = signInAs(CLOVERDALE_SCHEMA, CLOVERDALE_CODE, "PRINCIPAL");
+        UUID theirs = createGuardian(cloverdale, "Ritu Bose", "+91 90000 00021");
+
+        mockMvc.perform(get(GUARDIANS + "/" + theirs + "/students").cookie(riverbank))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NF_001"));
+    }
+
     // ── Tenancy ──────────────────────────────────────────────────────────────────────────────
 
     /**
@@ -940,6 +1066,40 @@ class StudentApiTests {
                 .andExpect(jsonPath("$.error.code").value("PERM_001"));
     }
 
+    /**
+     * The permission decision on {@code GET /api/guardians/&#123;id&#125;/students}, asserted.
+     *
+     * <p>The two reads are separate so that a school can hand somebody the guardian directory
+     * without handing them the roll ({@code StudentPermissions}). An endpoint that hangs off
+     * {@code /api/guardians} but answers with children's names, admission numbers and classes must
+     * not be the hole in that — so it is gated on {@code student:student:read}, and someone holding
+     * only the guardian read gets the count on the directory and nothing more.
+     *
+     * <p>No shipped template holds one of these without the other, which is exactly why this role is
+     * built by hand: the claim being tested is about the endpoint, not about the templates.
+     */
+    @Test
+    void refusesAGuardiansChildrenToSomeoneWhoMayReadGuardiansButNotStudents() throws Exception {
+        Cookie principal = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        UUID student = createStudent(principal, "2026/0241", "Aarav Kulkarni");
+        UUID father = createGuardian(principal, "Suresh Kulkarni", "+91 98765 43210");
+        linkGuardian(principal, student, father, "FATHER", true);
+
+        Cookie frontDesk =
+                signInWithPermissions(RIVERBANK_SCHEMA, RIVERBANK_CODE, "FRONT_DESK", "student:guardian:read");
+
+        // The directory, with the count, is theirs.
+        mockMvc.perform(get(GUARDIANS).cookie(frontDesk))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].linkedStudentCount").value(1));
+
+        // The names behind the count are not.
+        mockMvc.perform(get(GUARDIANS + "/" + father + "/students").cookie(frontDesk))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("PERM_001"))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
     /** A librarian holds neither read, which is what keeps guardian phone numbers off that desk. */
     @Test
     void refusesTheGuardianDirectoryToARoleThatHasNoBusinessWithIt() throws Exception {
@@ -961,6 +1121,9 @@ class StudentApiTests {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("AUTH_002"));
         mockMvc.perform(get(GUARDIANS))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_002"));
+        mockMvc.perform(get(GUARDIANS + "/" + anyId + "/students"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("AUTH_002"));
 
@@ -1058,6 +1221,16 @@ class StudentApiTests {
                 "id");
     }
 
+    /** A record entered from a paper form that had only a name — the row `phone_digits` is `''` for. */
+    private UUID createGuardianWithoutPhone(Cookie session, String fullName) throws Exception {
+        return idOf(
+                mockMvc.perform(request(post(GUARDIANS), session, """
+                                {"fullName": "%s"}
+                                """.formatted(fullName)))
+                        .andExpect(status().isCreated()),
+                "id");
+    }
+
     private UUID enrol(Cookie session, UUID student, UUID year, UUID sectionId, String rollNumber) throws Exception {
         return idOf(
                 mockMvc.perform(request(
@@ -1142,6 +1315,12 @@ class StudentApiTests {
                 .single();
     }
 
+    private List<String> guardianPhones(String schema) {
+        return jdbc.sql("select phone from " + schema + ".guardian order by full_name")
+                .query(String.class)
+                .list();
+    }
+
     private List<String> guardianNames(String schema) {
         return jdbc.sql("select full_name from " + schema + ".guardian order by full_name")
                 .query(String.class)
@@ -1197,6 +1376,32 @@ class StudentApiTests {
      * could edit a child's record only because the fixture said so would prove nothing.
      */
     private Cookie signInAs(String schema, String schoolCode, String roleCode) throws Exception {
+        String username = roleCode.toLowerCase() + "-" + schema;
+        createAccount(schema, username, "Ravi Deshpande");
+        grantRole(schema, username, roleCode);
+        return signIn(schoolCode, username);
+    }
+
+    /**
+     * Someone holding exactly the named permissions and nothing else.
+     *
+     * <p>{@link #signInAs} is preferred everywhere it fits, because what it asserts is the shipped
+     * grant. This exists for the one claim the templates cannot express: no shipped template holds
+     * {@code student:guardian:read} without {@code student:student:read}, and the endpoint that
+     * separates them has to be tested against a caller who really holds only one.
+     */
+    private Cookie signInWithPermissions(String schema, String schoolCode, String roleCode, String... permissions)
+            throws Exception {
+        UUID roleId = UUID.randomUUID();
+        jdbc.sql("insert into " + schema + ".role (id, code, name, description) values (?, ?, ?, ?)")
+                .params(roleId, roleCode, roleCode, "Built by a test, not shipped.")
+                .update();
+        for (String permission : permissions) {
+            jdbc.sql("insert into " + schema + ".role_permission (role_id, permission_code) values (?, ?)")
+                    .params(roleId, permission)
+                    .update();
+        }
+
         String username = roleCode.toLowerCase() + "-" + schema;
         createAccount(schema, username, "Ravi Deshpande");
         grantRole(schema, username, roleCode);

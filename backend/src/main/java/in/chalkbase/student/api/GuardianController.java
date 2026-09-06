@@ -5,6 +5,7 @@ import in.chalkbase.platform.api.PageResponse;
 import in.chalkbase.student.application.GuardianService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -56,7 +57,11 @@ public class GuardianController {
      * indistinguishable rows, and "3 students" is what tells the clerk this is already somebody's
      * parent rather than a stranger they are about to duplicate.
      *
-     * @param q free text over name, phone and email — the three things a clerk has in front of them
+     * @param q free text over name, email and phone. The phone half compares <strong>digits to
+     *     digits</strong>: the term is stripped to its digits and matched against the digits of the
+     *     stored number, so a clerk typing {@code 98765 43210} finds a guardian entered as
+     *     {@code +919876543210}. Nothing is normalised on write — the number stays as the school
+     *     typed it, because that is what the school reads back and dials.
      */
     @PreAuthorize("hasAuthority('student:guardian:read')")
     @GetMapping
@@ -64,6 +69,33 @@ public class GuardianController {
             @RequestParam(required = false) String q,
             @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "fullName") Pageable pageable) {
         return ApiResponse.success(guardians.list(q, pageable));
+    }
+
+    /**
+     * Which children this guardian is responsible for — the expansion of {@code linkedStudentCount}.
+     *
+     * <p>The count on the list says the shared record is doing its job; this says which children it
+     * reaches, which is what somebody verifying a suspected duplicate actually needs. Two rows both
+     * reading "Suresh Kulkarni, linked to 2 students" is not a question a number can answer, and the
+     * answer a clerk reaches for instead is a third record.
+     *
+     * <p><strong>Gated on {@code student:student:read}, not {@code student:guardian:read}, and that
+     * is the decision on this endpoint.</strong> What comes back is student data — a child's name,
+     * their admission number, the class they sit in — so it is guarded by the permission that guards
+     * student data everywhere else. The two permissions are separate precisely so a school can hand
+     * somebody the guardian directory without handing them the roll (see {@code StudentPermissions}),
+     * and an endpoint hanging off {@code /api/guardians} must not be the hole in that. Someone
+     * holding only the guardian read still gets the count on the list; they do not get the names.
+     * Where it is arguable the more protective reading wins, and here it is barely arguable.
+     *
+     * <p>Not paged, unlike every other list in this module. A guardian has a handful of children —
+     * four is a large family, not a large page — and the envelope would be ceremony with nothing
+     * behind it.
+     */
+    @PreAuthorize("hasAuthority('student:student:read')")
+    @GetMapping("/{id}/students")
+    public ApiResponse<List<GuardianStudent>> students(@PathVariable UUID id) {
+        return ApiResponse.success(guardians.studentsOf(id));
     }
 
     @PreAuthorize("hasAuthority('student:guardian:manage')")

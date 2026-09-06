@@ -51,6 +51,28 @@ public class Guardian {
     @Column(length = 20)
     private String phone;
 
+    /**
+     * The digits of {@link #phone}, maintained by the database and <strong>never written here</strong>.
+     *
+     * <p>A {@code generated always ... stored} column. It exists because the directory search has to
+     * compare digits to digits: a guardian entered as {@code +91 98765 43210} has to be found by a
+     * clerk typing {@code 9876543210}, and a {@code like} against the raw column does not do that.
+     * The phone number is what separates two people who share a surname, so a search that fails on
+     * it fails in exactly the case where the office is one keystroke from creating a duplicate.
+     *
+     * <p>{@code insertable = false, updatable = false} is not a hint. PostgreSQL refuses any
+     * non-default value for a generated column, so a mapping that let Hibernate put this in an
+     * {@code INSERT} would fail every write to this table. It is also why nothing normalises the
+     * number on the way in: {@link #phone} keeps what the school typed, because that is what the
+     * school reads back off the screen and dials.
+     *
+     * <p>Stale on a freshly persisted instance, deliberately — the value is computed by the database
+     * and not re-read afterwards. Nothing in Java may rely on it; it is mapped so that a JPA
+     * {@code Specification} can name it. Confidential under ADR-0014, like the number it is made of.
+     */
+    @Column(name = "phone_digits", insertable = false, updatable = false)
+    private String phoneDigits;
+
     @Column(length = 320)
     private String email;
 

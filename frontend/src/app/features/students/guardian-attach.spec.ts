@@ -61,7 +61,17 @@ describe('GuardianAttach', () => {
   const element = () => fixture.nativeElement as HTMLElement;
   const text = () => element().textContent ?? '';
 
-  const search = () => httpMock.expectOne((request) => request.url === GUARDIANS);
+  /** The directory search. Told apart from the duplicate check by its page size. */
+  const search = () =>
+    httpMock.expectOne(
+      (request) => request.url === GUARDIANS && request.params.get('size') !== '10',
+    );
+
+  /** The check that runs under the phone field on the create step. */
+  const duplicateCheck = () =>
+    httpMock.expectOne(
+      (request) => request.url === GUARDIANS && request.params.get('size') === '10',
+    );
 
   const button = (label: string) =>
     Array.from(element().querySelectorAll('button')).find((candidate) =>
@@ -258,39 +268,109 @@ describe('GuardianAttach', () => {
    * order: the guardian has to exist before anything can point at them.
    */
   it('creates the person, then links them, in that order', () => {
-    arrive([]);
+    // Fake timers: typing a phone number also starts the debounced duplicate check, and whether a
+    // real-timer test outran the debounce would depend on how busy the machine was. Driven
+    // explicitly and answered with nobody; the check has its own test below.
+    vi.useFakeTimers();
+    try {
+      arrive([]);
 
-    button('Add a new guardian').click();
-    fixture.detectChanges();
+      button('Add a new guardian').click();
+      fixture.detectChanges();
 
-    type('guardian-new-name', 'Test Parent Two');
-    type('guardian-new-phone', '9000000002');
-    choose('guardian-new-relation', 'MOTHER');
+      type('guardian-new-name', 'Test Parent Two');
+      type('guardian-new-phone', '9000000002');
+      choose('guardian-new-relation', 'MOTHER');
+      vi.advanceTimersByTime(400);
+      fixture.detectChanges();
+      duplicateCheck().flush(envelope(page([])));
+      fixture.detectChanges();
 
-    button('Add and attach').click();
-    fixture.detectChanges();
+      button('Add and attach').click();
+      fixture.detectChanges();
 
-    const create = httpMock.expectOne({ url: GUARDIANS, method: 'POST' });
-    expect(create.request.body).toEqual({
-      fullName: 'Test Parent Two',
-      phone: '9000000002',
-      email: '',
-      occupation: '',
-    });
-    create.flush(envelope(guardian({ id: 'g-new', fullName: 'Test Parent Two' })));
-    fixture.detectChanges();
+      const create = httpMock.expectOne({ url: GUARDIANS, method: 'POST' });
+      expect(create.request.body).toEqual({
+        fullName: 'Test Parent Two',
+        phone: '9000000002',
+        email: '',
+        occupation: '',
+      });
+      create.flush(envelope(guardian({ id: 'g-new', fullName: 'Test Parent Two' })));
+      fixture.detectChanges();
 
-    const link = httpMock.expectOne({
-      url: `/api/students/${STUDENT}/guardians`,
-      method: 'POST',
-    });
-    expect(link.request.body).toEqual({
-      guardianId: 'g-new',
-      relation: 'MOTHER',
-      primary: false,
-    });
-    link.flush(envelope(null));
-    fixture.detectChanges();
+      const link = httpMock.expectOne({
+        url: `/api/students/${STUDENT}/guardians`,
+        method: 'POST',
+      });
+      expect(link.request.body).toEqual({
+        guardianId: 'g-new',
+        relation: 'MOTHER',
+        primary: false,
+      });
+      link.flush(envelope(null));
+      fixture.detectChanges();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * The catch the name search cannot be.
+   *
+   * This screen already opens on the existing guardians, and somebody still reaches the create form
+   * — because they searched "Suresh Kulkarni" and the record says "S. Kulkarni". The number is what
+   * the two spellings have in common, so it is checked as it is typed, and the way out is one
+   * button that turns a create into a link.
+   */
+  it('warns on the create step when the number already belongs to somebody here', () => {
+    vi.useFakeTimers();
+    try {
+      arrive([]);
+
+      button('Add a new guardian').click();
+      fixture.detectChanges();
+
+      type('guardian-new-name', 'S. Kulkarni');
+      type('guardian-new-phone', '+91 90000 00001');
+      vi.advanceTimersByTime(400);
+      fixture.detectChanges();
+
+      const check = duplicateCheck();
+      // Digits, not the string as typed: the server compares digits to digits.
+      expect(check.request.params.get('q')).toBe('919000000001');
+      check.flush(envelope(page([guardian({ phone: '+91 90000 00001' })])));
+      fixture.detectChanges();
+
+      expect(text()).toContain('already has this number');
+      expect(text()).toContain('Test Parent One');
+      expect(text()).toContain('Linked to 4 students');
+      // It offers; it never refuses. Two people really do share a number.
+      expect(text()).toContain('carry on and add them');
+
+      button('Use this guardian').click();
+      fixture.detectChanges();
+
+      // Now an ordinary link to the person who was already here — no second record.
+      expect(text()).toContain('This is the same record their other children use');
+      choose('guardian-relation', 'FATHER');
+      button('Attach to this student').click();
+      fixture.detectChanges();
+
+      const link = httpMock.expectOne({
+        url: `/api/students/${STUDENT}/guardians`,
+        method: 'POST',
+      });
+      expect(link.request.body).toEqual({
+        guardianId: 'g-1',
+        relation: 'FATHER',
+        primary: false,
+      });
+      link.flush(envelope(null));
+      fixture.detectChanges();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   /**

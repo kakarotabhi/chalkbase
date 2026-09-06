@@ -271,6 +271,17 @@
       second group is bound on the block below, which `FormGroupDirective` supports because it is a
       root binding rather than a nested control name.
     -->
+    <!--
+      The check that runs while the number is being typed. The search above is by name, and two
+      records for one man are usually spelled two ways — so this is the catch that the name search
+      cannot be. It warns and offers; it never refuses (see the component).
+    -->
+    <cb-guardian-duplicate-warning
+      [phone]="typedPhone()"
+      [excludeGuardianIds]="linkedGuardianIds()"
+      (use)="useExisting($event)"
+    />
+
     <form class="attach__form" [formGroup]="newGuardian" (ngSubmit)="createAndLink()" novalidate>
       <div class="attach__fields">
         <cb-form-field

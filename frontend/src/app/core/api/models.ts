@@ -541,6 +541,30 @@ export interface GuardianSummary {
   readonly linkedStudentCount: number;
 }
 
+/**
+ * One child, as seen from a guardian's record — the other direction of `StudentGuardian`.
+ *
+ * This is what `linkedStudentCount` cannot answer. The count says the shared model is working;
+ * somebody staring at two records that both read "Suresh Kulkarni, linked to 2 students" is asking
+ * *which* two, and a number cannot tell them. Without the names the safest-looking move is a third
+ * record, which is the duplication ADR-0020 §5 exists to prevent.
+ *
+ * `GET /api/guardians/{id}/students` is guarded by `student:student:read`, **not** by the guardian
+ * read. It answers with children's names and admission numbers, so it is gated like every other
+ * piece of student data — someone who may see the directory but not the roll gets the count and no
+ * names, and a screen showing this must cope with a 403 while the rest of the row still works.
+ */
+export interface GuardianStudent {
+  readonly studentId: string;
+  readonly fullName: string;
+  readonly admissionNumber: string;
+  readonly relation: GuardianRelation;
+  /** Whether this guardian is the school's first call for this child. */
+  readonly primary: boolean;
+  /** Absent for a child admitted but not yet placed, or when no session is current. */
+  readonly currentEnrolment?: CurrentEnrolment;
+}
+
 /** Creating or replacing a guardian record. The relationship is not here — it is on the link. */
 export interface SaveGuardianRequest {
   readonly fullName: string;

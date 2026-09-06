@@ -55,6 +55,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
 | Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
 | `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
+| Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
 
 ## Next, in order
 
@@ -155,9 +156,20 @@ Recorded so they are decided rather than discovered.
   `org.hibernate.orm.jdbc.error` is now at ERROR, and the unmapped-constraint branch of
   `GlobalExceptionHandler` logs the constraint's *name* instead of the exception, because
   PostgreSQL's `DETAIL` line carries the values that clashed. Both have tests.
-- **`linkedStudentCount` cannot be expanded into "which students"** — no endpoint answers it, and
-  nothing prevents a duplicate guardian server-side. The search-first attach flow is the only
-  defence for the model ADR-0020 §5 depends on. Worth closing early.
+- ~~`linkedStudentCount` cannot be expanded into "which students"~~ ✅ Closed. It expands into the
+  list, and the phone search now matches digits to digits — it had been comparing the raw stored
+  value, so a guardian entered `+919876543210` never matched a clerk typing `98765 43210`. The one
+  defence for ADR-0020 §5 had not been working on the field that matters. There is still no
+  server-side uniqueness, deliberately: two people genuinely share a phone number, so the create
+  form warns and offers rather than refusing.
+- **The guardian search is a sequential scan and that is a decision.** `like '%digits%'` is
+  unanchored, which no btree index can serve, so none was created — an index that is never used
+  reads to the next person as though the search were indexed, and under ADR-0011 it would be created
+  once per school forever for nothing. The answer when it stops being fine is a `pg_trgm` GIN index;
+  the extension is available on the dev database and not installed, and installing it is a
+  database-wide change wanting a measurement behind it.
+- `guardian.phone` is `varchar(20)`. `+91 98765 43210` fits at 16; a longer international number
+  with an extension would not.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
   dominated by round trips. Fifty schools would be about four minutes of startup. Mumbai (ADR-0015)
   will cut it sharply; the linear shape does not change, so the ADR-0011 expiry stands.

@@ -74,6 +74,32 @@ describe('GuardiansApi', () => {
   });
 
   /**
+   * Not paged, and that is the shape rather than an omission: a guardian has a handful of children,
+   * so this answers a plain list. A 403 is an ordinary answer here — the endpoint is guarded by
+   * `student:student:read` while the directory is guarded by `student:guardian:read`.
+   */
+  it("reads a guardian's students as a plain list", () => {
+    let received: unknown;
+    api.students('g-1').subscribe((value) => (received = value));
+
+    const request = httpMock.expectOne({ url: `${GUARDIANS}/g-1/students`, method: 'GET' });
+    expect(request.request.withCredentials).toBe(true);
+    request.flush(
+      envelope([
+        {
+          studentId: 's-1',
+          fullName: 'A Child',
+          admissionNumber: '2026/0001',
+          relation: 'FATHER',
+          primary: true,
+        },
+      ]),
+    );
+
+    expect(received).toHaveLength(1);
+  });
+
+  /**
    * ADR-0020 §6: nothing here is deleted. Detaching a guardian from one child is a different
    * operation on a different resource, and it lives on `StudentsApi`.
    */
