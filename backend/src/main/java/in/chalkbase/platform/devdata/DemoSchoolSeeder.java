@@ -113,11 +113,17 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
     private final Environment environment;
     private final JdbcClient jdbc;
     private final PasswordEncoder passwordEncoder;
+    private final in.chalkbase.platform.tenancy.SchoolProvisioning provisioning;
 
-    public DemoSchoolSeeder(Environment environment, JdbcClient jdbc, PasswordEncoder passwordEncoder) {
+    public DemoSchoolSeeder(
+            Environment environment,
+            JdbcClient jdbc,
+            PasswordEncoder passwordEncoder,
+            in.chalkbase.platform.tenancy.SchoolProvisioning provisioning) {
         this.environment = environment;
         this.jdbc = jdbc;
         this.passwordEncoder = passwordEncoder;
+        this.provisioning = provisioning;
     }
 
     /**
@@ -202,29 +208,36 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
     private void seed(SeedApiClient api, int port) {
         long started = System.currentTimeMillis();
 
-        // Onboarding is permitAll and CSRF-exempt today, so this one runs before there is anyone to
-        // sign in as — which is also the call that creates the schema, migrates it and copies the
-        // role templates into it (SchoolProvisioning).
-        api.postForData(
-                "/api/schools",
-                new LinkedHashMap<>(Map.of(
-                        "code",
+        // Registered directly rather than through POST /api/schools, and the reason is a real one
+        // rather than convenience.
+        //
+        // That endpoint used to be permitAll, so this call worked before there was anyone to sign in
+        // as. It is now an operator endpoint requiring `school:school:create`, which no role holds —
+        // so the HTTP call would be refused, and the chicken-and-egg is unresolvable over HTTP: the
+        // first account cannot exist until the school does.
+        //
+        // The seeder is not a caller. It is the application starting itself up, in the same position
+        // as TenantMigrationRunner, so it does what the service would do: write the registry row and
+        // provision the schema — which migrates it and copies the role templates in.
+        jdbc.sql("insert into public.school (id, code, name, schema_name, board, city, state, active)"
+                        + " values (?, ?, ?, ?, ?, ?, ?, true) on conflict (code) do nothing")
+                .params(
+                        java.util.UUID.randomUUID(),
                         SCHOOL_CODE,
-                        "name",
                         SCHOOL_NAME,
-                        "schemaName",
                         SCHOOL_SCHEMA,
-                        "board",
                         "CBSE",
-                        "city",
                         "Nagpur",
-                        "state",
-                        "Maharashtra")));
+                        "Maharashtra")
+                .update();
+        provisioning.provision(SCHOOL_SCHEMA);
         log.info("Demo school {} registered and schema {} provisioned", SCHOOL_CODE, SCHOOL_SCHEMA);
 
         createAccounts();
 
         signIn(api, ACCOUNTS.getFirst().username());
+
+        fillInTheSchoolProfile(api);
 
         AcademicYear year = currentIndianSchoolYear(LocalDate.now());
         UUID sessionId = createAcademicSession(api, year);
@@ -232,6 +245,38 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         int guardianCount = admitEveryone(api, sessionId, year, sections);
 
         announce(port, year, sections.size(), guardianCount, (System.currentTimeMillis() - started) / 1000);
+    }
+
+    /**
+     * Fills in the school's own profile, so the screen demonstrates itself rather than its empty
+     * state.
+     *
+     * <p>Left out of the first version of this seeder, and it showed: Settings › School profile was
+     * the one screen in the product that a visitor always found saying "not filled in yet". The
+     * empty state is worth seeing once; it is not worth being the only thing anyone sees.
+     *
+     * <p>Goes over HTTP as the principal, unlike the school registration above, because this one has
+     * a caller: the principal holds {@code school:school:update} and this is exactly what they would
+     * do on their first afternoon.
+     */
+    private void fillInTheSchoolProfile(SeedApiClient api) {
+        Map<String, Object> profile = new LinkedHashMap<>();
+        profile.put("code", SCHOOL_CODE);
+        profile.put("schemaName", SCHOOL_SCHEMA);
+        profile.put("name", SCHOOL_NAME);
+        profile.put("board", "CBSE");
+        profile.put("addressLine1", "Plot 22, Ramdaspeth");
+        profile.put("addressLine2", "Near the water tower");
+        profile.put("city", "Nagpur");
+        profile.put("state", "Maharashtra");
+        profile.put("pincode", "440010");
+        profile.put("principalName", "Nandini Apte");
+        profile.put("phone", "+91 712 255 0100");
+        profile.put("email", "office@chalkbase-demo.example.in");
+        profile.put("website", "https://chalkbase-demo.example.in");
+        profile.put("affiliationNumber", "1130456");
+        api.put("/api/school/profile", profile);
+        log.info("Filled in the school profile for {}", SCHOOL_CODE);
     }
 
     // ── accounts ─────────────────────────────────────────────────────────────────────────────
