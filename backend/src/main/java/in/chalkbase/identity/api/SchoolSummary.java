@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.io.Serializable;
 
 /**
@@ -10,4 +13,12 @@ import java.io.Serializable;
  * on the session is what lets {@code /api/me} answer without reading {@code public.school} on every
  * page load — and the school's code and name do not change under a session.
  */
-public record SchoolSummary(String code, String name) implements Serializable {}
+public record SchoolSummary(
+        @Classification(Tier.PUBLIC) String code,
+        @Classification(Tier.PUBLIC) String name) implements Serializable {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

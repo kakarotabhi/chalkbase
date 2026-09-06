@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Guardian;
 import in.chalkbase.student.domain.GuardianRelation;
 import in.chalkbase.student.domain.StudentGuardianLink;
@@ -22,14 +25,14 @@ import java.util.UUID;
  *     database by {@code uq_student_guardian_one_primary}.
  */
 public record StudentGuardian(
-        UUID linkId,
-        UUID guardianId,
-        String fullName,
-        GuardianRelation relation,
-        String phone,
-        String email,
-        String occupation,
-        boolean primary) {
+        @Classification(Tier.INTERNAL) UUID linkId,
+        @Classification(Tier.INTERNAL) UUID guardianId,
+        @Classification(Tier.CONFIDENTIAL) String fullName,
+        @Classification(Tier.INTERNAL) GuardianRelation relation,
+        @Classification(Tier.CONFIDENTIAL) String phone,
+        @Classification(Tier.CONFIDENTIAL) String email,
+        @Classification(Tier.CONFIDENTIAL) String occupation,
+        @Classification(Tier.INTERNAL) boolean primary) {
 
     public static StudentGuardian of(StudentGuardianLink link) {
         Guardian guardian = link.getGuardian();
@@ -42,5 +45,11 @@ public record StudentGuardian(
                 guardian.getEmail(),
                 guardian.getOccupation(),
                 link.isPrimary());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

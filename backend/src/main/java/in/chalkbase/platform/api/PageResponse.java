@@ -1,5 +1,8 @@
 package in.chalkbase.platform.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.List;
 import org.springframework.data.domain.Page;
 
@@ -22,7 +25,12 @@ import org.springframework.data.domain.Page;
  * @param totalElements how many rows match the filter across every page
  * @param totalPages how many pages that makes at this size
  */
-public record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
+public record PageResponse<T>(
+        @Classification(Tier.CONFIDENTIAL) List<T> content,
+        @Classification(Tier.INTERNAL) int page,
+        @Classification(Tier.INTERNAL) int size,
+        @Classification(Tier.INTERNAL) long totalElements,
+        @Classification(Tier.INTERNAL) int totalPages) {
 
     public PageResponse {
         content = content == null ? List.of() : List.copyOf(content);
@@ -35,5 +43,11 @@ public record PageResponse<T>(List<T> content, int page, int size, long totalEle
     public static <T> PageResponse<T> of(Page<?> page, List<T> content) {
         return new PageResponse<>(
                 content, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

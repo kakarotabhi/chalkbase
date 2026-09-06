@@ -41,6 +41,18 @@ public class ConstraintViolationResolver {
         return constraintNameOf(exception).map(name -> byConstraintName.get(name.toLowerCase()));
     }
 
+    /**
+     * The name of the constraint that was violated, whether or not any module has claimed it.
+     *
+     * <p>Exposed so an unmapped violation can be logged by <em>name</em> rather than by exception.
+     * PostgreSQL puts its {@code DETAIL} line inside the exception message — {@code Key
+     * (admission_number)=(2026/0001) already exists} — so logging the exception logs the offending
+     * value, which for this product is a child's admission number (ADR-0014).
+     */
+    public Optional<String> constraintName(DataIntegrityViolationException exception) {
+        return constraintNameOf(exception);
+    }
+
     private Optional<String> constraintNameOf(Throwable throwable) {
         for (Throwable current = throwable; current != null; current = current.getCause()) {
             if (current instanceof org.hibernate.exception.ConstraintViolationException hibernate) {

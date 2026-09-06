@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Gender;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentStatus;
@@ -23,12 +26,12 @@ import java.util.UUID;
  *     yet said which year it is in
  */
 public record StudentSummary(
-        UUID id,
-        String admissionNumber,
-        String fullName,
-        Gender gender,
-        StudentStatus status,
-        CurrentEnrolment currentEnrolment) {
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.CONFIDENTIAL) String admissionNumber,
+        @Classification(Tier.CONFIDENTIAL) String fullName,
+        @Classification(Tier.CONFIDENTIAL) Gender gender,
+        @Classification(Tier.INTERNAL) StudentStatus status,
+        @Classification(Tier.CONFIDENTIAL) CurrentEnrolment currentEnrolment) {
 
     public static StudentSummary of(Student student, CurrentEnrolment currentEnrolment) {
         return new StudentSummary(
@@ -38,5 +41,11 @@ public record StudentSummary(
                 student.getGender(),
                 student.getStatus(),
                 currentEnrolment);
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

@@ -1,5 +1,8 @@
 package in.chalkbase.academics.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -20,6 +23,13 @@ import java.time.LocalDate;
  */
 @EndsAfterStart
 public record SaveAcademicSessionRequest(
-        @NotBlank @Size(max = 40) String name,
-        @NotNull LocalDate startsOn,
-        @NotNull LocalDate endsOn) {}
+        @Classification(Tier.INTERNAL) @NotBlank @Size(max = 40) String name,
+
+        @Classification(Tier.INTERNAL) @NotNull LocalDate startsOn,
+        @Classification(Tier.INTERNAL) @NotNull LocalDate endsOn) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

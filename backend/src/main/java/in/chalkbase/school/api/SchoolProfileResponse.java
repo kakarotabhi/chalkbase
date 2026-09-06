@@ -1,5 +1,8 @@
 package in.chalkbase.school.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.school.domain.Board;
 import in.chalkbase.school.domain.School;
 import in.chalkbase.school.domain.SchoolProfile;
@@ -24,22 +27,22 @@ import java.time.Instant;
  * @param updatedAt when the profile was last saved, or null when it never has been
  */
 public record SchoolProfileResponse(
-        String code,
-        String schemaName,
-        String name,
-        Board board,
-        String addressLine1,
-        String addressLine2,
-        String city,
-        String state,
-        String pincode,
-        String principalName,
-        String phone,
-        String email,
-        String website,
-        String affiliationNumber,
-        boolean configured,
-        Instant updatedAt) {
+        @Classification(Tier.PUBLIC) String code,
+        @Classification(Tier.INTERNAL) String schemaName,
+        @Classification(Tier.PUBLIC) String name,
+        @Classification(Tier.PUBLIC) Board board,
+        @Classification(Tier.PUBLIC) String addressLine1,
+        @Classification(Tier.PUBLIC) String addressLine2,
+        @Classification(Tier.PUBLIC) String city,
+        @Classification(Tier.PUBLIC) String state,
+        @Classification(Tier.PUBLIC) String pincode,
+        @Classification(Tier.CONFIDENTIAL) String principalName,
+        @Classification(Tier.CONFIDENTIAL) String phone,
+        @Classification(Tier.CONFIDENTIAL) String email,
+        @Classification(Tier.PUBLIC) String website,
+        @Classification(Tier.PUBLIC) String affiliationNumber,
+        @Classification(Tier.INTERNAL) boolean configured,
+        @Classification(Tier.INTERNAL) Instant updatedAt) {
 
     public static SchoolProfileResponse of(School school, SchoolProfile profile) {
         if (profile == null) {
@@ -81,5 +84,11 @@ public record SchoolProfileResponse(
                 profile.getAffiliationNumber(),
                 true,
                 profile.getUpdatedAt());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

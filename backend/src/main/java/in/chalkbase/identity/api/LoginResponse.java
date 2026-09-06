@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,4 +19,14 @@ import java.util.UUID;
  *     checks the same set on every call, and a client that ignored this list would gain nothing.
  */
 public record LoginResponse(
-        UUID userId, String displayName, boolean mustChangePassword, SchoolSummary school, List<String> permissions) {}
+        @Classification(Tier.INTERNAL) UUID userId,
+        @Classification(Tier.CONFIDENTIAL) String displayName,
+        @Classification(Tier.INTERNAL) boolean mustChangePassword,
+        @Classification(Tier.PUBLIC) SchoolSummary school,
+        @Classification(Tier.INTERNAL) List<String> permissions) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

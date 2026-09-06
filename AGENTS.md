@@ -88,8 +88,11 @@ cd frontend && npm test -- --watch=false
   truthiness or `??` when reading anything that came off the wire. A list is returned empty rather
   than null so it is always safe to iterate.
 - **Fees are append-only** (ADR-0012). Never update a charge or a ledger entry; write a reversal.
-- **Treat every DTO field as classified** (ADR-0014): Restricted and Confidential data is never
-  logged, never put in an error message, and never sent to a third party. The `@Classification`
-  annotation the ADR describes, and the build failure for an unclassified field, **do not exist
-  yet** — this is a rule you follow by reading it, not one the compiler enforces. Do not write code
-  that assumes the annotation is there.
+- **Every record under a `*/api/` package carries `@Classification` on every component**
+  (ADR-0014), and `toString()` returning `Classified.describe(this)`. Both are enforced by
+  `ClassificationTests`, which fails the build naming the offending field. Add the annotation in the
+  same change that adds the field; pick the more protective tier when it is arguable.
+- **That protects `log.info("saving {}", dto)`. It does not protect
+  `log.info("saving {}", dto.fullName())`** — nothing does yet. Restricted and Confidential values
+  are never logged, never put in an error message, and never sent to a third party, and for the
+  accessor case that remains a rule you follow by reading it.

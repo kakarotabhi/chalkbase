@@ -104,3 +104,8 @@ springdoc:
 logging:
   level:
     root: INFO
+    # ADR-0014: Hibernate logs the whole failed INSERT, values included, when a batch entry is
+    # rejected — so one duplicate admission number puts a child's name, date of birth and gender
+    # in the log at WARN. The constraint name is already logged by GlobalExceptionHandler and
+    # mapped to an error code, so nothing diagnostic is lost by silencing this.
+    org.hibernate.orm.jdbc.error: ERROR

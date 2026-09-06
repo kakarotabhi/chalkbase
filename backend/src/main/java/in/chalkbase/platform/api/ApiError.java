@@ -1,5 +1,8 @@
 package in.chalkbase.platform.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.Map;
 
 /**
@@ -11,7 +14,10 @@ import java.util.Map;
  *     or anything from the request body.
  * @param details field-level detail, typically field name to failure reason. Omitted when empty.
  */
-public record ApiError(String code, String message, Map<String, String> details) {
+public record ApiError(
+        @Classification(Tier.INTERNAL) String code,
+        @Classification(Tier.INTERNAL) String message,
+        @Classification(Tier.INTERNAL) Map<String, String> details) {
 
     public static ApiError of(String code, String message) {
         return new ApiError(code, message, null);
@@ -19,5 +25,11 @@ public record ApiError(String code, String message, Map<String, String> details)
 
     public static ApiError withDetails(String code, String message, Map<String, String> details) {
         return new ApiError(code, message, details == null || details.isEmpty() ? null : Map.copyOf(details));
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

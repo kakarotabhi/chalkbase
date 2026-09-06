@@ -1,5 +1,8 @@
 package in.chalkbase.platform.audit;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.UUID;
 
 /**
@@ -22,7 +25,11 @@ import java.util.UUID;
  * @param roles the role codes held at the time, comma-separated and sorted, or null
  * @param tenantSchema the school this actor belongs to
  */
-public record AuditActor(UUID id, String name, String roles, String tenantSchema) {
+public record AuditActor(
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.CONFIDENTIAL) String name,
+        @Classification(Tier.INTERNAL) String roles,
+        @Classification(Tier.INTERNAL) String tenantSchema) {
 
     /**
      * Nobody — the event is attributable to a school but to no account.
@@ -34,5 +41,11 @@ public record AuditActor(UUID id, String name, String roles, String tenantSchema
      */
     public static AuditActor unauthenticated(String tenantSchema) {
         return new AuditActor(null, null, null, tenantSchema);
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

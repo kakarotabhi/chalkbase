@@ -1,5 +1,8 @@
 package in.chalkbase.platform.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.platform.web.RequestId;
 import java.time.Instant;
 
@@ -20,7 +23,12 @@ import java.time.Instant;
  * @param traceId identifier for this request, also returned as the {@code X-Request-Id} header.
  *     This is what a school quotes to support, and what finds the request in the logs.
  */
-public record ApiResponse<T>(boolean success, T data, ApiError error, Instant timestamp, String traceId) {
+public record ApiResponse<T>(
+        @Classification(Tier.INTERNAL) boolean success,
+        @Classification(Tier.CONFIDENTIAL) T data,
+        @Classification(Tier.INTERNAL) ApiError error,
+        @Classification(Tier.INTERNAL) Instant timestamp,
+        @Classification(Tier.INTERNAL) String traceId) {
 
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(true, data, null, Instant.now(), RequestId.current());
@@ -28,5 +36,11 @@ public record ApiResponse<T>(boolean success, T data, ApiError error, Instant ti
 
     public static <T> ApiResponse<T> error(ApiError error) {
         return new ApiResponse<>(false, null, error, Instant.now(), RequestId.current());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

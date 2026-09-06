@@ -46,7 +46,7 @@ are barred outright. Consent and retention are therefore data model concerns, no
 | Tier | Contents | Handling |
 |---|---|---|
 | **Restricted** | Biometrics, health and counselling records, caste/community, religion, disability/CWSN, guardian income, EWS/BPL/RTE category, APAAR and Aadhaar references | Encrypted at rest. Never logged, at any level. Never in an error message. Every read is audited. Masked by default in the UI, revealed by an explicit permission and a recorded action. |
-| **Confidential** | Student and guardian names, date of birth, address, phone, photographs, marks, fee ledger, attendance | Never logged. Permission-gated per [ADR-0005](0005-authorization-model.md). Export is audited. |
+| **Confidential** | Student and guardian names, date of birth, address, phone, photographs, marks, fee ledger, attendance, and **credentials** — passwords, password hashes, session ids and tokens, which additionally are never stored in a recoverable form and never returned by any endpoint | Never logged. Permission-gated per [ADR-0005](0005-authorization-model.md). Export is audited. |
 | **Internal** | Class and section structure, timetables, subjects, fee heads, staff roles, academic calendar | Permission-gated. May be logged freely. |
 | **Public** | School profile, mandatory public disclosure pages, the certificate verification response | No authentication required. Deliberately published. |
 
@@ -63,6 +63,28 @@ A `@Classification` annotation on DTO record components is the single source of 
 - **A test that fails the build** when a DTO field is unclassified. An unannotated field is not
   assumed safe; it is a build error. This is what makes the policy hold across changes nobody
   reviews closely.
+
+### What is actually built, as of 2026-09-06
+
+One of the four bullets above, and it is worth being precise about which — the others are still
+aspirations and should not be relied on.
+
+**Built:** `@Classification` on every record under a `*/api/` package, a `toString()` on each that
+renders through `platform.classification.Classified`, and three build-failing tests: every component
+is annotated, every record delegates its `toString`, and a populated instance's `toString` contains
+no `CONFIDENTIAL` or `RESTRICTED` value. It fails closed — an unannotated component renders
+`<UNCLASSIFIED>`, never the value.
+
+**Not built, and the gap is narrower than it sounds.** This stops `log.info("saving {}", dto)`. It
+does nothing about `log.info("saving {}", dto.fullName())`, which is exactly as unsafe as it was
+before. Closing that needs either the log-redacting serialiser above, or — cheaper and probably
+first — a static rule that flags a call to a `CONFIDENTIAL` accessor appearing inside a logger
+argument. Export masking has no exports to mask yet.
+
+**Also unbuilt: encryption at rest**, which is why no `RESTRICTED` field exists anywhere
+([ADR-0020](0020-student-and-guardian-model.md) §2). A test asserts that no `RESTRICTED` component
+exists, so introducing one before the encryption, the read-auditing and the UI masking exist will
+fail the build rather than quietly ship.
 
 Classification is declared **once, at the DTO**, because the DTO is already the mandatory boundary
 under `AGENTS.md` rule 4 — every crossing of a module or HTTP boundary passes through one.

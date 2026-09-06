@@ -262,8 +262,21 @@ public class GlobalExceptionHandler {
                             ApiError.of(mapping.errorCode().code(), mapping.message()));
                 })
                 .orElseGet(() -> {
-                    // Unclaimed constraint: the client gets a generic conflict, we get the detail.
-                    log.error("Unmapped data integrity violation", ex);
+                    // An unclaimed constraint: the client gets a generic conflict, and we get the
+                    // constraint's NAME and nothing else.
+                    //
+                    // Logging the exception here would be the natural thing and it leaks: PostgreSQL
+                    // puts its DETAIL line in the message — `Key (admission_number)=(2026/0001)
+                    // already exists` — so the values that clashed end up in the log, and in this
+                    // product those are a child's identifiers (ADR-0014). The constraint name is
+                    // the actionable half anyway: it says which rule fired and therefore which
+                    // module owes a ConstraintMapping. The trace id in the response ties it back to
+                    // the request.
+                    log.error(
+                            "Unmapped data integrity violation on constraint {} ({}). Add a"
+                                    + " ConstraintMapping for it so callers get a usable message.",
+                            constraintViolations.constraintName(ex).orElse("<not reported by the driver>"),
+                            ex.getClass().getSimpleName());
                     return respond(PlatformErrorCode.CONFLICT);
                 });
     }

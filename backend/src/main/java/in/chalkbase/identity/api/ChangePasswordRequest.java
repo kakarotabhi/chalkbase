@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -12,12 +15,13 @@ import jakarta.validation.constraints.Size;
  * act on, rather than as a generic field validation error quoting a regular expression.
  */
 public record ChangePasswordRequest(
-        @NotBlank @Size(max = 200) String currentPassword,
-        @NotBlank @Size(max = 200) String newPassword) {
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String currentPassword,
 
-    /** Neither password may reach a log line or an error message. */
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String newPassword) {
+
+    /** Neither password may reach a log line or an error message; both are Confidential. */
     @Override
     public String toString() {
-        return "ChangePasswordRequest[]";
+        return Classified.describe(this);
     }
 }

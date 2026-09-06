@@ -1,6 +1,9 @@
 package in.chalkbase.academics.api;
 
 import in.chalkbase.academics.domain.AcademicSession;
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -18,9 +21,19 @@ import java.util.UUID;
  * @param current true for the year the school says it is in. At most one session per school has
  *     this set.
  */
-public record AcademicSessionRef(UUID id, String name, LocalDate startsOn, boolean current) {
+public record AcademicSessionRef(
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.INTERNAL) String name,
+        @Classification(Tier.INTERNAL) LocalDate startsOn,
+        @Classification(Tier.INTERNAL) boolean current) {
 
     public static AcademicSessionRef of(AcademicSession session) {
         return new AcademicSessionRef(session.getId(), session.getName(), session.getStartsOn(), session.isCurrent());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

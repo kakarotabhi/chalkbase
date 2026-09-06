@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Gender;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentStatus;
@@ -31,16 +34,16 @@ import java.util.UUID;
  * @param guardians the people responsible for this child, primary contact first
  */
 public record StudentDetail(
-        UUID id,
-        String admissionNumber,
-        String fullName,
-        Gender gender,
-        StudentStatus status,
-        CurrentEnrolment currentEnrolment,
-        LocalDate dateOfBirth,
-        LocalDate admittedOn,
-        List<StudentGuardian> guardians,
-        List<Enrolment> enrolments) {
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.CONFIDENTIAL) String admissionNumber,
+        @Classification(Tier.CONFIDENTIAL) String fullName,
+        @Classification(Tier.CONFIDENTIAL) Gender gender,
+        @Classification(Tier.INTERNAL) StudentStatus status,
+        @Classification(Tier.CONFIDENTIAL) CurrentEnrolment currentEnrolment,
+        @Classification(Tier.CONFIDENTIAL) LocalDate dateOfBirth,
+        @Classification(Tier.CONFIDENTIAL) LocalDate admittedOn,
+        @Classification(Tier.CONFIDENTIAL) List<StudentGuardian> guardians,
+        @Classification(Tier.CONFIDENTIAL) List<Enrolment> enrolments) {
 
     public StudentDetail {
         guardians = guardians == null ? List.of() : List.copyOf(guardians);
@@ -63,5 +66,11 @@ public record StudentDetail(
                 student.getAdmittedOn(),
                 guardians,
                 enrolments);
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }
