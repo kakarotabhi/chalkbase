@@ -15,6 +15,8 @@ import { Observable, debounceTime, distinctUntilChanged } from 'rxjs';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { GUARDIAN_PAGE_SIZE, GuardiansApi } from '../../core/api/guardians-api';
 import { GuardianStudent, GuardianSummary } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -93,6 +95,9 @@ export class GuardianList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /** Whether to offer adding or correcting a guardian. `student:guardian:manage` on the wire. */
+  protected readonly canManageGuardians = permitted(Permissions.GUARDIAN_MANAGE);
 
   protected readonly pageSize = GUARDIAN_PAGE_SIZE;
 

@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { SchoolClass, StudentSummary } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { StudentList } from './student-list';
 
 const STUDENTS = '/api/students';
@@ -120,6 +122,10 @@ describe('StudentList', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
   });
 
   afterEach(() => {
@@ -311,5 +317,44 @@ describe('StudentList', () => {
 
     expect(text()).toContain('A date of birth has to be in the past');
     // Nothing was sent: `httpMock.verify()` in afterEach is what asserts that.
+  });
+
+  // ── What the toolbar is gated on ─────────────────────────────────────────────────────────
+
+  /**
+   * The permission check is exercised through the real `SessionStore` and the real template.
+   * Nothing here mocks it: a stub would pass whether or not the store, the helper and the markup
+   * agree, which is the only thing these three tests are for.
+   */
+  describe('write actions', () => {
+    const importLink = () => element().querySelector('a[href="/students/import"]');
+
+    it('offers both ways of adding a student to somebody who may manage them', () => {
+      arrive();
+
+      expect(button('Add a student')).toBeTruthy();
+      expect(importLink()).not.toBeNull();
+    });
+
+    it('offers neither to a classteacher who may only read the roll', () => {
+      signInWith(Permissions.STUDENT_READ);
+      arrive();
+
+      expect(button('Add a student')).toBeUndefined();
+      expect(importLink()).toBeNull();
+      // The list itself is what the read entitles them to, and it still works.
+      expect(text()).toContain('Test Student One');
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.STUDENT_READ);
+      arrive();
+      expect(button('Add a student')).toBeUndefined();
+
+      signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
+      fixture.detectChanges();
+
+      expect(button('Add a student')).toBeTruthy();
+    });
   });
 });

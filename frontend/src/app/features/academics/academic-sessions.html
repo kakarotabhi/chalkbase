@@ -142,7 +142,12 @@
     </div>
   }
 
-  @if (!editing()) {
+  <!--
+    `POST /api/academics/sessions` is gated on `academics:session:manage`. A classteacher holds the
+    read and lands here from the menu; without this check the screen offered them a form whose
+    submit is a 403.
+  -->
+  @if (canManageSessions() && !editing()) {
     <div class="toolbar">
       <cb-button id="session-add" [disabled]="switching()" (click)="startCreate()">
         Add a session
@@ -193,26 +198,28 @@
 
             <p class="session__range">{{ row.range }}</p>
 
-            <div class="session__actions">
-              <cb-button
-                variant="secondary"
-                [id]="row.editButtonId"
-                [disabled]="!!editing()"
-                (click)="startEdit(row)"
-              >
-                Edit
-              </cb-button>
-              @if (!row.current) {
+            @if (canManageSessions()) {
+              <div class="session__actions">
                 <cb-button
                   variant="secondary"
-                  [id]="row.makeCurrentButtonId"
+                  [id]="row.editButtonId"
                   [disabled]="!!editing()"
-                  (click)="askToMakeCurrent(row)"
+                  (click)="startEdit(row)"
                 >
-                  Make current
+                  Edit
                 </cb-button>
-              }
-            </div>
+                @if (!row.current) {
+                  <cb-button
+                    variant="secondary"
+                    [id]="row.makeCurrentButtonId"
+                    [disabled]="!!editing()"
+                    (click)="askToMakeCurrent(row)"
+                  >
+                    Make current
+                  </cb-button>
+                }
+              </div>
+            }
           }
         </li>
       }

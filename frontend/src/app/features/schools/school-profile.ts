@@ -12,6 +12,8 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { Board, SchoolProfile as SchoolProfileModel } from '../../core/api/models';
 import { SchoolApi } from '../../core/api/school-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { HasUnsavedChanges } from '../../core/forms/unsaved-changes-guard';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -215,6 +217,17 @@ export class SchoolProfile implements HasUnsavedChanges {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Whether this user may save a change to the profile. `PUT /api/school/profile` enforces it.
+   *
+   * The menu item is already gated on this permission server-side, so reaching this screen without
+   * it means typing the URL — but `GET` is gated only on `school:school:read`, so the record does
+   * load and the screen becomes what that read entitles them to: the profile, and no way to
+   * change it. The form is put into its disabled state alongside hiding Save, because hiding the
+   * button on its own would leave an inviting set of boxes whose contents can never be kept.
+   */
+  protected readonly canEditProfile = permitted(Permissions.SCHOOL_UPDATE);
 
   protected readonly boards = BOARDS;
   protected readonly states = STATES;
@@ -465,6 +478,13 @@ export class SchoolProfile implements HasUnsavedChanges {
     this.form.controls.code.disable({ emitEvent: false });
     this.form.markAsPristine();
     this.form.markAsUntouched();
+    // Nor may anything else be, for somebody who holds the read and not the update. Hiding Save
+    // on its own would leave thirteen inviting boxes and nowhere for what is typed into them to
+    // go; this makes the screen what their permissions actually entitle them to, which is a
+    // reading of the profile.
+    if (!this.canEditProfile()) {
+      this.form.disable({ emitEvent: false });
+    }
   }
 
   private finishSaving(): void {

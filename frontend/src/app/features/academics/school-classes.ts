@@ -15,6 +15,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { SchoolClass, Section } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -129,6 +131,15 @@ export class SchoolClasses {
   protected readonly form = this.formBuilder.group({
     name: ['', Validators.required],
   });
+
+  /**
+   * Whether to offer any of the ladder's write controls — add, rename, reorder, stop running.
+   *
+   * One check for all of them because the backend gates every write on this module's single
+   * `academics:class:manage`; splitting reorder from rename here would invent a distinction the
+   * server does not make.
+   */
+  protected readonly canManageClasses = permitted(Permissions.CLASS_MANAGE);
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */

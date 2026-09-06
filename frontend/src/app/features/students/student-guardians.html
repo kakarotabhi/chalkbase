@@ -1,6 +1,6 @@
 <div class="section__head">
   <h2 class="section__heading">Guardians</h2>
-  @if (!attaching()) {
+  @if (canManageGuardians() && !attaching()) {
     <cb-button
       [id]="'guardian-attach-open'"
       variant="secondary"
@@ -149,38 +149,44 @@
             }
           </dl>
 
-          <div class="guardian__actions">
-            <cb-button
-              variant="secondary"
-              [id]="row.editButtonId"
-              [disabled]="busy() || attaching()"
-              (click)="startEdit(row)"
-            >
-              Change relation
-            </cb-button>
-            @if (!row.primary) {
+          <!--
+            All three write the link, and all three are gated on `student:guardian:manage`. The row
+            itself stays: someone with the guardian read may see who a child's parents are.
+          -->
+          @if (canManageGuardians()) {
+            <div class="guardian__actions">
               <cb-button
                 variant="secondary"
-                [id]="row.primaryButtonId"
+                [id]="row.editButtonId"
                 [disabled]="busy() || attaching()"
-                (click)="makePrimary(row)"
+                (click)="startEdit(row)"
               >
-                Make main contact
+                Change relation
               </cb-button>
-            }
-            <!--
-              "Remove from this student", never "Delete". It ends the link and leaves the person
-              in place for their other children (ADR-0020 §5). The wording is the whole point.
-            -->
-            <cb-button
-              variant="ghost"
-              [id]="row.removeButtonId"
-              [disabled]="busy() || attaching()"
-              (click)="askToRemove(row)"
-            >
-              Remove from this student
-            </cb-button>
-          </div>
+              @if (!row.primary) {
+                <cb-button
+                  variant="secondary"
+                  [id]="row.primaryButtonId"
+                  [disabled]="busy() || attaching()"
+                  (click)="makePrimary(row)"
+                >
+                  Make main contact
+                </cb-button>
+              }
+              <!--
+                "Remove from this student", never "Delete". It ends the link and leaves the person
+                in place for their other children (ADR-0020 §5). The wording is the whole point.
+              -->
+              <cb-button
+                variant="ghost"
+                [id]="row.removeButtonId"
+                [disabled]="busy() || attaching()"
+                (click)="askToRemove(row)"
+              >
+                Remove from this student
+              </cb-button>
+            </div>
+          }
         }
       </li>
     }

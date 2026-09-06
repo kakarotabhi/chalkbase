@@ -94,7 +94,12 @@
     </div>
   }
 
-  @if (!editor()) {
+  <!--
+    Every write on this screen — add, rename, reorder, stop running, and the same three for a
+    section — goes to an endpoint gated on `academics:class:manage`. Someone with the read alone
+    sees the ladder and nothing that would end in a 403.
+  -->
+  @if (canManageClasses() && !editor()) {
     <div class="toolbar">
       <cb-button id="class-add" [disabled]="saving()" (click)="startAddClass()">
         Add a class
@@ -143,82 +148,87 @@
               </div>
 
               <!--
+                Reordering and the row's own write controls, together: every one of them is gated
+                on `academics:class:manage`, so they appear and disappear as one group.
+
                 Move up and move down rather than a drag surface: one tap, one key, and something
                 to announce. See the component for the argument.
               -->
-              <div class="move">
-                <button
-                  type="button"
-                  class="move__button"
-                  [id]="row.moveUpId"
-                  [disabled]="row.isFirst"
-                  (click)="moveUp(row)"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+              @if (canManageClasses()) {
+                <div class="move">
+                  <button
+                    type="button"
+                    class="move__button"
+                    [id]="row.moveUpId"
+                    [disabled]="row.isFirst"
+                    (click)="moveUp(row)"
                   >
-                    <path d="M12 19V6" />
-                    <path d="M6 11.5 12 5.5l6 6" />
-                  </svg>
-                  <span class="hidden-label">Move {{ row.name }} up</span>
-                </button>
-                <button
-                  type="button"
-                  class="move__button"
-                  [id]="row.moveDownId"
-                  [disabled]="row.isLast"
-                  (click)="moveDown(row)"
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 19V6" />
+                      <path d="M6 11.5 12 5.5l6 6" />
+                    </svg>
+                    <span class="hidden-label">Move {{ row.name }} up</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="move__button"
+                    [id]="row.moveDownId"
+                    [disabled]="row.isLast"
+                    (click)="moveDown(row)"
                   >
-                    <path d="M12 5v13" />
-                    <path d="M6 12.5 12 18.5l6-6" />
-                  </svg>
-                  <span class="hidden-label">Move {{ row.name }} down</span>
-                </button>
-              </div>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 5v13" />
+                      <path d="M6 12.5 12 18.5l6-6" />
+                    </svg>
+                    <span class="hidden-label">Move {{ row.name }} down</span>
+                  </button>
+                </div>
 
-              <div class="rung__actions">
-                <button
-                  type="button"
-                  class="link"
-                  [id]="row.renameButtonId"
-                  [disabled]="!!editor() || saving()"
-                  (click)="startRenameClass(row)"
-                >
-                  Rename<span class="hidden-label"> {{ row.name }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="link"
-                  [id]="row.activeButtonId"
-                  [disabled]="!!editor() || saving()"
-                  (click)="toggleClass(row)"
-                >
-                  @if (row.active) {
-                    Stop running<span class="hidden-label"> {{ row.name }}</span>
-                  } @else {
-                    Start running<span class="hidden-label"> {{ row.name }}</span> again
-                  }
-                </button>
-              </div>
+                <div class="rung__actions">
+                  <button
+                    type="button"
+                    class="link"
+                    [id]="row.renameButtonId"
+                    [disabled]="!!editor() || saving()"
+                    (click)="startRenameClass(row)"
+                  >
+                    Rename<span class="hidden-label"> {{ row.name }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="link"
+                    [id]="row.activeButtonId"
+                    [disabled]="!!editor() || saving()"
+                    (click)="toggleClass(row)"
+                  >
+                    @if (row.active) {
+                      Stop running<span class="hidden-label"> {{ row.name }}</span>
+                    } @else {
+                      Start running<span class="hidden-label"> {{ row.name }}</span> again
+                    }
+                  </button>
+                </div>
+              }
             }
           </div>
 
@@ -240,35 +250,37 @@
                       @if (!section.active) {
                         <span class="flag">Not running</span>
                       }
-                      <span class="section__actions">
-                        <button
-                          type="button"
-                          class="link"
-                          [id]="section.renameButtonId"
-                          [disabled]="!!editor() || saving()"
-                          (click)="startRenameSection(row, section)"
-                        >
-                          Rename<span class="hidden-label"> {{ section.qualifiedName }}</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="link"
-                          [id]="section.activeButtonId"
-                          [disabled]="!!editor() || saving()"
-                          (click)="toggleSection(row, section)"
-                        >
-                          @if (section.active) {
-                            Stop running<span class="hidden-label">
-                              {{ section.qualifiedName }}</span
-                            >
-                          } @else {
-                            Start running<span class="hidden-label">
-                              {{ section.qualifiedName }}</span
-                            >
-                            again
-                          }
-                        </button>
-                      </span>
+                      @if (canManageClasses()) {
+                        <span class="section__actions">
+                          <button
+                            type="button"
+                            class="link"
+                            [id]="section.renameButtonId"
+                            [disabled]="!!editor() || saving()"
+                            (click)="startRenameSection(row, section)"
+                          >
+                            Rename<span class="hidden-label"> {{ section.qualifiedName }}</span>
+                          </button>
+                          <button
+                            type="button"
+                            class="link"
+                            [id]="section.activeButtonId"
+                            [disabled]="!!editor() || saving()"
+                            (click)="toggleSection(row, section)"
+                          >
+                            @if (section.active) {
+                              Stop running<span class="hidden-label">
+                                {{ section.qualifiedName }}</span
+                              >
+                            } @else {
+                              Start running<span class="hidden-label">
+                                {{ section.qualifiedName }}</span
+                              >
+                              again
+                            }
+                          </button>
+                        </span>
+                      }
                     }
                   </li>
                 }
@@ -281,7 +293,7 @@
               </div>
             }
 
-            @if (editor() === null) {
+            @if (canManageClasses() && editor() === null) {
               <button
                 type="button"
                 class="link link--add"

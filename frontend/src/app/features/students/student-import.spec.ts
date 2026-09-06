@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AcademicSession, ImportError, ImportReport } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { StudentImport } from './student-import';
 
 const SESSIONS = '/api/academics/sessions';
@@ -116,6 +118,10 @@ describe('StudentImport', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
   });
 
   /** Set by the one test that patches URL's statics, so they are put back however it ends. */
@@ -519,5 +525,47 @@ describe('StudentImport', () => {
     expect(text.toLowerCase()).toContain('showing the first 2');
     // And the import is still refused, because 1,800 problems means nothing would land.
     expect(button('Import these students')?.disabled).toBe(true);
+  });
+
+  // ── What the whole screen is gated on ────────────────────────────────────────────────────
+
+  describe('write actions', () => {
+    it('lets somebody who may manage students get on with it', () => {
+      arrive();
+
+      expect(text()).toContain('Start from the template');
+      expect(text()).not.toContain('You do not have permission to import students');
+    });
+
+    /**
+     * The reported defect, at its worst: this screen used to walk a classteacher through choosing
+     * a year, picking a file and waiting for an upload before telling them they may not import.
+     * The refusal it already knew how to render is now rendered before any of that.
+     */
+    it('says so up front to somebody who may only read the roll, before any file is chosen', () => {
+      signInWith(Permissions.STUDENT_READ);
+      fixture = TestBed.createComponent(StudentImport);
+      fixture.detectChanges();
+      httpMock.expectOne({ url: SESSIONS, method: 'GET' }).flush(envelope(sessions));
+      fixture.detectChanges();
+
+      expect(text()).toContain('You do not have permission to import students');
+      expect(text()).not.toContain('Start from the template');
+      expect(button('Check the file')).toBeUndefined();
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.STUDENT_READ);
+      fixture = TestBed.createComponent(StudentImport);
+      fixture.detectChanges();
+      httpMock.expectOne({ url: SESSIONS, method: 'GET' }).flush(envelope(sessions));
+      fixture.detectChanges();
+      expect(text()).toContain('You do not have permission to import students');
+
+      signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
+      fixture.detectChanges();
+
+      expect(text()).toContain('Start from the template');
+    });
   });
 });

@@ -16,6 +16,8 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { apiErrorCode } from '../../core/api/api-error';
 import { GuardianRelation, StudentGuardian } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { Dialog } from '../../shared/components/dialog/dialog';
@@ -92,6 +94,14 @@ export class StudentGuardians {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Whether this user may attach, correct or detach a guardian.
+   *
+   * The guardian permission, not the student one: they are separate resources precisely so a
+   * school can hand somebody the class roster without handing them the parents' phone numbers.
+   */
+  protected readonly canManageGuardians = permitted(Permissions.GUARDIAN_MANAGE);
 
   protected readonly relationOptions = RELATION_OPTIONS;
 
