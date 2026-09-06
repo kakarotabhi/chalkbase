@@ -57,6 +57,9 @@ src/environments/ apiBaseUrl per build configuration.
   files.
 - **The response envelope is unwrapped in `core/api`,** not in components. Components receive plain
   payloads; error handling reads `error.code`, never `error.message` (ADR-0007).
+  **Adding a field, a record or an endpoint has a recipe** — see
+  [`contracts/README.md`](../contracts/README.md), "What to do when you change the API". The
+  nullable case is the one with a trap in it.
 
 ## Tests
 
