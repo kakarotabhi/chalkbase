@@ -4,7 +4,8 @@
   <p class="page-status">Loading schools…</p>
 } @else if (loadFailed()) {
   <p class="page-status page-status--error">
-    Could not reach the Chalkbase API. Is the backend running on port 8080?
+    This is the platform register of every school on this deployment, and your account cannot open
+    it. If you are looking for your own school's details, they are under Settings › School profile.
   </p>
 } @else {
   @let rows = schools() ?? [];

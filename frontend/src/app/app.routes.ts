@@ -31,7 +31,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'schools' },
+      // Students, not the school register. The register is a platform-operator view and is no
+      // longer in a school user's menu at all — landing there meant the first screen after signing
+      // in was an error for every user, which is how it was found. Students is what a school
+      // actually opens the product to do.
+      { path: '', pathMatch: 'full', redirectTo: 'students' },
       {
         path: 'schools',
         title: 'Schools',

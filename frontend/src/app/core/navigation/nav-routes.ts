@@ -34,6 +34,10 @@ export interface NavRoute {
  * in CI rather than a menu item that quietly vanishes in production.
  */
 export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, NavRoute>([
+  // `schools` is deliberately absent. The backend stopped emitting it: the school REGISTER is a
+  // platform-operator view, and every shipped role held the permission that gated it, so every user
+  // was shown a menu item leading to a list of every other school. The route still exists for an
+  // operator who types it; nothing puts it in a menu.
   ['schools', { path: '/schools', icon: 'school' }],
   // The settings section. The backend has emitted this since the navigation catalogue landed and
   // it was being dropped every time, because there was nothing behind it; the school profile is

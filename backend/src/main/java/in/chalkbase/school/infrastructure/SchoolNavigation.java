@@ -22,8 +22,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SchoolNavigation {
 
-    /** The school register. Matches the frontend's {@code /schools} route by convention, not by URL. */
-    public static final String SCHOOLS = "schools";
+    /*
+     * There is deliberately no `schools` item any more.
+     *
+     * It pointed at the school REGISTER — every campus on the deployment — which is a
+     * platform-operator view, not something a principal navigates to. It was gated on
+     * `school:school:read`, which every shipped template holds, so every user of every school was
+     * served a menu item leading to a list of all the other schools. Testing the deployed instance
+     * is what surfaced it: the item was in the menu, it was the landing page, and the endpoint
+     * behind it now refuses school users, so the first screen after signing in was an error.
+     *
+     * When a platform-operator account exists it gets its own navigation, in whatever module owns
+     * operators. It does not belong in the menu a school sees.
+     */
 
     /**
      * This school's own profile, which lives under the settings section the identity module owns.
@@ -43,9 +54,7 @@ public class SchoolNavigation {
 
     @Bean
     NavigationProvider schoolNavigationProvider() {
-        return () -> List.of(
-                new NavigationItem(SCHOOLS, "nav.schools", "school", 20, SchoolPermissions.SCHOOL_READ),
-                new NavigationItem(
-                        SETTINGS_PROFILE, "nav.settings.profile", "school", 20, SchoolPermissions.SCHOOL_UPDATE));
+        return () -> List.of(new NavigationItem(
+                SETTINGS_PROFILE, "nav.settings.profile", "school", 20, SchoolPermissions.SCHOOL_UPDATE));
     }
 }
