@@ -9,7 +9,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
-| `student` | `student`, `guardian`, `student_guardian`, `student_enrolment` (per tenant); documents and alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians and enrolment built |
+| `student` | `student`, `guardian`, `student_guardian`, `student_enrolment` (per tenant); documents and alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment and CSV import built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
 | `academics` | `academic_session`, `school_class`, `section` (per tenant); subjects, timetable and syllabus still planned | `/api/academics/**` | yes | sessions and classes built |
 | `attendance` | student and staff attendance | `/api/attendance` | yes | planned |

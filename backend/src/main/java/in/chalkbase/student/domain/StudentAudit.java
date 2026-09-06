@@ -48,5 +48,28 @@ public final class StudentAudit {
     /** A child placed in a section for a year, moved, renumbered or ended. {@code entityId} is the student's id. */
     public static final String STUDENT_ENROLMENT = "STUDENT_ENROLMENT";
 
+    /**
+     * A whole file of students admitted at once. {@code entityId} is the <em>academic session's</em>
+     * id — the third exception to the rule above, and the reason is the same one that produced it.
+     *
+     * <p>An import is one act with one decision behind it, and the thing it is a fact about is the
+     * year it loaded. Six hundred {@code ENTITY_CREATED} rows would bury every other thing that
+     * happened that day in the one log a principal reads to find out what happened that day
+     * (ADR-0021 §7), and there is no single child this row is about.
+     *
+     * <p>The individual children are not lost by this: they exist, with their {@code created_at},
+     * and this row says when the load happened and who ran it.
+     */
+    public static final String STUDENT_IMPORT = "STUDENT_IMPORT";
+
+    /**
+     * A verb of this module's own, for the reason {@code AuditAction} allows one.
+     *
+     * <p>{@code ENTITY_CREATED} on {@link #STUDENT_IMPORT} would read as "an import was created",
+     * which is not what happened — a school's whole roll arrived in one act, and the log a principal
+     * reads should say so in the row rather than in a field name.
+     */
+    public static final String STUDENTS_IMPORTED = "STUDENTS_IMPORTED";
+
     private StudentAudit() {}
 }

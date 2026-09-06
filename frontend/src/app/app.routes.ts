@@ -70,10 +70,10 @@ export const routes: Routes = [
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.
       //
-      // **Order matters here.** `students/guardians` is declared before `students/:id`, because the
-      // router matches in order and `:id` would otherwise swallow the word "guardians" and try to
-      // load a student whose id is that. This is the kind of thing that works until somebody
-      // reorders the file for tidiness, so it is written down.
+      // **Order matters here.** `students/guardians` and `students/import` are declared before
+      // `students/:id`, because the router matches in order and `:id` would otherwise swallow the
+      // word "guardians" and try to load a student whose id is that. This is the kind of thing that
+      // works until somebody reorders the file for tidiness, so it is written down.
       {
         path: 'students',
         pathMatch: 'full',
@@ -85,6 +85,12 @@ export const routes: Routes = [
         title: 'Guardians · Chalkbase',
         loadComponent: () =>
           import('./features/students/guardian-list').then((m) => m.GuardianList),
+      },
+      {
+        path: 'students/import',
+        title: 'Import students · Chalkbase',
+        loadComponent: () =>
+          import('./features/students/student-import').then((m) => m.StudentImport),
       },
       {
         path: 'students/:id',

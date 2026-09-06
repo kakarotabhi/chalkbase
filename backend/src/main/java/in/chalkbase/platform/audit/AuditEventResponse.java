@@ -34,7 +34,14 @@ public record AuditEventResponse(
         @Classification(Tier.INTERNAL) List<String> changedFields,
         @Classification(Tier.CONFIDENTIAL) String ipAddress,
         @Classification(Tier.INTERNAL) String userAgent,
-        @Classification(Tier.INTERNAL) String traceId) {
+        @Classification(Tier.INTERNAL) String traceId,
+        /**
+         * How many records a bulk action touched, or null when it touched one.
+         *
+         * <p>Absent on almost every row, and that is the point: an import of six hundred students
+         * is one event, and this is the number that makes it legible as one.
+         */
+        @Classification(Tier.INTERNAL) Integer recordCount) {
 
     static AuditEventResponse of(AuditEvent event) {
         return new AuditEventResponse(
@@ -50,7 +57,8 @@ public record AuditEventResponse(
                 split(event.getChangedFields()),
                 event.getIpAddress(),
                 event.getUserAgent(),
-                event.getTraceId());
+                event.getTraceId(),
+                event.getRecordCount());
     }
 
     private static List<String> split(String commaSeparated) {

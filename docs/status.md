@@ -17,7 +17,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0020) | ✅ Done |
+| Architecture decisions (ADR-0001…0021) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
@@ -56,6 +56,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
 | `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
 | Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
+| Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
 
 ## Next, in order
 
@@ -94,8 +95,13 @@ Each line says what it unblocks, because the order is not arbitrary.
     Needs a key-management decision tied to deployment (ADR-0015), and a decision on whether the
     tier is declared on the entity as well as the DTO — two declarations that can disagree is worse
     than one in the wrong place.
-11. **Subjects**, then **documents, import/export and dashboards** to close Phase 1.
-12. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
+11. ~~**Student import.**~~ ✅ Done. Validate as its own call, all-or-nothing on commit, every
+    problem listed at once. **Export is deliberately not built**: ADR-0014 requires exports masked by
+    classification with the unmasked one audited, and neither the masking nor the permission that
+    lifts it exists — an export ignoring that would be the largest unaudited disclosure surface in
+    the product.
+12. **Subjects**, then **guardian import, documents and dashboards** to close Phase 1.
+13. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
     it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
     showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
     interceptor does this for 401 only.
@@ -168,6 +174,23 @@ Recorded so they are decided rather than discovered.
   once per school forever for nothing. The answer when it stops being fine is a `pg_trgm` GIN index;
   the extension is available on the dev database and not installed, and installing it is a
   database-wide change wanting a measurement behind it.
+- **The import reads CSV, not `.xlsx`.** The requirement says "import from Excel"; every Excel can
+  *Save As* CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
+  surface, which AGENTS rule 8 says to ask about. A `.xlsx` upload is detected by its magic bytes and
+  refused with instructions rather than a parse error. **Open question for the product owner**: if
+  "Save as CSV" is a genuine barrier for school offices, POI is the answer and it is a small change
+  behind the same endpoint.
+- **Guardians are not imported**, deliberately (ADR-0021 §4): a file of six hundred students each
+  naming a father would create six hundred guardian records, including four for one man with four
+  children here — the duplicate the manual flow was just fixed to prevent. Doing it properly means
+  matching each row against the directory by phone, which is its own slice.
+- **The upload limit is coupled across two files.** `spring.servlet.multipart.*` is set below nginx's
+  `client_max_body_size` so Spring is always the one refusing, in the ADR-0007 envelope; a request
+  refused by nginx returns HTML and may reach the browser without CORS headers, so the client sees a
+  network failure rather than "that file is too large". Raise both or neither.
+- `MaxUploadSizeExceededException → VAL_003` is untested: `MockMvcRequestBuilders.multipart()` builds
+  the request object directly and never runs the multipart resolver, so the limit cannot be exercised
+  from MockMvc at all.
 - `guardian.phone` is `varchar(20)`. `+91 98765 43210` fits at 16; a longer international number
   with an extension would not.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,

@@ -1,0 +1,417 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+@use '../../../styles/controls' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  // One line of context is not worth the vertical space on a 360px screen, where the navigation
+  // already says where you are.
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// ADR-0010 names bulk import a desktop-first task. The screen still works on a phone, so this is a
+// sentence and not a wall — but it belongs only where it is true.
+.compact-note {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include from-medium {
+    display: none;
+  }
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.linklike {
+  @include link-button;
+}
+
+// A link that behaves like the text buttons beside it.
+a.linklike {
+  display: inline-block;
+  line-height: var(--cb-touch-target-min);
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The steps ──────────────────────────────────────────────────────────────
+
+/// An ordered list, because the order is the design (ADR-0021 §1): the check is a step you pass
+/// through, not a box you tick. The numbers are the browser's own, so the count is right whatever
+/// the screen decides to show.
+.steps {
+  margin: 0;
+  padding: 0;
+  max-width: 60rem;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  position: relative;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.step__title {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  counter-increment: step;
+
+  &::before {
+    content: counter(step) '. ';
+    color: var(--cb-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.step__lede {
+  margin: 0 0 var(--cb-space-3);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+/// The sentence beside a control that cannot be used. Never on its own — the button stays visible
+/// and disabled, so there is something for this to be about.
+.step__why {
+  margin: var(--cb-space-2) 0 0;
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// ── The column reference ───────────────────────────────────────────────────
+
+.columns {
+  margin-top: var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+}
+
+.columns__summary {
+  min-height: var(--cb-touch-target-min);
+  display: flex;
+  align-items: center;
+  color: var(--cb-primary);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.columns__note {
+  margin: var(--cb-space-2) 0;
+  max-width: 64ch;
+  color: var(--cb-text-muted);
+}
+
+.columns__list {
+  margin: 0 0 var(--cb-space-2);
+}
+
+.column {
+  padding: var(--cb-space-2) 0;
+  border-top: 1px solid var(--cb-border);
+
+  @include from-medium {
+    display: grid;
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+    gap: var(--cb-space-3);
+    align-items: baseline;
+  }
+}
+
+.column__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+
+  code {
+    font-family: var(--cb-font-numeric);
+    font-weight: 600;
+  }
+}
+
+.column__optional {
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}
+
+.column__note {
+  margin: 0;
+  color: var(--cb-text-muted);
+}
+
+// ── Choosing ───────────────────────────────────────────────────────────────
+
+.choices {
+  display: grid;
+  gap: var(--cb-space-4);
+
+  @include from-expanded {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    align-items: start;
+  }
+}
+
+/// The browser's own file control, given the same box as every other control on the screen so it
+/// does not read as something bolted on. The button inside it is the platform's and stays that way.
+.file {
+  @include control-surface;
+
+  padding: var(--cb-space-2) var(--cb-space-3);
+  line-height: var(--cb-touch-target-min);
+
+  &::file-selector-button {
+    min-height: 2rem;
+    margin-right: var(--cb-space-3);
+    padding: 0 var(--cb-space-3);
+    border: 1px solid var(--cb-border-strong);
+    border-radius: var(--cb-radius-sm);
+    background: var(--cb-surface);
+    color: var(--cb-text);
+    font: inherit;
+    cursor: pointer;
+  }
+}
+
+/// The name and the size, which is the whole of what this screen knows about the file (ADR-0014).
+.chosen {
+  margin: var(--cb-space-3) 0 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.chosen__name {
+  // A file name can be long and has no spaces to break at.
+  overflow-wrap: anywhere;
+  color: var(--cb-text);
+}
+
+.chosen__size {
+  margin-left: var(--cb-space-2);
+  font-family: var(--cb-font-numeric);
+}
+
+// ── What came back ─────────────────────────────────────────────────────────
+
+.summary {
+  margin-bottom: var(--cb-space-4);
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.summary__counts {
+  margin: 0;
+  font-size: var(--cb-font-size-base);
+
+  strong {
+    font-family: var(--cb-font-numeric);
+  }
+}
+
+.summary__bad {
+  color: var(--cb-danger);
+}
+
+.summary__file {
+  margin: var(--cb-space-1) 0 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+  overflow-wrap: anywhere;
+}
+
+// The banners double as the focus target when a check fails, so they need the ring too.
+.banner:focus-visible {
+  outline: none;
+  box-shadow: var(--cb-focus-ring);
+}
+
+// ── The problems ───────────────────────────────────────────────────────────
+
+.problems__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.grouping {
+  display: flex;
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  overflow: hidden;
+}
+
+/// Two views of one list. `aria-pressed` rather than colour alone says which one is showing, and
+/// the pressed state is a filled background so it survives a photocopy and a colour-blind reader.
+.grouping__option {
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-3);
+  border: none;
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font: inherit;
+  font-size: var(--cb-font-size-sm);
+  cursor: pointer;
+
+  & + & {
+    border-left: 1px solid var(--cb-border-strong);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--cb-primary);
+    color: var(--cb-primary-contrast);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.problems__hint {
+  margin: 0 0 var(--cb-space-3);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.group {
+  margin-bottom: var(--cb-space-3);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  background: var(--cb-surface);
+}
+
+.group__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+  margin: 0;
+  padding: var(--cb-space-2) var(--cb-space-3);
+  border-bottom: 1px solid var(--cb-border);
+  font-size: var(--cb-font-size-sm);
+}
+
+.group__name {
+  font-family: var(--cb-font-numeric);
+  font-weight: 600;
+}
+
+.group__caption {
+  color: var(--cb-text-muted);
+  font-weight: 400;
+}
+
+.group__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/// One problem. Two short fields, so it is a stacked card on a phone and two columns on a laptop —
+/// and never a table that has to be scrolled sideways to read the sentence that says what is wrong
+/// (ADR-0010). Reading all twenty-seven in one pass is the point of this screen.
+.problem {
+  display: block;
+  padding: var(--cb-space-2) var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+
+  & + & {
+    border-top: 1px solid var(--cb-border);
+  }
+
+  @include from-medium {
+    display: grid;
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+    gap: var(--cb-space-3);
+    align-items: baseline;
+  }
+}
+
+.problem__where {
+  display: block;
+  font-family: var(--cb-font-numeric);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.problem__what {
+  display: block;
+  color: var(--cb-text-muted);
+}
+
+// Said before the list rather than after it: a school needs to know the problems are a sample
+// before it starts working through them.
+.problems__truncated {
+  margin: 0 0 var(--cb-space-3);
+  padding: var(--cb-space-2) var(--cb-space-3);
+  border-left: 3px solid var(--cb-warning);
+  background: var(--cb-warning-surface);
+  color: var(--cb-text);
+  font-size: var(--cb-font-size-sm);
+}

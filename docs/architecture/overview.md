@@ -55,6 +55,7 @@
 | The audit log: names, not values | [ADR-0018](adr/0018-audit-log.md) |
 | Classes and sections are structural | [ADR-0019](adr/0019-classes-and-sections.md) |
 | One student name field; guardians are shared | [ADR-0020](adr/0020-student-and-guardian-model.md) |
+| Bulk import: validate first, all-or-nothing | [ADR-0021](adr/0021-bulk-import.md) |
 
 ## Module inventory
 

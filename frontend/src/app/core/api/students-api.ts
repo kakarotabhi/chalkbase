@@ -6,6 +6,7 @@ import {
   ApiResponse,
   CreateEnrolmentRequest,
   Enrolment,
+  ImportReport,
   LinkGuardianRequest,
   PageResponse,
   SaveStudentRequest,
@@ -129,6 +130,40 @@ export class StudentsApi {
       .pipe(unwrap);
   }
 
+  /* ── Bulk import (ADR-0021) ──────────────────────────────────────────── */
+
+  /**
+   * Parses the file, checks every row, and answers with everything wrong with it. **Writes
+   * nothing** — `imported` comes back 0 whatever the file contains.
+   *
+   * A separate endpoint rather than `import?dryRun=true`, because a flag has a default and the
+   * wrong default here writes six hundred rows nobody has looked at (ADR-0021 §1).
+   */
+  validateImport(file: File, academicSessionId: string): Observable<ImportReport> {
+    return this.http
+      .post<ApiResponse<ImportReport>>(
+        `${this.baseUrl}/import/validate`,
+        importBody(file, academicSessionId),
+        { withCredentials: true },
+      )
+      .pipe(unwrap);
+  }
+
+  /**
+   * The same checks, and then the commit — **all or nothing** (ADR-0021 §2). One bad row and
+   * nothing is imported, so a caller that gets an error here can be certain the register is
+   * exactly as it was.
+   */
+  runImport(file: File, academicSessionId: string): Observable<ImportReport> {
+    return this.http
+      .post<ApiResponse<ImportReport>>(
+        `${this.baseUrl}/import`,
+        importBody(file, academicSessionId),
+        { withCredentials: true },
+      )
+      .pipe(unwrap);
+  }
+
   /* ── Enrolments ──────────────────────────────────────────────────────── */
 
   /** Puts a student into a section for a session. The answer is the enrolment that was created. */
@@ -213,6 +248,24 @@ export class StudentsApi {
  * here at all means the write went through.
  */
 const discardBody = map((): void => undefined);
+
+/**
+ * The multipart body both import calls send.
+ *
+ * **No `Content-Type` header is set anywhere near this**, deliberately: the browser has to write
+ * it, because only the browser knows the multipart boundary it just generated. Setting
+ * `multipart/form-data` by hand produces a body the server cannot split.
+ *
+ * The `File` is handed straight to `FormData` and is never read here. Its contents are hundreds of
+ * children's names and dates of birth (ADR-0014), and this app has no reason to have seen them —
+ * it uploads the handle the user chose and keeps nothing.
+ */
+function importBody(file: File, academicSessionId: string): FormData {
+  const body = new FormData();
+  body.append('file', file);
+  body.append('academicSessionId', academicSessionId);
+  return body;
+}
 
 function clampSize(size: number): number {
   return Math.min(Math.max(1, Math.trunc(size)), STUDENT_MAX_PAGE_SIZE);

@@ -1,6 +1,7 @@
 package in.chalkbase.academics.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +39,31 @@ public interface AcademicsLookup {
 
     /** One section of this school with the class it divides, or empty. */
     Optional<SectionRef> section(UUID sectionId);
+
+    /**
+     * The school's whole ladder of classes, in the order the school reads it.
+     *
+     * <p>Unpaged and whole, unlike anything student-shaped: a ladder is fourteen rows, and the
+     * caller for this is one resolving <em>names</em> in bulk — a spreadsheet holds "Class 5", not
+     * a UUID (ADR-0021 §3). Resolving those one row at a time would be six hundred round trips to
+     * answer a question the whole ladder answers once.
+     *
+     * <p>Retired classes are included, flagged. A caller matching a name has to be able to tell "no
+     * class is called that" from "that class was retired", and the two need different sentences.
+     */
+    List<SchoolClassRef> classes();
+
+    /**
+     * Every section of this school, each with the class it divides.
+     *
+     * <p>The other half of {@link #classes()}, and separate from it for one reason: a class with no
+     * sections yet exists here as a class and contributes no sections, so a caller can say "Class 5
+     * has no section called B" rather than "there is no Class 5", which would be false.
+     *
+     * <p>Retired sections are included and flagged, for the reason {@link SectionRef#active()}
+     * gives.
+     */
+    List<SectionRef> sections();
 
     /** Several years at once, keyed by id. Unknown ids are absent from the map. */
     Map<UUID, AcademicSessionRef> sessions(Collection<UUID> sessionIds);

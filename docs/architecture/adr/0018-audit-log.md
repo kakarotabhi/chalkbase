@@ -56,6 +56,26 @@ field's classification at runtime, "values of unclassified fields are fine" is a
 tell which fields those are. Relaxing this later is additive; discovering that a school's audit
 table has been accumulating phone numbers is not.
 
+### 2b. A count is not a value (amended 2026-09-06)
+
+`audit_event.record_count` holds how many records a bulk action touched, and is null for the
+single-record actions that are almost all of them.
+
+This does not weaken §2. That rule keeps personal data out of the log: what is refused is the
+*value a field took*, because those values are a child's name and date of birth. A row count is not
+a value of any field and identifies nobody — it is a property of the event, like `occurred_at` and
+`outcome`.
+
+It has a column because the alternative was worse. Writing the count into `changed_fields` as
+`imported_600` would pass the field-name regex, and would be smuggling a value past a check built to
+stop exactly that. An agent building the student import declined to do it and asked instead, which
+is the right instinct: a rule that can be satisfied by disguising the thing it forbids is not
+holding.
+
+Without it, the audit row for an import says who imported into which year and not whether that was
+three students or six hundred — and reconstructing the number afterwards by counting `created_at`
+timestamps is the forensic work an audit log exists to spare somebody.
+
 ### 3. A data change is audited in the SAME transaction as the change
 
 If the transaction rolls back, the audit row goes with it. An audit log that records changes which
