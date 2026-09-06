@@ -9,6 +9,17 @@ can check the claims below rather than take them on trust.
 
 ---
 
+---
+
+> **Superseded in part, 6 September 2026.** The product owner read §2.5, §2.6 and §2.7 and disagreed
+> with the recommendation in §2.5 — they drew the mockup, and the filter bar is to match it. The
+> Students screen was rebuilt accordingly: pills that print their current value and tint themselves
+> when set, the two write actions on the title row, the lede replaced by the count. The one thing
+> §2.5 got right survived the rebuild — every pill is a real control with a real accessible name.
+> The rest of this file stands. Do not re-argue the three sections marked below.
+
+---
+
 ## Verdict
 
 The design system has not drifted. The product is small, and it looks small. The mockups were drawn
@@ -118,6 +129,13 @@ against the three-item one.
   used through, so it gets the room"). But it costs real vertical space: on the deployed app the
   first student row starts at y≈425 where the mockup's starts at y≈315. **I would keep the built
   version and update the mockup**, not the reverse.
+- **Overruled.** The recommendation in the last sentence was wrong, and it bundled a real
+  accessibility point together with a layout preference as if they were one decision. They are not:
+  a pill can print its own value *and* carry a permanent accessible name, which is what shipped —
+  `cb-select` gained a `pill` variant with a required `ariaLabel`, and the search box keeps a
+  visually-hidden `<label>`. The filter block went from 99px to **44px**, and the title-to-first-row
+  distance from 275px to **137px**. "More filters" was not built: there are three filters and a
+  disclosure onto nothing is worse than its absence.
 
 ### 2.6 Page-header actions moved below the filters
 
@@ -129,6 +147,10 @@ against the three-item one.
   daily act, and importing six hundred happens once"). The *position* is not commented. The effect
   is that the primary action on the screen is the fourth thing down the page, and on a phone it is
   below the fold — see [`app-students-360.png`](./design-drift-shots/app-students-360.png).
+- **Closed.** Both actions now sit on the title row, right-aligned, as designed. Import stays the
+  quieter of the two — a text link, not the mockup's secondary button — because that demotion was a
+  decision with a reason and moving a control is not a licence to restyle it. The
+  `Permissions.STUDENT_MANAGE` gate from #38 is unchanged and still covered by its three tests.
 
 ### 2.7 The subtitle lost the count
 
@@ -140,6 +162,12 @@ against the three-item one.
   [`app-academics-classes.png`](./design-drift-shots/app-academics-classes.png)). But the count is
   already computed — the pager renders `Showing 1–25 of 60` from it. Losing it costs the one number
   a principal opens this screen to see.
+- **Closed on this screen.** The lede is gone and the count is the subtitle. Two departures from the
+  mockup: the count is hidden while a filter is set, because under a filter it would be a count of
+  matches and a heading that shrank as somebody typed would read as a school losing students — the
+  pager already says "Showing 1–25 of 12" there. And there is no `· Session 2026–27`, because no
+  request this screen makes returns the session name and a hard-coded one would be invented. The
+  other screens still carry their ledes; this was not a house-wide change.
 
 ### 2.8 Sign-in gained a School code field
 

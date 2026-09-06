@@ -1,7 +1,22 @@
+@if (pill()) {
+  <!--
+    The width of the pill, and nothing else. A native select laid out at `width: auto` is as wide
+    as its longest option; this holds only the option actually chosen, sits in the same grid cell
+    as the select, and is hidden from both the screen and the accessibility tree.
+  -->
+  <span class="select__sizer" [class.select__sizer--active]="active()" aria-hidden="true">{{
+    selectedLabel()
+  }}</span>
+}
+
 <select
   class="select"
+  [class.select--field]="!pill()"
+  [class.select--pill]="pill()"
+  [class.select--active]="active()"
   [class.select--invalid]="invalid()"
   [attr.id]="id()"
+  [attr.aria-label]="ariaLabel()"
   [attr.aria-describedby]="describedBy()"
   [attr.aria-invalid]="invalid() ? 'true' : null"
   [disabled]="isDisabled() || readOnly()"

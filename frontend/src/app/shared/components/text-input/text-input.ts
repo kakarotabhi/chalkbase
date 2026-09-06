@@ -7,6 +7,8 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Icon } from '../icon/icon';
+import { IconName } from '../icon/icon-glyphs';
 
 /**
  * A single-line text control for reactive forms.
@@ -17,6 +19,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
  */
 @Component({
   selector: 'cb-text-input',
+  imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './text-input.html',
   styleUrl: './text-input.scss',
@@ -38,6 +41,14 @@ export class TextInput implements ControlValueAccessor {
    */
   readonly type = input<'text' | 'email' | 'tel' | 'date'>('text');
   readonly placeholder = input('');
+  /**
+   * A glyph drawn inside the box, at its leading edge — the magnifier on a search field.
+   *
+   * Decoration only: it is `aria-hidden` and takes no clicks, and the field still needs a real
+   * label. An icon that stood in for one would leave the control announced as "edit text" and
+   * nothing else.
+   */
+  readonly leadingIcon = input<IconName | null>(null);
   readonly autocomplete = input<string | null>(null);
   readonly inputmode = input<string | null>(null);
   readonly autocapitalize = input<string | null>(null);

@@ -25,7 +25,6 @@ import { STUDENT_PAGE_SIZE, StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
-import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { StudentForm } from './student-form';
@@ -103,7 +102,7 @@ interface StudentRow {
  */
 @Component({
   selector: 'cb-student-list',
-  imports: [ReactiveFormsModule, RouterLink, Button, FormField, Select, TextInput, StudentForm],
+  imports: [ReactiveFormsModule, RouterLink, Button, Select, TextInput, StudentForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-list.html',
   styleUrl: './student-list.scss',
@@ -179,6 +178,34 @@ export class StudentList {
 
   /** Bumped on every filter change so `filtered` recomputes; the values come off the controls. */
   private readonly revision = signal(0);
+
+  /**
+   * The line under the title — how many students the school has.
+   *
+   * This replaced a two-line lede explaining that you can search by name or admission number.
+   * That sentence was read once and then re-read past on every visit, and the thing it explained
+   * now sits inside the box it was explaining: the search field's own placeholder says it. The
+   * designs put a fact there instead, which is what a subtitle on a list screen is worth.
+   *
+   * Only the school's own total, and only when nothing is narrowing the list. Under a filter the
+   * number would be a count of matches, which the paging line already prints as "Showing 1–25 of
+   * 12" — and a heading that changed to "12 students" as somebody typed would read as a school
+   * shrinking. Nothing while loading or after a failure, because there is no honest number then.
+   *
+   * The session name the mockup pairs with this is deliberately absent: no request on this screen
+   * returns it, and a hard-coded "Session 2026–27" would be a fact this app invented.
+   */
+  protected readonly subtitle = computed(() => {
+    if (this.loading() || this.failureCode() !== null || this.filtered()) {
+      return null;
+    }
+    const total = this.totalElements();
+    if (total === 0) {
+      return null;
+    }
+    // en-IN, because 1,428 is 1,428 here but 12,45,678 is not 1,245,678.
+    return `${total.toLocaleString('en-IN')} ${total === 1 ? 'student' : 'students'}`;
+  });
 
   /**
    * Every section in the school, as `Class 5 · A`, flattened from the ladder.

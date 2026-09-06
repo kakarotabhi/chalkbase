@@ -1,10 +1,39 @@
 <p class="crumbs">Students <span aria-hidden="true">›</span> All students</p>
-<h1 class="page-title">Students</h1>
 
-<p class="page-lede">
-  Every student at this school. Search by name or admission number to find out which class and
-  section a child is in.
-</p>
+<!--
+  Title, what the list currently holds, and the two write actions — one row, as the designs draw it.
+  The actions used to sit below the filters, which put a fourth band of chrome between the filter
+  bar and the first child on every visit, for two controls most sessions never touch.
+-->
+<div class="page-head">
+  <div class="page-head__titles">
+    <h1 class="page-title">Students</h1>
+    @if (subtitle(); as line) {
+      <p class="page-subtitle">{{ line }}</p>
+    }
+  </div>
+
+  <!--
+    Both ways of adding a child are gated on `student:student:manage`, which is what the server
+    enforces on `POST /api/students` and on both import endpoints. Someone holding only the read
+    sees the list, the filters and the paging, and nothing that would end in a 403.
+
+    Moving the controls did not move that line: same permission, same two affordances, and still
+    all-or-nothing. They are equally absent while the add form is open, and on the 403 screen,
+    which is where they were before.
+  -->
+  @if (canManageStudents() && !forbidden() && !adding()) {
+    <div class="page-head__actions">
+      <!--
+        The way in to the bulk import (ADR-0021). Quieter than the button beside it on purpose:
+        typing one child in is the daily act, and importing six hundred happens once, when the
+        school is onboarding.
+      -->
+      <a class="page-head__import" routerLink="/students/import">Import from a spreadsheet</a>
+      <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
+    </div>
+  }
+</div>
 
 @if (forbidden()) {
   <!--
@@ -34,79 +63,74 @@
     </div>
   </div>
 } @else {
+  <!--
+    One row of controls, each 44px, each showing what it currently holds.
+
+    The pills are `cb-select` in its filter shape, not a hand-rolled menu: a native `<select>` is
+    what gives a thumb the full-screen Android picker, and type-ahead and the escape key on a
+    keyboard, and none of that is worth reimplementing per screen. What the variant changes is what
+    the control looks like and how wide it is — it prints the option it holds and tints itself once
+    that option is narrowing the list.
+  -->
   <form class="filters" [formGroup]="filters" (ngSubmit)="$event.preventDefault()">
+    <!--
+      Announced, not drawn. A pill row has no room for a label above every control, and the box
+      already says what it takes through its placeholder and its magnifier — but "no visible label"
+      is not "no name", so the label is here and permanent, just hidden from the screen.
+    -->
+    <label class="filters__label" for="student-search">Search students</label>
+
     <!--
       `autocomplete="off"`, and it is not boilerplate. This box is on the machine at the front
       counter, and a browser that remembers what was typed into it offers the last six children's
       names to the next person who clicks in — which is a disclosure of Confidential data
       (ADR-0014) to somebody standing at a desk, with no request and no log line anywhere.
     -->
-    <cb-form-field
-      #searchField
+    <cb-text-input
       class="filters__search"
-      label="Search"
-      controlId="student-search"
-      hint="Name or admission number."
-    >
-      <cb-text-input
-        formControlName="q"
-        autocomplete="off"
-        placeholder="Search students"
-        [id]="searchField.controlId()"
-        [describedBy]="searchField.describedById()"
-      />
-    </cb-form-field>
+      formControlName="q"
+      autocomplete="off"
+      leadingIcon="search"
+      placeholder="Search by name or admission number"
+      [id]="'student-search'"
+    />
 
-    <cb-form-field #statusField label="Status" controlId="student-status-filter">
-      <cb-select
-        formControlName="status"
-        [id]="statusField.controlId()"
-        [options]="statusFilterOptions"
-        [describedBy]="statusField.describedById()"
-      />
-    </cb-form-field>
+    <!--
+      `ariaLabel` on both pills, because the visible text is the value and not the question: a
+      control reading "Any status" would otherwise be announced as a combo box called "Any status",
+      which says what is chosen and never what choosing it does.
+    -->
+    <cb-select
+      class="filters__pill"
+      variant="pill"
+      ariaLabel="Status"
+      formControlName="status"
+      [id]="'student-status-filter'"
+      [options]="statusFilterOptions"
+    />
 
-    <cb-form-field
-      #sectionField
-      label="Class and section"
-      controlId="student-section-filter"
-      [hint]="
-        ladderFailed() ? 'The class list could not be loaded, so this filter is empty.' : null
-      "
-    >
-      <cb-select
-        formControlName="sectionId"
-        [id]="sectionField.controlId()"
-        [options]="sectionOptions()"
-        [describedBy]="sectionField.describedById()"
-      />
-    </cb-form-field>
+    <cb-select
+      class="filters__pill"
+      variant="pill"
+      ariaLabel="Class and section"
+      formControlName="sectionId"
+      [id]="'student-section-filter'"
+      [options]="sectionOptions()"
+      [describedBy]="ladderFailed() ? 'student-section-note' : null"
+    />
   </form>
 
-  @if (filtered()) {
-    <div class="chips">
-      <cb-button variant="ghost" (click)="clearFilters()">Clear filters</cb-button>
-    </div>
+  @if (ladderFailed()) {
+    <!--
+      Below the row rather than in it: the filter bar is one 44px line in the ordinary case, and a
+      message that only ever appears when a separate request failed should not reserve room in it.
+    -->
+    <p class="filters__note" id="student-section-note">
+      The class list could not be loaded, so this filter is empty.
+    </p>
   }
 
-  @if (!adding()) {
-    <!--
-      Both ways of adding a child are gated on `student:student:manage`, which is what the server
-      enforces on `POST /api/students` and on both import endpoints. Someone holding only the read
-      sees the list, the filters and the paging, and nothing that would end in a 403.
-    -->
-    @if (canManageStudents()) {
-      <div class="toolbar">
-        <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
-        <!--
-          The way in to the bulk import (ADR-0021). Quieter than the button beside it on purpose:
-          typing one child in is the daily act, and importing six hundred happens once, when the
-          school is onboarding.
-        -->
-        <a class="toolbar__link" routerLink="/students/import">Import from a spreadsheet</a>
-      </div>
-    }
-  } @else {
+  @if (adding()) {
     <div class="panel">
       <cb-student-form
         heading="Add a student"
@@ -151,6 +175,14 @@
     @if (filtered()) {
       <p class="page-status" role="status">
         No student matches this search. Try part of a name, or clear the filters.
+      </p>
+      <!--
+        Clearing lives here and not under the filter bar. The bar says for itself what is set — a
+        tinted pill, text in the box — so a permanent "Clear filters" was a band of chrome on every
+        visit for the one state where somebody is actually stuck, which is this one.
+      -->
+      <p class="page-status__action">
+        <cb-button variant="secondary" (click)="clearFilters()">Clear filters</cb-button>
       </p>
     } @else {
       <p class="page-status" role="status">

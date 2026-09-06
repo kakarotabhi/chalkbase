@@ -31,6 +31,25 @@ class SelectHost {
   readonly readOnly = signal(false);
 }
 
+/** The filter-bar shape: no visible label, no placeholder, and a real "not filtering" option. */
+@Component({
+  imports: [ReactiveFormsModule, Select],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <cb-select
+      variant="pill"
+      ariaLabel="Board"
+      [formControl]="control"
+      id="board-filter"
+      [options]="boards"
+    />
+  `,
+})
+class PillHost {
+  readonly control = new FormControl('', { nonNullable: true });
+  readonly boards: readonly SelectOption[] = [{ value: '', label: 'Any board' }, ...BOARDS];
+}
+
 describe('Select', () => {
   let fixture: ComponentFixture<SelectHost>;
   let host: SelectHost;
@@ -105,5 +124,73 @@ describe('Select', () => {
     fixture.detectChanges();
 
     expect(select().disabled).toBe(true);
+  });
+
+  /**
+   * The pill variant, which the student list's filter bar is built from.
+   *
+   * What is worth proving here is the pair of things the shape is for and the one thing it must not
+   * cost: it prints the value it holds, it says when that value is narrowing anything, and it still
+   * has a name a screen reader can read out even though nothing on screen is labelling it.
+   */
+  describe('as a pill', () => {
+    let pill: ComponentFixture<PillHost>;
+
+    const control = () => pill.nativeElement.querySelector('select') as HTMLSelectElement;
+    const sizer = () => pill.nativeElement.querySelector('.select__sizer') as HTMLElement;
+
+    // No second `configureTestingModule`: the outer one has already instantiated the module, and
+    // a standalone component needs nothing declared for it anyway.
+    beforeEach(() => {
+      pill = TestBed.createComponent(PillHost);
+      pill.detectChanges();
+    });
+
+    /**
+     * The visible text is the value, so it cannot also be the name. Without this the control is
+     * announced as a combo box called "Any board", which says what is chosen and never what
+     * choosing it does.
+     */
+    it('carries a name of its own, because nothing on screen labels it', () => {
+      expect(control().getAttribute('aria-label')).toBe('Board');
+    });
+
+    /**
+     * The sizer is what makes a pill as wide as the option it holds rather than as wide as the
+     * longest one it offers, so it has to track the value — and it must stay out of the
+     * accessibility tree, or the label is announced twice.
+     */
+    it('prints the option it is holding, and hides that copy from assistive technology', () => {
+      expect(sizer().textContent?.trim()).toBe('Any board');
+      expect(sizer().getAttribute('aria-hidden')).toBe('true');
+
+      pill.componentInstance.control.setValue('STATE');
+      pill.detectChanges();
+
+      expect(sizer().textContent?.trim()).toBe('State board');
+    });
+
+    /** "Is this filter doing anything" is the one question a filter bar answers at a glance. */
+    it('tints itself once it is narrowing something, and not before', () => {
+      expect(control().className).not.toContain('select--active');
+
+      pill.componentInstance.control.setValue('CBSE');
+      pill.detectChanges();
+      expect(control().className).toContain('select--active');
+
+      // The empty string is the "Any board" option, which is a real choice and not a placeholder.
+      pill.componentInstance.control.setValue('');
+      pill.detectChanges();
+      expect(control().className).not.toContain('select--active');
+    });
+
+    /** Whatever the skin, it is the same native select underneath. */
+    it("is still the platform's own control", () => {
+      control().value = 'CISCE';
+      control().dispatchEvent(new Event('change'));
+      pill.detectChanges();
+
+      expect(pill.componentInstance.control.value).toBe('CISCE');
+    });
   });
 });
