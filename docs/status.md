@@ -17,7 +17,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0021) | ✅ Done |
+| Architecture decisions (ADR-0001…0022) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
@@ -91,10 +91,13 @@ Each line says what it unblocks, because the order is not arbitrary.
 9. ~~**Students and guardians.**~~ ✅ Done. One name field rather than three, guardians shared
    between siblings, and enrolment carrying the session. Restricted category fields are deliberately
    absent — see the blocker below.
-10. **Encryption at rest**, which unblocks the Restricted student fields and therefore UDISE+.
-    Needs a key-management decision tied to deployment (ADR-0015), and a decision on whether the
-    tier is declared on the entity as well as the DTO — two declarations that can disagree is worse
-    than one in the wrong place.
+10. **Encryption at rest** — **decided, not yet built**
+    ([ADR-0022](architecture/adr/0022-encryption-at-rest.md)). Both open questions are settled: the
+    key is a 256-bit `CHALKBASE_ENCRYPTION_KEY` from the environment with a key id prefixed to every
+    ciphertext so rotation is possible, and storage is marked with `@Encrypted` on the entity while
+    `@Classification` stays on the DTO, bound by a build-failing test rather than by repeating the
+    tier in two places that can disagree. **This is the next slice**, and it unblocks the Restricted
+    student fields and therefore UDISE+.
 11. ~~**Student import.**~~ ✅ Done. Validate as its own call, all-or-nothing on commit, every
     problem listed at once. **Export is deliberately not built**: ADR-0014 requires exports masked by
     classification with the unmasked one audited, and neither the masking nor the permission that
@@ -125,7 +128,8 @@ Also queued, not blocking:
   `log.info("saving {}", dto.fullName())`. The cheap next step is a static rule flagging a
   `CONFIDENTIAL` accessor inside a logger argument — worth more than export masking, and worth doing
   before the codebase has many more call sites.
-- **Encryption at rest does not exist, and the student record now needs it.** Caste and community,
+- **Encryption at rest does not exist, and the student record now needs it.** The decisions are
+  taken ([ADR-0022](architecture/adr/0022-encryption-at-rest.md)); the code is not written. Caste and community,
   religion, disability/CWSN, EWS/BPL/RTE category, guardian income, APAAR and Aadhaar are Restricted
   under [ADR-0014](architecture/adr/0014-data-classification.md): encrypted at rest, masked in the
   UI, every read audited. None of that machinery is built, so
