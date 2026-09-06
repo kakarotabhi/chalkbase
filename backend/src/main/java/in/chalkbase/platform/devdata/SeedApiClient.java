@@ -66,6 +66,14 @@ final class SeedApiClient {
                 path);
     }
 
+    JsonNode put(String path, Map<String, Object> body) {
+        return send(
+                HttpRequest.newBuilder(base.resolve(path))
+                        .header("Content-Type", "application/json")
+                        .PUT(HttpRequest.BodyPublishers.ofString(serialise(body))),
+                path);
+    }
+
     /** The {@code data} of the ADR-0007 envelope, which is where every successful payload lives. */
     JsonNode postForData(String path, Map<String, Object> body) {
         return post(path, body).path("data");
