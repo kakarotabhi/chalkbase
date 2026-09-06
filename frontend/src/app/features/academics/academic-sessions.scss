@@ -1,0 +1,236 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  // One line of context is not worth the vertical space on a 360px screen, where the navigation
+  // already says where you are.
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+/**
+ * The answer to "which year am I in", above the fold and before the list.
+ *
+ * A tinted strip rather than a coloured word: the tint carries the emphasis, the tick carries the
+ * meaning for anyone who cannot see the tint, and the sentence carries it for everyone else. Never
+ * colour alone.
+ */
+.current-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-2);
+  margin: 0 0 var(--cb-space-4);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-base);
+
+  svg {
+    flex: none;
+    margin-top: 2px;
+  }
+}
+
+// A school with no current session cannot record anything academic. That is a warning, not a fact.
+.current-line--none {
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+}
+
+.current-line__range {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+/**
+ * The live region. Always in the DOM, so a change to it is announced rather than being a region
+ * that appears — an assistive technology has to have been watching it beforehand.
+ */
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  // The one action on the screen: full width where the screen is a thumb wide.
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+.sessions {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  max-width: 46rem;
+  list-style: none;
+}
+
+.session {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+/**
+ * The current one, marked three ways so no single one of them has to carry it: a tinted surface,
+ * a rule down its leading edge that survives a black-and-white printout, and the badge that says
+ * the word.
+ */
+.session--current {
+  background: var(--cb-primary-surface);
+  border-color: var(--cb-primary);
+  border-inline-start: 4px solid var(--cb-primary);
+}
+
+.session__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+}
+
+.session__name {
+  margin: 0;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cb-space-1);
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-primary);
+  color: var(--cb-primary-contrast);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.session__range {
+  margin: var(--cb-space-1) 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.session__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-2);
+}
+
+// ── The editor ─────────────────────────────────────────────────────────────
+
+.editor {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+
+  // In place inside a row, the card is the row: no second border, no second background.
+  .session & {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+  }
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+/**
+ * One column on a phone, three across from tablet portrait up — the whole form is a name and two
+ * dates, and splitting a start date from an end date across two rows makes the pair harder to read
+ * than it needs to be. `minmax(0, 1fr)` because a grid track's default minimum is its content.
+ */
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-start;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}

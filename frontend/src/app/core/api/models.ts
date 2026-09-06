@@ -268,3 +268,100 @@ export interface AuditEvent {
   /** The same trace id the ADR-0007 envelope returns, so an error screen leads back to here. */
   readonly traceId: string | null;
 }
+
+/* ── Academics (GET/POST/PUT /api/academics/*) ───────────────────────────── */
+
+/**
+ * One academic year, and the time axis every academic record hangs off (ADR-0019).
+ *
+ * `startsOn` and `endsOn` are `yyyy-MM-dd` — calendar days a school picked, never instants. Do not
+ * hand either to `new Date(string)`: that parses a bare date as UTC and shifts it by the offset,
+ * which in India is five and a half hours of "1 April" landing on 31 March.
+ *
+ * Exactly one session is `current` at a time, and the server is what enforces that — making one
+ * current clears the previous one in the same transaction, so there is no client-side moment where
+ * two are current or none is.
+ */
+export interface AcademicSession {
+  readonly id: string;
+  readonly name: string;
+  /** `yyyy-MM-dd`. */
+  readonly startsOn: string;
+  /** `yyyy-MM-dd`, after `startsOn`. */
+  readonly endsOn: string;
+  readonly current: boolean;
+}
+
+/**
+ * Creating or replacing a session. `current` is deliberately absent: it is changed only through
+ * `POST /api/academics/sessions/{id}/current`, so an ordinary edit cannot move the whole school on
+ * to a different year as a side effect of fixing a typo.
+ */
+export interface SaveAcademicSessionRequest {
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+}
+
+/**
+ * One section of a class — "A", "B", "Rose".
+ *
+ * There is no delete, on purpose (ADR-0019): by the time anything references a section it is too
+ * late to decide that removing it was right, so a section that stops running is deactivated and
+ * can be brought back. `active` has been on the table since the first migration for that reason.
+ */
+export interface Section {
+  readonly id: string;
+  readonly name: string;
+  readonly active: boolean;
+}
+
+/**
+ * One rung of the school's ladder — Nursery, Class 1, Class 12.
+ *
+ * Structural, not per-session (ADR-0019): this row is a fact about the school, and the academic
+ * year appears on the enrolment that puts a student in it.
+ *
+ * `sequence` is what orders the ladder and is unique, so "which comes first" always has an answer.
+ * It is **not** editable field by field — `PUT /api/academics/classes/{id}` does not take it. The
+ * whole ladder is reordered at once through `PUT /api/academics/classes/order`, which is what makes
+ * swapping two classes one transaction rather than two updates that collide on the unique index.
+ */
+export interface SchoolClass {
+  readonly id: string;
+  readonly name: string;
+  readonly sequence: number;
+  readonly active: boolean;
+  /** Ordered by name by the server, inactive ones included and flagged. */
+  readonly sections: readonly Section[];
+}
+
+/** Creating a class. No position: a new class is appended to the end and moved from there. */
+export interface CreateClassRequest {
+  readonly name: string;
+}
+
+/** Renaming a class, or switching it off and on again. Never its position — see `SchoolClass`. */
+export interface UpdateClassRequest {
+  readonly name: string;
+  readonly active: boolean;
+}
+
+/**
+ * The whole ladder, in its new order.
+ *
+ * **Every class id, including the inactive ones.** The server rejects a partial list rather than
+ * renumbering it, because a client that dropped one would close the gap it left and lose a rung.
+ */
+export interface ReorderClassesRequest {
+  readonly classIds: readonly string[];
+}
+
+export interface CreateSectionRequest {
+  readonly name: string;
+}
+
+export interface UpdateSectionRequest {
+  readonly name: string;
+  readonly active: boolean;
+}

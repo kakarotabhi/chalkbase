@@ -66,12 +66,19 @@ cd frontend && npm test -- --watch=false
 - Formatting is automatic (Spotless for Java, Prettier for the frontend) and enforced in CI.
   Do not reformat files you did not otherwise change.
 - Database: `snake_case`, **singular** table names (`student`, `fee_charge`). FKs `<table>_id`,
-  booleans `is_`/`has_`, timestamps `created_at`/`updated_at` as `timestamptz`, indexes
-  `ix_<table>_<cols>`, constraints `uq_`/`ck_`/`fk_`, migrations `V<n>__<snake_case>.sql`.
+  timestamps `created_at`/`updated_at` as `timestamptz`, indexes `idx_<table>_<cols>`, constraints
+  `uq_`/`ck_`/`fk_`, migrations `V<n>__<snake_case>.sql`.
+- A boolean column **reads as a predicate**: `active`, `is_current`, `must_change_password`. Prefix
+  with `is_`/`has_` only where the bare word would be ambiguous or collide with SQL — `current` is
+  why `is_current` is not just `current`.
 - **Primary keys are UUIDv7**, because schema-per-tenant (ADR-0011) means ids from different schools
   meet during any cross-school rollup or export, where sequences would collide.
 - **Money is `numeric(12,2)`** in the database and `BigDecimal` in Java. Never a float, anywhere.
 - Lists use **offset pagination** — `?page=0&size=25&sort=name,asc`, returning `PageResponse<T>`
   inside the ADR-0007 envelope.
 - **Fees are append-only** (ADR-0012). Never update a charge or a ledger entry; write a reversal.
-- **Every DTO field carries a `@Classification`** (ADR-0014). An unclassified field fails the build.
+- **Treat every DTO field as classified** (ADR-0014): Restricted and Confidential data is never
+  logged, never put in an error message, and never sent to a third party. The `@Classification`
+  annotation the ADR describes, and the build failure for an unclassified field, **do not exist
+  yet** — this is a rule you follow by reading it, not one the compiler enforces. Do not write code
+  that assumes the annotation is there.

@@ -17,7 +17,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0018) | ✅ Done |
+| Architecture decisions (ADR-0001…0019) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
@@ -26,7 +26,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
-| Academic session and classes | ⬜ Not started |
+| Academic sessions, classes and sections | ✅ Done |
 | Students and guardians | ⬜ Not started |
 | Deployment to Coolify | ⬜ Not started |
 
@@ -52,6 +52,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
 | Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
 | Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
+| Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
 
 ## Next, in order
 
@@ -79,11 +80,15 @@ Each line says what it unblocks, because the order is not arbitrary.
    with the registry row written back on save so the register cannot disagree with the school.
 7. **Shared components** as the admin screens need them: dialog and toast remain (ADR-0009).
    Designed already — see [`docs/artifacts`](artifacts/README.md).
-8. **Academic session and classes** — the next real admin screens.
-9. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
-   it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
-   showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
-   interceptor does this for 401 only.
+8. ~~**Academic sessions and classes.**~~ ✅ Done. Sessions with exactly one current year enforced by
+   a partial unique index, and the class ladder with its sections — structural rather than
+   per-session (ADR-0019). Reordering is one endpoint taking the whole ladder, because two separate
+   updates cannot swap two positions past a unique constraint.
+9. **Subjects**, then **students and guardians** — the reason all of the above exists.
+10. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
+    it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
+    showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
+    interceptor does this for 401 only.
 
 Also queued, not blocking:
 
@@ -139,6 +144,16 @@ Recorded so they are decided rather than discovered.
   `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
   without a refetch loop.
 - Expired sessions are never purged.
+- **A deactivated class keeps its name.** `uq_school_class_name` does not account for `active`, and
+  there is no delete (ADR-0019), so a school that retires "Class 5" and later wants it back must
+  reactivate that row rather than create a new one. That is the intended behaviour, but it makes
+  showing inactive classes findable a correctness concern rather than a nicety — a user who cannot
+  see the retired row hits a name clash they cannot explain.
+- **`AGENTS.md` claimed two things that were not true** and now does not: indexes are `idx_`, not
+  `ix_`, and the `@Classification` annotation ADR-0014 describes does not exist, so nothing fails
+  the build for an unclassified field. Both were found by agents reading the file and trying to
+  follow it. A rule that lies is worse than no rule; if ADR-0014's enforcement is wanted, it is
+  still worth building while the DTO count is small.
 - **The audit log has no retention period and no purge job.** ADR-0014 requires every category to
   carry one; seven years is the Indian financial-record convention, but the number is a legal
   question for the board and the DPDP rules rather than an engineering choice. Needed before the

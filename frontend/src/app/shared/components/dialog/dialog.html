@@ -1,0 +1,49 @@
+<!--
+  The scrim is decoration and a large, forgiving tap target for "not this". Hidden from assistive
+  technology, because Escape and the two buttons are the announced ways out.
+-->
+<div class="dialog__scrim" aria-hidden="true" (click)="cancel()"></div>
+
+<div
+  class="dialog__panel"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="headingId"
+  [attr.aria-describedby]="bodyId"
+  cdkTrapFocus
+  [cdkTrapFocusAutoCapture]="true"
+>
+  <h2 class="dialog__heading" [id]="headingId">{{ heading() }}</h2>
+
+  <!--
+    The consequence, in the caller's own words, and pointed at by `aria-describedby` so it is read
+    out with the heading rather than only found by someone who goes looking for it.
+  -->
+  <div class="dialog__body" [id]="bodyId">
+    <ng-content />
+  </div>
+
+  <!--
+    Cancel first in the DOM, and first visually at every width. Two reasons, and they agree:
+    reading order and focus order should not disagree (WCAG 2.4.3), and the focus trap captures the
+    first tabbable element — which means the safe answer is the one already under the user's hands
+    when the dialog opens, so an Enter still travelling from the button that opened it cannot go
+    ahead with anything.
+
+    There is no close "×". Cancel says the same thing in a word, and Escape says it from the
+    keyboard; a third way out would just be a smaller target for the same answer.
+  -->
+  <div class="dialog__actions">
+    <cb-button class="dialog__cancel" variant="secondary" [disabled]="busy()" (click)="cancel()">
+      {{ cancelLabel() }}
+    </cb-button>
+    <cb-button
+      class="dialog__confirm"
+      [variant]="confirmVariant()"
+      [loading]="busy()"
+      (click)="confirm()"
+    >
+      {{ confirmLabel() }}
+    </cb-button>
+  </div>
+</div>

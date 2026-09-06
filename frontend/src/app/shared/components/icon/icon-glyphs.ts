@@ -108,6 +108,26 @@ const GLYPHS = {
     ],
   },
   /**
+   * Academics: the school's own academic model — its years, and its ladder of classes and
+   * sections. An open book, drawn as a spine with one leaf either side of it.
+   *
+   * Hand-drawn on the same 24×24 grid as the rest rather than taken from an icon set, which
+   * ADR-0009 does not allow. The two leaves mirror about the spine, so the glyph stays symmetrical
+   * at 20px, which is the size navigation actually renders it at — a book with a thicker page on
+   * one side reads as a smudge there.
+   *
+   * It deliberately does not reuse `school` (a mortarboard, which is the institution) or `exams`
+   * (a medal, which is a result). This is the shape of what is taught, not of the school and not
+   * of a grade.
+   */
+  academics: {
+    paths: [
+      'M12 7.4v12.1',
+      'M12 7.4C10.3 6 8.2 5.3 5.6 5.3H3.6v12.1h2c2.6 0 4.7.7 6.4 2.1',
+      'M12 7.4c1.7-1.4 3.8-2.1 6.4-2.1h2v12.1h-2c-2.6 0-4.7.7-6.4 2.1',
+    ],
+  },
+  /**
    * The stand-in for an item whose registry entry names an icon that does not exist. It renders
    * rather than throwing, because a menu that disappears over a typo in an icon name is a worse
    * failure than one item drawn as a plain square.

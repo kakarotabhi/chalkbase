@@ -3,8 +3,8 @@ package in.chalkbase.platform.tenancy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import in.chalkbase.TestcontainersConfiguration;
-import in.chalkbase.school.domain.AcademicSession;
-import in.chalkbase.school.infrastructure.AcademicSessionRepository;
+import in.chalkbase.academics.domain.AcademicSession;
+import in.chalkbase.academics.infrastructure.AcademicSessionRepository;
 import java.time.LocalDate;
 import java.util.List;
 import javax.sql.DataSource;
