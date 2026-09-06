@@ -28,10 +28,16 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code SchoolPermissions}, and the shipped role templates already hold {@code school:school:read}.
  * What is missing is only the principal to check them against.
  *
+ * <p>On the {@code prod} profile these methods are not reachable without the
+ * {@code X-Chalkbase-Setup-Key} header — {@code platform.config.SetupKeyFilter} answers 404 to
+ * anything else. That is a stopgap added because the application now has a public URL and
+ * {@code create} provisions a PostgreSQL schema; a single shared secret names nobody and audits as
+ * nobody, so it is not the operator account and does not close the TODO below.
+ *
  * <p>TODO(identity): replace {@code permitAll()} with
  * {@code hasAuthority(SchoolPermissions.SCHOOL_READ)} and {@code ...SCHOOL_CREATE} in the same
  * change that introduces platform-operator accounts, and remove the matching exemptions from
- * {@code SecurityConfig}. Until then, do not expose this application publicly.
+ * {@code SecurityConfig} — and the setup key with them.
  */
 @RestController
 @RequestMapping("/api/schools")

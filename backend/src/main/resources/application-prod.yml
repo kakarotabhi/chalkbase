@@ -1,4 +1,9 @@
 # Production. Everything sensitive comes from the environment — see ops/coolify/.env.example.
+#
+# Two deployments share this profile and neither may assume it is the only one:
+#   - Coolify on a VPS, the baseline of ADR-0015. See ops/coolify/README.md.
+#   - Render's free tier, the owner's personal dev environment. See render.yaml at the repo root.
+# A setting that is true of only one of them does not belong here.
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -13,6 +18,58 @@ spring:
       hibernate:
         format_sql: false
 
+server:
+  # The port is deliberately NOT set here. `server.port: ${PORT:8080}` in application.yml is the
+  # only statement of it, which is what lets Render inject its own PORT while everything else
+  # defaults to 8080. Re-stating a literal port on this profile is exactly how that stops working,
+  # so it is recorded as an absence rather than left to be rediscovered.
+
+  # Both deployments put a TLS-terminating proxy in front of this service and speak plain HTTP to
+  # the container, so the request the application sees is never itself secure. Trusting
+  # X-Forwarded-* is what makes ServletRequest#isSecure() tell the truth — without it the CSRF
+  # cookie, whose Secure flag CookieCsrfTokenRepository derives from the request, is issued
+  # without that flag over an HTTPS connection.
+  #
+  # This trusts those headers from whatever connected, so it is only sound because nothing reaches
+  # this container except through that proxy. Publishing the container's port straight to the
+  # internet would make the headers forgeable, and this line wrong.
+  forward-headers-strategy: framework
+
+  servlet:
+    session:
+      cookie:
+        # Says out loud what the deployment already is: the browser only ever reaches this service
+        # over HTTPS. A cookie without Secure is one that a downgrade to http:// will still send.
+        secure: true
+        # Lax, not None, and that is a statement about the topology. The browser sees ONE origin —
+        # Render's static site rewrites /api/* to the backend, and nginx proxies /api/ on Coolify —
+        # so every API call is same-site and Lax is never in the way. Reaching for None would mean
+        # the frontend had been split onto a second origin; None without that is just a cross-site
+        # cookie nobody needed.
+        same-site: lax
+        http-only: true
+
+chalkbase:
+  # The shared secret standing in front of POST /api/schools until platform-operator accounts exist
+  # (see SetupKeyConfiguration). Blank here on purpose: a deployment that does not set it fails to
+  # start rather than coming up with onboarding open, so this default is a tripwire, not a fallback.
+  setup-key: ${CHALKBASE_SETUP_KEY:}
+
+# Swagger stays ON, deliberately.
+#
+# This is not an oversight and not a leftover. This profile's public deployment is the owner's
+# personal dev environment — one user, no real school data — and a browsable API explorer is the
+# point of putting it on the internet at all. /v3/api-docs/** and /swagger-ui/** are permitAll in
+# SecurityConfig; leaving them so publishes the shape of the API, never its data, and every
+# endpoint behind them still enforces its own @PreAuthorize.
+#
+# The day this profile serves a real school, `springdoc.api-docs.enabled: false` goes here and the
+# permitAll rules for those two paths come out of SecurityConfig in the same change.
+
 logging:
   level:
+    # INFO, not DEBUG. Render's free tier keeps a small log buffer, and DEBUG on in.chalkbase fills
+    # it fast enough that the exception you are actually chasing has already scrolled out of it.
+    # It is also where the tier boundary sits: DEBUG is where accessor values reach a sink that
+    # nothing redacts (ADR-0014).
     in.chalkbase: INFO

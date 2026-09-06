@@ -1,6 +1,7 @@
 package in.chalkbase.platform.config;
 
 import in.chalkbase.platform.error.SecurityErrorResponder;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -11,6 +12,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 /**
@@ -39,7 +41,17 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain apiFilterChain(HttpSecurity http, SecurityErrorResponder securityErrors) throws Exception {
+    SecurityFilterChain apiFilterChain(
+            HttpSecurity http, SecurityErrorResponder securityErrors, ObjectProvider<SetupKeyFilter> setupKey)
+            throws Exception {
+        // Present only on the prod profile (SetupKeyConfiguration). Added here, inside the chain,
+        // rather than as a servlet filter in front of it: FilterChainProxy has already run
+        // StrictHttpFirewall and parsed the request path by this point, so the filter's
+        // /api/schools/** matcher and the permitAll() rule below cannot disagree about which
+        // requests they are talking about. Placed ahead of CsrfFilter so a request with no key is
+        // refused before any session or CSRF work is done for it.
+        setupKey.ifAvailable(filter -> http.addFilterBefore(filter, CsrfFilter.class));
+
         // The plain (non-XOR) handler is what lets a browser read the XSRF-TOKEN cookie and echo it
         // back verbatim as X-XSRF-TOKEN. Setting the request attribute name to null opts out of
         // deferred loading, so the cookie is issued on every response rather than only once
@@ -57,11 +69,16 @@ public class SecurityConfig {
                         // the one endpoint where forgery buys an attacker nothing but signing a
                         // victim into an account the attacker already controls, and it has its own
                         // lockout. Every other POST/PUT/DELETE is protected.
-                        // Onboarding is exempt for as long as it is permitAll. CSRF exists to stop a
-                        // malicious site spending a victim's ambient cookie; an endpoint that reads
-                        // no cookie has no ambient authority to spend, so the token would be
-                        // friction with no security behind it — and it breaks every non-browser
-                        // caller, which is what an operator onboarding a school actually uses.
+                        // Onboarding is exempt, and the setup key does not change that. CSRF
+                        // exists to stop a malicious site spending a victim's ambient cookie; an
+                        // endpoint that reads no cookie has no ambient authority to spend, so the
+                        // token would be friction with no security behind it — and it breaks every
+                        // non-browser caller, which is what an operator onboarding a school
+                        // actually uses. The prod-only X-Chalkbase-Setup-Key is not ambient either:
+                        // a browser never attaches a custom header on its own, and a cross-origin
+                        // request that sets one is preflighted. The exemption stays correct for the
+                        // same reason it always was — there is nothing here a victim's browser can
+                        // be made to spend.
                         // TODO(identity): remove this exemption in the same change that makes
                         // /api/schools/** authenticated.
                         .ignoringRequestMatchers("/api/auth/login", "/api/schools/**"))
@@ -80,8 +97,13 @@ public class SecurityConfig {
                                 // TODO(identity): onboarding a school is a platform-operator action and has
                                 // no principal to authenticate until the authorization model of ADR-0005
                                 // lands. Left open so onboarding still works; close it in the same change
-                                // that introduces platform-operator accounts, and do not expose this
-                                // application publicly before then.
+                                // that introduces platform-operator accounts.
+                                // permitAll() is the truth on local and test. On prod it is not the whole
+                                // truth: SetupKeyFilter, added above, has already turned away anything
+                                // without a matching X-Chalkbase-Setup-Key by the time a request reaches
+                                // this rule. That is a stopgap for the deployed environment having a
+                                // public URL, not a substitute for the operator account — a single shared
+                                // secret names nobody, expires never, and cannot be audited.
                                 .requestMatchers("/api/schools/**")
                                 .permitAll()
                                 .requestMatchers("/api/**")
