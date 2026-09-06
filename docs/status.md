@@ -129,6 +129,15 @@ against the existing directory by phone, or it recreates the duplicate problem
   [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) leaves those columns out entirely
   rather than store a child's caste in plaintext. **UDISE+ returns need them**, so this is on the
   critical path to onboarding a real school, not a later nicety.
+- **A session survives its account being disabled or locked.** Closing the forced-password hole
+  (#36) made this visible rather than creating it: `must_change_password` is now re-read on every
+  API call, and it is the *only* thing that is. Account status, lockout and permissions are all
+  resolved once at login ([ADR-0005](architecture/adr/0005-authorization-model.md)) and never
+  revisited, so locking somebody out of a school's data currently means waiting for their session
+  to expire. We now re-check the least severe of the three, which reads oddly, and the fix wants
+  deciding as one thing: what a session re-validates, how often, and what it costs. Related: there
+  is **no admin password-reset endpoint** yet, and when one lands it must invalidate the target's
+  sessions or a reset will not dislodge anyone holding the old cookie.
 - **Audit retention is unset.** ADR-0014 requires a period per category; the table grows unbounded
   until a purge exists. The number is a legal question, not an engineering one.
 
@@ -185,6 +194,21 @@ Recorded so they are decided rather than discovered.
 - The generated OpenAPI client is not wired up; `frontend/src/app/core/api/models.ts` is hand-written
   and mirrors the backend by hand (ADR-0007).
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
+- **The built UI and the mockups differ, and most of the difference is not drift.**
+  [The assessment](design-drift-assessment.md) compares `docs/artifacts/*.dc.html` against the
+  deployed screens, with screenshot pairs. The design *system* has not moved — the mockups were
+  drawn from `_tokens.scss` and the tokens still match one-for-one — so the gap is mostly modules
+  that do not exist yet (Dashboard, Attendance, Fees, Exams, Transport, Reports), which the
+  server-driven menu reports honestly. What is real and cheap: the active nav item is white where
+  the design has a tint, so the sidebar reads as having nothing selected; the page gutter is half
+  what was drawn; and the shared component library stops at form controls, so a card surface is
+  hand-rolled in 13 SCSS files and a badge in 6 — all six wrong the same way, because they were
+  copied from each other. The report also lists five things **not** worth fixing and six mockups
+  that are now obsolete: on those, the design should move rather than the code.
+- `nav-routes.ts` registers `students.import`, but no backend `NavigationProvider` emits that id, so
+  the menu will never show it — the import screen is reachable only from the student-list link.
+  Harmless (registering ahead of the backend is what that file is for), but it is not a menu entry
+  anyone should wait for.
 - **Hibernate was logging the whole failed INSERT, values included, at WARN** — one duplicate
   admission number put a child's name, date of birth and gender in the log, in every environment.
   `org.hibernate.orm.jdbc.error` is now at ERROR, and the unmapped-constraint branch of
