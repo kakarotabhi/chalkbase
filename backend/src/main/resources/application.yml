@@ -74,6 +74,15 @@ spring:
     multipart:
       max-file-size: 512KB
       max-request-size: 768KB
+      # The upload never touches the disk, which is what ADR-0021 §6 promises and what this line is
+      # the whole of. Spring's default threshold is 0B, meaning EVERY multipart upload is spooled to
+      # a temp file — and this particular upload is several hundred children's names, dates of birth
+      # and admission numbers. Written unencrypted to the container's temp directory, and left
+      # behind entirely if the process dies mid-request.
+      #
+      # Set above max-file-size so the file is always held in memory instead: at most 512 KB per
+      # concurrent upload, which is nothing next to a file of children on a shared filesystem.
+      file-size-threshold: 1MB
 
   threads:
     virtual:

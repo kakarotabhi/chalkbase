@@ -71,7 +71,21 @@ answer and it is a small change behind the same endpoint.
 ### 6. The file is never stored, and never logged
 
 Parsed in a stream, held only as long as the request, and discarded. It is not written to disk, not
-put in object storage, and not attached to the audit event. A parse error names the row and the
+put in object storage, and not attached to the audit event.
+
+**"Not written to disk" needs one line of configuration to be true, and it was missed the first
+time.** Spring's `spring.servlet.multipart.file-size-threshold` defaults to `0B`, which means every
+multipart upload is spooled to a temp file. For most uploads that is unremarkable; for this one it
+puts several hundred children's names, dates of birth and admission numbers unencrypted into the
+container's temp directory — where they stay if the process dies mid-request. The threshold is set
+above `max-file-size` so the file is always held in memory instead, and a test asserts the
+*relationship* between the two rather than the number, because raising the size limit without
+raising the threshold would silently undo it.
+
+It is worth recording how this was found: it was not. The ADR said the file is not written to disk,
+the code did nothing to make that so, and the gap survived a build, a full test suite, a live run
+against the real database and a green CI. It turned up only because the merge was paused and the
+slice read again. A parse error names the row and the
 column and never quotes the cell, because the cell is a child's name
 ([ADR-0014](0014-data-classification.md)).
 
