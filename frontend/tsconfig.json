@@ -12,7 +12,15 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    /*
+     * The generated API contract lives outside `src/` because it belongs to neither side: it is
+     * exported from the backend build and consumed here. Mapped rather than imported by a relative
+     * path so that `core/api/models.ts` reads as a boundary rather than as four levels of `../`.
+     */
+    "paths": {
+      "@contracts/*": ["../contracts/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

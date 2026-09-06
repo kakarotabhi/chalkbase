@@ -124,8 +124,11 @@ export class StudentEnrolments {
       .map((enrolment) => ({
         id: enrolment.id,
         sessionId: enrolment.sessionId,
-        sessionName: enrolment.sessionName,
-        classId: enrolment.classId,
+        // Blank rather than absent when `academics` could not resolve the name: the row type
+        // stays a plain string, the edit form can still be patched from it, and the cell renders
+        // empty exactly as `placement` already does. See `Enrolment` in models.ts.
+        sessionName: enrolment.sessionName ?? '',
+        classId: enrolment.classId ?? '',
         sectionId: enrolment.sectionId,
         placement: classAndSection(enrolment.className, enrolment.sectionName),
         rollNumber: enrolment.rollNumber?.trim() || null,
@@ -313,9 +316,11 @@ export class StudentEnrolments {
     }
 
     const value = this.form.getRawValue();
-    // An empty roll number is null, not "": the column is nullable because a roll number is
-    // assigned later, and an empty string is a value rather than the absence of one.
-    const rollNumber = value.rollNumber.trim() || null;
+    // An empty roll number is omitted, not sent as "": the column is nullable because a roll
+    // number is assigned later, and an empty string is a value rather than the absence of one.
+    // Omitted rather than null because that is what the contract describes — the request record
+    // carries no `@NotNull`, so an absent field and an explicit null both arrive as null.
+    const rollNumber = value.rollNumber.trim() || undefined;
     const editingId = this.editingId();
 
     this.busy.set(true);

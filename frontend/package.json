@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "contracts:types": "openapi-typescript ../contracts/openapi.json --output ../contracts/api-types.ts --immutable --alphabetize"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -26,8 +27,14 @@
     "@angular/cli": "^22.1.7",
     "@angular/compiler-cli": "^22.1.0",
     "jsdom": "^28.0.0",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

@@ -4,6 +4,7 @@ import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.platform.web.RequestId;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
@@ -25,10 +26,17 @@ import java.time.Instant;
  */
 public record ApiResponse<T>(
         @Classification(Tier.INTERNAL) boolean success,
-        @Classification(Tier.CONFIDENTIAL) T data,
-        @Classification(Tier.INTERNAL) ApiError error,
+
+        @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
+        T data,
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        ApiError error,
+
         @Classification(Tier.INTERNAL) Instant timestamp,
-        @Classification(Tier.INTERNAL) String traceId) {
+
+        @Schema(nullable = true) @Classification(Tier.INTERNAL)
+        String traceId) {
 
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(true, data, null, Instant.now(), RequestId.current());

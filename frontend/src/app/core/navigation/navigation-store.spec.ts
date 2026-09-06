@@ -5,7 +5,6 @@ import { NAV_ROUTES, NavRoute } from './nav-routes';
 
 const item = (over: Partial<NavigationItem> & Pick<NavigationItem, 'id'>): NavigationItem => ({
   labelKey: `nav.${over.id}`,
-  icon: null,
   order: 10,
   children: [],
   ...over,
@@ -82,10 +81,21 @@ describe('NavigationStore', () => {
     expect(store.items()[0].label).toBe('Something new');
   });
 
-  it("prefers the school's own name for an item over the catalogue", () => {
-    store.load([item({ id: 'fees', labelKey: 'nav.fees', label: 'Fees & Dues' })]);
+  /**
+   * There is no per-school renaming, and this test says so rather than pretending otherwise.
+   *
+   * It used to pass a `label` on the item and assert the override won. The server has never sent
+   * that field — `platform.navigation.NavigationItem` is `id`, `labelKey`, `icon`, `order` and
+   * `children` — so the test was mocking a capability into existence and then verifying it. The
+   * generated contract types are what surfaced it.
+   *
+   * When a school's own naming does arrive (ADR-0006 Tier-2), it arrives on the wire first and this
+   * becomes a real test.
+   */
+  it('has no per-school renaming, so the catalogue always wins', () => {
+    store.load([item({ id: 'fees', labelKey: 'nav.fees' })]);
 
-    expect(store.items()[0].label).toBe('Fees & Dues');
+    expect(store.items()[0].label).toBe('Fees');
   });
 
   it('takes the icon from the registry, not from the server', () => {

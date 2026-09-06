@@ -1,6 +1,7 @@
 package in.chalkbase.platform.navigation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ import java.util.List;
 public record NavigationItem(
         String id,
         String labelKey,
-        String icon,
+        @Schema(nullable = true) String icon,
         int order,
         /*
          * Not serialised to the client. Every item that survives filtering is, by definition, one

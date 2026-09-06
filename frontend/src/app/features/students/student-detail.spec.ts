@@ -336,9 +336,11 @@ describe('StudentDetail', () => {
     expect(request.request.body).toEqual({
       academicSessionId: 'y1',
       sectionId: 'sec-a',
-      // Null, not "": the column is nullable because a roll number is assigned later, and an empty
-      // string is a value rather than the absence of one.
-      rollNumber: null,
+      // Omitted, not "": the column is nullable because a roll number is assigned later, and an
+      // empty string is a value rather than the absence of one. `undefined` here is the key being
+      // present on the body object; `JSON.stringify` drops it, so nothing reaches the wire and the
+      // record component arrives null — which is what the contract describes.
+      rollNumber: undefined,
     });
     request.flush(envelope(null));
     fixture.detectChanges();

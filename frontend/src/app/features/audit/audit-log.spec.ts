@@ -312,8 +312,8 @@ describe('AuditLog', () => {
         event({
           action: 'LOGIN_FAILED',
           outcome: 'FAILURE',
-          actorId: null,
-          actorName: null,
+          actorId: undefined,
+          actorName: undefined,
           actorRoles: [],
           changedFields: [],
         }),

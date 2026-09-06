@@ -45,9 +45,7 @@ describe('StudentsApi', () => {
         admittedOn: '2026-04-01',
       })
       .subscribe();
-    api
-      .addEnrolment('s1', { academicSessionId: 'y1', sectionId: 'sec1', rollNumber: null })
-      .subscribe();
+    api.addEnrolment('s1', { academicSessionId: 'y1', sectionId: 'sec1' }).subscribe();
     api.linkGuardian('s1', { guardianId: 'g1', relation: 'FATHER', primary: true }).subscribe();
     api.detachGuardian('s1', 'l1').subscribe();
 
