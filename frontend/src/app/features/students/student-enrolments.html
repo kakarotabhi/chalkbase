@@ -1,6 +1,6 @@
 <div class="section__head">
   <h2 class="section__heading">Enrolments</h2>
-  @if (!editing() && !structureLoading() && !structureFailureCode()) {
+  @if (canManageStudents() && !editing() && !structureLoading() && !structureFailureCode()) {
     <cb-button [id]="'enrolment-add'" variant="secondary" [disabled]="busy()" (click)="startAdd()">
       Add an enrolment
     </cb-button>
@@ -243,16 +243,18 @@
           </div>
         </dl>
 
-        <div class="enrolment__actions">
-          <cb-button
-            variant="secondary"
-            [id]="row.editButtonId"
-            [disabled]="busy() || !!editing() || structureLoading() || !!structureFailureCode()"
-            (click)="startEdit(row)"
-          >
-            Edit
-          </cb-button>
-        </div>
+        @if (canManageStudents()) {
+          <div class="enrolment__actions">
+            <cb-button
+              variant="secondary"
+              [id]="row.editButtonId"
+              [disabled]="busy() || !!editing() || structureLoading() || !!structureFailureCode()"
+              (click)="startEdit(row)"
+            >
+              Edit
+            </cb-button>
+          </div>
+        }
       </li>
     }
   </ol>

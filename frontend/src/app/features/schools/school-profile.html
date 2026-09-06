@@ -356,47 +356,54 @@
       </section>
 
       <!--
-        The action bar. It says what state the form is in before it offers the buttons: unsaved
-        changes while something is edited, and nothing while there is nothing to save — so Save is
-        never a button whose effect the user has to guess at.
+        Gated on `school:school:update`, which is what `PUT /api/school/profile` enforces. The
+        menu item is gated on the same permission server-side, so this is the URL-typing case —
+        and it now reads as the record rather than as a form with a Save that 403s.
       -->
-      <div class="actions" [class.actions--dirty]="dirty() && !saving()">
-        @if (dirty() && !saving()) {
-          <p class="actions__state" role="status">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.9"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9.5" />
-              <path d="M12 7.5v5" />
-              <path d="M12 16.2v.1" />
-            </svg>
-            <span>Unsaved changes</span>
-          </p>
-        }
+      @if (canEditProfile()) {
+        <!--
+          The action bar. It says what state the form is in before it offers the buttons: unsaved
+          changes while something is edited, and nothing while there is nothing to save — so Save is
+          never a button whose effect the user has to guess at.
+        -->
+        <div class="actions" [class.actions--dirty]="dirty() && !saving()">
+          @if (dirty() && !saving()) {
+            <p class="actions__state" role="status">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9.5" />
+                <path d="M12 7.5v5" />
+                <path d="M12 16.2v.1" />
+              </svg>
+              <span>Unsaved changes</span>
+            </p>
+          }
 
-        <div class="actions__buttons">
-          <cb-button variant="secondary" [disabled]="saving() || !dirty()" (click)="cancel()">
-            Cancel
-          </cb-button>
-          <cb-button
-            type="submit"
-            variant="primary"
-            [disabled]="!dirty()"
-            [loading]="saving()"
-            loadingLabel="Saving…"
-          >
-            Save changes
-          </cb-button>
+          <div class="actions__buttons">
+            <cb-button variant="secondary" [disabled]="saving() || !dirty()" (click)="cancel()">
+              Cancel
+            </cb-button>
+            <cb-button
+              type="submit"
+              variant="primary"
+              [disabled]="!dirty()"
+              [loading]="saving()"
+              loadingLabel="Saving…"
+            >
+              Save changes
+            </cb-button>
+          </div>
         </div>
-      </div>
+      }
     </div>
   </form>
 }

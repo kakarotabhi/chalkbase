@@ -22,6 +22,8 @@ import {
   StudentSummary,
 } from '../../core/api/models';
 import { STUDENT_PAGE_SIZE, StudentsApi } from '../../core/api/students-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
@@ -117,6 +119,15 @@ export class StudentList {
 
   protected readonly pageSize = STUDENT_PAGE_SIZE;
   protected readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
+
+  /**
+   * Whether to offer the two ways of adding a student at all.
+   *
+   * Both `POST /api/students` and both import endpoints are gated on this one permission, so both
+   * affordances stand or fall together. Hidden rather than disabled: a classteacher will never be
+   * able to enable it, and a greyed-out button is a question the screen cannot answer.
+   */
+  protected readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
 
   protected readonly filters = this.formBuilder.group({
     q: '',

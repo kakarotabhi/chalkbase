@@ -60,9 +60,11 @@
   <p class="announcement" role="status">{{ announcement() }}</p>
 
   @if (!editing()) {
-    <div class="toolbar">
-      <cb-button [id]="'guardian-add'" (click)="startAdd()">Add a guardian</cb-button>
-    </div>
+    @if (canManageGuardians()) {
+      <div class="toolbar">
+        <cb-button [id]="'guardian-add'" (click)="startAdd()">Add a guardian</cb-button>
+      </div>
+    }
   } @else {
     <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
       <h2 class="editor__heading">{{ editorHeading() }}</h2>
@@ -332,16 +334,18 @@
             </div>
           </dl>
 
-          <div class="guardian__actions">
-            <cb-button
-              variant="secondary"
-              [id]="row.editButtonId"
-              [disabled]="!!editing()"
-              (click)="startEdit(row)"
-            >
-              Edit
-            </cb-button>
-          </div>
+          @if (canManageGuardians()) {
+            <div class="guardian__actions">
+              <cb-button
+                variant="secondary"
+                [id]="row.editButtonId"
+                [disabled]="!!editing()"
+                (click)="startEdit(row)"
+              >
+                Edit
+              </cb-button>
+            </div>
+          }
         </li>
       }
     </ul>

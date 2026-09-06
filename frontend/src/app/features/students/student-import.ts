@@ -18,6 +18,8 @@ import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorStatus } from '../../core/api/api-error';
 import { AcademicSession, ImportError, ImportReport } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
@@ -211,9 +213,28 @@ export class StudentImport {
       this.sessions().length === 0,
   );
 
-  /** A 403 from either endpoint. The screen has nothing else to offer, so it says so and stops. */
+  /**
+   * Whether this user may import at all. Both endpoints are gated on `student:student:manage`.
+   *
+   * There is still no route guard — ADR-0008 — and this is not one: the screen renders, and what
+   * it renders is the refusal it used to render only after somebody had chosen a year, picked a
+   * file and waited for a 403.
+   */
+  private readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
+
+  /**
+   * Nothing to offer: either the session says this user may not import, or an endpoint said so.
+   *
+   * The 403 arm is kept even though the permission is now known up front, because the two can
+   * disagree — effective permissions are resolved once per session (ADR-0005), so a role edited
+   * mid-session leaves this tab holding a list the server no longer agrees with. The server is the
+   * authority; this screen believes it either way and shows the same explanation.
+   */
   protected readonly forbidden = computed(
-    () => this.checkFailureCode() === ACCESS_DENIED || this.importFailureCode() === ACCESS_DENIED,
+    () =>
+      !this.canManageStudents() ||
+      this.checkFailureCode() === ACCESS_DENIED ||
+      this.importFailureCode() === ACCESS_DENIED,
   );
 
   /** The container refused the upload before it reached a controller. See `apiErrorStatus`. */

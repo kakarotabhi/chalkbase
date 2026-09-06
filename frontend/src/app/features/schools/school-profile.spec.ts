@@ -4,6 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { unsavedChangesGuard } from '../../core/forms/unsaved-changes-guard';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { SchoolProfile } from './school-profile';
 
 const URL = '/api/school/profile';
@@ -74,6 +76,10 @@ describe('SchoolProfile', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.SCHOOL_READ, Permissions.SCHOOL_UPDATE);
   });
 
   afterEach(() => {
@@ -330,5 +336,42 @@ describe('SchoolProfile', () => {
 
     expect(confirmed).not.toHaveBeenCalled();
     expect(mayLeave).toBe(true);
+  });
+
+  // ── What saving is gated on ──────────────────────────────────────────────────────────────
+
+  describe('write actions', () => {
+    it('offers Save to somebody who may edit the profile', () => {
+      arrive();
+
+      expect(button('Save changes')).toBeTruthy();
+      expect(field('school-name').disabled).toBe(false);
+    });
+
+    /**
+     * The menu item is gated on the same permission server-side, so this is somebody who typed the
+     * URL. `GET` is gated only on the read, so the record does load — and the screen becomes what
+     * that read entitles them to, which is a profile they can look at.
+     */
+    it('shows the profile read-only to somebody who holds only the read', () => {
+      signInWith(Permissions.SCHOOL_READ);
+      arrive();
+
+      expect(button('Save changes')).toBeUndefined();
+      expect(button('Cancel')).toBeUndefined();
+      expect(field('school-name').disabled).toBe(true);
+      expect(field('school-name').value).toBe('Evergreen Public School');
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.SCHOOL_READ);
+      arrive();
+      expect(button('Save changes')).toBeUndefined();
+
+      signInWith(Permissions.SCHOOL_READ, Permissions.SCHOOL_UPDATE);
+      fixture.detectChanges();
+
+      expect(button('Save changes')).toBeTruthy();
+    });
   });
 });
