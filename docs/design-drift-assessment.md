@@ -124,18 +124,44 @@ against the three-item one.
   `Fee status` dropdowns and a **More filters** affordance. No visible labels. Roughly 60px tall.
 - **Built:** a three-column grid of `cb-form-field`s, each with a visible label above and a hint
   below (`student-list.scss:52-76`). Roughly 100px tall, plus the lede above it.
-- **Deliberate?** Yes, and defensibly — visible labels beat placeholder-only pills for
-  accessibility, and the grid is commented ("the search box is the control this screen is actually
-  used through, so it gets the room"). But it costs real vertical space: on the deployed app the
-  first student row starts at y≈425 where the mockup's starts at y≈315. **I would keep the built
-  version and update the mockup**, not the reverse.
-- **Overruled.** The recommendation in the last sentence was wrong, and it bundled a real
-  accessibility point together with a layout preference as if they were one decision. They are not:
-  a pill can print its own value *and* carry a permanent accessible name, which is what shipped —
-  `cb-select` gained a `pill` variant with a required `ariaLabel`, and the search box keeps a
-  visually-hidden `<label>`. The filter block went from 99px to **44px**, and the title-to-first-row
-  distance from 275px to **137px**. "More filters" was not built: there are three filters and a
-  disclosure onto nothing is worse than its absence.
+- **Deliberate?** Partly, and this entry originally reached the wrong conclusion. It recommended
+  keeping the build and changing the mockup, on the grounds that visible labels beat placeholder-only
+  pills for accessibility. **That argument is sound and it settles only one of five differences.**
+  The product owner — who drew the mockup — disagreed with the verdict, and re-measuring says they
+  were right.
+
+  Measured at 1360px, same session, all three states:
+
+  | | Designed | Built (before) | Built (now) |
+  |---|---|---|---|
+  | Filter block height | **44px** | 99px | **44px** |
+  | Title → first table row | **~137px** | 275px | **137px** |
+  | Pill text | the current value (`Class IX`) | a static label, `Any class or section` inside | the current value |
+  | An applied filter | tinted: primary border, primary surface, weight 600 | no distinction; a separate **Clear filters** appears | tinted |
+  | More filters | a disclosure affordance | absent | absent, deliberately |
+
+  A note on that 137px, because an earlier draft of this row said 192px and was measuring the wrong
+  thing. `Students1280.dc.html` is drawn in its *selected* state — "1 selected", "Assign section",
+  "Remove" — and those wrap the filter row onto a second line. 192px is the design with rows
+  selected; 137px is the design at rest, which is what every visit actually looks like.
+
+  Only the first column of that table is about labels. A control can carry a permanent accessible
+  name **and** show its current value, tint when it is applied, sit in a 44px row, and leave the
+  title row free for the page actions. Conflating those into one accept-or-reject decision is what
+  produced the wrong answer: the build gave up four things to gain one, and the four were not in
+  tension with the one.
+
+- **What shipped.** `cb-select` gained a `pill` variant with a required `ariaLabel`, and the search
+  box keeps a visually-hidden `<label>` — the accessibility tree reads `textbox "Search students"`,
+  `combobox "Status"`, `combobox "Class and section"`, so the point this entry was right about
+  survived intact. The pill sizes to the option it holds rather than the longest one, and tints from
+  the empty value that is already this codebase's "not filtering" convention (6.47:1 light, 6.66:1
+  dark; `contrast-audit.mjs` still passes). "More filters" was not built: there are three filters,
+  and a disclosure onto nothing is worse than its absence.
+
+  One thing in the mockup is genuinely wrong and was not copied: the search box is 36px while the
+  pills beside it in the same row are 44px. 44 is this project's tap target. The pills win, and that
+  artboard is the part of the design that should move.
 
 ### 2.6 Page-header actions moved below the filters
 
@@ -395,12 +421,16 @@ the next one that will overflow, the first time a wide table lands on it.
 | 11 | Loading skeletons shaped like rows | `student-list` (+ EmptyState work) | **a day** | Do it only after #7; on its own it is polish. |
 | 12 | Move the primary action to the title row | `student-list.html` | **a day incl. the 360 layout** | Improves the phone experience meaningfully; needs care not to break the compact stack. |
 
+> **Correction, after the fact.** Row 12 ("move the primary action to the title row") and §2.5 turn
+> out to be the same piece of work: the design puts the actions in the title row *because* the filter
+> row is one line, and rebuilding one without the other leaves the screen in a third arrangement that
+> matches neither. They are being done together, as one change, and the pill row is no longer on the
+> "not worth fixing" list below — it was put there by a verdict this document has since withdrawn.
+
 **Not worth fixing:**
 
 - **Numbered pagination** (§2.4). Previous/Next is correct and cheap; revisit when a tenant actually
   has 70 pages, not before.
-- **The pill-shaped filter row** (§2.5). The built labelled form is more accessible and better
-  commented. Change the mockup instead.
 - **Bulk selection** (§2.3). It is a feature, not drift. Decide it on product value, not on the fact
   that a mockup has checkboxes in it.
 - **Header padding 20 → 16px, nav gap 2 → 4px, cell padding 11/12 → 12/16px.** Sub-pixel-perfect
@@ -419,9 +449,10 @@ corrected in `docs/artifacts/` so the next person comparing them does not re-rai
    The product is schema-per-tenant (ADR-0011); the school genuinely cannot be known before the code
    is typed, so the mockups' "Greenfield Public School" subtitle is not reachable. Three artboards
    are wrong by one field.
-2. **`Students1280.dc.html` / `Students360.dc.html` — replace the unlabelled filter pills with the
-   built labelled form grid.** The build is the better pattern; the mockup is the one that should
-   move.
+2. **`Students1280.dc.html` / `Students360.dc.html` — make the search box 44px.** It is 36px next to
+   44px pills in the same row, which is the design's own inconsistency rather than the build's. This
+   is the *only* part of the students filter row where the mockup should move; an earlier draft of
+   this document said the whole pill row should, and that was wrong (§2.5).
 3. **`Overlays.dc.html` — drop or heavily caveat the toast section.** `styles/_banner.scss` records
    an explicit decision against toasts: *"Not a toast: a banner belongs to the thing it is about and
    stays until that changes."* There is no toast component and there should not be one. The mockup
