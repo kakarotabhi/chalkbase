@@ -15,18 +15,31 @@
   grid-template-areas: 'header' 'content';
   grid-template-rows: var(--cb-header-height) 1fr;
 
+  // minmax(0, 1fr), never a bare `1fr` or an implicit `auto` column. A grid track sized `auto` or
+  // `1fr` is floored at its items' min-content width, and a grid item's own `min-width` is `auto`,
+  // so the track cannot get narrower than the widest thing inside it wants to be. The header wants
+  // 375px with a school name of average length — logo, name, account button, gutters — so on a
+  // 360px screen the whole shell was 375px wide and the page scrolled sideways. The school name
+  // never ellipsed, because from its point of view there was always enough room.
+  //
+  // `.shell__identity` and `.shell__school` are already set up to ellipse and were not the problem:
+  // adding `min-width: 0` there changes nothing while the track above them is still floored. This
+  // is the one place the floor can be lifted, and lifting it here covers every grid item rather
+  // than each one that later turns out to be wide (a table on the content track will do it next).
+  grid-template-columns: minmax(0, 1fr);
+
   // 100vh is wrong on mobile: it is the viewport with browser chrome hidden, so the bottom of the
   // page sits underneath the address bar. dvh tracks the actual visible area.
   min-height: 100dvh;
 
   @include from-medium {
     grid-template-areas: 'header header' 'nav content';
-    grid-template-columns: var(--cb-rail-width) 1fr;
+    grid-template-columns: var(--cb-rail-width) minmax(0, 1fr);
     grid-template-rows: var(--cb-header-height) 1fr;
   }
 
   @include from-expanded {
-    grid-template-columns: var(--cb-sidebar-width) 1fr;
+    grid-template-columns: var(--cb-sidebar-width) minmax(0, 1fr);
   }
 }
 
