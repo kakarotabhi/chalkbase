@@ -61,6 +61,31 @@ public class UserAccountService {
         return accounts.findById(accountId);
     }
 
+    /**
+     * Whether this account is still on the password its school issued it.
+     *
+     * <p>Read from the account row rather than from the session, deliberately, and this is the one
+     * decision in the forced-change enforcement worth arguing about. The flag changes <em>during</em>
+     * a session — that is the whole point of it, and it is already why {@code SessionBootstrap}
+     * reads the row for {@code /api/me} instead of trusting the principal. A copy on the principal
+     * would be a second answer to the same question, and the two disagreeing means either
+     * {@code /api/me} tells a client to go and change a password the filter has already stopped
+     * requiring, or the filter keeps refusing an account that has changed it. Neither is a bug
+     * anyone would find quickly.
+     *
+     * <p>The cost is one primary-key select per API call for a signed-in session, which is why
+     * {@link UserAccountRepository#findMustChangePassword} projects a single column instead of
+     * loading the entity.
+     *
+     * <p><strong>An account that no longer exists answers true.</strong> Fail closed: a session
+     * pointing at a deleted account is not a session that should keep reading a school's data while
+     * we decide what to call it. The client's next {@code /api/me} answers 401 and sends it to the
+     * login screen, which is where it can actually recover.
+     */
+    public boolean mustChangePassword(UUID accountId) {
+        return accounts.findMustChangePassword(accountId).orElse(true);
+    }
+
     public Optional<UserCredential> activeCredential(UUID accountId, CredentialType type) {
         return credentials.findByAccount_IdAndTypeAndStatus(accountId, type, CredentialStatus.ACTIVE);
     }

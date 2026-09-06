@@ -26,6 +26,17 @@ export const AUTH_ERROR = {
   CURRENT_PASSWORD_WRONG: 'AUTH_006',
   /** 400 from the password endpoint. The new password does not meet the policy. */
   WEAK_PASSWORD: 'AUTH_007',
+  /**
+   * 403 from any endpoint except the four this account may still reach: `POST /api/auth/password`,
+   * `POST /api/auth/logout`, `POST /api/auth/login` and `GET /api/me`. The school issued a
+   * temporary password and it has not been replaced, so the account may replace it and do nothing
+   * else — the server enforces that now, not the client.
+   *
+   * Distinct from `PERM_001` on purpose, and the distinction is the whole reason this code exists.
+   * "Ask your school for this permission" and "set your own password" need completely different
+   * screens, and a client that could not tell them apart would show the wrong one.
+   */
+  PASSWORD_CHANGE_REQUIRED: 'AUTH_008',
 } as const;
 
 /**
