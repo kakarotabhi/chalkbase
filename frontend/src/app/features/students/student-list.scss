@@ -14,18 +14,62 @@
   }
 }
 
+// ── The title row ──────────────────────────────────────────────────────────
+
+// Title on the left, the two write actions on the right, as the designs draw it. Wraps rather than
+// squeezing: at a thumb's width the actions drop under the title and take the room they need.
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-4);
+}
+
+.page-head__titles {
+  min-width: 0;
+}
+
 .page-title {
   @include page-title;
 
-  margin-bottom: var(--cb-space-2);
+  // The subtitle belongs to the title, so it sits under it rather than a paragraph away.
+  margin-bottom: var(--cb-space-1);
+}
+
+.page-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+
+  // Their own row under the title at compact, beside it from tablet up. They wrap between
+  // themselves too — the two labels do not fit on one line at 360px — and both stay left-aligned
+  // against the same margin as everything else on the screen when they do.
+  flex: 1 0 100%;
+
+  @include from-medium {
+    flex: none;
+  }
+}
+
+// The second way in, and deliberately the quieter one: a school imports once and adds students
+// every week.
+.page-head__import {
+  @include link-button;
+
+  display: inline-block;
+  line-height: var(--cb-touch-target-min);
 }
 
 .page-status {
   @include page-status;
 }
 
-.page-lede,
+.page-subtitle,
 .page-status,
+.filters__note,
 .muted,
 .gender,
 .session,
@@ -34,10 +78,13 @@
   color: var(--cb-text-muted);
 }
 
-.page-lede {
-  margin: 0 0 var(--cb-space-4);
-  max-width: 64ch;
+.page-subtitle {
+  margin: 0;
   font-size: var(--cb-font-size-sm);
+}
+
+.page-status__action {
+  margin: var(--cb-space-3) 0 0;
 }
 
 .banner {
@@ -57,33 +104,9 @@
 
 // ── Filters ────────────────────────────────────────────────────────────────
 
+// One row, one control height. Everything in it is 44px, so the row is 44px, and it wraps onto a
+// second line rather than squeezing anything below a thumb's worth of target.
 .filters {
-  display: grid;
-  gap: var(--cb-space-4);
-  margin-bottom: var(--cb-space-4);
-
-  @include from-medium {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 52rem;
-  }
-
-  @include from-expanded {
-    // The search box is the control this screen is actually used through, so it gets the room.
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.2fr);
-  }
-}
-
-.filters__search {
-  @include from-medium {
-    grid-column: 1 / -1;
-  }
-
-  @include from-expanded {
-    grid-column: auto;
-  }
-}
-
-.chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -91,39 +114,30 @@
   margin-bottom: var(--cb-space-4);
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--cb-space-3);
-  margin-bottom: var(--cb-space-4);
-
-  // The main action on the screen: full width where the screen is a thumb wide.
-  cb-button {
-    flex: 1;
-  }
-
-  @include from-medium {
-    cb-button {
-      flex: none;
-    }
-  }
+// Hidden from the screen, never from the accessibility tree, and out of flow so it cannot add a
+// line to a row whose whole point is that it is one line.
+.filters__label {
+  @include visually-hidden;
 }
 
-// The second way in, and deliberately the quieter one: a school imports once and adds students
-// every week. On its own line at compact width, where the button beside it already fills the row.
-.toolbar__link {
-  @include link-button;
+// The control this screen is actually used through, so it takes the room the row can spare. The
+// basis is what a name and an admission number need side by side; the cap stops it eating a
+// 1360px row and pushing the pills onto their own line for no reason.
+.filters__search {
+  flex: 1 1 17.5rem;
+  min-width: 0;
+  max-width: 22rem;
+}
 
-  flex: 1 0 100%;
-  display: inline-block;
-  line-height: var(--cb-touch-target-min);
-  text-align: center;
+// A pill sizes itself to the option it holds. This is only the permission to shrink below it,
+// which is what keeps a long section name from widening the row instead of wrapping it.
+.filters__pill {
+  min-width: 0;
+}
 
-  @include from-medium {
-    flex: none;
-    text-align: left;
-  }
+.filters__note {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
 }
 
 .panel {

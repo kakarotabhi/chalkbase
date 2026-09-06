@@ -5,19 +5,91 @@
   position: relative;
 }
 
+// A pill is as wide as the option it holds, so it is laid out as a one-cell grid whose only
+// in-flow child is the hidden sizer. `max-width` is what keeps a long section name from pushing the
+// filter row off a 360px screen — the sizer clips, the row wraps, nothing overflows.
+:host(.is-pill) {
+  display: inline-grid;
+  max-width: 100%;
+}
+
 .select {
-  @include control-surface;
-
-  // Room for the chevron, which sits over the control's right-hand end.
-  padding-right: var(--cb-space-8);
-
   // The platform's arrow is replaced by ours so the control matches the text inputs beside it.
   appearance: none;
   cursor: pointer;
 }
 
+.select--field {
+  @include control-surface;
+
+  // Room for the chevron, which sits over the control's right-hand end.
+  padding-right: var(--cb-space-8);
+}
+
+// The filter-bar shape: 44px like everything else in that row, its own text rather than a label
+// above it, and the room on the right that the chevron sits in.
+.select--pill,
+.select__sizer {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding: 0 calc(var(--cb-space-8) + var(--cb-space-2)) 0 var(--cb-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--cb-radius-sm);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.select--pill {
+  // Taken out of flow so it contributes nothing to the width of the cell it sits in. A select left
+  // in flow would size the cell to its own max-content, and a select's max-content is its longest
+  // option — which is how a pill holding "Class 9 · B" ends up as wide as "Any class or section".
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border-color: var(--cb-border-strong);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  text-overflow: ellipsis;
+
+  &:focus {
+    border-color: var(--cb-primary);
+    box-shadow: var(--cb-focus-ring);
+    outline: none;
+  }
+
+  &:disabled {
+    background: var(--cb-surface);
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+// Narrowing the list. `--cb-primary` on `--cb-primary-surface` is one of the pairs
+// `contrast-audit.mjs` checks at 4.5:1, in both themes.
+.select--active {
+  border-color: var(--cb-primary);
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+  font-weight: 600;
+}
+
 .select--invalid {
   @include control-invalid;
+}
+
+// Measured, never seen, and never read out: `visibility: hidden` keeps it out of the accessibility
+// tree while it goes on reserving the width. It carries the same padding, border, size and weight
+// as the select so the two agree to the pixel — including the weight, because the active pill is
+// bolder and therefore wider.
+.select__sizer {
+  height: var(--cb-touch-target-min);
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.select__sizer--active {
+  font-weight: 600;
 }
 
 .select__chevron {
@@ -31,6 +103,11 @@
 
   // Clicks belong to the select underneath, including on the chevron itself.
   pointer-events: none;
+}
+
+// The chevron belongs to the pill it decorates, so it takes the tint with it.
+.select--active + .select__chevron {
+  color: var(--cb-primary);
 }
 
 .select:disabled + .select__chevron {

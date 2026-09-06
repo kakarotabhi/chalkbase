@@ -2,10 +2,28 @@
 
 :host {
   display: block;
+  // The leading icon is positioned against the box, not laid out beside it.
+  position: relative;
 }
 
 .input {
   @include control-surface;
+}
+
+// Room for the icon, so text never runs underneath it.
+.input--leading {
+  padding-left: calc(var(--cb-space-8) + var(--cb-space-2));
+}
+
+.input__icon {
+  position: absolute;
+  top: 0;
+  left: var(--cb-space-3);
+  height: var(--cb-touch-target-min);
+  color: var(--cb-text-muted);
+
+  // The box underneath owns every click, including one that lands on the glyph.
+  pointer-events: none;
 }
 
 .input--invalid {

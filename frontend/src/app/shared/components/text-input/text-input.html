@@ -1,5 +1,10 @@
+@if (leadingIcon(); as glyph) {
+  <cb-icon class="input__icon" [name]="glyph" />
+}
+
 <input
   class="input"
+  [class.input--leading]="leadingIcon() !== null"
   [class.input--invalid]="invalid()"
   [attr.id]="id()"
   [attr.type]="type()"

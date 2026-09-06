@@ -96,6 +96,15 @@ const GLYPHS = {
     paths: ['M6 6l12 12M18 6L6 18'],
   },
   /**
+   * The magnifier inside a search box, taken from the search fields in the approved designs
+   * (`docs/artifacts/Students1280.dc.html`). Decoration beside a real, labelled control: the box
+   * carries the accessible name, never this.
+   */
+  search: {
+    circles: [{ cx: 11, cy: 11, r: 6.5 }],
+    paths: ['M16 16l4.5 4.5'],
+  },
+  /**
    * Oversight: the audit log. A shield for "this is the record that protects the school", with the
    * tick that says the record was kept — drawn here rather than pulled from an icon library, which
    * ADR-0009 does not allow. The name matches the hint the backend sends for the item, though the

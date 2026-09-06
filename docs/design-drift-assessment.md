@@ -9,6 +9,17 @@ can check the claims below rather than take them on trust.
 
 ---
 
+---
+
+> **Superseded in part, 6 September 2026.** The product owner read §2.5, §2.6 and §2.7 and disagreed
+> with the recommendation in §2.5 — they drew the mockup, and the filter bar is to match it. The
+> Students screen was rebuilt accordingly: pills that print their current value and tint themselves
+> when set, the two write actions on the title row, the lede replaced by the count. The one thing
+> §2.5 got right survived the rebuild — every pill is a real control with a real accessible name.
+> The rest of this file stands. Do not re-argue the three sections marked below.
+
+---
+
 ## Verdict
 
 The design system has not drifted. The product is small, and it looks small. The mockups were drawn
@@ -119,29 +130,38 @@ against the three-item one.
   The product owner — who drew the mockup — disagreed with the verdict, and re-measuring says they
   were right.
 
-  Measured at 1360px, same session, both screens:
+  Measured at 1360px, same session, all three states:
 
-  | | Designed | Built |
-  |---|---|---|
-  | Filter block height | **44px** | **99px** |
-  | Title → first table row | **192px** | **275px** |
-  | Pill text | the current value (`Class IX`) | a static label, `Any class or section` inside |
-  | An applied filter | tinted: primary border, primary surface, weight 600 | no distinction; a separate **Clear filters** appears |
-  | More filters | a disclosure affordance | absent |
+  | | Designed | Built (before) | Built (now) |
+  |---|---|---|---|
+  | Filter block height | **44px** | 99px | **44px** |
+  | Title → first table row | **~137px** | 275px | **137px** |
+  | Pill text | the current value (`Class IX`) | a static label, `Any class or section` inside | the current value |
+  | An applied filter | tinted: primary border, primary surface, weight 600 | no distinction; a separate **Clear filters** appears | tinted |
+  | More filters | a disclosure affordance | absent | absent, deliberately |
 
-  Only the first column of that table is about labels. A control can carry a visible accessible name
-  **and** show its current value, tint when it is applied, sit in a 44px row, and leave the title row
-  free for the page actions. Conflating those into one accept-or-reject decision is what produced the
-  wrong answer: the build gave up four things to gain one, and the four were not in tension with the
-  one.
+  A note on that 137px, because an earlier draft of this row said 192px and was measuring the wrong
+  thing. `Students1280.dc.html` is drawn in its *selected* state — "1 selected", "Assign section",
+  "Remove" — and those wrap the filter row onto a second line. 192px is the design with rows
+  selected; 137px is the design at rest, which is what every visit actually looks like.
 
-  83px of chrome before any data, on every visit, is about two students' worth of rows.
+  Only the first column of that table is about labels. A control can carry a permanent accessible
+  name **and** show its current value, tint when it is applied, sit in a 44px row, and leave the
+  title row free for the page actions. Conflating those into one accept-or-reject decision is what
+  produced the wrong answer: the build gave up four things to gain one, and the four were not in
+  tension with the one.
 
-  **Corrected verdict: restore the design's filter bar, keep real accessible names on the pills.**
-  Being tracked separately; see the fix table below.
+- **What shipped.** `cb-select` gained a `pill` variant with a required `ariaLabel`, and the search
+  box keeps a visually-hidden `<label>` — the accessibility tree reads `textbox "Search students"`,
+  `combobox "Status"`, `combobox "Class and section"`, so the point this entry was right about
+  survived intact. The pill sizes to the option it holds rather than the longest one, and tints from
+  the empty value that is already this codebase's "not filtering" convention (6.47:1 light, 6.66:1
+  dark; `contrast-audit.mjs` still passes). "More filters" was not built: there are three filters,
+  and a disclosure onto nothing is worse than its absence.
 
-  One thing in the mockup is genuinely wrong and is not being copied: the search box is 36px while
-  the pills beside it in the same row are 44px. 44 is this project's tap target. The pills win.
+  One thing in the mockup is genuinely wrong and was not copied: the search box is 36px while the
+  pills beside it in the same row are 44px. 44 is this project's tap target. The pills win, and that
+  artboard is the part of the design that should move.
 
 ### 2.6 Page-header actions moved below the filters
 
@@ -153,6 +173,10 @@ against the three-item one.
   daily act, and importing six hundred happens once"). The *position* is not commented. The effect
   is that the primary action on the screen is the fourth thing down the page, and on a phone it is
   below the fold — see [`app-students-360.png`](./design-drift-shots/app-students-360.png).
+- **Closed.** Both actions now sit on the title row, right-aligned, as designed. Import stays the
+  quieter of the two — a text link, not the mockup's secondary button — because that demotion was a
+  decision with a reason and moving a control is not a licence to restyle it. The
+  `Permissions.STUDENT_MANAGE` gate from #38 is unchanged and still covered by its three tests.
 
 ### 2.7 The subtitle lost the count
 
@@ -164,6 +188,12 @@ against the three-item one.
   [`app-academics-classes.png`](./design-drift-shots/app-academics-classes.png)). But the count is
   already computed — the pager renders `Showing 1–25 of 60` from it. Losing it costs the one number
   a principal opens this screen to see.
+- **Closed on this screen.** The lede is gone and the count is the subtitle. Two departures from the
+  mockup: the count is hidden while a filter is set, because under a filter it would be a count of
+  matches and a heading that shrank as somebody typed would read as a school losing students — the
+  pager already says "Showing 1–25 of 12" there. And there is no `· Session 2026–27`, because no
+  request this screen makes returns the session name and a hard-coded one would be invented. The
+  other screens still carry their ledes; this was not a house-wide change.
 
 ### 2.8 Sign-in gained a School code field
 

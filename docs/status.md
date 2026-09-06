@@ -181,6 +181,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
 | Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
 | Signing in lands on the first item of the user's own menu, never a constant | `landingGuard`, `features/landing/` |
+| Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
 
 ## Known gaps and debt
 
@@ -305,6 +306,12 @@ Recorded so they are decided rather than discovered.
   India is one zone, so this is right for everyone in the country and wrong only for someone reading
   from abroad — the row detail names the zone so they are not misled. A `timezone` on the school
   closes it properly, and is a contract change rather than a screen fix.
+- **The audit log still uses the labelled-form filter pattern** the students list has just left
+  behind (`features/audit/audit-log.html`). That is deliberate for now, not an oversight: two of its
+  three filters are dates, which have no sensible "current value" to print on a pill, and the
+  screen was out of scope for the change that rebuilt the students bar. The two screens now look
+  different from each other, which is the cost of stopping at one. Worth revisiting when a third
+  filter bar appears — at that point the pill row is a shared thing, not a variant on a control.
 - The per-component style budget was raised from 4 kB / 8 kB to **8 kB / 12 kB**. The old warning
   threshold was calibrated when every screen was a simple form; a screen that honours ADR-0010 with
   a table above the wide breakpoint and cards below legitimately costs more, and the audit log is
