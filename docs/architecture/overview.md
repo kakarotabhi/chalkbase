@@ -56,6 +56,7 @@
 | Classes and sections are structural | [ADR-0019](adr/0019-classes-and-sections.md) |
 | One student name field; guardians are shared | [ADR-0020](adr/0020-student-and-guardian-model.md) |
 | Bulk import: validate first, all-or-nothing | [ADR-0021](adr/0021-bulk-import.md) |
+| Encryption at rest: env-var key, marked on the entity | [ADR-0022](adr/0022-encryption-at-rest.md) |
 
 ## Module inventory
 
