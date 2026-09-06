@@ -1,0 +1,336 @@
+<p class="crumbs">Academics <span aria-hidden="true">›</span> Academic sessions</p>
+<h1 class="page-title">Academic sessions</h1>
+
+<p class="page-lede">
+  The years this school runs. Enrolments, attendance, marks and fees are all recorded against
+  whichever session is current, so exactly one of them is — and changing which one changes what
+  everybody at the school is looking at.
+</p>
+
+@if (forbidden()) {
+  <!--
+    Not a redirect and not a crash. There is deliberately no client-side permission guard on this
+    route (ADR-0008): the server hides the menu item, the endpoint enforces the permission, and
+    re-deriving that here would be a second copy of the authorization model.
+  -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view academic sessions</strong>
+      <span>Ask your principal to add "View academic sessions" to your role.</span>
+    </div>
+  </div>
+} @else if (loading()) {
+  <p class="page-status" role="status">Loading academic sessions…</p>
+} @else if (loadFailed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load the academic sessions</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else {
+  <!--
+    Said here as well as on the row, and not as decoration. A school with eight years of sessions
+    scrolls; "which year am I in" has to be answerable without scrolling, because every other
+    academic screen depends on the answer. The "none yet" case is a real state on a new school and
+    is worth saying out loud rather than leaving as an absence.
+  -->
+  @if (current(); as row) {
+    <p class="current-line">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 6.5 9.4 17.5 4 12.3" />
+      </svg>
+      <span>
+        Current session: <strong>{{ row.name }}</strong>
+        <span class="current-line__range">{{ row.range }}</span>
+      </span>
+    </p>
+  } @else if (view().length > 0) {
+    <p class="current-line current-line--none">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <span>
+        No session is current. Choose one below — nothing academic can be recorded until you do.
+      </span>
+    </p>
+  }
+
+  <!--
+    Everything this screen does is announced through one live region rather than a banner per
+    action: a banner that appears after every save is one people stop reading, and then they stop
+    reading the ones that matter.
+  -->
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  @if (switchFailure(); as message) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">{{ message.title }}</strong>
+        <span>{{ message.detail }}</span>
+      </div>
+    </div>
+  }
+
+  @if (!editing()) {
+    <div class="toolbar">
+      <cb-button id="session-add" [disabled]="switching()" (click)="startCreate()">
+        Add a session
+      </cb-button>
+    </div>
+  }
+
+  @if (addingNew()) {
+    <ng-container [ngTemplateOutlet]="editor" />
+  }
+
+  @if (view().length === 0) {
+    @if (!addingNew()) {
+      <p class="page-status" role="status">
+        No academic sessions yet. Add the year this school is running — most Indian schools run
+        April to March.
+      </p>
+    }
+  } @else {
+    <ol class="sessions">
+      @for (row of view(); track row.id) {
+        <li class="session" [class.session--current]="row.current">
+          @if (editingId() === row.id) {
+            <ng-container [ngTemplateOutlet]="editor" />
+          } @else {
+            <div class="session__head">
+              <h2 class="session__name">{{ row.name }}</h2>
+              @if (row.current) {
+                <!-- The word, not only the colour: photocopies and colour-blind readers. -->
+                <span class="badge">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 6.5 9.4 17.5 4 12.3" />
+                  </svg>
+                  Current session
+                </span>
+              }
+            </div>
+
+            <p class="session__range">{{ row.range }}</p>
+
+            <div class="session__actions">
+              <cb-button
+                variant="secondary"
+                [id]="row.editButtonId"
+                [disabled]="!!editing()"
+                (click)="startEdit(row)"
+              >
+                Edit
+              </cb-button>
+              @if (!row.current) {
+                <cb-button
+                  variant="secondary"
+                  [id]="row.makeCurrentButtonId"
+                  [disabled]="!!editing()"
+                  (click)="askToMakeCurrent(row)"
+                >
+                  Make current
+                </cb-button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ol>
+  }
+}
+
+<!--
+  One editor, used in two places: above the list when adding, and in the row when editing. Rendered
+  from a single template rather than written twice, so the validation, the ids and the wording
+  cannot drift apart between "add" and "edit".
+-->
+<ng-template #editor>
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h2 class="editor__heading">{{ editorHeading() }}</h2>
+
+    @if (saveFailure(); as message) {
+      <div class="banner banner--danger" role="alert">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">{{ message.title }}</strong>
+          <span>{{ message.detail }}</span>
+        </div>
+      </div>
+    }
+
+    <div class="editor__fields">
+      <cb-form-field
+        #nameField
+        label="Name"
+        controlId="session-name"
+        [required]="true"
+        hint="Whatever this school calls the year, for example 2026–27."
+        [error]="fieldErrors().name"
+      >
+        <cb-text-input
+          formControlName="name"
+          [id]="nameField.controlId()"
+          [describedBy]="nameField.describedById()"
+          [invalid]="nameField.hasError()"
+          [readOnly]="saving()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #startsField
+        label="Starts on"
+        controlId="session-starts"
+        [required]="true"
+        [error]="fieldErrors().startsOn"
+      >
+        <cb-text-input
+          formControlName="startsOn"
+          type="date"
+          [id]="startsField.controlId()"
+          [describedBy]="startsField.describedById()"
+          [invalid]="startsField.hasError()"
+          [readOnly]="saving()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #endsField
+        label="Ends on"
+        controlId="session-ends"
+        [required]="true"
+        [error]="fieldErrors().endsOn"
+      >
+        <cb-text-input
+          formControlName="endsOn"
+          type="date"
+          [id]="endsField.controlId()"
+          [describedBy]="endsField.describedById()"
+          [invalid]="endsField.hasError()"
+          [readOnly]="saving()"
+        />
+      </cb-form-field>
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">Save session</cb-button>
+    </div>
+  </form>
+</ng-template>
+
+@if (confirming(); as target) {
+  <cb-dialog
+    [heading]="'Make ' + target.name + ' the current session?'"
+    confirmLabel="Make it current"
+    cancelLabel="Leave it as it is"
+    [busy]="switching()"
+    (confirmed)="confirmMakeCurrent()"
+    (cancelled)="cancelMakeCurrent()"
+  >
+    <p>
+      Enrolments, attendance, marks and fees are recorded against the current session. Everyone at
+      this school will be working in <strong>{{ target.name }}</strong> from now on.
+    </p>
+    @if (current(); as previous) {
+      <p>
+        {{ previous.name }} stops being current. Nothing already recorded in it changes, and you can
+        switch back.
+      </p>
+    }
+  </cb-dialog>
+}

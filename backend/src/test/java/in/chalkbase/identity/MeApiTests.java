@@ -71,6 +71,10 @@ class MeApiTests {
     private static final String SCHOOL_UPDATE = "school:school:update";
     private static final String USER_READ = "identity:user:read";
     private static final String ROLE_MANAGE = "identity:role:manage";
+    private static final String SESSION_READ = "academics:session:read";
+    private static final String SESSION_MANAGE = "academics:session:manage";
+    private static final String CLASS_READ = "academics:class:read";
+    private static final String CLASS_MANAGE = "academics:class:manage";
 
     /**
      * Anything that would make a navigation node say <em>where</em> to go rather than <em>what</em>
@@ -159,14 +163,27 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.school.name").value(ORCHARD_NAME))
                 .andExpect(jsonPath("$.data.permissions")
                         .value(org.hamcrest.Matchers.containsInAnyOrder(
-                                SCHOOL_READ, SCHOOL_UPDATE, USER_READ, ROLE_MANAGE)))
+                                SCHOOL_READ,
+                                SCHOOL_UPDATE,
+                                SESSION_READ,
+                                SESSION_MANAGE,
+                                CLASS_READ,
+                                CLASS_MANAGE,
+                                USER_READ,
+                                ROLE_MANAGE)))
                 .andExpect(jsonPath("$.data.navigation[0].id").value("schools"))
                 .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.schools"))
-                .andExpect(jsonPath("$.data.navigation[1].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("settings.access"))
+                // The academics container, between the register (20) and settings (90). It has no
+                // screen of its own; both of its children are declared inline by the module that
+                // owns them, which is what makes it a container rather than a leaf.
+                .andExpect(jsonPath("$.data.navigation[1].id").value("academics"))
+                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("academics.sessions"))
+                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("academics.classes"))
+                .andExpect(jsonPath("$.data.navigation[2].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("settings.access"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees both children.
-                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
@@ -174,7 +191,7 @@ class MeApiTests {
                 // permission the caller holds, so sending it would only invite a second copy of the
                 // authorization model on the client (ADR-0008).
                 .andExpect(jsonPath("$.data.navigation[0].requiredPermission").doesNotExist())
-                .andExpect(jsonPath("$.data.navigation[1].children[0].requiredPermission")
+                .andExpect(jsonPath("$.data.navigation[2].children[0].requiredPermission")
                         .doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
     }
@@ -291,16 +308,18 @@ class MeApiTests {
         grant(ORCHARD_SCHEMA, "classteacher", "CLASS_TEACHER");
         createAccount(ORCHARD_SCHEMA, "subjectteacher", "Farida Khan");
         grant(ORCHARD_SCHEMA, "subjectteacher", "SUBJECT_TEACHER");
-        createAccount(MEADOW_SCHEMA, "librarian", "Nisha Kurup");
-        grant(MEADOW_SCHEMA, "librarian", "LIBRARIAN");
+        createAccount(MEADOW_SCHEMA, "subjectteacher", "Nisha Kurup");
+        grant(MEADOW_SCHEMA, "subjectteacher", "SUBJECT_TEACHER");
 
         String classTeacher = versionOf(bootstrap(ORCHARD_CODE, "classteacher"));
         String subjectTeacher = versionOf(bootstrap(ORCHARD_CODE, "subjectteacher"));
-        String librarianElsewhere = versionOf(bootstrap(MEADOW_CODE, "librarian"));
+        String teacherElsewhere = versionOf(bootstrap(MEADOW_CODE, "subjectteacher"));
 
-        // All three templates grant exactly school:school:read and nothing else.
+        // The class teacher and the subject teacher are two different roles granting the same three
+        // permissions — school:school:read plus the two academics reads — and the third is that set
+        // held at another school entirely.
         assertThat(subjectTeacher).isEqualTo(classTeacher);
-        assertThat(librarianElsewhere).isEqualTo(classTeacher);
+        assertThat(teacherElsewhere).isEqualTo(classTeacher);
     }
 
     @Test

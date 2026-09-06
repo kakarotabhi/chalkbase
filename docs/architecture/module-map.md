@@ -6,12 +6,12 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
 | `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config. Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | built, with its screen |
-| `school` | `public.school`, `public.school_group` (registry); `school_profile`, `academic_session` (per tenant) | `/api/schools`, `/api/school/profile` | registry is not; the rest are | profile built |
+| `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
 | `student` | students, guardians, documents, alumni | `/api/students` | yes | planned |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
-| `academics` | classes, sections, subjects, timetable, syllabus | `/api/academics` | yes | planned |
+| `academics` | `academic_session`, `school_class`, `section` (per tenant); subjects, timetable and syllabus still planned | `/api/academics/**` | yes | sessions and classes built |
 | `attendance` | student and staff attendance | `/api/attendance` | yes | planned |
 | `exam` | assessments, marks, report cards | `/api/exams` | yes | planned |
 | `fee` | fee heads, concessions, invoices, receipts | `/api/fees` | yes | planned |
@@ -37,6 +37,13 @@ Modules are added in roadmap order — see
   read before any tenant is bound. A school's editable detail lives in `school_profile`, inside its
   own schema. The registry's copy of name, board, city and state is written back on every profile
   save, because a school register that disagrees with the school is worse than a duplicated column.
+- **`academic_session` belongs to `academics`, not to `school`.** It moved there with the classes
+  work: it is the time axis the academic model hangs off, and leaving it beside the school registry
+  would make every academics query reach across a boundary for it. The table did not change — only
+  the Java package.
+- **Classes and sections are structural, not per session** ([ADR-0019](adr/0019-classes-and-sections.md)).
+  The session appears on what references them — enrolment first, and later the class-teacher
+  assignment, which genuinely changes every year.
 
 ## Reaching across a module boundary
 

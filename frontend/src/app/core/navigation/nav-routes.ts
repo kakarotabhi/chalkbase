@@ -47,6 +47,16 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // of what it took to switch the menu item on, with no backend change — which is the bargain
   // ADR-0008 describes, arriving exactly as described.
   ['audit', { path: '/audit', icon: 'shield-check' }],
+  // Academics, and the two screens under it. All three share the one glyph: a nested group that
+  // changes icon per child reads as three unrelated destinations rather than as one section, and
+  // the label is what tells them apart.
+  //
+  // The container needs an entry of its own even though it is only a heading — `NavigationStore`
+  // drops an unresolvable id along with its children, so without this the two screens would
+  // vanish from the menu with the parent.
+  ['academics', { path: '/academics', icon: 'academics' }],
+  ['academics.sessions', { path: '/academics/sessions', icon: 'academics' }],
+  ['academics.classes', { path: '/academics/classes', icon: 'academics' }],
   // `settings.access` is deliberately absent. The backend emits it, it has no screen in this
   // build, and so it stays dropped-and-logged — an entry here would be a menu item that 404s,
   // which is the one thing this registry exists to prevent.

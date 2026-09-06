@@ -26,6 +26,10 @@ public final class RoleTemplates {
 
     private static final String SCHOOL_READ = "school:school:read";
     private static final String SCHOOL_UPDATE = "school:school:update";
+    private static final String SESSION_READ = "academics:session:read";
+    private static final String SESSION_MANAGE = "academics:session:manage";
+    private static final String CLASS_READ = "academics:class:read";
+    private static final String CLASS_MANAGE = "academics:class:manage";
     private static final String USER_READ = "identity:user:read";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
@@ -37,6 +41,15 @@ public final class RoleTemplates {
      * <p>{@code school:school:update} is the other half of that distinction and two templates do
      * hold it: correcting your own school's address is school work, and the head of the school is
      * who does it.
+     *
+     * <p>The academics permissions follow the same split, and the read half is wider than any
+     * shipped permission has been so far. A class teacher, a subject teacher and an admission
+     * counsellor all have to know which classes, sections and academic years exist before they can
+     * do anything at all — a counsellor cannot take an application for a class the screen will not
+     * show them. Changing the ladder or moving the school into a new academic year is a decision
+     * about the school, so only the two templates that run it hold {@code manage}. A school that
+     * wants its office administrator to add sections adds the permission to that role itself, which
+     * is the whole point of roles being data.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -45,6 +58,10 @@ public final class RoleTemplates {
                     "Head of the school. Sees everything and decides who else may.",
                     SCHOOL_READ,
                     SCHOOL_UPDATE,
+                    SESSION_READ,
+                    SESSION_MANAGE,
+                    CLASS_READ,
+                    CLASS_MANAGE,
                     USER_READ,
                     ROLE_MANAGE),
             new RoleTemplate(
@@ -53,20 +70,33 @@ public final class RoleTemplates {
                     "Deputises for the principal on the academic side, without control of access.",
                     SCHOOL_READ,
                     SCHOOL_UPDATE,
+                    SESSION_READ,
+                    SESSION_MANAGE,
+                    CLASS_READ,
+                    CLASS_MANAGE,
                     USER_READ),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
                     "Owns one section: its attendance, its results and its parents.",
-                    SCHOOL_READ),
+                    SCHOOL_READ,
+                    SESSION_READ,
+                    CLASS_READ),
             new RoleTemplate(
-                    "SUBJECT_TEACHER", "Subject Teacher", "Teaches one subject across several sections.", SCHOOL_READ),
+                    "SUBJECT_TEACHER",
+                    "Subject Teacher",
+                    "Teaches one subject across several sections.",
+                    SCHOOL_READ,
+                    SESSION_READ,
+                    CLASS_READ),
             new RoleTemplate("ACCOUNTANT", "Accountant", "Fees, receipts and the day book.", SCHOOL_READ),
             new RoleTemplate(
                     "ADMISSION_COUNSELLOR",
                     "Admission Counsellor",
                     "Enquiries and applications, from the first call to the admission.",
-                    SCHOOL_READ),
+                    SCHOOL_READ,
+                    SESSION_READ,
+                    CLASS_READ),
             new RoleTemplate("LIBRARIAN", "Librarian", "The catalogue, issues, returns and fines.", SCHOOL_READ),
             new RoleTemplate(
                     "TRANSPORT_MANAGER",

@@ -1,0 +1,332 @@
+<p class="crumbs">Academics <span aria-hidden="true">›</span> Classes and sections</p>
+<h1 class="page-title">Classes and sections</h1>
+
+<p class="page-lede">
+  The ladder this school runs, in the order it runs in, and the sections inside each class. These
+  are facts about the school rather than about one year, so they carry over from session to session
+  on their own. Nothing here is ever deleted — a class or section that stops running is switched
+  off, stays in place, and can be brought back. It keeps its name while it is off, so bringing one
+  back means switching that row on again rather than adding a second one with the same name.
+</p>
+
+@if (forbidden()) {
+  <!--
+    No client-side permission guard on this route (ADR-0008): the server hides the menu item and
+    the endpoint enforces the permission. Typing the URL without it ends here, calmly.
+  -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view classes and sections</strong>
+      <span>Ask your principal to add "View classes" to your role.</span>
+    </div>
+  </div>
+} @else if (loading()) {
+  <p class="page-status" role="status">Loading classes and sections…</p>
+} @else if (loadFailed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load classes and sections</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else {
+  <!--
+    One live region for the whole screen. Every move, rename and switch says what it did here, so a
+    keyboard or screen-reader user is told what happened without a banner appearing after every
+    action — and a sighted user gets the same sentence, which is exactly as useful.
+  -->
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  @if (writeFailure(); as message) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">{{ message.title }}</strong>
+        <span>{{ message.detail }}</span>
+      </div>
+    </div>
+  }
+
+  @if (!editor()) {
+    <div class="toolbar">
+      <cb-button id="class-add" [disabled]="saving()" (click)="startAddClass()">
+        Add a class
+      </cb-button>
+    </div>
+  }
+
+  @if (addingClass()) {
+    <div class="editor-card">
+      <ng-container [ngTemplateOutlet]="editor_" />
+    </div>
+  }
+
+  @if (view().length === 0) {
+    @if (!addingClass()) {
+      <p class="page-status" role="status">
+        No classes yet. Add the first rung of the ladder — Nursery, or Class 1, or whatever this
+        school starts at. Chalkbase does not assume one, because schools genuinely differ.
+      </p>
+    }
+  } @else {
+    <ol class="ladder">
+      @for (row of view(); track row.id) {
+        <li class="rung" [class.rung--inactive]="!row.active">
+          <div class="rung__head">
+            <span class="rung__position" aria-hidden="true">{{ row.position }}</span>
+
+            @if (editingClass(row.id)) {
+              <div class="rung__editor">
+                <ng-container [ngTemplateOutlet]="editor_" />
+              </div>
+            } @else {
+              <div class="rung__identity">
+                <h2 class="rung__name">{{ row.name }}</h2>
+                @if (!row.active) {
+                  <!-- The word, not only the dimming: photocopies and colour-blind readers. -->
+                  <span class="flag">Not running</span>
+                }
+                <p class="rung__meta">
+                  @if (row.sections.length === 0) {
+                    No sections yet
+                  } @else {
+                    {{ row.activeSectionCount }} of {{ row.sections.length }} sections running
+                  }
+                </p>
+              </div>
+
+              <!--
+                Move up and move down rather than a drag surface: one tap, one key, and something
+                to announce. See the component for the argument.
+              -->
+              <div class="move">
+                <button
+                  type="button"
+                  class="move__button"
+                  [id]="row.moveUpId"
+                  [disabled]="row.isFirst"
+                  (click)="moveUp(row)"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 19V6" />
+                    <path d="M6 11.5 12 5.5l6 6" />
+                  </svg>
+                  <span class="hidden-label">Move {{ row.name }} up</span>
+                </button>
+                <button
+                  type="button"
+                  class="move__button"
+                  [id]="row.moveDownId"
+                  [disabled]="row.isLast"
+                  (click)="moveDown(row)"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5v13" />
+                    <path d="M6 12.5 12 18.5l6-6" />
+                  </svg>
+                  <span class="hidden-label">Move {{ row.name }} down</span>
+                </button>
+              </div>
+
+              <div class="rung__actions">
+                <button
+                  type="button"
+                  class="link"
+                  [id]="row.renameButtonId"
+                  [disabled]="!!editor() || saving()"
+                  (click)="startRenameClass(row)"
+                >
+                  Rename<span class="hidden-label"> {{ row.name }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="link"
+                  [id]="row.activeButtonId"
+                  [disabled]="!!editor() || saving()"
+                  (click)="toggleClass(row)"
+                >
+                  @if (row.active) {
+                    Stop running<span class="hidden-label"> {{ row.name }}</span>
+                  } @else {
+                    Start running<span class="hidden-label"> {{ row.name }}</span> again
+                  }
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="sections">
+            <h3 class="sections__title">Sections</h3>
+
+            @if (row.sections.length === 0) {
+              <p class="sections__empty">
+                None yet. A class with no sections cannot have anyone enrolled into it.
+              </p>
+            } @else {
+              <ul class="sections__list">
+                @for (section of row.sections; track section.id) {
+                  <li class="section" [class.section--inactive]="!section.active">
+                    @if (editingSection(section.id)) {
+                      <ng-container [ngTemplateOutlet]="editor_" />
+                    } @else {
+                      <span class="section__name">{{ section.name }}</span>
+                      @if (!section.active) {
+                        <span class="flag">Not running</span>
+                      }
+                      <span class="section__actions">
+                        <button
+                          type="button"
+                          class="link"
+                          [id]="section.renameButtonId"
+                          [disabled]="!!editor() || saving()"
+                          (click)="startRenameSection(row, section)"
+                        >
+                          Rename<span class="hidden-label"> {{ section.qualifiedName }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="link"
+                          [id]="section.activeButtonId"
+                          [disabled]="!!editor() || saving()"
+                          (click)="toggleSection(row, section)"
+                        >
+                          @if (section.active) {
+                            Stop running<span class="hidden-label">
+                              {{ section.qualifiedName }}</span
+                            >
+                          } @else {
+                            Start running<span class="hidden-label">
+                              {{ section.qualifiedName }}</span
+                            >
+                            again
+                          }
+                        </button>
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (addingSectionTo(row.id)) {
+              <div class="sections__editor">
+                <ng-container [ngTemplateOutlet]="editor_" />
+              </div>
+            }
+
+            @if (editor() === null) {
+              <button
+                type="button"
+                class="link link--add"
+                [id]="row.addSectionButtonId"
+                [disabled]="saving()"
+                (click)="startAddSection(row)"
+              >
+                Add a section<span class="hidden-label"> to {{ row.name }}</span>
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  }
+}
+
+<!--
+  One editor, used in four places — a new class, a renamed class, a new section, a renamed section.
+  Written once rather than four times, so the validation, the ids and the wording cannot drift
+  apart between them. The heading is what says which of the four is open.
+-->
+<ng-template #editor_>
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <p class="editor__heading">{{ editorHeading() }}</p>
+
+    <cb-form-field
+      #nameField
+      [label]="editorLabel()"
+      controlId="class-name"
+      [required]="true"
+      [error]="nameError()"
+    >
+      <cb-text-input
+        formControlName="name"
+        [id]="nameField.controlId()"
+        [describedBy]="nameField.describedById()"
+        [invalid]="nameField.hasError()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+</ng-template>

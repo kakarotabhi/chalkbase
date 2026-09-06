@@ -1,0 +1,379 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.page-lede,
+.page-status,
+.rung__meta,
+.sections__empty {
+  color: var(--cb-text-muted);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+/// Announced, never seen: the part of an action's name that the layout carries visually.
+.hidden-label {
+  @include visually-hidden;
+}
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The ladder ─────────────────────────────────────────────────────────────
+
+.ladder {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  max-width: 52rem;
+  list-style: none;
+}
+
+.rung {
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+/**
+ * A class that is not running.
+ *
+ * Muted, and still in its place in the ladder — never hidden behind a filter. The order the user
+ * sees has to be the order that gets sent, because `PUT /classes/order` takes every id and would
+ * renumber whatever a filtered client left out.
+ */
+.rung--inactive {
+  background: var(--cb-surface);
+  border-style: dashed;
+}
+
+/**
+ * The class's own line: its number, its name, the two move buttons and the two text actions.
+ *
+ * One column on a phone with the move buttons pulled to the right of the name, two rows deep; from
+ * tablet portrait up it becomes a single row with the actions at the end.
+ */
+.rung__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--cb-space-2) var(--cb-space-3);
+
+  @include from-medium {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+  }
+}
+
+/// The position in the ladder, as a number the eye can run down. Decorative: the move buttons say
+/// the position out loud when it changes, and the list itself is an `<ol>`.
+.rung__position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  font-size: var(--cb-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--cb-text-muted);
+}
+
+.rung__identity {
+  min-width: 0;
+}
+
+.rung__name {
+  display: inline;
+  margin: 0 var(--cb-space-2) 0 0;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rung__meta {
+  margin: var(--cb-space-1) 0 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+/// "Not running", on a class or a section. A word, so it survives a photocopy and a colour-blind
+/// reader — the dimming beside it is the redundant signal, not the only one.
+.flag {
+  display: inline-block;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rung__editor,
+.sections__editor {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+
+.sections__editor {
+  margin-bottom: var(--cb-space-2);
+}
+
+// ── Move up and move down ──────────────────────────────────────────────────
+
+.move {
+  display: flex;
+  gap: var(--cb-space-1);
+}
+
+/**
+ * A 44px target each (ADR-0010), stacked side by side so the pair reads as one control. Disabled
+ * at the ends of the ladder rather than removed: a button that disappears at the top and comes
+ * back lower down is a target that moves under the finger reaching for it.
+ */
+.move__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cb-touch-target-min);
+  height: var(--cb-touch-target-min);
+  padding: 0;
+  background: var(--cb-bg);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  color: var(--cb-text);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--cb-surface);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--cb-primary);
+    box-shadow: var(--cb-focus-ring);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ── Text actions ───────────────────────────────────────────────────────────
+
+.rung__actions,
+.section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+}
+
+.rung__actions {
+  grid-column: 2 / -1;
+
+  @include from-medium {
+    grid-column: auto;
+  }
+}
+
+/**
+ * The row actions. Text rather than `cb-button`, like the audit log's own row controls: they act
+ * on what is already on the page rather than submitting anything, and a screen with fourteen
+ * classes on it would otherwise be forty-two solid buttons.
+ *
+ * Still a real control — 44px of vertical target, its own focus ring, and a name a screen reader
+ * can read out of context, which is what the visually hidden half of each label is for.
+ */
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cb-touch-target-min);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--cb-primary);
+  font: inherit;
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+
+  &:disabled {
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+// ── Sections ───────────────────────────────────────────────────────────────
+
+.sections {
+  margin-top: var(--cb-space-2);
+  padding-top: var(--cb-space-2);
+  border-top: 1px solid var(--cb-border);
+
+  @include from-medium {
+    // Lined up under the class name rather than under its number, so the nesting is visible
+    // without a second indent guide.
+    margin-inline-start: calc(1.75rem + var(--cb-space-3));
+  }
+}
+
+.sections__title {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+}
+
+.sections__empty {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+}
+
+.sections__list {
+  display: grid;
+  gap: var(--cb-space-1);
+  margin: 0 0 var(--cb-space-1);
+  padding: 0;
+  list-style: none;
+}
+
+/**
+ * One section per row rather than a chip.
+ *
+ * A chip would be tidier and would hide the two things this screen most needs to keep visible:
+ * whether the section is running, and that switching it off is an ordinary, reversible action
+ * rather than a setting buried inside an edit form (ADR-0019).
+ */
+.section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  min-width: 0;
+}
+
+.section__name {
+  font-size: var(--cb-font-size-base);
+  overflow-wrap: anywhere;
+}
+
+.section--inactive .section__name {
+  color: var(--cb-text-muted);
+}
+
+.section__actions {
+  margin-inline-start: auto;
+}
+
+// ── The editor ─────────────────────────────────────────────────────────────
+
+.editor-card {
+  max-width: 52rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}

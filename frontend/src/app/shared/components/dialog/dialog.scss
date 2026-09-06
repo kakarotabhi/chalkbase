@@ -1,0 +1,102 @@
+@use '../../../../styles/mixins' as *;
+
+/**
+ * Over everything, at every width.
+ *
+ * Like `cb-bottom-sheet`, this is deliberately not written `compact-only`: the caller decides when
+ * a dialog is the right shape, and hiding one above a breakpoint would leave that caller with a
+ * confirmation that silently does nothing on a tablet.
+ */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: block;
+}
+
+.dialog__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--cb-scrim);
+}
+
+/**
+ * Compact: full width along the bottom edge, where the thumb already is (ADR-0010). The page stays
+ * visible above it, which is what says the dialog is temporary rather than a new screen.
+ */
+.dialog__panel {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  max-height: var(--cb-sheet-max-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--cb-space-4);
+  // Clear of the home indicator on gesture-navigation phones.
+  padding-bottom: calc(var(--cb-space-4) + var(--cb-safe-bottom));
+  background: var(--cb-surface-raised);
+  border-radius: var(--cb-radius-xl) var(--cb-radius-xl) 0 0;
+  box-shadow: var(--cb-shadow-2);
+}
+
+.dialog__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+  color: var(--cb-text);
+}
+
+.dialog__body {
+  // A question nobody can read is a question nobody answers well. Consequences get room to be
+  // stated in a sentence rather than compressed into a clause.
+  max-width: 52ch;
+  font-size: var(--cb-font-size-base);
+  color: var(--cb-text);
+
+  :last-child {
+    margin-bottom: 0;
+  }
+}
+
+/**
+ * Two equal halves on a phone, where they are the width of the screen between them, and a row
+ * aligned to the end from tablet portrait up. Cancel is first in both, matching the DOM — the same
+ * shape the school profile's action bar uses, so the two do not drift.
+ */
+.dialog__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-end;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+/**
+ * Medium and up: a centred card. The panel is the same element — a second component for the
+ * compact shape would be a second thing to keep accessible.
+ */
+@include from-medium {
+  .dialog__panel {
+    inset-inline: auto;
+    top: 50%;
+    left: 50%;
+    bottom: auto;
+    translate: -50% -50%;
+    width: min(30rem, calc(100vw - var(--cb-space-8)));
+    max-height: calc(100dvh - var(--cb-space-8));
+    padding: var(--cb-space-6);
+    border-radius: var(--cb-radius-lg);
+  }
+}

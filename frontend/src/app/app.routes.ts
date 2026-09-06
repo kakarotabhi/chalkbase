@@ -48,6 +48,24 @@ export const routes: Routes = [
         title: 'Audit log · Chalkbase',
         loadComponent: () => import('./features/audit/audit-log').then((m) => m.AuditLog),
       },
+      // Academics: the school's own academic model — its years, and its ladder of classes and
+      // sections (ADR-0019). No guard on either, for the same reason the audit log has none.
+      //
+      // The container has no index screen of its own, so it lands on the sessions list: a class
+      // means little until there is a year to enrol anybody into.
+      { path: 'academics', pathMatch: 'full', redirectTo: 'academics/sessions' },
+      {
+        path: 'academics/sessions',
+        title: 'Academic sessions · Chalkbase',
+        loadComponent: () =>
+          import('./features/academics/academic-sessions').then((m) => m.AcademicSessions),
+      },
+      {
+        path: 'academics/classes',
+        title: 'Classes and sections · Chalkbase',
+        loadComponent: () =>
+          import('./features/academics/school-classes').then((m) => m.SchoolClasses),
+      },
       // Settings has no index of its own yet, so the section lands on the one screen it has. When
       // a second settings screen ships this becomes a real index and the redirect goes.
       { path: 'settings', pathMatch: 'full', redirectTo: 'settings/school-profile' },

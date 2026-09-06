@@ -20,6 +20,14 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 export class Button {
   readonly variant = input<ButtonVariant>('primary');
   readonly type = input<'button' | 'submit' | 'reset'>('button');
+  /**
+   * Put on the native `<button>`, not on the host.
+   *
+   * So `document.querySelector('#…')` finds something that can actually take focus. A screen that
+   * moves focus back to the control a panel was opened from — the academics screens do, in half a
+   * dozen places — otherwise has to know that `cb-button` is a wrapper and go looking inside it.
+   */
+  readonly id = input<string | null>(null);
   readonly disabled = input(false);
   readonly loading = input(false);
   /** Full width. Used for the single action at the bottom of a form on a phone. */

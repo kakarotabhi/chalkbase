@@ -14,10 +14,10 @@ import org.hibernate.annotations.UuidGenerator;
 /**
  * What a school says about itself: where it is, who runs it, and how it is reached.
  *
- * <p>Deliberately unqualified, like {@link AcademicSession} and unlike {@link School}. The registry
- * row in {@code public.school} is identity and routing — read before any tenant is bound — while
- * this is the school's own data and lives in the school's own schema, reached through
- * {@code search_path} (ADR-0011). There is no {@code school_id}: the schema is the tenant.
+ * <p>Deliberately unqualified, unlike {@link School}. The registry row in {@code public.school} is
+ * identity and routing — read before any tenant is bound — while this is the school's own data and
+ * lives in the school's own schema, reached through {@code search_path} (ADR-0011). There is no
+ * {@code school_id}: the schema is the tenant.
  *
  * <p>There is at most one of these per schema, and {@code uq_school_profile_singleton} is what says
  * so. The mapped {@code singleton} field is only there so Hibernate writes the column; nothing

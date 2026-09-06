@@ -62,6 +62,17 @@ class AccessControlTests {
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
 
+    /**
+     * The academics permissions, ordered here as {@code order by permission_code} returns them.
+     * A principal now holds four more than when this file was written, which is the point: the
+     * assertions below are exact so that a release widening a shipped template has to say so here.
+     */
+    private static final String CLASS_MANAGE = "academics:class:manage";
+
+    private static final String CLASS_READ = "academics:class:read";
+    private static final String SESSION_MANAGE = "academics:session:manage";
+    private static final String SESSION_READ = "academics:session:read";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -125,7 +136,15 @@ class AccessControlTests {
                     .isEqualTo(12);
 
             assertThat(permissionsOf(schema, "PRINCIPAL"))
-                    .containsExactly(ROLE_MANAGE, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+                    .containsExactly(
+                            CLASS_MANAGE,
+                            CLASS_READ,
+                            SESSION_MANAGE,
+                            SESSION_READ,
+                            ROLE_MANAGE,
+                            USER_READ,
+                            SCHOOL_READ,
+                            SCHOOL_UPDATE);
         }
     }
 
@@ -151,9 +170,19 @@ class AccessControlTests {
         jdbc.sql("update " + HILLVIEW_SCHEMA + ".role set name = 'Head Mistress' where code = 'PRINCIPAL'")
                 .update();
 
-        assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL")).containsExactly(USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+        assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL"))
+                .containsExactly(
+                        CLASS_MANAGE, CLASS_READ, SESSION_MANAGE, SESSION_READ, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "PRINCIPAL"))
-                .containsExactly(ROLE_MANAGE, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+                .containsExactly(
+                        CLASS_MANAGE,
+                        CLASS_READ,
+                        SESSION_MANAGE,
+                        SESSION_READ,
+                        ROLE_MANAGE,
+                        USER_READ,
+                        SCHOOL_READ,
+                        SCHOOL_UPDATE);
 
         assertThat(permissionsOf(HILLVIEW_SCHEMA, "LIBRARIAN")).containsExactly(USER_READ, SCHOOL_READ);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "LIBRARIAN")).containsExactly(SCHOOL_READ);
@@ -169,7 +198,9 @@ class AccessControlTests {
 
         provisioning.provision(HILLVIEW_SCHEMA);
 
-        assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL")).containsExactly(USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
+        assertThat(permissionsOf(HILLVIEW_SCHEMA, "PRINCIPAL"))
+                .containsExactly(
+                        CLASS_MANAGE, CLASS_READ, SESSION_MANAGE, SESSION_READ, USER_READ, SCHOOL_READ, SCHOOL_UPDATE);
         assertThat(jdbc.sql("select count(*) from " + HILLVIEW_SCHEMA + ".role")
                         .query(Integer.class)
                         .single())
@@ -186,13 +217,14 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "LIBRARIAN", "SCHOOL", null, null, null);
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
-        // school:school:read comes from all three; identity:user:read and platform:audit:read only
-        // from the auditor grant. identity:role:manage comes from none of them, and no union of
-        // allows can produce it.
+        // school:school:read comes from all three; the two academics reads only from the class
+        // teacher grant; identity:user:read and platform:audit:read only from the auditor grant.
+        // identity:role:manage comes from none of them, and no union of allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
-                        .value(org.hamcrest.Matchers.containsInAnyOrder(SCHOOL_READ, USER_READ, AUDIT_READ)));
+                        .value(org.hamcrest.Matchers.containsInAnyOrder(
+                                SCHOOL_READ, SESSION_READ, CLASS_READ, USER_READ, AUDIT_READ)));
     }
 
     @Test
@@ -250,7 +282,14 @@ class AccessControlTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
                         .value(org.hamcrest.Matchers.containsInAnyOrder(
-                                SCHOOL_READ, SCHOOL_UPDATE, USER_READ, ROLE_MANAGE)));
+                                SCHOOL_READ,
+                                SCHOOL_UPDATE,
+                                SESSION_READ,
+                                SESSION_MANAGE,
+                                CLASS_READ,
+                                CLASS_MANAGE,
+                                USER_READ,
+                                ROLE_MANAGE)));
     }
 
     // ── Enforcement ──────────────────────────────────────────────────────────────────────────

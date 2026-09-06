@@ -53,6 +53,7 @@
 | Data classification and DPDP handling | [ADR-0014](adr/0014-data-classification.md) |
 | Deployment baseline | [ADR-0015](adr/0015-deployment-baseline.md) |
 | The audit log: names, not values | [ADR-0018](adr/0018-audit-log.md) |
+| Classes and sections are structural | [ADR-0019](adr/0019-classes-and-sections.md) |
 
 ## Module inventory
 
