@@ -1,0 +1,130 @@
+# Render Blueprint — the owner's personal dev environment on Render's free tier.
+#
+# This is IN ADDITION to Coolify, not a replacement for it. ADR-0015 still names a self-hosted VPS
+# under Coolify as the deployment baseline, and ops/docker/ + ops/coolify/ are still the path a real
+# school is served by. What lives here is a second, disposable environment: one user, no real school
+# data, and an API explorer that is meant to be reachable from a browser.
+#
+# Two free services, and NO database. Render's free PostgreSQL is deleted when its trial expires,
+# which is not a property you want in the thing holding your only demo school. The database stays on
+# Supabase (ap-northeast-2), already provisioned, and is reached over the public internet — which is
+# the whole reason both services sit in Singapore rather than Render's Oregon default. Every query
+# crosses that link, including the per-tenant Flyway pass TenantMigrationRunner makes at startup,
+# and on a free instance that pass is inside the cold-start budget.
+#
+# Schema verified against https://render.com/docs/blueprint-spec (fetched 2026-09-06):
+#   - `runtime` is the current field name; it replaces the deprecated `env`.
+#   - `region` is one of oregon (default), ohio, virginia, frankfurt, singapore.
+#   - `dockerfilePath` / `dockerContext` are relative to the repo root, or to `rootDir` if set.
+#   - with `rootDir` set, `buildCommand` and `staticPublishPath` are relative to it.
+#   - `sync: false` makes Render prompt for the value at Blueprint creation instead of reading it
+#     from this file, so no secret is ever committed.
+#   - `fromService` resolves a *property* of another service — host, port, hostport — and is only
+#     available where an envVar value is expected. See the note on the /api rewrite below.
+
+services:
+  # ── API ────────────────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: chalkbase-api
+    runtime: docker
+    plan: free
+    region: singapore
+
+    # The same image the Coolify deployment builds, from the repo root, so there is one Dockerfile
+    # and one thing to keep working. `dockerContext: .` is required, not cosmetic: the Dockerfile
+    # copies `backend/...` paths and cannot build with `backend/` as its context.
+    dockerfilePath: ./ops/docker/Dockerfile.backend
+    dockerContext: .
+
+    # Permitted anonymously by SecurityConfig, and the only actuator endpoint besides /info that is
+    # exposed at all. Render polls it to decide a deploy is live.
+    healthCheckPath: /actuator/health
+
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # Stated rather than inherited. Render's default PORT is 10000, and the application would
+      # honour it — `server.port: ${PORT:8080}` in application.yml. But Dockerfile.backend's own
+      # EXPOSE and HEALTHCHECK both name 8080, so leaving the default would make the image's
+      # container-level health check probe a port nothing is listening on. Render uses
+      # healthCheckPath above and would not notice, which is precisely why this would go unnoticed.
+      - key: PORT
+        value: 8080
+
+      # The free instance has 512 MB. The image's default is MaxRAMPercentage=75, which asks for a
+      # ~384 MB heap and leaves metaspace, code cache, thread stacks and Hikari's native buffers to
+      # fit in the remaining ~128 MB — survivable, until a student import arrives during a tenant
+      # migration pass and the container is killed with no stack trace to explain it. Overriding
+      # the whole JAVA_OPTS string here rather than the Dockerfile keeps the VPS deployment, which
+      # has real memory, on the setting that suits it.
+      - key: JAVA_OPTS
+        value: -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC
+
+      # Supabase. `sync: false` means Render prompts once at Blueprint creation and stores the value
+      # in the service's environment — it is never written back to this file.
+      #
+      # The URL is the *session pooler* / direct connection string from the Supabase dashboard, as
+      # jdbc:postgresql://... . Note that ADR-0011 hands each connection a `search_path` per school,
+      # so a transaction-mode pooler that hands out a different backend per statement would break
+      # tenancy. Use the session pooler or the direct connection, not port 6543 in transaction mode.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+      # Without this the service refuses to start (SetupKeyConfiguration), which is deliberate:
+      # POST /api/schools creates a PostgreSQL schema and is permitAll until platform-operator
+      # accounts exist, so on a public URL this header is the only thing between a scanner and an
+      # unbounded number of junk schemas in the Supabase project. Generate with
+      # `openssl rand -base64 32`.
+      - key: CHALKBASE_SETUP_KEY
+        sync: false
+
+  # ── Web ────────────────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: chalkbase-web
+    runtime: static
+
+    # `rootDir` makes both of the following relative to frontend/. The publish path is not a guess:
+    # it is what `@angular/build:application` writes for the project named `chalkbase-web` in
+    # frontend/angular.json, which sets no explicit outputPath — and it is the same directory
+    # ops/docker/Dockerfile.frontend copies into nginx.
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist/chalkbase-web/browser
+
+    # ORDER MATTERS. Render evaluates these top to bottom and stops at the first match, so the SPA
+    # fallback must come last — above the /api rule it would swallow every API call and hand the
+    # caller index.html with a 200.
+    routes:
+      # A REWRITE, not a redirect, and the session depends on the difference. A rewrite is proxied
+      # server-side: the browser's address bar, its origin and its cookie jar all stay on
+      # chalkbase-web, so the JSESSIONID and XSRF-TOKEN cookies the API sets are first-party and
+      # SameSite=Lax is never in the way (see application-prod.yml). A redirect would move the
+      # browser to chalkbase-api.onrender.com, making every subsequent call cross-site: the session
+      # cookie would not be sent, and every request would come back 401.
+      #
+      # The destination is HARDCODED, and it is the one thing in this file that cannot be derived.
+      # `fromService` resolves a service property into an *environment variable* value; a route's
+      # `destination` is a plain string field and the Blueprint spec gives no way to interpolate a
+      # service reference into it. Inventing `fromService:` syntax here would produce a Blueprint
+      # that either fails validation or silently proxies nowhere.
+      #
+      # >>> CHECK THIS AFTER THE FIRST DEPLOY. <<< Render derives the hostname from the service
+      # name, but appends a suffix if `chalkbase-api` is already taken across the platform — in
+      # which case the real URL is on the service's page in the dashboard, and this line has to be
+      # corrected to match it. The symptom of getting it wrong is every API call returning the
+      # backend's 404 page, or a proxy error, with the frontend loading perfectly.
+      - type: rewrite
+        source: /api/*
+        destination: https://chalkbase-api.onrender.com/api/*
+
+      # Angular routes are client-side, so a deep link — or a refresh on one — asks Render for a
+      # path no file exists at. Without this every one of them is a 404. Render skips redirect and
+      # rewrite rules for paths that DO have a file, so this cannot shadow the hashed build assets.
+      - type: rewrite
+        source: /*
+        destination: /index.html
