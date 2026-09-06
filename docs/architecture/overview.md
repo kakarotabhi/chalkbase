@@ -52,6 +52,7 @@
 | Payment and messaging provider ports | [ADR-0013](adr/0013-external-provider-ports.md) |
 | Data classification and DPDP handling | [ADR-0014](adr/0014-data-classification.md) |
 | Deployment baseline | [ADR-0015](adr/0015-deployment-baseline.md) |
+| The audit log: names, not values | [ADR-0018](adr/0018-audit-log.md) |
 
 ## Module inventory
 

@@ -3,7 +3,7 @@
 Living status. **Updated in the same pull request as the work it describes** — a status file that is
 updated "later" is worse than none, because people trust it.
 
-Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
+Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 ([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md))
 
 ## At a glance
@@ -17,14 +17,16 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0017) | ✅ Done |
+| Architecture decisions (ADR-0001…0018) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
 | Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
-| Shared UI components | ✅ Button, field, inputs, checkbox, bottom sheet |
-| School setup, academic session, classes | ⬜ Not started |
+| Audit log (FR-008) — table, service, `GET /api/audit` | ✅ Backend; no screen yet |
+| School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
+| Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
+| Academic session and classes | ⬜ Not started |
 | Students and guardians | ⬜ Not started |
 | Deployment to Coolify | ⬜ Not started |
 
@@ -46,6 +48,9 @@ Last updated: 2026-09-05 · Roadmap phase: **1** — Phase 0 is complete
 | Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
 | Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy | [Phase 0 decisions](requirements/07-phase-0-decisions.md) |
 | Fee ledger, provider ports, data classification, deployment baseline | ADR-0012…0015 |
+| Audit log: one generic table per school, field NAMES only, two transaction semantics | [ADR-0018](architecture/adr/0018-audit-log.md) |
+| School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
+| Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
 
 ## Next, in order
 
@@ -61,21 +66,25 @@ Each line says what it unblocks, because the order is not arbitrary.
 3. ~~**`GET /api/me`**~~ ✅ Done. Bootstrap returns user, school, permissions, a
    `permissionsVersion` hash and the permission-filtered navigation tree; the shell renders from it,
    unknown ids are dropped and logged, and the guard now asks the server (ADR-0008).
-4. **Tenant resolution from the session.** The plumbing is built; what is missing is the filter that
-   binds `TenantContext` per request. Until identity lands there is no authenticated school to bind,
-   so every request runs against `public` — correct for the registry, and nothing else is exposed
-   yet.
-5. **Shared components** as the login and admin screens need them: button, form field, text input,
-   select, dialog, toast (ADR-0009). Designed already — see
-   [`docs/artifacts`](artifacts/README.md).
-6. **School setup and academic session** — the first real admin screens, and Phase 1 proper.
+4. ~~**Tenant resolution from the session.**~~ ✅ Done. `SessionTenantFilter` binds `TenantContext`
+   per request and unbinds it in a `finally`; a rejected tenant name no longer leaks its pooled
+   connection (ADR-0011).
+5. ~~**Audit log (FR-008).**~~ ✅ Done, backend only. One `audit_event` table per school, field
+   names and never values, data changes in the caller's transaction and security events in their
+   own (ADR-0018). **Its screen is the next slice** — the backend emits the `audit` menu id today
+   and the frontend drops it, which is ADR-0008's designed behaviour and costs a log line.
+6. ~~**School profile.**~~ ✅ Done. `GET`/`PUT /api/school/profile` and `/settings/school-profile`,
+   with the registry row written back on save so the register cannot disagree with the school.
+7. **Shared components** as the admin screens need them: dialog and toast remain (ADR-0009).
+   Designed already — see [`docs/artifacts`](artifacts/README.md).
+8. **Academic session and classes** — the next real admin screens.
 
 Also queued, not blocking:
 
-- `PageResponse<T>` — **settled by Phase 0**: offset pagination, `?page&size&sort`, inside the
-  ADR-0007 envelope. Build it with the first list endpoint.
+- ~~`PageResponse<T>`~~ ✅ Built with `GET /api/audit`, the first list endpoint: offset pagination
+  inside the ADR-0007 envelope, page size capped at 100, and an unknown `?sort=` property answered
+  with a 400 rather than a 500.
 - Deploy to Coolify on the Hostinger Mumbai box once authentication exists (ADR-0015).
-- Audit log (FR-008), which is a Phase 1 exit criterion.
 - `@Classification` annotation and the build-failing test for unclassified DTO fields (ADR-0014) —
   cheapest to add before there are many DTOs, not after.
 - Synthetic school seeder for the `dev` profile: ~600 students, 14 classes, one term of attendance,
@@ -96,14 +105,14 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 
 Recorded so they are decided rather than discovered.
 
-- `SecurityConfig` permits every request, with CSRF disabled. **Do not expose a deployment
-  publicly.** Closes with item 1 above.
+- `/api/schools/**` is still `permitAll`, because onboarding a campus has no caller to authenticate
+  yet. It is CSRF-exempt for exactly as long as that is true — CSRF protects ambient cookie
+  authority, and an endpoint that reads no cookie has none. Closes with a platform-operator account.
 - Durable cross-module events are not enabled; the Modulith event registry needs its own migration,
   which lands with the first published domain event (ADR-0001).
 - The generated OpenAPI client is not wired up; `frontend/src/app/core/api/models.ts` is hand-written
   and mirrors the backend by hand (ADR-0007).
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
-- No audit logging yet, though FR-008 marks it P0.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
   dominated by round trips. Fifty schools would be about four minutes of startup. Mumbai (ADR-0015)
   will cut it sharply; the linear shape does not change, so the ADR-0011 expiry stands.
@@ -114,16 +123,22 @@ Recorded so they are decided rather than discovered.
   keys must be globally unique — UUIDv7, already the convention. Not exercised by the MVP, which is
   scoped to a single-campus school.
 
-- **The navigation contract has no test across the two sides.** The backend declares `settings` and
-  `settings.access`; the frontend route registry maps neither, so a principal's menu shows one item
-  and logs two drops. That is ADR-0008's designed transitional behaviour and it resolves when the
-  settings screen lands — but the guard against it is a CI check comparing the backend's ids to the
-  frontend's registry, which needs both artefacts and so belongs in neither agent's half. Both left
-  a matching `TODO(contract)`.
+- **The navigation contract still has no test across the two sides.** The backend now declares
+  `settings`, `settings.access`, `settings.profile`, `schools` and `audit`; the frontend registry
+  maps all but `settings.access` and `audit`, which stay dropped-and-logged because neither has a
+  screen. That is ADR-0008's designed behaviour, not a defect — but the guard against a genuine typo
+  is a CI check comparing the backend's ids to the frontend's registry, which needs both artefacts
+  and so belongs in neither agent's half. Both sides carry a matching `TODO(contract)`.
 - **ADR-0008's staleness rule is not implemented.** A `403` should make the client refetch
   `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
   without a refetch loop.
-- Expired sessions are never purged
+- Expired sessions are never purged.
+- **The audit log has no retention period and no purge job.** ADR-0014 requires every category to
+  carry one; seven years is the Indian financial-record convention, but the number is a legal
+  question for the board and the DPDP rules rather than an engineering choice. Needed before the
+  first school completes a full session, since nothing bounds the table until then.
+- Indian states are a hardcoded list in the school-profile form (`TODO(reference-data)`). They are
+  Tier-1 master data and belong in `public` behind an endpoint (ADR-0006).
 
 ## Keeping this honest
 

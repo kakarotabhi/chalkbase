@@ -52,6 +52,10 @@ cd frontend && npm test -- --watch=false
 10. **Update the docs in the same change.** A user-facing change updates `docs/manual/`; a
     structural decision gets an ADR; a new module updates `docs/architecture/module-map.md`; and
     anything that moves the project forward updates `docs/status.md`.
+11. **Every endpoint that changes data calls `AuditService.recordChange`** in the same transaction
+    as the change, passing the NAMES of the changed fields and never their values (ADR-0018). Nothing
+    in the compiler forces this, which is exactly why it is written down. Never pass a password, a
+    hash, a session id or any value of a Restricted or Confidential field to any audit method.
 
 ## Conventions
 

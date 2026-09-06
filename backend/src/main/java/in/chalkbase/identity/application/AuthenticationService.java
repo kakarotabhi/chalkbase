@@ -5,11 +5,16 @@ import in.chalkbase.identity.api.LoginRequest;
 import in.chalkbase.identity.api.LoginResponse;
 import in.chalkbase.identity.api.SchoolSummary;
 import in.chalkbase.identity.domain.CredentialType;
+import in.chalkbase.identity.domain.IdentifierType;
 import in.chalkbase.identity.domain.IdentityErrorCode;
 import in.chalkbase.identity.domain.PasswordPolicy;
 import in.chalkbase.identity.domain.SessionDuration;
 import in.chalkbase.identity.domain.UserAccount;
 import in.chalkbase.identity.domain.UserCredential;
+import in.chalkbase.platform.audit.AuditAction;
+import in.chalkbase.platform.audit.AuditActor;
+import in.chalkbase.platform.audit.AuditOutcome;
+import in.chalkbase.platform.audit.AuditService;
 import in.chalkbase.platform.error.ChalkbaseException;
 import in.chalkbase.platform.error.PlatformErrorCode;
 import in.chalkbase.platform.tenancy.TenantContext;
@@ -51,6 +56,12 @@ import org.springframework.stereotype.Service;
  * per-request permission query. A role or grant change takes effect on the next login, or
  * immediately if the session is invalidated.
  *
+ * <p>Every sign-in, failed sign-in, lockout, sign-out and password change is audited here, each in
+ * <strong>its own transaction</strong> (ADR-0018 §4) — the same reasoning that already puts the
+ * failed-attempt counter in its own transaction below. A failed sign-in must be recorded precisely
+ * because it failed; recording it inside the transaction that then throws would roll the record
+ * back along with the attempt, and the audit log would contain only the logins that worked.
+ *
  * <p><strong>This class carries no transaction annotation, deliberately.</strong> Hibernate picks
  * the tenant when it opens a session at the start of a transaction, so a transaction opened here —
  * before {@link TenantContext} has been bound — would run every statement against {@code public}.
@@ -67,6 +78,7 @@ public class AuthenticationService {
     private final AccessResolver accessResolver;
     private final PasswordEncoder passwordEncoder;
     private final SecurityContextRepository securityContextRepository;
+    private final AuditService audit;
     private final Map<CredentialType, CredentialVerifier> verifiers = new EnumMap<>(CredentialType.class);
 
     private final SecurityContextHolderStrategy securityContextHolderStrategy =
@@ -78,12 +90,14 @@ public class AuthenticationService {
             AccessResolver accessResolver,
             PasswordEncoder passwordEncoder,
             SecurityContextRepository securityContextRepository,
+            AuditService audit,
             List<CredentialVerifier> credentialVerifiers) {
         this.schools = schools;
         this.users = users;
         this.accessResolver = accessResolver;
         this.passwordEncoder = passwordEncoder;
         this.securityContextRepository = securityContextRepository;
+        this.audit = audit;
         for (CredentialVerifier verifier : credentialVerifiers) {
             CredentialVerifier clash = this.verifiers.put(verifier.supports(), verifier);
             if (clash != null) {
@@ -107,12 +121,19 @@ public class AuthenticationService {
         // the same schema as the account, and resolving them afterwards would need the tenant bound
         // a second time.
         SignedIn signedIn = inSchool(school.schemaName(), () -> {
-            UserAccount account = authenticate(request);
+            UserAccount account = authenticate(request, school.schemaName());
             return new SignedIn(account, accessResolver.resolveFor(account.getId(), LocalDate.now()));
         });
         UserAccount account = signedIn.account();
 
         establishSession(http, response, school, signedIn, request.username(), request.isRemembered());
+        // Audited after the session exists, so the actor snapshot — id, display name and the roles
+        // held at this moment — comes off the principal that was just established rather than from
+        // a second lookup that could disagree with it. The tenant is no longer bound here; the
+        // actor carries the schema, which is what an audit row belongs to.
+        audit.recordSecurityEvent(
+                AuditAction.LOGIN_SUCCEEDED, AuditOutcome.SUCCESS, IdentifierType.USERNAME.name(), request.username());
+
         // The school code is safe to log; the username is not — it is usually a child's admission
         // number. Never add it here.
         log.info("Login succeeded for school {} (account {})", school.code(), account.getId());
@@ -127,12 +148,22 @@ public class AuthenticationService {
 
     /** Ends the session. Idempotent: signing out twice is not an error. */
     public void logout(HttpServletRequest http) {
+        // Read before the context is cleared, or there would be nobody to attribute the sign-out to.
+        AuditActor actor = currentActorOrNull();
+
         HttpSession session = http.getSession(false);
         if (session != null) {
             // Server-side invalidation, not just a discarded cookie — forced logout is FR-006.
             session.invalidate();
         }
         securityContextHolderStrategy.clearContext();
+
+        if (actor != null) {
+            audit.recordSecurityEvent(
+                    AuditAction.LOGOUT, AuditOutcome.SUCCESS, "USER_ACCOUNT", String.valueOf(actor.id()), actor);
+        }
+        // A sign-out with no session had no principal and no school, so there is nothing to record
+        // against. That is the idempotent case, not a gap.
     }
 
     /** Changes the signed-in user's password and clears the forced-change flag. */
@@ -154,6 +185,14 @@ public class AuthenticationService {
             }
 
             users.changePassword(account.getId(), credential.getId(), passwordEncoder.encode(request.newPassword()));
+
+            // The action, never the secret. Neither password, neither hash, and no session id goes
+            // anywhere near an audit row — there is no parameter here that would take one.
+            audit.recordSecurityEvent(
+                    AuditAction.PASSWORD_CHANGED,
+                    AuditOutcome.SUCCESS,
+                    "USER_ACCOUNT",
+                    account.getId().toString());
             return null;
         });
 
@@ -174,22 +213,43 @@ public class AuthenticationService {
 
     // ── internals ────────────────────────────────────────────────────────────────────────────
 
-    /** Runs inside the tenant. The account it returns is detached and safe to read afterwards. */
-    private UserAccount authenticate(LoginRequest request) {
-        UserAccount account =
-                users.findByUsername(request.username()).orElseThrow(() -> unauthenticated("no such username"));
+    /**
+     * Runs inside the tenant. The account it returns is detached and safe to read afterwards.
+     *
+     * <p>Every exit from here that is not a success is audited as {@code LOGIN_FAILED} first. The
+     * attempt is attributable to a school — the school code was resolved before authentication was
+     * attempted — but to no account, so the row carries no actor id: what is known is the
+     * identifier that was tried, and that goes in {@code entity_id} as an identifier, never in a
+     * value field.
+     */
+    private UserAccount authenticate(LoginRequest request, String schema) {
+        UserAccount account = users.findByUsername(request.username()).orElseThrow(() -> {
+            loginFailed(request.username(), schema);
+            return unauthenticated("no such username");
+        });
 
         // Checked before the password is verified: an attacker must not be able to keep guessing
         // simply because every guess is wrong.
         if (account.isLocked(Instant.now())) {
             log.warn("Login refused: account {} is locked", account.getId());
+            loginFailed(request.username(), schema);
             throw new ChalkbaseException(IdentityErrorCode.ACCOUNT_LOCKED);
         }
 
         UserCredential credential =
                 users.activeCredential(account.getId(), CredentialType.PASSWORD).orElse(null);
         if (credential == null || !verifier(CredentialType.PASSWORD).verify(credential, request.password())) {
-            users.recordFailedAttempt(account.getId());
+            boolean lockedByThisAttempt = users.recordFailedAttempt(account.getId());
+            loginFailed(request.username(), schema);
+            if (lockedByThisAttempt) {
+                // Recorded once, when the lock is applied — not on every attempt that follows it.
+                audit.recordSecurityEvent(
+                        AuditAction.ACCOUNT_LOCKED,
+                        AuditOutcome.FAILURE,
+                        "USER_ACCOUNT",
+                        account.getId().toString(),
+                        AuditActor.unauthenticated(schema));
+            }
             throw unauthenticated("wrong password");
         }
 
@@ -197,12 +257,42 @@ public class AuthenticationService {
         // someone who does not already know its password.
         if (!account.isActive()) {
             log.warn("Login refused: account {} is {}", account.getId(), account.getStatus());
+            loginFailed(request.username(), schema);
             throw new ChalkbaseException(IdentityErrorCode.ACCOUNT_LOCKED);
         }
 
         users.recordSuccessfulLogin(account.getId(), credential.getId());
         account.recordSuccessfulLogin(Instant.now());
         return account;
+    }
+
+    /**
+     * One failed sign-in, in its own transaction, with no actor.
+     *
+     * <p>The actor is stated as {@link AuditActor#unauthenticated} rather than left to be resolved:
+     * a login form can be posted from a browser that still holds someone else's session, and
+     * resolving the security context there would attribute a stranger's failed guess to whoever
+     * last signed in on that machine.
+     */
+    private void loginFailed(String attemptedUsername, String schema) {
+        audit.recordSecurityEvent(
+                AuditAction.LOGIN_FAILED,
+                AuditOutcome.FAILURE,
+                IdentifierType.USERNAME.name(),
+                attemptedUsername,
+                AuditActor.unauthenticated(schema));
+    }
+
+    /** The signed-in user as an audit snapshot, or null when nobody is signed in. */
+    private AuditActor currentActorOrNull() {
+        Authentication authentication =
+                securityContextHolderStrategy.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof AuthenticatedUser user)) {
+            return null;
+        }
+        return new AuditActor(user.userId(), user.displayName(), user.rolesSnapshot(), user.schema());
     }
 
     private ChalkbaseException unauthenticated(String reason) {
@@ -252,6 +342,7 @@ public class AuthenticationService {
         AuthenticatedUser principal = new AuthenticatedUser(
                 account.getId(),
                 username,
+                account.getDisplayName(),
                 school.schemaName(),
                 new SchoolSummary(school.code(), school.name()),
                 signedIn.access());

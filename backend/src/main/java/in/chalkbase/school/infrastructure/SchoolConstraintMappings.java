@@ -19,7 +19,23 @@ public class SchoolConstraintMappings {
 
     @Bean
     ConstraintMappingProvider schoolConstraintMappingProvider() {
-        return () -> List.of(new ConstraintMapping(
-                "uq_school_code", SchoolErrorCode.DUPLICATE_CODE, SchoolErrorCode.DUPLICATE_CODE.defaultMessage()));
+        return () -> List.of(
+                mapping("uq_school_code", SchoolErrorCode.DUPLICATE_CODE),
+
+                // school_profile. Every check constraint on that table is claimed here, including
+                // the ones the request DTO already validates: the DTO speaks for HTTP clients, and
+                // these are what a violation from anywhere else is called.
+                mapping("uq_school_profile_singleton", SchoolErrorCode.PROFILE_ALREADY_EXISTS),
+                mapping("ck_school_profile_singleton", SchoolErrorCode.PROFILE_ALREADY_EXISTS),
+                mapping("ck_school_profile_pincode", SchoolErrorCode.INVALID_PINCODE),
+                mapping("ck_school_profile_email", SchoolErrorCode.INVALID_CONTACT),
+                mapping("ck_school_profile_phone", SchoolErrorCode.INVALID_CONTACT),
+                mapping("ck_school_profile_website", SchoolErrorCode.INVALID_CONTACT),
+                mapping("ck_school_profile_board", SchoolErrorCode.UNKNOWN_BOARD));
+    }
+
+    /** The common case: the error code's own sentence is the one to show. */
+    private static ConstraintMapping mapping(String constraintName, SchoolErrorCode errorCode) {
+        return new ConstraintMapping(constraintName, errorCode, errorCode.defaultMessage());
     }
 }

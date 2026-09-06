@@ -3,6 +3,7 @@ package in.chalkbase.platform.navigation;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +26,25 @@ import org.springframework.stereotype.Component;
  * <p><strong>Menus are not security.</strong> Filtering here is a convenience so a user is not
  * shown a button that will 403. Every endpoint still enforces its own permission, and that
  * enforcement is what protects data.
+ *
+ * <h2>Contributing to another module's section</h2>
+ *
+ * <p>A module declares its own subtree inline, as a {@link NavigationItem} with children. To add a
+ * screen to a section <em>another</em> module owns, declare it at the top level under its dotted
+ * id — {@code settings.profile} — and the catalogue places it beneath {@code settings}. The id
+ * already says where an item belongs, so nothing else has to.
+ *
+ * <p>This is why the alternative was rejected: without it, the school module's profile screen
+ * would have to be declared inside {@code IdentityNavigation}, and {@code settings} would become
+ * the one file every module edits to add its own menu entry — the coupling {@link
+ * NavigationProvider} exists to avoid, and a boundary violation besides. A contribution whose
+ * parent no module declares stops the application at startup rather than silently appearing as a
+ * root item.
+ *
+ * <p>A <em>container</em> — a section with no screen of its own, dropped when nothing inside it
+ * survives filtering — is one declared with at least one inline child. A section that declared no
+ * child of its own would be a menu entry pointing at nothing on the day it was written, so the
+ * owning module declares the first child and others contribute alongside it.
  */
 @Component
 public class NavigationCatalog {
@@ -48,17 +68,29 @@ public class NavigationCatalog {
 
     private final List<NavigationItem> roots;
 
+    /**
+     * Ids declared <em>with</em> an inline sub-menu, captured before merging.
+     *
+     * <p>Recorded here rather than read back off the assembled tree because merging makes the two
+     * indistinguishable: after contributions are placed, a section that owns no screen and a screen
+     * that happens to have gained a child both simply have children. Only the first should vanish
+     * when everything inside it is filtered away.
+     */
+    private final Set<String> containers;
+
     public NavigationCatalog(List<NavigationProvider> providers) {
         Map<String, String> declaredBy = new LinkedHashMap<>();
-        List<NavigationItem> collected = new ArrayList<>();
+        Map<String, NavigationItem> byId = new LinkedHashMap<>();
+        Set<String> declaredContainers = new LinkedHashSet<>();
         for (NavigationProvider provider : providers) {
             String source = provider.getClass().getName();
             for (NavigationItem item : provider.navigation()) {
                 validate(item, null, source, declaredBy);
-                collected.add(item);
+                flatten(item, byId, declaredContainers);
             }
         }
-        this.roots = sorted(collected);
+        this.containers = Set.copyOf(declaredContainers);
+        this.roots = sorted(assemble(byId, declaredBy));
         log.info("Registered {} navigation item(s) from {} module registr(ies)", declaredBy.size(), providers.size());
     }
 
@@ -102,22 +134,93 @@ public class NavigationCatalog {
 
     // ── internals ────────────────────────────────────────────────────────────────────────────
 
-    private static NavigationItem visible(NavigationItem item, Set<String> held) {
+    private NavigationItem visible(NavigationItem item, Set<String> held) {
         if (item.requiredPermission() != null && !held.contains(item.requiredPermission())) {
             return null;
-        }
-        if (!item.hasChildren()) {
-            return item;
         }
         List<NavigationItem> children = item.children().stream()
                 .map(child -> visible(child, held))
                 .filter(Objects::nonNull)
                 .toList();
         if (children.isEmpty()) {
-            return null;
+            // A container has nothing of its own to open, so an empty one is not an item. A screen
+            // keeps its entry: `schools` is still worth showing when the one thing contributed
+            // under it is filtered away.
+            //
+            // Note the childless copy rather than `item` itself. Returning the declared item would
+            // hand back the children that were just filtered out — the leak rule 2 exists to stop,
+            // arriving through the door marked "nothing to filter".
+            return containers.contains(item.id())
+                    ? null
+                    : new NavigationItem(
+                            item.id(), item.labelKey(), item.icon(), item.order(), item.requiredPermission());
         }
         return new NavigationItem(
                 item.id(), item.labelKey(), item.icon(), item.order(), item.requiredPermission(), children);
+    }
+
+    /**
+     * Every declared item by id, stripped of its inline children, plus which ones were containers.
+     *
+     * <p>Children are dropped here and rebuilt by {@link #assemble} so an inline declaration and a
+     * contribution end up in exactly one place. Keeping both would nest the same item twice.
+     */
+    private static void flatten(NavigationItem item, Map<String, NavigationItem> byId, Set<String> containers) {
+        byId.put(
+                item.id(),
+                new NavigationItem(item.id(), item.labelKey(), item.icon(), item.order(), item.requiredPermission()));
+        if (item.hasChildren()) {
+            containers.add(item.id());
+            for (NavigationItem child : item.children()) {
+                flatten(child, byId, containers);
+            }
+        }
+    }
+
+    /**
+     * Rebuilds the tree from the flat set, placing each item under the id its own id names.
+     *
+     * <p>An id is dotted precisely so it says where it belongs, which makes this a lookup rather
+     * than a merge: {@code settings.profile} goes under {@code settings} whether the same module
+     * declared both or not. A parent id is always strictly shorter than its child's, so there is no
+     * cycle to guard against.
+     */
+    private static List<NavigationItem> assemble(Map<String, NavigationItem> byId, Map<String, String> declaredBy) {
+        Map<String, List<String>> childIds = new LinkedHashMap<>();
+        List<String> rootIds = new ArrayList<>();
+        for (String id : byId.keySet()) {
+            int lastDot = id.lastIndexOf('.');
+            if (lastDot < 0) {
+                rootIds.add(id);
+                continue;
+            }
+            String parentId = id.substring(0, lastDot);
+            if (!byId.containsKey(parentId)) {
+                throw new IllegalStateException("Navigation item " + id + " (declared by " + declaredBy.get(id)
+                        + ") belongs under \"" + parentId + "\", which no module declares."
+                        + " Either the owning module is not on the classpath, or the id is a typo."
+                        + " It is refused rather than shown at the top level, because a section's"
+                        + " child loose among the roots is a menu that reads wrongly.");
+            }
+            childIds.computeIfAbsent(parentId, key -> new ArrayList<>()).add(id);
+        }
+        return rootIds.stream().map(id -> attach(id, byId, childIds)).toList();
+    }
+
+    private static NavigationItem attach(
+            String id, Map<String, NavigationItem> byId, Map<String, List<String>> childIds) {
+        NavigationItem item = byId.get(id);
+        List<String> children = childIds.get(id);
+        if (children == null) {
+            return item;
+        }
+        return new NavigationItem(
+                item.id(),
+                item.labelKey(),
+                item.icon(),
+                item.order(),
+                item.requiredPermission(),
+                children.stream().map(child -> attach(child, byId, childIds)).toList());
     }
 
     /** Sorts a level and every level below it, once, so filtering never has to sort again. */

@@ -76,12 +76,20 @@ public class UserAccount {
         this.lastLoginAt = now;
     }
 
-    /** Counts one failure and locks the account once {@code maxAttempts} have failed. */
-    public void recordFailedAttempt(Instant now, int maxAttempts, Duration lockFor) {
+    /**
+     * Counts one failure and locks the account once {@code maxAttempts} have failed.
+     *
+     * @return true when <em>this</em> failure is the one that locked the account. The caller needs
+     *     to tell "locked just now" from "already locked" so the audit log records one
+     *     {@code ACCOUNT_LOCKED} per lockout rather than one per subsequent attempt (ADR-0018).
+     */
+    public boolean recordFailedAttempt(Instant now, int maxAttempts, Duration lockFor) {
+        boolean wasLocked = isLocked(now);
         this.failedAttempts = (short) Math.min(this.failedAttempts + 1, Short.MAX_VALUE);
         if (this.failedAttempts >= maxAttempts) {
             this.lockedUntil = now.plus(lockFor);
         }
+        return !wasLocked && isLocked(now);
     }
 
     public void passwordChanged() {

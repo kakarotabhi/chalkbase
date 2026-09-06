@@ -19,3 +19,18 @@ export function apiErrorCode(error: unknown): string {
   }
   return UNKNOWN_ERROR_CODE;
 }
+
+/**
+ * The per-field reasons a validation failure carried, or an empty map.
+ *
+ * The backend keys `details` by field name (ADR-0007), and those names are the request record's
+ * own — which is what lets a form put each message under the control it belongs to, instead of one
+ * sentence at the top and the user left to find the field.
+ */
+export function apiErrorDetails(error: unknown): Readonly<Record<string, string>> {
+  if (error instanceof HttpErrorResponse) {
+    const envelope = error.error as ApiResponse<never> | null;
+    return envelope?.error?.details ?? {};
+  }
+  return {};
+}

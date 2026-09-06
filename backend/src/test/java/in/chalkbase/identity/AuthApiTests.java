@@ -130,6 +130,44 @@ class AuthApiTests {
                 .andExpect(jsonPath("$.error.message").value("Invalid username or password"));
     }
 
+    /**
+     * A stored secret that carries no algorithm prefix is a failed sign-in, not a server error.
+     *
+     * <p>Found by running against the dev database with a hash inserted by hand — the way it would
+     * first happen in production, through an import or a half-finished credential migration.
+     * {@code DelegatingPasswordEncoder.matches} throws for an unmapped prefix, and before this was
+     * caught the caller got a 500, the attempt was never audited, and it never counted toward the
+     * lockout: an account with a corrupt hash could be guessed against forever, in silence.
+     */
+    @Test
+    void treatsAnUnreadableStoredSecretAsAFailedSignInRatherThanAServerError() throws Exception {
+        jdbc.sql("update " + RIVERDALE_SCHEMA
+                        + ".user_credential set secret = '$2b$10$notaprefixedhashatallxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'"
+                        + " where user_account_id = (select user_account_id from " + RIVERDALE_SCHEMA
+                        + ".user_identifier where value = ?)")
+                .param(USERNAME)
+                .update();
+
+        mockMvc.perform(login(RIVERDALE_CODE, USERNAME, RIVERDALE_PASSWORD))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("AUTH_001"));
+
+        // It counted, which is the half that matters: the attempt is on the record and the account
+        // is on its way to being locked rather than being guessed against indefinitely.
+        assertThat(jdbc.sql("select failed_attempts from " + RIVERDALE_SCHEMA
+                                + ".user_account where id = (select user_account_id from " + RIVERDALE_SCHEMA
+                                + ".user_identifier where value = ?)")
+                        .param(USERNAME)
+                        .query(Integer.class)
+                        .single())
+                .isEqualTo(1);
+
+        assertThat(jdbc.sql("select count(*) from " + RIVERDALE_SCHEMA + ".audit_event where action = 'LOGIN_FAILED'")
+                        .query(Integer.class)
+                        .single())
+                .isEqualTo(1);
+    }
+
     @Test
     void reportsAnUnknownSchoolCodeAsAuth005() throws Exception {
         mockMvc.perform(login("NO-SUCH-SCHOOL", USERNAME, RIVERDALE_PASSWORD))
@@ -359,6 +397,11 @@ class AuthApiTests {
         provisioning.provision(LAKEVIEW_SCHEMA);
         jdbc.sql("delete from " + RIVERDALE_SCHEMA + ".user_account").update();
         jdbc.sql("delete from " + LAKEVIEW_SCHEMA + ".user_account").update();
+        // Cleared too. Audit rows are not deleted by anything the application does — that is the
+        // point of them — so without this every test in this class inherits the sign-ins of the
+        // ones before it, and any assertion on a count is answered by an accumulated total.
+        jdbc.sql("delete from " + RIVERDALE_SCHEMA + ".audit_event").update();
+        jdbc.sql("delete from " + LAKEVIEW_SCHEMA + ".audit_event").update();
         jdbc.sql("delete from public.spring_session").update();
         schools.deleteAll();
     }

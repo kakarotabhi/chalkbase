@@ -1,0 +1,35 @@
+<select
+  class="select"
+  [class.select--invalid]="invalid()"
+  [attr.id]="id()"
+  [attr.aria-describedby]="describedBy()"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [disabled]="isDisabled() || readOnly()"
+  [value]="value()"
+  (change)="handleChange($event)"
+  (blur)="handleBlur()"
+>
+  @if (placeholder(); as prompt) {
+    <!-- Disabled, so it cannot be chosen again once a real option has been picked. -->
+    <option value="" disabled [selected]="value() === ''">{{ prompt }}</option>
+  }
+  @for (option of options(); track option.value) {
+    <option [value]="option.value" [selected]="option.value === value()">{{ option.label }}</option>
+  }
+</select>
+
+<!-- Decoration over the native control; the select itself still owns every interaction. -->
+<span class="select__chevron" aria-hidden="true">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M6 9.5l6 6 6-6" />
+  </svg>
+</span>

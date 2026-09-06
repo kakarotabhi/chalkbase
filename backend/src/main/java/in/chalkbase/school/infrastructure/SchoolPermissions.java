@@ -29,6 +29,20 @@ public class SchoolPermissions {
      */
     public static final String SCHOOL_CREATE = "school:school:create";
 
+    /**
+     * Editing this school's own profile — address, contact, principal, affiliation and board.
+     *
+     * <p>Deliberately not {@link #SCHOOL_CREATE}, and the distinction is the whole point: this is a
+     * school administrator correcting their own school's address, not a platform operator bringing
+     * a new campus online. It is a school-level action, so unlike {@code create} the shipped role
+     * templates should hold it.
+     *
+     * <p>Held by the {@code PRINCIPAL} and {@code VICE_PRINCIPAL} templates, and enforced by
+     * {@code SchoolProfileController}. A school that wants its office administrator to have it adds
+     * it to that role itself, which is the whole point of roles being data.
+     */
+    public static final String SCHOOL_UPDATE = "school:school:update";
+
     @Bean
     PermissionProvider schoolPermissionProvider() {
         return () -> List.of(
@@ -38,6 +52,11 @@ public class SchoolPermissions {
                         SCHOOL_CREATE,
                         "school",
                         "Onboard a school",
-                        "Register a new campus and bring its database schema online."));
+                        "Register a new campus and bring its database schema online."),
+                new PermissionDefinition(
+                        SCHOOL_UPDATE,
+                        "school",
+                        "Edit the school profile",
+                        "Change this school's address, contact details, principal and affiliation."));
     }
 }

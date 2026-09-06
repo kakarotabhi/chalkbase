@@ -35,6 +35,17 @@ export interface NavRoute {
  */
 export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, NavRoute>([
   ['schools', { path: '/schools', icon: 'school' }],
+  // The settings section. The backend has emitted this since the navigation catalogue landed and
+  // it was being dropped every time, because there was nothing behind it; the school profile is
+  // the first screen there is.
+  ['settings', { path: '/settings', icon: 'settings' }],
+  // Contributed by the school module under the settings container the identity module owns — the
+  // backend places it by its dotted id, so neither module has to reach into the other.
+  ['settings.profile', { path: '/settings/school-profile', icon: 'settings' }],
+  // `settings.access` and `audit` are deliberately absent. The backend emits both, neither has a
+  // screen in this build, and so they stay dropped-and-logged — an entry here would be a menu item
+  // that 404s, which is the one thing this registry exists to prevent. The audit *API* has shipped;
+  // its screen is the next slice, and the menu entry starts working with no backend change.
 ]);
 
 /**

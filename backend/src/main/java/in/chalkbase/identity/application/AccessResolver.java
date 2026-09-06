@@ -54,9 +54,13 @@ public class AccessResolver {
 
         Set<String> permissions = new LinkedHashSet<>();
         Set<AccessScope> scopes = new LinkedHashSet<>();
+        // The role codes are collected for the audit trail only (ADR-0018 records the roles held at
+        // the time as a snapshot). Nothing authorizes on them — code checks permissions (ADR-0005).
+        Set<String> roles = new LinkedHashSet<>();
         for (UserRoleGrant grant : inForce) {
             permissions.addAll(grant.getRole().getPermissions());
             scopes.add(grant.scope());
+            roles.add(grant.getRole().getCode());
         }
 
         log.debug(
@@ -64,6 +68,6 @@ public class AccessResolver {
                 userAccountId,
                 inForce.size(),
                 permissions.size());
-        return new EffectiveAccess(permissions, scopes);
+        return new EffectiveAccess(permissions, scopes, roles);
     }
 }

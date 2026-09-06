@@ -215,6 +215,84 @@ class NavigationCatalogTests {
                 .withMessageContaining("has no labelKey");
     }
 
+    // ── Contributions from another module ────────────────────────────────────────────────────
+
+    /**
+     * The reason this exists: the school module owns the school-profile screen, the identity module
+     * owns the settings section it belongs in, and neither may reach into the other. The id says
+     * where the item goes, so declaring it at the top level is enough.
+     */
+    @Test
+    void placesAContributedChildUnderASectionAnotherModuleOwns() {
+        NavigationCatalog catalog = catalogOf(
+                List.of(parent("settings", 90, null, List.of(leaf("settings.access", 10, null)))),
+                List.of(leaf("settings.profile", 20, null)));
+
+        assertThat(allIdsFor(catalog, Set.of())).containsExactly("settings", "settings.access", "settings.profile");
+    }
+
+    /** Contributed and inline children are one list, so they interleave by order like any siblings. */
+    @Test
+    void sortsAContributedChildAmongTheSectionsOwnChildren() {
+        NavigationCatalog catalog = catalogOf(
+                List.of(parent("settings", 90, null, List.of(leaf("settings.access", 30, null)))),
+                List.of(leaf("settings.profile", 10, null)));
+
+        assertThat(allIdsFor(catalog, Set.of())).containsExactly("settings", "settings.profile", "settings.access");
+    }
+
+    /** A section survives on a contributed child alone — otherwise the contribution would be pointless. */
+    @Test
+    void keepsASectionAliveWhenOnlyAContributedChildSurvives() {
+        NavigationCatalog catalog = catalogOf(
+                List.of(parent("settings", 90, null, List.of(leaf("settings.access", 10, REPORTS_READ)))),
+                List.of(leaf("settings.profile", 20, FEES_READ)));
+
+        assertThat(allIdsFor(catalog, Set.of(FEES_READ))).containsExactly("settings", "settings.profile");
+        assertThat(idsFor(catalog, Set.of())).isEmpty();
+    }
+
+    /**
+     * A screen that gains a contributed child is still a screen. Deciding container-ness from the
+     * assembled tree would get this backwards and hide {@code schools} whenever the one thing
+     * contributed under it happened to be filtered away.
+     */
+    @Test
+    void keepsALeafThatGainedAContributedChildWhenThatChildIsFiltered() {
+        NavigationCatalog catalog =
+                catalogOf(List.of(leaf("schools", 20, null)), List.of(leaf("schools.import", 10, FEES_READ)));
+
+        assertThat(allIdsFor(catalog, Set.of(FEES_READ))).containsExactly("schools", "schools.import");
+        assertThat(allIdsFor(catalog, Set.of())).containsExactly("schools");
+    }
+
+    /**
+     * The failure mode this prevents: a contribution to a section that is not there ends up as a
+     * root item, which reads as a top-level menu entry called "profile" rather than as a bug.
+     */
+    @Test
+    void refusesAContributionWhoseParentNoModuleDeclares() {
+        assertThatIllegalStateException()
+                .isThrownBy(() -> catalogOf(List.of(leaf("settings.profile", 20, null))))
+                .withMessageContaining("belongs under \"settings\"");
+    }
+
+    /** Contributions nest as deeply as their ids say, not one level only. */
+    @Test
+    void placesAContributionMoreThanOneLevelDeep() {
+        NavigationCatalog catalog = catalogOf(
+                List.of(parent(
+                        "settings",
+                        90,
+                        null,
+                        List.of(parent(
+                                "settings.access", 10, null, List.of(leaf("settings.access.roles", 10, null)))))),
+                List.of(leaf("settings.access.permissions", 20, null)));
+
+        assertThat(allIdsFor(catalog, Set.of()))
+                .containsExactly("settings", "settings.access", "settings.access.roles", "settings.access.permissions");
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────────────────────
 
     private static NavigationItem leaf(String id, int order, String requiredPermission) {

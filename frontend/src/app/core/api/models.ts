@@ -24,6 +24,58 @@ export interface CreateSchoolRequest {
   readonly state?: string;
 }
 
+/* ── School profile (GET/PUT /api/school/profile) ────────────────────────── */
+
+/**
+ * The current school, as its own administrators see it.
+ *
+ * No id here and none in the URL: the tenant is the school (ADR-0011), so *which* school is
+ * answered by the session. `code` and `schemaName` address that tenant and cannot be edited — the
+ * backend refuses an update that changes either rather than quietly ignoring it.
+ */
+export interface SchoolProfile {
+  readonly code: string;
+  readonly schemaName: string;
+  readonly name: string;
+  readonly board: Board;
+  readonly addressLine1?: string;
+  readonly addressLine2?: string;
+  readonly city?: string;
+  readonly state?: string;
+  readonly pincode?: string;
+  readonly principalName?: string;
+  readonly phone?: string;
+  readonly email?: string;
+  readonly website?: string;
+  readonly affiliationNumber?: string;
+  /** False when the school has never saved one: the fields above are seeds, not saved answers. */
+  readonly configured: boolean;
+  readonly updatedAt?: string;
+}
+
+/**
+ * A full replacement of the profile — every editable field, every time.
+ *
+ * `code` and `schemaName` go back unchanged so that an attempt to change them is refused loudly
+ * instead of dropped silently.
+ */
+export interface UpdateSchoolProfileRequest {
+  readonly code: string;
+  readonly schemaName: string;
+  readonly name: string;
+  readonly board: Board;
+  readonly addressLine1: string;
+  readonly addressLine2: string;
+  readonly city: string;
+  readonly state: string;
+  readonly pincode: string;
+  readonly principalName: string;
+  readonly phone: string;
+  readonly email: string;
+  readonly website: string;
+  readonly affiliationNumber: string;
+}
+
 /**
  * The envelope every `/api` response uses. Exactly one of `data` and `error` is present.
  * See ADR-0007.

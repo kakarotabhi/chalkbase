@@ -68,6 +68,7 @@ class MeApiTests {
     private static final String PASSWORD = "Orchard#2026";
 
     private static final String SCHOOL_READ = "school:school:read";
+    private static final String SCHOOL_UPDATE = "school:school:update";
     private static final String USER_READ = "identity:user:read";
     private static final String ROLE_MANAGE = "identity:role:manage";
 
@@ -157,11 +158,15 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.school.code").value(ORCHARD_CODE))
                 .andExpect(jsonPath("$.data.school.name").value(ORCHARD_NAME))
                 .andExpect(jsonPath("$.data.permissions")
-                        .value(org.hamcrest.Matchers.containsInAnyOrder(SCHOOL_READ, USER_READ, ROLE_MANAGE)))
+                        .value(org.hamcrest.Matchers.containsInAnyOrder(
+                                SCHOOL_READ, SCHOOL_UPDATE, USER_READ, ROLE_MANAGE)))
                 .andExpect(jsonPath("$.data.navigation[0].id").value("schools"))
                 .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.schools"))
                 .andExpect(jsonPath("$.data.navigation[1].id").value("settings"))
                 .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("settings.access"))
+                // Contributed by the school module under identity's settings container, placed by
+                // its dotted id. A principal holding school:school:update sees both children.
+                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
@@ -229,9 +234,11 @@ class MeApiTests {
     }
 
     /**
-     * The auditor holds {@code school:school:read} but not {@code identity:role:manage}. Settings
-     * has no permission of its own, so it survives on its own account and is then dropped because
-     * the only thing inside it is gone — a section that opens onto nothing is worse than no section.
+     * The auditor holds {@code school:school:read} and {@code platform:audit:read} but not
+     * {@code identity:role:manage}. Settings has no permission of its own, so it survives on its own
+     * account and is then dropped because the only thing inside it is gone — a section that opens
+     * onto nothing is worse than no section. The two leaves the auditor may open are still there,
+     * which is what makes the dropped section a decision rather than an empty menu.
      */
     @Test
     void dropsASectionWhoseOnlyChildTheUserMayNotOpen() throws Exception {
@@ -240,7 +247,7 @@ class MeApiTests {
 
         JsonNode auditor = bootstrap("auditor");
 
-        assertThat(idsIn(auditor)).containsExactly("schools");
+        assertThat(idsIn(auditor)).containsExactly("schools", "audit");
         assertEveryItemIsOneTheCallerMayUse(auditor);
     }
 

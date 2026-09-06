@@ -23,21 +23,36 @@ import java.util.Set;
  * rows that a scope would narrow. Pairing them would be a change here and in the query helpers, not
  * a change to the model.
  *
+ * <p>The role codes are carried alongside, and they are <strong>not</strong> an authorization
+ * input — nothing checks them, and code checks permissions only (ADR-0005). They exist because
+ * FR-008 requires an audited action to be traceable to a user <em>and a role</em>, and because
+ * ADR-0018 records the roles held at the time as a snapshot: reading them back off the account
+ * afterwards would let a later role change rewrite the past.
+ *
  * @param permissions permission codes, each of which is also a Spring Security authority
  * @param scopes how far each grant reaches; empty means the user holds no grants at all
+ * @param roles the codes of the roles these permissions came from. For the audit trail, never for
+ *     a decision.
  */
-public record EffectiveAccess(Set<String> permissions, Set<AccessScope> scopes) implements Serializable {
+public record EffectiveAccess(Set<String> permissions, Set<AccessScope> scopes, Set<String> roles)
+        implements Serializable {
 
-    private static final EffectiveAccess NONE = new EffectiveAccess(Set.of(), Set.of());
+    private static final EffectiveAccess NONE = new EffectiveAccess(Set.of(), Set.of(), Set.of());
 
     public EffectiveAccess {
         permissions = Set.copyOf(permissions);
         scopes = Set.copyOf(scopes);
+        roles = Set.copyOf(roles);
     }
 
     /** A user with no grants. Authenticated, and able to do nothing but change their own password. */
     public static EffectiveAccess none() {
         return NONE;
+    }
+
+    /** The role codes, sorted and comma-separated — the snapshot shape {@code audit_event} stores. */
+    public String rolesAsSnapshot() {
+        return roles.isEmpty() ? null : roles.stream().sorted().collect(java.util.stream.Collectors.joining(","));
     }
 
     public boolean has(String permission) {

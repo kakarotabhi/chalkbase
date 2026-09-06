@@ -59,6 +59,25 @@ public class School {
         this.state = state;
     }
 
+    /**
+     * Updates the registry's copy of the display details, which the school profile owns.
+     *
+     * <p>{@code code} and {@code schemaName} are deliberately not arguments: they address the
+     * tenant and name its PostgreSQL schema, so changing either would orphan every row this school
+     * has. They are set once, at onboarding, and there is no method here that can change them.
+     *
+     * <p>The duplication with {@code school_profile} is intentional. The registry is read with no
+     * tenant bound — by the migration orchestrator at startup, and by the platform's school list —
+     * so it keeps enough to describe a school without opening that school's schema. The profile is
+     * authoritative; this keeps the copy honest.
+     */
+    public void updateRegistryDetails(String name, Board board, String city, String state) {
+        this.name = name;
+        this.board = board;
+        this.city = city;
+        this.state = state;
+    }
+
     public UUID getId() {
         return id;
     }

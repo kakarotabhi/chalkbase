@@ -72,11 +72,17 @@ public class UserAccountService {
         credentials.findById(credentialId).ifPresent(credential -> credential.markUsed(now));
     }
 
-    /** Counts a failure and locks the account once {@link #MAX_FAILED_ATTEMPTS} have failed. */
+    /**
+     * Counts a failure and locks the account once {@link #MAX_FAILED_ATTEMPTS} have failed.
+     *
+     * @return true when this failure is the one that locked the account, so the caller can audit
+     *     the lockout once instead of on every attempt afterwards
+     */
     @Transactional
-    public void recordFailedAttempt(UUID accountId) {
-        accounts.findById(accountId)
-                .ifPresent(account -> account.recordFailedAttempt(Instant.now(), MAX_FAILED_ATTEMPTS, LOCK_DURATION));
+    public boolean recordFailedAttempt(UUID accountId) {
+        return accounts.findById(accountId)
+                .map(account -> account.recordFailedAttempt(Instant.now(), MAX_FAILED_ATTEMPTS, LOCK_DURATION))
+                .orElse(false);
     }
 
     /**
