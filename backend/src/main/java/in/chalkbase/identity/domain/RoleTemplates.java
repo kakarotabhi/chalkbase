@@ -42,6 +42,11 @@ public final class RoleTemplates {
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
      * database schema and is a platform-operator action, not a school one (ADR-0005).
      *
+     * <p>That permission now also gates <em>reading</em> the school register, so it is load-bearing
+     * rather than decorative: {@code GET /api/schools} lists every school on the deployment with its
+     * schema name, and no school user may see another school. Granting this to a template would
+     * hand one school's principal the register of all the others.
+     *
      * <p>{@code school:school:update} is the other half of that distinction and two templates do
      * hold it: correcting your own school's address is school work, and the head of the school is
      * who does it.

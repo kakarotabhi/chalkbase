@@ -16,6 +16,8 @@ import { RouterLink } from '@angular/router';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { SaveStudentRequest, StudentDetail as StudentRecord } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
+import { Permissions } from '../../core/auth/permissions';
+import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { formatDay } from '../../shared/formatting/day';
 import { StudentEnrolments } from './student-enrolments';
@@ -76,6 +78,9 @@ export class StudentDetail {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /** Whether this user may correct the record. `PUT /api/students/{id}` enforces the same code. */
+  protected readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth-guard';
 import { unsavedChangesGuard } from './core/forms/unsaved-changes-guard';
+import { landingGuard } from './core/navigation/landing-guard';
 
 /**
  * Top-level routes.
@@ -31,7 +32,20 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'schools' },
+      // Where signing in lands — and deliberately not a constant. It was `schools`, then
+      // `students`, and each was this file guessing what the person signing in is allowed to open:
+      // the auditor holds `platform:audit:read` and nothing else, so `students` met them with a
+      // 403 as their first screen. `landingGuard` reads the first item of the user's own menu
+      // instead, which the server already filtered by permission (ADR-0008). The component behind
+      // it renders only in the one case where that menu has nowhere to send them, and says so.
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Chalkbase',
+        canActivate: [landingGuard],
+        loadComponent: () =>
+          import('./features/landing/no-destination').then((m) => m.NoDestination),
+      },
       {
         path: 'schools',
         title: 'Schools',

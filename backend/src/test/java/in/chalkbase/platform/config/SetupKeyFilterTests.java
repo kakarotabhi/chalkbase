@@ -1,6 +1,7 @@
 package in.chalkbase.platform.config;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -120,6 +121,9 @@ class SetupKeyFilterTests {
     @Test
     void onboardsASchoolWhenTheKeyIsCorrect() throws Exception {
         mockMvc.perform(post("/api/schools")
+                        .with(user("platform-operator")
+                                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                        "school:school:create")))
                         .with(csrf())
                         .header(SetupKeyFilter.HEADER, KEY)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,7 +132,11 @@ class SetupKeyFilterTests {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.code").value("SKT-S01"));
 
-        mockMvc.perform(get("/api/schools").header(SetupKeyFilter.HEADER, KEY))
+        mockMvc.perform(get("/api/schools")
+                        .with(user("platform-operator")
+                                .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                        "school:school:create")))
+                        .header(SetupKeyFilter.HEADER, KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name").value("Setup Key Test School"));
     }

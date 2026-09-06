@@ -8,6 +8,8 @@ import {
   SchoolClass,
   StudentDetail as StudentRecord,
 } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { StudentDetail } from './student-detail';
 
 const STUDENT = '018f3a10-0000-7000-8000-000000000001';
@@ -147,6 +149,10 @@ describe('StudentDetail', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE, Permissions.GUARDIAN_MANAGE);
   });
 
   afterEach(() => {
@@ -372,5 +378,61 @@ describe('StudentDetail', () => {
     expect(text()).toContain('You cannot change enrolments');
     expect(text()).toContain('Class 5 · A');
     expect(button('Add an enrolment')).toBeUndefined();
+  });
+
+  // ── What the record's actions are gated on ───────────────────────────────────────────────
+
+  describe('write actions', () => {
+    const control = (id: string) => element().querySelector(`#${id}`);
+
+    it('offers editing, enrolling and attaching a guardian to somebody who may do all three', () => {
+      arrive();
+
+      expect(control('student-edit')).not.toBeNull();
+      expect(control('enrolment-add')).not.toBeNull();
+      expect(control('enrolment-edit-e-1')).not.toBeNull();
+      expect(control('guardian-attach-open')).not.toBeNull();
+      expect(control('guardian-edit-link-1')).not.toBeNull();
+      expect(control('guardian-remove-link-1')).not.toBeNull();
+    });
+
+    it('offers none of them to a classteacher who may only read the record', () => {
+      signInWith(Permissions.STUDENT_READ, Permissions.GUARDIAN_READ);
+      arrive();
+
+      expect(control('student-edit')).toBeNull();
+      expect(control('enrolment-add')).toBeNull();
+      expect(control('enrolment-edit-e-1')).toBeNull();
+      expect(control('guardian-attach-open')).toBeNull();
+      expect(control('guardian-edit-link-1')).toBeNull();
+      expect(control('guardian-remove-link-1')).toBeNull();
+      // What the read entitles them to is still there: the child, their guardians, their history.
+      expect(text()).toContain('Test Student One');
+    });
+
+    /**
+     * The two resources are separate on the backend precisely so a school can hand somebody the
+     * class roster without handing them the parents' phone numbers. The screen has to draw the
+     * same line, or the guardian permission is decorative.
+     */
+    it('gates the guardian actions on the guardian permission, not the student one', () => {
+      signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
+      arrive();
+
+      expect(control('student-edit')).not.toBeNull();
+      expect(control('guardian-attach-open')).toBeNull();
+      expect(control('guardian-edit-link-1')).toBeNull();
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.STUDENT_READ);
+      arrive();
+      expect(control('student-edit')).toBeNull();
+
+      signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
+      fixture.detectChanges();
+
+      expect(control('student-edit')).not.toBeNull();
+    });
   });
 });

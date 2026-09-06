@@ -171,6 +171,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
 | Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
 | Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
+| Signing in lands on the first item of the user's own menu, never a constant | `landingGuard`, `features/landing/` |
 
 ## Known gaps and debt
 
@@ -252,6 +253,11 @@ Recorded so they are decided rather than discovered.
   `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
   without a refetch loop.
 - Expired sessions are never purged.
+- **The forced password change is enforced at two points, not everywhere.** The login screen sends
+  someone holding a temporary password to `/change-password`, and `landingGuard` sends them there
+  again on a reload of `/`. Typing a deep link still gets past both. Closing it properly is a guard
+  on the shell rather than a third copy of the same check — worth doing the next time anything in
+  `core/auth` is opened.
 - **A deactivated class keeps its name.** `uq_school_class_name` does not account for `active`, and
   there is no delete (ADR-0019), so a school that retires "Class 5" and later wants it back must
   reactivate that row rather than create a new one. That is the intended behaviour, but it makes

@@ -1,6 +1,7 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { LoginResponse, MeResponse } from '../api/models';
 import { NavigationStore } from '../navigation/navigation-store';
+import { Permission } from './permissions';
 
 /**
  * Who is signed in, as signals the shell and the auth screens read.
@@ -44,6 +45,43 @@ export class SessionStore {
   readonly isSignedIn = computed(() => this.currentUser() !== null);
   readonly mustChangePassword = computed(() => this.currentUser()?.mustChangePassword ?? false);
   readonly schoolName = computed(() => this.currentUser()?.school.name ?? null);
+
+  /**
+   * What this user may do, as a set, recomputed whenever the session changes.
+   *
+   * Both ways in fill it: the login response carries `permissions` and so does `GET /api/me`, so
+   * this is populated on the sign-in path and on the reload path without either of them knowing
+   * about this signal. Signing out empties it, because `currentUser` goes null.
+   *
+   * A `Set` rather than the array the server sent, so a screen with a dozen gated controls does a
+   * dozen hash lookups rather than a dozen linear scans, and so nothing downstream can mutate the
+   * list the store is holding.
+   */
+  private readonly grantedPermissions = computed<ReadonlySet<string>>(
+    () => new Set(this.currentUser()?.permissions ?? []),
+  );
+
+  /**
+   * Whether this user holds a permission — the one question the interface asks about access.
+   *
+   * **Not a boundary.** ADR-0005: the server enforces every permission independently and this
+   * decides only what to draw. The value of drawing it correctly is that somebody is not asked to
+   * fill in a form that ends in a 403.
+   *
+   * **Absent means no.** A store with no session holds no permissions, so every gated control is
+   * hidden. That is the failure this app wants: the alternative — show everything when we do not
+   * know — is precisely the defect this replaced, and the only state in which the list is empty
+   * for a real user is one where they are not signed in and a route guard is already sending them
+   * to the sign-in screen. A network failure during bootstrap does not land here either:
+   * `SessionBootstrap` keeps whatever the tab already knew rather than emptying the store.
+   *
+   * Reading a signal, so a caller inside a `computed` or a template re-evaluates when the session
+   * changes — a permission read once at construction would still be showing the previous user's
+   * buttons after a sign-out and a sign-in on the school office's shared machine.
+   */
+  has(permission: Permission): boolean {
+    return this.grantedPermissions().has(permission);
+  }
 
   signedIn(user: LoginResponse, passwordUsed: string): void {
     this.currentUser.set(user);
@@ -89,4 +127,28 @@ export class SessionStore {
     this.currentPermissionsVersion.set(null);
     this.navigation.clear();
   }
+}
+
+/**
+ * The one way a component asks whether this user may do something.
+ *
+ * ```ts
+ * protected readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
+ * ```
+ * ```html
+ * @if (canManageStudents()) { <cb-button …>Add a student</cb-button> }
+ * ```
+ *
+ * A field initialiser in an injection context, like `inject` itself, so there is no store to hold
+ * and no permission string in a template. The signal it returns is live: it tracks the session
+ * rather than sampling it, so nothing has to be re-created when the signed-in user changes.
+ *
+ * Deliberately not a structural directive. This codebase moved to `@if` control flow and forbids
+ * `*ngIf`, so a new `*`-prefixed directive would be the one exception to that rule in the whole
+ * app; and a directive can only gate a whole element, where several screens here need to gate a
+ * group of controls that already sit inside a `@if` on something else.
+ */
+export function permitted(permission: Permission): Signal<boolean> {
+  const session = inject(SessionStore);
+  return computed(() => session.has(permission));
 }

@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AUTH_ERROR } from '../api/auth-api';
 import { SessionStore } from '../auth/session-store';
 import { ApiResponse } from '../api/models';
 
@@ -15,6 +16,9 @@ import { ApiResponse } from '../api/models';
  * the user needs.
  */
 const AUTH_ENDPOINTS = ['/api/auth/login', '/api/auth/logout', '/api/me'];
+
+/** Where a session that still owes its forced password change is sent. */
+const CHANGE_PASSWORD = '/change-password';
 
 /**
  * Logs every API failure with its trace id, and sends an expired session back to the login screen.
@@ -62,6 +66,25 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 401 && !isAuthEndpoint) {
         session.signedOut();
         void router.navigate(['/login'], { queryParams: { returnTo: router.url } });
+      }
+
+      // The account is still on the password its school issued it, and the server has just refused
+      // this call because of it. This is a redirect the server asked for, not a rule re-derived
+      // here: there is deliberately no client-side guard checking `mustChangePassword` before
+      // navigating, because that would be a second copy of the authorization model living on the
+      // wrong side of the wire (ADR-0008). The client reacts to what it is told.
+      //
+      // The session is NOT cleared. Unlike a 401, it is real and still usable for the one thing
+      // that matters — replacing the password — and signing the user out here would send them to
+      // a login screen where the same temporary password lets them straight back in, into the same
+      // refusal. A reload arrives here having lost the temporary password from memory, and the
+      // change-password screen sends that case on to sign in for itself.
+      if (
+        error.status === 403 &&
+        apiError?.code === AUTH_ERROR.PASSWORD_CHANGE_REQUIRED &&
+        pathOf(router.url) !== CHANGE_PASSWORD
+      ) {
+        void router.navigateByUrl(CHANGE_PASSWORD);
       }
 
       return throwError(() => error);

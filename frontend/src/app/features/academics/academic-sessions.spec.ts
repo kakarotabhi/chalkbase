@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AcademicSession } from '../../core/api/models';
+import { Permissions } from '../../core/auth/permissions';
+import { signInWith } from '../../core/auth/session-fixture';
 import { AcademicSessions } from './academic-sessions';
 
 const SESSIONS_URL = '/api/academics/sessions';
@@ -78,6 +80,10 @@ describe('AcademicSessions', () => {
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
+    // The default for every test below: somebody who may do the things this screen offers.
+    // The tests that care sign a different user in instead, and none of them mocks the
+    // permission check — the real `SessionStore` is what the templates read.
+    signInWith(Permissions.SESSION_READ, Permissions.SESSION_MANAGE);
   });
 
   afterEach(() => {
@@ -418,5 +424,46 @@ describe('AcademicSessions', () => {
     // Still on the year it was on, and no refetch was made to discover that.
     expect(text()).toContain('Current session: 2026–27');
     expect(element().querySelector('.dialog__panel')).toBeNull();
+  });
+
+  // ── What the write actions are gated on ──────────────────────────────────────────────────
+
+  describe('write actions', () => {
+    const control = (id: string) => element().querySelector(`#${id}`);
+
+    it('offers adding, editing and switching year to somebody who may manage sessions', () => {
+      arrive();
+
+      expect(control('session-add')).not.toBeNull();
+      expect(control(`session-edit-${PREVIOUS.id}`)).not.toBeNull();
+      expect(control(`session-current-${PREVIOUS.id}`)).not.toBeNull();
+    });
+
+    /**
+     * The reported defect, as a test. A classteacher holds `academics:session:read`, reaches this
+     * screen from the menu the server built for them, and was offered a form whose submit is a
+     * 403.
+     */
+    it('offers none of them to a classteacher who may only read the years', () => {
+      signInWith(Permissions.SESSION_READ);
+      arrive();
+
+      expect(control('session-add')).toBeNull();
+      expect(control(`session-edit-${PREVIOUS.id}`)).toBeNull();
+      expect(control(`session-current-${PREVIOUS.id}`)).toBeNull();
+      // The list and which year is current is the whole of what the read entitles them to.
+      expect(text()).toContain('2026–27');
+    });
+
+    it('reads the live session, not a snapshot taken when the screen was built', () => {
+      signInWith(Permissions.SESSION_READ);
+      arrive();
+      expect(control('session-add')).toBeNull();
+
+      signInWith(Permissions.SESSION_READ, Permissions.SESSION_MANAGE);
+      fixture.detectChanges();
+
+      expect(control('session-add')).not.toBeNull();
+    });
   });
 });

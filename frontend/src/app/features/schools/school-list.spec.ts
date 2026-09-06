@@ -43,7 +43,15 @@ describe('SchoolList', () => {
     expect(fixture.nativeElement.textContent).toContain('Delhi Public School, R. K. Puram');
   });
 
-  it('shows an error message when the API returns a failure envelope', async () => {
+  /**
+   * The message must describe what happened to the reader, not to a developer.
+   *
+   * It used to say "Could not reach the Chalkbase API. Is the backend running on port 8080?" — a
+   * local-development sentence, shown on a public deployment, for a 403 that is not a connectivity
+   * failure at all. It was the first thing every user saw after signing in, because this screen was
+   * also the landing page. Testing the deployed instance is what surfaced it.
+   */
+  it('explains the refusal in terms of the reader, not of a developer', async () => {
     fixture.detectChanges();
 
     httpMock.expectOne('/api/schools').flush(
@@ -59,6 +67,11 @@ describe('SchoolList', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Could not reach the Chalkbase API');
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('platform register');
+    expect(text).toContain('Settings');
+    // Never again: this page is reached over HTTPS on a deployment where 8080 means nothing.
+    expect(text).not.toContain('8080');
+    expect(text).not.toContain('localhost');
   });
 });
