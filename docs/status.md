@@ -112,8 +112,9 @@ Also queued, not blocking:
   inside the ADR-0007 envelope, page size capped at 100, and an unknown `?sort=` property answered
   with a 400 rather than a 500.
 - Deploy to Coolify on the Hostinger Mumbai box once authentication exists (ADR-0015).
-- `@Classification` annotation and the build-failing test for unclassified DTO fields (ADR-0014) —
-  cheapest to add before there are many DTOs, not after.
+- ~~`@Classification` annotation and the build-failing test for unclassified DTO fields~~ ✅ Built
+  (PR #22), on every record under a `*/api/` package. The remaining hole is the accessor case, which
+  is listed under Blocking below rather than here.
 - Synthetic school seeder for the `dev` profile: ~600 students, 14 classes, one term of attendance,
   fixed seed. Needed to make list screens and performance real.
 
