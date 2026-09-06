@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -11,23 +14,29 @@ import jakarta.validation.constraints.Size;
  * once.
  */
 public record LoginRequest(
-        @NotBlank @Size(max = 32) String schoolCode,
-        @NotBlank @Size(max = 320) String username,
-        @NotBlank @Size(max = 200) String password,
+        @Classification(Tier.INTERNAL) @NotBlank @Size(max = 32) String schoolCode,
+
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 320) String username,
+
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String password,
         /**
          * Keeps the session alive for {@code SessionDuration.REMEMBERED} instead of the default.
          * Absent is false — an old client, or a shared machine at the school office, gets the short
          * session.
          */
-        Boolean rememberMe) {
+        @Classification(Tier.INTERNAL) Boolean rememberMe) {
 
     public boolean isRemembered() {
         return Boolean.TRUE.equals(rememberMe);
     }
 
-    /** Keeps the password out of anything that stringifies a request — logs, error messages, traces. */
+    /**
+     * Keeps the username and the password out of anything that stringifies a request — logs, error
+     * messages, traces. Redacted by tier now rather than by a hand-written string, so a field added
+     * later is covered without anyone remembering to come back here.
+     */
     @Override
     public String toString() {
-        return "LoginRequest[schoolCode=" + schoolCode + "]";
+        return Classified.describe(this);
     }
 }

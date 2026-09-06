@@ -1,5 +1,8 @@
 package in.chalkbase.school.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.school.domain.Board;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,34 +30,43 @@ import jakarta.validation.constraints.Size;
  */
 public record UpdateSchoolProfileRequest(
         /** Echoed back unchanged, or omitted. Any other value is rejected — it cannot be changed. */
-        @Size(max = 32) String code,
+        @Classification(Tier.PUBLIC) @Size(max = 32) String code,
         /** Echoed back unchanged, or omitted. Any other value is rejected — it cannot be changed. */
-        @Size(max = 63) String schemaName,
-        @NotBlank @Size(max = 200) String name,
-        @NotNull Board board,
-        @NotBlank @Size(max = 200) String addressLine1,
-        @Size(max = 200) String addressLine2,
-        @NotBlank @Size(max = 100) String city,
-        @NotBlank @Size(max = 100) String state,
+        @Classification(Tier.INTERNAL) @Size(max = 63) String schemaName,
 
+        @Classification(Tier.PUBLIC) @NotBlank @Size(max = 200) String name,
+
+        @Classification(Tier.PUBLIC) @NotNull Board board,
+
+        @Classification(Tier.PUBLIC) @NotBlank @Size(max = 200) String addressLine1,
+
+        @Classification(Tier.PUBLIC) @Size(max = 200) String addressLine2,
+
+        @Classification(Tier.PUBLIC) @NotBlank @Size(max = 100) String city,
+
+        @Classification(Tier.PUBLIC) @NotBlank @Size(max = 100) String state,
+
+        @Classification(Tier.PUBLIC)
         @NotBlank @Pattern(
                 regexp = UpdateSchoolProfileRequest.PINCODE_PATTERN,
                 message = "must be six digits and must not start with a zero")
         String pincode,
 
-        @NotBlank @Size(max = 200) String principalName,
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String principalName,
 
+        @Classification(Tier.CONFIDENTIAL)
         @NotBlank @Pattern(
                 regexp = UpdateSchoolProfileRequest.PHONE_PATTERN,
                 message = "must be 7 to 20 characters of digits, spaces, brackets or dashes")
         String phone,
 
-        @NotBlank @Email @Size(max = 320) String email,
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Email @Size(max = 320) String email,
 
+        @Classification(Tier.PUBLIC)
         @Pattern(regexp = UpdateSchoolProfileRequest.WEBSITE_PATTERN, message = "must start with http:// or https://") @Size(max = 200)
         String website,
 
-        @Size(max = 40) String affiliationNumber) {
+        @Classification(Tier.PUBLIC) @Size(max = 40) String affiliationNumber) {
 
     /** Six digits, never leading zero — an Indian PIN code. */
     public static final String PINCODE_PATTERN = "^[1-9][0-9]{5}$";
@@ -68,4 +80,10 @@ public record UpdateSchoolProfileRequest(
 
     /** A scheme is required: a link a parent taps has to be one a browser can follow. */
     public static final String WEBSITE_PATTERN = "^https?://\\S+$";
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
 }

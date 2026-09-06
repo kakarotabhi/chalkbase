@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -24,7 +27,16 @@ import jakarta.validation.constraints.Size;
  *     be answered with {@code na@na.com}.
  */
 public record SaveGuardianRequest(
-        @NotBlank @Size(max = 200) String fullName,
-        @Size(max = 20) String phone,
-        @Email @Size(max = 320) String email,
-        @Size(max = 120) String occupation) {}
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String fullName,
+
+        @Classification(Tier.CONFIDENTIAL) @Size(max = 20) String phone,
+
+        @Classification(Tier.CONFIDENTIAL) @Email @Size(max = 320) String email,
+
+        @Classification(Tier.CONFIDENTIAL) @Size(max = 120) String occupation) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

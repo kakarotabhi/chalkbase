@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Guardian;
 import java.util.UUID;
 
@@ -21,7 +24,12 @@ import java.util.UUID;
  * <p>Every field but the id and the count is Confidential under ADR-0014.
  */
 public record GuardianSummary(
-        UUID id, String fullName, String phone, String email, String occupation, long linkedStudentCount) {
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.CONFIDENTIAL) String fullName,
+        @Classification(Tier.CONFIDENTIAL) String phone,
+        @Classification(Tier.CONFIDENTIAL) String email,
+        @Classification(Tier.CONFIDENTIAL) String occupation,
+        @Classification(Tier.INTERNAL) long linkedStudentCount) {
 
     public static GuardianSummary of(Guardian guardian, long linkedStudentCount) {
         return new GuardianSummary(
@@ -31,5 +39,11 @@ public record GuardianSummary(
                 guardian.getEmail(),
                 guardian.getOccupation(),
                 linkedStudentCount);
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.UUID;
 
 /**
@@ -14,4 +17,13 @@ import java.util.UUID;
  *     from the account rather than from the session, so a password changed during this session is
  *     reflected on the next bootstrap without signing out.
  */
-public record MeUser(UUID id, String displayName, boolean mustChangePassword) {}
+public record MeUser(
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.CONFIDENTIAL) String displayName,
+        @Classification(Tier.INTERNAL) boolean mustChangePassword) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

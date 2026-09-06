@@ -1,5 +1,8 @@
 package in.chalkbase.identity.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.platform.navigation.NavigationItem;
 import java.util.List;
 
@@ -21,8 +24,14 @@ import java.util.List;
  * @param navigation the menu tree, already cut down to this user. Stable dotted ids, never URLs.
  */
 public record MeResponse(
-        MeUser user,
-        SchoolSummary school,
-        String permissionsVersion,
-        List<String> permissions,
-        List<NavigationItem> navigation) {}
+        @Classification(Tier.CONFIDENTIAL) MeUser user,
+        @Classification(Tier.PUBLIC) SchoolSummary school,
+        @Classification(Tier.INTERNAL) String permissionsVersion,
+        @Classification(Tier.INTERNAL) List<String> permissions,
+        @Classification(Tier.INTERNAL) List<NavigationItem> navigation) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

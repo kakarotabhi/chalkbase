@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
@@ -18,6 +21,12 @@ import java.util.UUID;
  * same year.
  */
 public record UpdateEnrolmentRequest(
-        @NotNull UUID sectionId,
-        @Size(max = 20) String rollNumber,
-        @NotNull Boolean active) {}
+        @Classification(Tier.INTERNAL) @NotNull UUID sectionId,
+        @Classification(Tier.CONFIDENTIAL) @Size(max = 20) String rollNumber,
+        @Classification(Tier.INTERNAL) @NotNull Boolean active) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

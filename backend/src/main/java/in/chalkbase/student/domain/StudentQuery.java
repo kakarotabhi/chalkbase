@@ -1,5 +1,8 @@
 package in.chalkbase.student.domain;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.UUID;
 
 /**
@@ -15,7 +18,10 @@ import java.util.UUID;
  *     enrolment in the school's <em>current</em> academic year, so a school that has not said which
  *     year it is in gets an empty page rather than last year's class list.
  */
-public record StudentQuery(String q, StudentStatus status, UUID sectionId) {
+public record StudentQuery(
+        @Classification(Tier.CONFIDENTIAL) String q,
+        @Classification(Tier.INTERNAL) StudentStatus status,
+        @Classification(Tier.INTERNAL) UUID sectionId) {
 
     /** Everything, unnarrowed. */
     public static StudentQuery all() {
@@ -24,5 +30,11 @@ public record StudentQuery(String q, StudentStatus status, UUID sectionId) {
 
     public boolean hasText() {
         return q != null && !q.isBlank();
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

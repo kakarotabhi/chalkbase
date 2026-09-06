@@ -1,5 +1,9 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
+
 /**
  * Where a student sits <em>this year</em>, flattened onto a list row.
  *
@@ -15,4 +19,14 @@ package in.chalkbase.student.api;
  *
  * @param rollNumber null until the class list settles. Assigned after admission, on purpose.
  */
-public record CurrentEnrolment(String sessionName, String className, String sectionName, String rollNumber) {}
+public record CurrentEnrolment(
+        @Classification(Tier.INTERNAL) String sessionName,
+        @Classification(Tier.INTERNAL) String className,
+        @Classification(Tier.INTERNAL) String sectionName,
+        @Classification(Tier.CONFIDENTIAL) String rollNumber) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

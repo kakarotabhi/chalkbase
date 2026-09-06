@@ -54,6 +54,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
 | Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
 | Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
+| `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
 
 ## Next, in order
 
@@ -88,8 +89,12 @@ Each line says what it unblocks, because the order is not arbitrary.
 9. ~~**Students and guardians.**~~ ✅ Done. One name field rather than three, guardians shared
    between siblings, and enrolment carrying the session. Restricted category fields are deliberately
    absent — see the blocker below.
-10. **Subjects**, then **documents, import/export and dashboards** to close Phase 1.
-11. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
+10. **Encryption at rest**, which unblocks the Restricted student fields and therefore UDISE+.
+    Needs a key-management decision tied to deployment (ADR-0015), and a decision on whether the
+    tier is declared on the entity as well as the DTO — two declarations that can disagree is worse
+    than one in the wrong place.
+11. **Subjects**, then **documents, import/export and dashboards** to close Phase 1.
+12. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
     it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
     showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
     interceptor does this for 401 only.
@@ -107,6 +112,11 @@ Also queued, not blocking:
 
 ## Blocking the first real school
 
+- **A Confidential value can still reach a log through an accessor.** `@Classification` and the
+  redacting `toString` stop `log.info("saving {}", dto)`; nothing stops
+  `log.info("saving {}", dto.fullName())`. The cheap next step is a static rule flagging a
+  `CONFIDENTIAL` accessor inside a logger argument — worth more than export masking, and worth doing
+  before the codebase has many more call sites.
 - **Encryption at rest does not exist, and the student record now needs it.** Caste and community,
   religion, disability/CWSN, EWS/BPL/RTE category, guardian income, APAAR and Aadhaar are Restricted
   under [ADR-0014](architecture/adr/0014-data-classification.md): encrypted at rest, masked in the
@@ -140,6 +150,14 @@ Recorded so they are decided rather than discovered.
 - The generated OpenAPI client is not wired up; `frontend/src/app/core/api/models.ts` is hand-written
   and mirrors the backend by hand (ADR-0007).
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
+- **Hibernate was logging the whole failed INSERT, values included, at WARN** — one duplicate
+  admission number put a child's name, date of birth and gender in the log, in every environment.
+  `org.hibernate.orm.jdbc.error` is now at ERROR, and the unmapped-constraint branch of
+  `GlobalExceptionHandler` logs the constraint's *name* instead of the exception, because
+  PostgreSQL's `DETAIL` line carries the values that clashed. Both have tests.
+- **`linkedStudentCount` cannot be expanded into "which students"** — no endpoint answers it, and
+  nothing prevents a duplicate guardian server-side. The search-first attach flow is the only
+  defence for the model ADR-0020 §5 depends on. Worth closing early.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
   dominated by round trips. Fifty schools would be about four minutes of startup. Mumbai (ADR-0015)
   will cut it sharply; the linear shape does not change, so the ADR-0011 expiry stands.

@@ -1,5 +1,8 @@
 package in.chalkbase.platform.audit;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -19,19 +22,19 @@ import java.util.UUID;
  * they read now. That is the whole reason they are snapshots.
  */
 public record AuditEventResponse(
-        UUID id,
-        Instant occurredAt,
-        UUID actorId,
-        String actorName,
-        List<String> actorRoles,
-        String action,
-        AuditOutcome outcome,
-        String entityType,
-        String entityId,
-        List<String> changedFields,
-        String ipAddress,
-        String userAgent,
-        String traceId) {
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.INTERNAL) Instant occurredAt,
+        @Classification(Tier.INTERNAL) UUID actorId,
+        @Classification(Tier.CONFIDENTIAL) String actorName,
+        @Classification(Tier.INTERNAL) List<String> actorRoles,
+        @Classification(Tier.INTERNAL) String action,
+        @Classification(Tier.INTERNAL) AuditOutcome outcome,
+        @Classification(Tier.INTERNAL) String entityType,
+        @Classification(Tier.INTERNAL) String entityId,
+        @Classification(Tier.INTERNAL) List<String> changedFields,
+        @Classification(Tier.CONFIDENTIAL) String ipAddress,
+        @Classification(Tier.INTERNAL) String userAgent,
+        @Classification(Tier.INTERNAL) String traceId) {
 
     static AuditEventResponse of(AuditEvent event) {
         return new AuditEventResponse(
@@ -55,5 +58,11 @@ public record AuditEventResponse(
             return List.of();
         }
         return List.of(commaSeparated.split(","));
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.GuardianRelation;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,4 +22,11 @@ import jakarta.validation.constraints.NotNull;
  * silently demoting a primary contact or resetting a relationship to a default.
  */
 public record UpdateStudentGuardianRequest(
-        @NotNull GuardianRelation relation, @NotNull Boolean primary) {}
+        @Classification(Tier.INTERNAL) @NotNull GuardianRelation relation,
+        @Classification(Tier.INTERNAL) @NotNull Boolean primary) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

@@ -1,5 +1,8 @@
 package in.chalkbase.academics.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
@@ -21,4 +24,11 @@ import java.util.UUID;
  * @param classIds every class of this school, exactly once, in the new display order. Position in
  *     the list becomes {@code sequence}, counting from one.
  */
-public record ReorderSchoolClassesRequest(@NotNull List<@NotNull UUID> classIds) {}
+public record ReorderSchoolClassesRequest(
+        @Classification(Tier.INTERNAL) @NotNull List<@NotNull UUID> classIds) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

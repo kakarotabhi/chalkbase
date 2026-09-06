@@ -2,6 +2,9 @@ package in.chalkbase.academics.api;
 
 import in.chalkbase.academics.domain.SchoolClass;
 import in.chalkbase.academics.domain.Section;
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +20,12 @@ import java.util.UUID;
  *     whole list, to reorder.
  * @param active false for a class the school has retired. Returned flagged rather than hidden.
  */
-public record SchoolClassResponse(UUID id, String name, int sequence, boolean active, List<SectionResponse> sections) {
+public record SchoolClassResponse(
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.INTERNAL) String name,
+        @Classification(Tier.INTERNAL) int sequence,
+        @Classification(Tier.INTERNAL) boolean active,
+        @Classification(Tier.INTERNAL) List<SectionResponse> sections) {
 
     /** Sorted here as well as by {@code @OrderBy}, so the contract holds however the rows were loaded. */
     public static SchoolClassResponse of(SchoolClass schoolClass) {
@@ -30,5 +38,11 @@ public record SchoolClassResponse(UUID id, String name, int sequence, boolean ac
                         .sorted(Comparator.comparing(Section::getName))
                         .map(SectionResponse::of)
                         .toList());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

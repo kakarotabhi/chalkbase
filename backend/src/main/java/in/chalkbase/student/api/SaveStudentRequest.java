@@ -1,5 +1,8 @@
 package in.chalkbase.student.api;
 
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.Gender;
 import in.chalkbase.student.domain.StudentStatus;
 import jakarta.validation.constraints.NotBlank;
@@ -38,9 +41,17 @@ import java.time.LocalDate;
  *     admission date and inventing one would put a guess on a document a school is held to
  */
 public record SaveStudentRequest(
-        @NotBlank @Size(max = 40) String admissionNumber,
-        @NotBlank @Size(max = 200) String fullName,
-        @NotNull @Past LocalDate dateOfBirth,
-        @NotNull Gender gender,
-        @NotNull StudentStatus status,
-        LocalDate admittedOn) {}
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 40) String admissionNumber,
+
+        @Classification(Tier.CONFIDENTIAL) @NotBlank @Size(max = 200) String fullName,
+
+        @Classification(Tier.CONFIDENTIAL) @NotNull @Past LocalDate dateOfBirth,
+        @Classification(Tier.CONFIDENTIAL) @NotNull Gender gender,
+        @Classification(Tier.INTERNAL) @NotNull StudentStatus status,
+        @Classification(Tier.CONFIDENTIAL) LocalDate admittedOn) {
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
+    }
+}

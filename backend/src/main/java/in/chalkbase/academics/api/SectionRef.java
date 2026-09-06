@@ -1,6 +1,9 @@
 package in.chalkbase.academics.api;
 
 import in.chalkbase.academics.domain.Section;
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import java.util.UUID;
 
 /**
@@ -18,7 +21,12 @@ import java.util.UUID;
  *     enrolment made before a section was retired still names it, and the caller has to be able to
  *     render that row.
  */
-public record SectionRef(UUID id, String name, UUID classId, String className, boolean active) {
+public record SectionRef(
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.INTERNAL) String name,
+        @Classification(Tier.INTERNAL) UUID classId,
+        @Classification(Tier.INTERNAL) String className,
+        @Classification(Tier.INTERNAL) boolean active) {
 
     public static SectionRef of(Section section) {
         return new SectionRef(
@@ -27,5 +35,11 @@ public record SectionRef(UUID id, String name, UUID classId, String className, b
                 section.getSchoolClass().getId(),
                 section.getSchoolClass().getName(),
                 section.isActive());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }

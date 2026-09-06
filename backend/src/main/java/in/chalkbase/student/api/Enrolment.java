@@ -2,6 +2,9 @@ package in.chalkbase.student.api;
 
 import in.chalkbase.academics.api.AcademicSessionRef;
 import in.chalkbase.academics.api.SectionRef;
+import in.chalkbase.platform.classification.Classification;
+import in.chalkbase.platform.classification.Classified;
+import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.student.domain.StudentEnrolment;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -24,16 +27,16 @@ import java.util.UUID;
  * @param rollNumber null until the class list settles
  */
 public record Enrolment(
-        UUID id,
-        UUID sessionId,
-        String sessionName,
-        UUID classId,
-        String className,
-        UUID sectionId,
-        String sectionName,
-        String rollNumber,
-        boolean active,
-        LocalDate enrolledOn) {
+        @Classification(Tier.INTERNAL) UUID id,
+        @Classification(Tier.INTERNAL) UUID sessionId,
+        @Classification(Tier.INTERNAL) String sessionName,
+        @Classification(Tier.INTERNAL) UUID classId,
+        @Classification(Tier.INTERNAL) String className,
+        @Classification(Tier.INTERNAL) UUID sectionId,
+        @Classification(Tier.INTERNAL) String sectionName,
+        @Classification(Tier.CONFIDENTIAL) String rollNumber,
+        @Classification(Tier.INTERNAL) boolean active,
+        @Classification(Tier.CONFIDENTIAL) LocalDate enrolledOn) {
 
     /**
      * @param session may be null, and {@code section} likewise. Neither can happen through the API —
@@ -54,5 +57,11 @@ public record Enrolment(
                 enrolment.getRollNumber(),
                 enrolment.isActive(),
                 enrolment.getEnrolledOn());
+    }
+
+    /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
+    @Override
+    public String toString() {
+        return Classified.describe(this);
     }
 }
