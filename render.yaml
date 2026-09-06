@@ -93,8 +93,16 @@ services:
     # frontend/angular.json, which sets no explicit outputPath — and it is the same directory
     # ops/docker/Dockerfile.frontend copies into nginx.
     rootDir: frontend
+    # Pinned because Render's default was v24.14.1, which sits in the gap between Angular's two
+    # supported lines: it wants >=22.22.3 on the 22 line or >=24.15.0 on the 24 line, and 24.14.1
+    # satisfies neither. The first deploy failed on exactly that. `frontend/.node-version` and the
+    # `engines` field in package.json say the same thing to nvm and npm, so a developer's machine
+    # and this build cannot drift apart.
     buildCommand: npm ci && npm run build
     staticPublishPath: dist/chalkbase-web/browser
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
 
     # ORDER MATTERS. Render evaluates these top to bottom and stops at the first match, so the SPA
     # fallback must come last — above the /api rule it would swallow every API call and hand the
