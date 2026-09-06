@@ -30,7 +30,13 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class TextInput implements ControlValueAccessor {
   readonly id = input<string | null>(null);
-  readonly type = input<'text' | 'email' | 'tel'>('text');
+  /**
+   * `date` uses the platform's own picker rather than a hand-built calendar, for the same reason
+   * `cb-select` stays a native `<select>`: Android and iOS replace it with a full-screen picker
+   * that is far easier to hit with a thumb than anything we could draw. Its value is a
+   * `yyyy-MM-dd` string in the user's own calendar day, never an instant.
+   */
+  readonly type = input<'text' | 'email' | 'tel' | 'date'>('text');
   readonly placeholder = input('');
   readonly autocomplete = input<string | null>(null);
   readonly inputmode = input<string | null>(null);

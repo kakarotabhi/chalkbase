@@ -197,3 +197,74 @@ export interface MeResponse {
   readonly permissions: readonly string[];
   readonly navigation: readonly NavigationItem[];
 }
+
+/* ── Paging ──────────────────────────────────────────────────────────────── */
+
+/**
+ * One page of a list endpoint, carried as the `data` of an `ApiResponse`.
+ *
+ * Offset pagination — `?page=0&size=25&sort=occurredAt,desc` — because every list in a school ERP
+ * is a bounded, admin-facing table where the user wants "page 7 of 12" and a total, and a cursor
+ * cannot answer "how many are there".
+ *
+ * Four numbers and a list, deliberately: the backend does not serialise Spring Data's own `Page`,
+ * so nothing here is coupled to a Spring Data implementation detail.
+ *
+ * `size` is the size that was *requested*, not the number of rows returned — the last page is
+ * shorter. Count `content.length` when you mean "rows on this page".
+ */
+export interface PageResponse<T> {
+  readonly content: readonly T[];
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+}
+
+/* ── Audit log (GET /api/audit) ──────────────────────────────────────────── */
+
+/** How an audited attempt ended. A closed set on the backend, so a union here. */
+export type AuditOutcome = 'SUCCESS' | 'FAILURE' | 'DENIED';
+
+/**
+ * One row of the school's audit log (ADR-0018).
+ *
+ * ## `action` is a string, not a union, and that is the contract
+ *
+ * The backend declares its verbs as string constants rather than an enum precisely so a module can
+ * name its own action without editing shared code. A union here would quietly re-close the set and
+ * make every new verb a compile error in a build that has no reason to know about it. Anything
+ * rendering this must cope with a value it has never seen — see `actionLabel` in
+ * `features/audit/audit-actions.ts`.
+ *
+ * ## `changedFields` holds field NAMES
+ *
+ * Never values, and there is no before/after pair to ask for: the backend rejects anything in this
+ * list that is not a plain field name (ADR-0014). Nothing rendering it may imply otherwise.
+ *
+ * ## `actorName` and `actorRoles` are snapshots
+ *
+ * They read as they did when the action happened, not as they read now — which is why they are
+ * plain strings and not a reference to an account. `actorId` is still the id that was acting, and
+ * is what the actor filter narrows on; it is null when nobody was authenticated, as on a failed
+ * sign-in.
+ */
+export interface AuditEvent {
+  readonly id: string;
+  /** ISO-8601 instant, UTC. Rendered in local time — never shown as the raw string. */
+  readonly occurredAt: string;
+  readonly actorId: string | null;
+  readonly actorName: string | null;
+  readonly actorRoles: readonly string[];
+  readonly action: string;
+  readonly outcome: AuditOutcome;
+  readonly entityType: string | null;
+  readonly entityId: string | null;
+  /** Field names only (ADR-0014). Empty for an event that changed nothing, such as a sign-in. */
+  readonly changedFields: readonly string[];
+  /** Personal data under the DPDP Act. Detail, not a column. */
+  readonly ipAddress: string | null;
+  readonly userAgent: string | null;
+  /** The same trace id the ADR-0007 envelope returns, so an error screen leads back to here. */
+  readonly traceId: string | null;
+}

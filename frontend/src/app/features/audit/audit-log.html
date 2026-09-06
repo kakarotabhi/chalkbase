@@ -1,0 +1,294 @@
+<h1 class="page-title">Audit log</h1>
+
+<!--
+  Said once, at the top, and not repeated against every row: the log records WHICH fields changed
+  and never what they changed to (ADR-0014). A reader who assumes otherwise would read this screen
+  as a history of values it does not hold and cannot produce.
+-->
+<p class="page-lede">
+  Who did what at this school, and when. The log records which fields changed — never the values
+  they were changed to. Times are shown in this device's local time.
+</p>
+
+@if (forbidden()) {
+  <!--
+    Not a redirect and not a crash. There is deliberately no client-side permission guard on this
+    route (ADR-0008): the server hides the menu item and the endpoint enforces the permission, and
+    re-deriving that here would be a second copy of the authorization model. So typing the URL
+    without the permission ends here, calmly, with something to do about it.
+  -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view the audit log</strong>
+      <span>
+        Ask your principal to add "View the audit log" to your role. Nothing has been recorded
+        against you for opening this page.
+      </span>
+    </div>
+  </div>
+} @else {
+  <form class="filters" [formGroup]="filters" (ngSubmit)="$event.preventDefault()">
+    <cb-form-field #actionField label="Action" controlId="audit-action">
+      <cb-select
+        formControlName="action"
+        [id]="actionField.controlId()"
+        [options]="actionOptions"
+        [describedBy]="actionField.describedById()"
+      />
+    </cb-form-field>
+
+    <cb-form-field #fromField label="From" controlId="audit-from" hint="This day is included.">
+      <cb-text-input
+        formControlName="from"
+        type="date"
+        [id]="fromField.controlId()"
+        [describedBy]="fromField.describedById()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #toField
+      label="To"
+      controlId="audit-to"
+      hint="This day is included."
+      [error]="rangeError()"
+    >
+      <cb-text-input
+        formControlName="to"
+        type="date"
+        [id]="toField.controlId()"
+        [describedBy]="toField.describedById()"
+        [invalid]="toField.hasError()"
+      />
+    </cb-form-field>
+  </form>
+
+  @if (filtered()) {
+    <div class="chips">
+      @if (actor(); as pinned) {
+        <!--
+          The actor filter exists only as this chip, because the API filters on a UUID and a UUID
+          text box is useless to a human. It is set by clicking a name in a row and removed here.
+        -->
+        <span class="chip">
+          <span class="chip__label">Only {{ pinned.name }}</span>
+          <button
+            type="button"
+            class="chip__remove"
+            [attr.aria-label]="'Stop showing only ' + pinned.name"
+            (click)="clearActor()"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </span>
+      }
+      <cb-button variant="ghost" (click)="clearFilters()">Clear filters</cb-button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading the audit log…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">Could not load the audit log</strong>
+        <span>Check your connection and try again. Nothing has been changed.</span>
+        <p class="banner__action">
+          <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+        </p>
+      </div>
+    </div>
+  } @else if (view().length === 0) {
+    @if (filtered()) {
+      <p class="page-status" role="status">
+        Nothing matches these filters. Try a wider date range, or clear them.
+      </p>
+    } @else {
+      <p class="page-status" role="status">Nothing has been recorded yet.</p>
+    }
+  } @else {
+    <!--
+      One table, two shapes (ADR-0010). At expanded widths it is a real table with native table
+      semantics; below that the same elements become cards, and the table semantics go with the
+      layout — which is correct, because at 360px this is a list of cards and announcing it as a
+      seven-column grid would be a lie. Rendering it twice was the alternative, and it would double
+      the DOM on the cheapest devices, which are the ones that can least afford it.
+    -->
+    <div class="log">
+      <table class="log__table">
+        <caption class="log__caption">
+          Audit events, newest first.
+        </caption>
+        <thead class="log__head">
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Who</th>
+            <th scope="col">Action</th>
+            <th scope="col">Outcome</th>
+            <th scope="col">Record</th>
+            <th scope="col">Fields changed</th>
+            <th scope="col"><span class="hidden-label">Details</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of view(); track row.id) {
+            @let open = expandedId() === row.id;
+            <tr class="row" [class.row--open]="open">
+              <td class="cell cell--when">
+                <time [attr.datetime]="row.occurredAtIso">{{ row.occurredAt }}</time>
+              </td>
+
+              <td class="cell cell--who">
+                @if (row.actorId) {
+                  <button
+                    type="button"
+                    class="actor"
+                    [attr.aria-label]="'Show only what ' + row.actorName + ' did'"
+                    (click)="filterByActor(row)"
+                  >
+                    {{ row.actorName }}
+                  </button>
+                } @else {
+                  <span class="actor actor--none">{{ row.actorName }}</span>
+                }
+                @if (row.actorRoles) {
+                  <span class="roles">{{ row.actorRoles }}</span>
+                }
+              </td>
+
+              <td class="cell cell--action">{{ row.action }}</td>
+
+              <td class="cell cell--outcome">
+                <!-- The word, not only the colour: printouts and colour-blind readers. -->
+                <span [class]="row.outcomeClass">{{ row.outcomeLabel }}</span>
+              </td>
+
+              <td class="cell cell--record">
+                @if (row.record) {
+                  {{ row.record }}
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+
+              <td class="cell cell--fields">
+                @if (row.changedFields.length > 0) {
+                  <span class="cell__label">Fields changed</span>
+                  <span class="fields">
+                    @for (field of row.changedFields; track field) {
+                      <span class="fields__name">{{ field }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+
+              <td class="cell cell--toggle">
+                <button
+                  type="button"
+                  class="toggle"
+                  [attr.aria-expanded]="open"
+                  [attr.aria-controls]="'audit-details-' + row.id"
+                  (click)="toggleDetails(row.id)"
+                >
+                  {{ open ? 'Hide details' : 'Details' }}
+                </button>
+              </td>
+            </tr>
+
+            @if (open) {
+              <!--
+                Address, device and trace id are what an investigation needs and what a scan never
+                does, so they are one tap away rather than three more columns nobody can fit.
+              -->
+              <tr class="details-row">
+                <td class="details" colspan="7" [id]="'audit-details-' + row.id">
+                  <dl class="details__list">
+                    <div class="details__pair">
+                      <dt>Exact time</dt>
+                      <dd>{{ row.occurredAtFull }}</dd>
+                    </div>
+                    <div class="details__pair">
+                      <dt>Roles at the time</dt>
+                      <dd>{{ row.actorRoles || 'None recorded' }}</dd>
+                    </div>
+                    <div class="details__pair">
+                      <dt>IP address</dt>
+                      <dd class="details__mono">{{ row.ipAddress }}</dd>
+                    </div>
+                    <div class="details__pair">
+                      <dt>Device</dt>
+                      <dd class="details__wrap">{{ row.userAgent }}</dd>
+                    </div>
+                    <div class="details__pair">
+                      <dt>Trace id</dt>
+                      <dd class="details__mono">{{ row.traceId }}</dd>
+                    </div>
+                    <div class="details__pair">
+                      <dt>Event id</dt>
+                      <dd class="details__mono">{{ row.id }}</dd>
+                    </div>
+                  </dl>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="paging" aria-label="Audit log pages">
+      <p class="paging__position" role="status">Showing {{ position() }}</p>
+      <div class="paging__buttons">
+        <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+          Previous
+        </cb-button>
+        <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">
+          Next
+        </cb-button>
+      </div>
+    </nav>
+  }
+}

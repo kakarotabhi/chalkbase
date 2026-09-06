@@ -37,6 +37,17 @@ export const routes: Routes = [
         title: 'Schools',
         loadComponent: () => import('./features/schools/school-list').then((m) => m.SchoolList),
       },
+      // No guard, deliberately. ADR-0008 is explicit that a menu is a convenience and never an
+      // authorization control, and warns against re-deriving the authorization model client-side —
+      // which a `canActivate` checking `platform:audit:read` would be. The server already leaves
+      // the item out of the menu for anyone without it, and `GET /api/audit` enforces it. So
+      // someone who types the URL gets a 403 the screen explains, not a redirect that pretends the
+      // page does not exist.
+      {
+        path: 'audit',
+        title: 'Audit log · Chalkbase',
+        loadComponent: () => import('./features/audit/audit-log').then((m) => m.AuditLog),
+      },
       // Settings has no index of its own yet, so the section lands on the one screen it has. When
       // a second settings screen ships this becomes a real index and the redirect goes.
       { path: 'settings', pathMatch: 'full', redirectTo: 'settings/school-profile' },

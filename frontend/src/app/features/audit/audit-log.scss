@@ -1,0 +1,439 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.page-title {
+  @include page-title;
+  // Closer to its lede than the other screens, which have nothing between the heading and the
+  // content. Overrides the shared bottom margin rather than forking the mixin.
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-6);
+  max-width: 60ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+// Everything that reads as secondary: status lines, the "—" for an absent value, the smaller
+// print inside a row. One rule rather than the same declaration nine times.
+.page-lede,
+.page-status,
+.muted,
+.roles,
+.cell--when,
+.cell--record,
+.cell__label,
+.fields__name,
+.paging__position,
+.details__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+/// Only announced, never seen: a column header the layout carries visually, or a label the table
+/// head already supplies at wider widths.
+.hidden-label {
+  @include visually-hidden;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+
+.filters {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 46rem;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cb-space-1);
+  padding: var(--cb-space-1) var(--cb-space-1) var(--cb-space-1) var(--cb-space-3);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+}
+
+// The three buttons on this screen that are not `cb-button`: they act on what is already on the
+// page rather than submitting anything, so they read as text and still take focus like controls.
+.chip__remove,
+.actor,
+.toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // The chip is a compact control, so its remove target is grown by padding on the chip rather
+  // than by a 44px box that would make the chip itself the height of a button.
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 50%;
+  color: inherit;
+}
+
+// ── The log ────────────────────────────────────────────────────────────────
+
+// Cards first, a table from expanded up (ADR-0010).
+//
+// The same elements do both: `display` is switched at the breakpoint rather than a second copy of
+// every row being rendered and hidden. The table's accessibility semantics follow `display`, which
+// is the correct outcome here — at 360px this is a list of cards and announcing it as a
+// seven-column grid would describe something the reader cannot see.
+.log__table {
+  display: block;
+  width: 100%;
+}
+
+.log__caption {
+  @include visually-hidden;
+}
+
+// No column headers on a card: each card says what it is, and the one label that is not obvious
+// from its content — "Fields changed" — is printed in the card itself.
+.log__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'when outcome'
+    'action action'
+    'who who'
+    'record record'
+    'fields fields'
+    'toggle toggle';
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+// An open row and its details are one card, not two.
+.row--open {
+  margin-bottom: 0;
+  border-bottom: none;
+  border-radius: var(--cb-radius-md) var(--cb-radius-md) 0 0;
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--when {
+  grid-area: when;
+}
+
+.cell--outcome {
+  grid-area: outcome;
+  text-align: right;
+}
+
+.cell--action {
+  grid-area: action;
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.cell--who {
+  grid-area: who;
+}
+
+.cell--record {
+  grid-area: record;
+}
+
+.cell--fields {
+  grid-area: fields;
+}
+
+.cell--toggle {
+  grid-area: toggle;
+}
+
+.cell__label {
+  display: block;
+  margin-bottom: var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+}
+
+/// The actor's name, and the only way to filter by actor: the API narrows on a UUID, so the row
+/// is the picker. A button rather than a link — it changes what this screen shows, it does not
+/// navigate.
+.actor {
+  color: var(--cb-primary);
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// Nobody was signed in — a failed sign-in has no actor. Not a target, because there is no id.
+.actor--none {
+  color: var(--cb-text-muted);
+  font-weight: 400;
+  text-decoration: none;
+  cursor: default;
+}
+
+.roles {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.outcome {
+  display: inline-block;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.outcome--success {
+  background: var(--cb-success-surface);
+  color: var(--cb-success);
+}
+
+.outcome--failure {
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+}
+
+.outcome--denied {
+  background: var(--cb-danger-surface);
+  color: var(--cb-danger);
+}
+
+/// Field NAMES (ADR-0014). Never a value, and nothing here pairs one with anything.
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-1);
+}
+
+.fields__name {
+  padding: 0 var(--cb-space-2);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-surface);
+  font-size: var(--cb-font-size-sm);
+}
+
+.toggle {
+  min-height: var(--cb-touch-target-min);
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+}
+
+.details-row {
+  display: block;
+  margin-bottom: var(--cb-space-2);
+}
+
+.details {
+  display: block;
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-top: none;
+  border-radius: 0 0 var(--cb-radius-md) var(--cb-radius-md);
+}
+
+.details__list {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.details__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-sm);
+  }
+}
+
+.details__mono {
+  font-family: var(--cb-font-numeric);
+}
+
+// A user agent is one long unbroken token. It wraps inside its own box or the page scrolls
+// sideways, which ADR-0010 does not allow.
+.details__wrap {
+  overflow-wrap: anywhere;
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paging__position {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.paging__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  // Two equal halves on a phone, where they are the full width of the screen.
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The table, from expanded up ────────────────────────────────────────────
+
+@include from-expanded {
+  .log {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .log__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .log__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row,
+  .details-row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-top: 1px solid var(--cb-border);
+    vertical-align: top;
+  }
+
+  .cell--when,
+  .cell--action {
+    white-space: nowrap;
+  }
+
+  .cell--action {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  .cell--outcome {
+    text-align: left;
+  }
+
+  // The head says "Fields changed"; repeating it in every cell would be noise.
+  .cell__label {
+    @include visually-hidden;
+  }
+
+  .details {
+    display: table-cell;
+    padding: var(--cb-space-4) var(--cb-space-4) var(--cb-space-6);
+    background: var(--cb-surface);
+    border: none;
+    border-radius: 0;
+  }
+}

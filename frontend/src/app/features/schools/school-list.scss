@@ -1,15 +1,12 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+
 .page-title {
-  margin: 0 0 var(--cb-space-6);
-  font-size: var(--cb-font-size-xl);
-  font-weight: 600;
+  @include page-title;
 }
 
 .page-status {
-  color: var(--cb-text-muted);
-
-  &--error {
-    color: var(--cb-danger);
-  }
+  @include page-status;
 }
 
 .school-list {

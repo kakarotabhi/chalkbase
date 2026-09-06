@@ -96,6 +96,18 @@ const GLYPHS = {
     paths: ['M6 6l12 12M18 6L6 18'],
   },
   /**
+   * Oversight: the audit log. A shield for "this is the record that protects the school", with the
+   * tick that says the record was kept — drawn here rather than pulled from an icon library, which
+   * ADR-0009 does not allow. The name matches the hint the backend sends for the item, though the
+   * registry is still what decides it (ADR-0008).
+   */
+  'shield-check': {
+    paths: [
+      'M12 2.9 4.6 6.1v5.7c0 4.3 3 7.6 7.4 9.3 4.4-1.7 7.4-5 7.4-9.3V6.1z',
+      'M8.9 12.1l2.3 2.3 4.2-4.4',
+    ],
+  },
+  /**
    * The stand-in for an item whose registry entry names an icon that does not exist. It renders
    * rather than throwing, because a menu that disappears over a typo in an icon name is a worse
    * failure than one item drawn as a plain square.

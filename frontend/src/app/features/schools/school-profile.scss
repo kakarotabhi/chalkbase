@@ -1,5 +1,6 @@
 @use '../../../styles/mixins' as *;
 @use '../../../styles/banner' as *;
+@use '../../../styles/page' as *;
 
 .crumbs {
   margin: 0 0 var(--cb-space-1);
@@ -14,17 +15,11 @@
 }
 
 .page-title {
-  margin: 0 0 var(--cb-space-6);
-  font-size: var(--cb-font-size-lg);
-  font-weight: 600;
-
-  @include from-medium {
-    font-size: var(--cb-font-size-xl);
-  }
+  @include page-title;
 }
 
 .page-status {
-  color: var(--cb-text-muted);
+  @include page-status;
 }
 
 .banner {
