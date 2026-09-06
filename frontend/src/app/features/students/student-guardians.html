@@ -1,0 +1,209 @@
+<div class="section__head">
+  <h2 class="section__heading">Guardians</h2>
+  @if (!attaching()) {
+    <cb-button
+      [id]="'guardian-attach-open'"
+      variant="secondary"
+      [disabled]="busy()"
+      (click)="startAttach()"
+    >
+      Add a guardian
+    </cb-button>
+  }
+</div>
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">{{ message.title }}</strong>
+      <span>{{ message.detail }}</span>
+    </div>
+  </div>
+}
+
+@if (attaching()) {
+  <cb-guardian-attach
+    [studentId]="studentId()"
+    [linkedGuardianIds]="linkedGuardianIds()"
+    (linked)="onAttached($event)"
+    (cancelled)="cancelAttach()"
+  />
+}
+
+@if (rows().length === 0) {
+  @if (!attaching()) {
+    <p class="section__status" role="status">
+      No guardian on this record yet. Search for one before adding a new person — a guardian who
+      already has a child here should be the same record.
+    </p>
+  }
+} @else {
+  <!--
+    A warning rather than a fact: the school has somebody's details but no answer to "who do we
+    ring first", which is the question this list exists for.
+  -->
+  @if (noPrimary()) {
+    <p class="no-primary">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <span>Nobody is the main contact for this student. Choose one below.</span>
+    </p>
+  }
+
+  <ul class="guardians">
+    @for (row of rows(); track row.linkId) {
+      <li class="guardian" [class.guardian--primary]="row.primary">
+        @if (editingLinkId() === row.linkId) {
+          <form class="link-form" [formGroup]="form" (ngSubmit)="saveEdit(row)" novalidate>
+            <h3 class="link-form__heading">{{ row.fullName }}</h3>
+
+            <div class="link-form__fields">
+              <cb-form-field
+                #relationField
+                label="Relation to this student"
+                controlId="guardian-link-relation"
+                [required]="true"
+                [error]="relationError()"
+              >
+                <cb-select
+                  formControlName="relation"
+                  placeholder="Choose one"
+                  [id]="relationField.controlId()"
+                  [options]="relationOptions"
+                  [describedBy]="relationField.describedById()"
+                  [invalid]="relationField.hasError()"
+                  [readOnly]="busy()"
+                />
+              </cb-form-field>
+
+              <cb-checkbox
+                formControlName="primary"
+                label="Main contact for this student"
+                [id]="'guardian-link-primary'"
+              />
+            </div>
+
+            <div class="link-form__actions">
+              <cb-button variant="secondary" [disabled]="busy()" (click)="cancelEdit()">
+                Cancel
+              </cb-button>
+              <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+            </div>
+          </form>
+        } @else {
+          <div class="guardian__who">
+            <span class="guardian__name">{{ row.fullName }}</span>
+            <span class="guardian__relation">{{ row.relationLabel }}</span>
+            @if (row.primary) {
+              <!-- The word, not only the tint: photocopies and colour-blind readers. -->
+              <span class="badge">Main contact</span>
+            }
+          </div>
+
+          <dl class="guardian__contact">
+            @if (row.phone) {
+              <div class="guardian__pair">
+                <dt>Phone</dt>
+                <dd class="guardian__number">{{ row.phone }}</dd>
+              </div>
+            }
+            @if (row.email) {
+              <div class="guardian__pair">
+                <dt>Email</dt>
+                <dd class="guardian__wrap">{{ row.email }}</dd>
+              </div>
+            }
+            @if (row.occupation) {
+              <div class="guardian__pair">
+                <dt>Occupation</dt>
+                <dd>{{ row.occupation }}</dd>
+              </div>
+            }
+          </dl>
+
+          <div class="guardian__actions">
+            <cb-button
+              variant="secondary"
+              [id]="row.editButtonId"
+              [disabled]="busy() || attaching()"
+              (click)="startEdit(row)"
+            >
+              Change relation
+            </cb-button>
+            @if (!row.primary) {
+              <cb-button
+                variant="secondary"
+                [id]="row.primaryButtonId"
+                [disabled]="busy() || attaching()"
+                (click)="makePrimary(row)"
+              >
+                Make main contact
+              </cb-button>
+            }
+            <!--
+              "Remove from this student", never "Delete". It ends the link and leaves the person
+              in place for their other children (ADR-0020 §5). The wording is the whole point.
+            -->
+            <cb-button
+              variant="ghost"
+              [id]="row.removeButtonId"
+              [disabled]="busy() || attaching()"
+              (click)="askToRemove(row)"
+            >
+              Remove from this student
+            </cb-button>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}
+
+@if (removing(); as target) {
+  <cb-dialog
+    [heading]="'Remove ' + target.fullName + ' from this student?'"
+    confirmLabel="Remove from this student"
+    cancelLabel="Keep them"
+    confirmVariant="danger"
+    [busy]="busy()"
+    (confirmed)="confirmRemove()"
+    (cancelled)="cancelRemove()"
+  >
+    <p>
+      This ends the link to this student only. <strong>{{ target.fullName }}</strong> stays on the
+      guardian list, with their phone number and email as they are, and any other children of theirs
+      at this school keep them.
+    </p>
+    @if (target.primary) {
+      <p>They are the main contact for this student, so this student will be left without one.</p>
+    }
+  </cb-dialog>
+}

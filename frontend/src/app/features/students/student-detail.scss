@@ -1,0 +1,190 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  // The one exception to hiding the crumb line on a phone: this screen is reached from a list and
+  // the way back to it is the second most likely thing somebody wants here.
+  @include compact-only {
+    margin-bottom: var(--cb-space-3);
+  }
+}
+
+.crumbs__link,
+.backlink {
+  color: var(--cb-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.backlink {
+  display: inline-block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-3) 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: 0;
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-status,
+.muted,
+.facts__aside,
+.facts__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin: var(--cb-space-4) 0;
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-2) 0 0;
+}
+
+/**
+ * The name, and the status beside it.
+ *
+ * The status is next to the heading rather than in the facts list because "has this child left" is
+ * the one thing that changes how everything below is read, and it should not be the fifth row of a
+ * definition list.
+ */
+.record__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.status {
+  display: inline-block;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status--active {
+  background: var(--cb-success-surface);
+  color: var(--cb-success);
+}
+
+// The three ways a student leaves. Not danger — none of them is a fault.
+.status--transferred,
+.status--graduated,
+.status--withdrawn {
+  background: var(--cb-info-surface);
+  color: var(--cb-info);
+}
+
+.status--inactive {
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+}
+
+/**
+ * The live region. Always in the DOM, so a change to it is announced rather than being a region
+ * that appears — an assistive technology has to have been watching it beforehand.
+ */
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+// ── The three cards ────────────────────────────────────────────────────────
+
+.card {
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+
+  @include from-expanded {
+    max-width: 60rem;
+  }
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-3);
+}
+
+.section__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include from-expanded {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.facts__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-base);
+  }
+}
+
+// Admission and roll numbers are read digit by digit, which is what the tabular face is for.
+.facts__number {
+  font-family: var(--cb-font-numeric);
+}
+
+.facts__aside {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}

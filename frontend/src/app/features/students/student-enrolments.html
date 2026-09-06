@@ -1,0 +1,259 @@
+<div class="section__head">
+  <h2 class="section__heading">Enrolments</h2>
+  @if (!editing() && !structureLoading() && !structureFailureCode()) {
+    <cb-button [id]="'enrolment-add'" variant="secondary" [disabled]="busy()" (click)="startAdd()">
+      Add an enrolment
+    </cb-button>
+  }
+</div>
+
+<p class="section__lede">
+  A student's place in the school, one record per academic year. Moving up a year is a new
+  enrolment, not a change to this one, which is what makes the history below readable.
+</p>
+
+@if (structureForbidden()) {
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You cannot change enrolments</strong>
+      <span>
+        Adding one needs the school's academic years and classes, and your role does not include
+        them. The enrolments already recorded are shown below.
+      </span>
+    </div>
+  </div>
+} @else if (structureFailed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load the classes and academic years</strong>
+      <span>An enrolment cannot be added until they load. The list below is unaffected.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="retryStructure()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+}
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">{{ message.title }}</strong>
+      <span>{{ message.detail }}</span>
+    </div>
+  </div>
+}
+
+@if (editing()) {
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h3 class="editor__heading">
+      {{ adding() ? 'Add an enrolment' : 'Edit this enrolment' }}
+    </h3>
+
+    <div class="editor__fields">
+      @if (adding()) {
+        <cb-form-field
+          #sessionField
+          label="Academic year"
+          controlId="enrolment-session"
+          [required]="true"
+          [error]="errors().academicSessionId"
+        >
+          <cb-select
+            formControlName="academicSessionId"
+            placeholder="Choose a year"
+            [id]="sessionField.controlId()"
+            [options]="sessionOptions()"
+            [describedBy]="sessionField.describedById()"
+            [invalid]="sessionField.hasError()"
+            [readOnly]="busy()"
+          />
+        </cb-form-field>
+      } @else {
+        <!--
+          Read-only on purpose. The session is what an enrolment *is* (ADR-0020 §4), so changing it
+          would not be a correction, it would be a different enrolment — and next year's place is a
+          new record rather than an edit to this one.
+        -->
+        <p class="editor__fixed">
+          <span class="editor__fixed-label">Academic year</span>
+          <span class="editor__fixed-value">{{ editingSessionName() }}</span>
+        </p>
+      }
+
+      <cb-form-field
+        #classField
+        label="Class"
+        controlId="enrolment-class"
+        [required]="true"
+        hint="Choose the class first — the sections below are its own."
+        [error]="errors().classId"
+      >
+        <cb-select
+          formControlName="classId"
+          placeholder="Choose a class"
+          [id]="classField.controlId()"
+          [options]="classOptions()"
+          [describedBy]="classField.describedById()"
+          [invalid]="classField.hasError()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #sectionField
+        label="Section"
+        controlId="enrolment-section"
+        [required]="true"
+        [error]="errors().sectionId"
+      >
+        <cb-select
+          formControlName="sectionId"
+          placeholder="Choose a section"
+          [id]="sectionField.controlId()"
+          [options]="sectionOptions()"
+          [describedBy]="sectionField.describedById()"
+          [invalid]="sectionField.hasError()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #rollField
+        label="Roll number"
+        controlId="enrolment-roll"
+        hint="Optional. It is usually given once the class list settles."
+        [error]="errors().rollNumber"
+      >
+        <cb-text-input
+          formControlName="rollNumber"
+          inputmode="numeric"
+          autocomplete="off"
+          [id]="rollField.controlId()"
+          [describedBy]="rollField.describedById()"
+          [invalid]="rollField.hasError()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      @if (!adding()) {
+        <div class="editor__active">
+          <cb-checkbox
+            formControlName="active"
+            label="This enrolment still stands"
+            [id]="'enrolment-active'"
+          />
+          <p class="editor__hint">
+            Untick it when a student left mid-year. The record stays, so the year is still part of
+            their history.
+          </p>
+        </div>
+      }
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="busy()" (click)="cancel()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">
+        {{ adding() ? 'Add enrolment' : 'Save enrolment' }}
+      </cb-button>
+    </div>
+  </form>
+}
+
+@if (rows().length === 0) {
+  @if (!editing()) {
+    <p class="section__status" role="status">
+      Not enrolled yet. Put this student in a class and section for the current academic year.
+    </p>
+  }
+} @else {
+  <ol class="enrolments">
+    @for (row of rows(); track row.id) {
+      <li class="enrolment" [class.enrolment--active]="row.active">
+        <div class="enrolment__head">
+          <span class="enrolment__session">{{ row.sessionName }}</span>
+          @if (row.active) {
+            <!-- The word, not only the tint. -->
+            <span class="badge">Current place</span>
+          } @else {
+            <span class="badge badge--past">Ended</span>
+          }
+        </div>
+
+        <p class="enrolment__placement">{{ row.placement }}</p>
+
+        <dl class="enrolment__facts">
+          <div class="enrolment__pair">
+            <dt>Roll number</dt>
+            <dd class="enrolment__number">
+              @if (row.rollNumber) {
+                {{ row.rollNumber }}
+              } @else {
+                <span class="muted">Not given yet</span>
+              }
+            </dd>
+          </div>
+          <div class="enrolment__pair">
+            <dt>Enrolled on</dt>
+            <dd>{{ row.enrolledOn }}</dd>
+          </div>
+        </dl>
+
+        <div class="enrolment__actions">
+          <cb-button
+            variant="secondary"
+            [id]="row.editButtonId"
+            [disabled]="busy() || !!editing() || structureLoading() || !!structureFailureCode()"
+            (click)="startEdit(row)"
+          >
+            Edit
+          </cb-button>
+        </div>
+      </li>
+    }
+  </ol>
+}

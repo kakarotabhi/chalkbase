@@ -76,6 +76,17 @@ cd frontend && npm test -- --watch=false
 - **Money is `numeric(12,2)`** in the database and `BigDecimal` in Java. Never a float, anywhere.
 - Lists use **offset pagination** — `?page=0&size=25&sort=name,asc`, returning `PageResponse<T>`
   inside the ADR-0007 envelope.
+- **A module's error codes are part of its contract, not an implementation detail.** When a module
+  adds an `ErrorCode`, the screens that can trigger it need the code and the condition, or they fall
+  back to wording a bare `CONF_001` for whatever write they happened to be doing — which reads as a
+  guess, because it is one. This has been missed three times: if you are writing a brief for the
+  other side of the wire, list the codes alongside the endpoints.
+- **A null field is omitted from the JSON, not sent as `null`** (`default-property-inclusion:
+  non_null`). So in `frontend/.../models.ts` an optional response field is `x?: T`, never
+  `x: T | null` — the second is a lie the compiler cannot catch, and code that reads it with
+  `=== null` takes the wrong branch in production while passing every mocked spec. Prefer
+  truthiness or `??` when reading anything that came off the wire. A list is returned empty rather
+  than null so it is always safe to iterate.
 - **Fees are append-only** (ADR-0012). Never update a charge or a ledger entry; write a reversal.
 - **Treat every DTO field as classified** (ADR-0014): Restricted and Confidential data is never
   logged, never put in an error message, and never sent to a third party. The `@Classification`

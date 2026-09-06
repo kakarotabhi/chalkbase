@@ -25,27 +25,11 @@ export const DUPLICATE_SESSION_NAME = 'ACAD_001';
  */
 export const DUPLICATE_SECTION_NAME = 'ACAD_006';
 
-/** How a school reads a date on screen: `1 Apr 2026`. Local, because it is read at the school. */
-const DAY = new Intl.DateTimeFormat('en-IN', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
-
 /**
  * `2026-04-01` → `1 Apr 2026`.
  *
- * Parsed field by field rather than handed to `new Date(string)`, which reads a bare date as UTC
- * and shifts it by the viewer's offset — in India, five and a half hours, which is enough to turn
- * "1 April" into "31 March" and a session that starts on the wrong day. A value this cannot parse
- * is returned as it arrived rather than rendered as `Invalid Date`.
+ * Re-exported rather than defined here: a date of birth on the student screens needs exactly the
+ * same parsing, and the timezone rule inside it is the sort of thing that must not exist twice.
+ * The academics screens keep importing it from this file, so nothing about them changed.
  */
-export function formatDay(day: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day?.trim() ?? '');
-  if (!match) {
-    return day ?? '';
-  }
-  const [, year, month, date] = match;
-  const parsed = new Date(Number(year), Number(month) - 1, Number(date));
-  return Number.isNaN(parsed.getTime()) ? day : DAY.format(parsed);
-}
+export { formatDay } from '../../shared/formatting/day';

@@ -1,0 +1,231 @@
+<p class="crumbs">Students <span aria-hidden="true">›</span> All students</p>
+<h1 class="page-title">Students</h1>
+
+<p class="page-lede">
+  Every student at this school. Search by name or admission number to find out which class and
+  section a child is in.
+</p>
+
+@if (forbidden()) {
+  <!--
+    Not a redirect and not a crash. There is deliberately no client-side permission guard on this
+    route (ADR-0008): the server hides the menu item, the endpoint enforces the permission, and
+    re-deriving that here would be a second copy of the authorization model.
+  -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view students</strong>
+      <span>Ask your principal to add "View students" to your role.</span>
+    </div>
+  </div>
+} @else {
+  <form class="filters" [formGroup]="filters" (ngSubmit)="$event.preventDefault()">
+    <!--
+      `autocomplete="off"`, and it is not boilerplate. This box is on the machine at the front
+      counter, and a browser that remembers what was typed into it offers the last six children's
+      names to the next person who clicks in — which is a disclosure of Confidential data
+      (ADR-0014) to somebody standing at a desk, with no request and no log line anywhere.
+    -->
+    <cb-form-field
+      #searchField
+      class="filters__search"
+      label="Search"
+      controlId="student-search"
+      hint="Name or admission number."
+    >
+      <cb-text-input
+        formControlName="q"
+        autocomplete="off"
+        placeholder="Search students"
+        [id]="searchField.controlId()"
+        [describedBy]="searchField.describedById()"
+      />
+    </cb-form-field>
+
+    <cb-form-field #statusField label="Status" controlId="student-status-filter">
+      <cb-select
+        formControlName="status"
+        [id]="statusField.controlId()"
+        [options]="statusFilterOptions"
+        [describedBy]="statusField.describedById()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #sectionField
+      label="Class and section"
+      controlId="student-section-filter"
+      [hint]="
+        ladderFailed() ? 'The class list could not be loaded, so this filter is empty.' : null
+      "
+    >
+      <cb-select
+        formControlName="sectionId"
+        [id]="sectionField.controlId()"
+        [options]="sectionOptions()"
+        [describedBy]="sectionField.describedById()"
+      />
+    </cb-form-field>
+  </form>
+
+  @if (filtered()) {
+    <div class="chips">
+      <cb-button variant="ghost" (click)="clearFilters()">Clear filters</cb-button>
+    </div>
+  }
+
+  @if (!adding()) {
+    <div class="toolbar">
+      <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
+    </div>
+  } @else {
+    <div class="panel">
+      <cb-student-form
+        heading="Add a student"
+        submitLabel="Add student"
+        [saving]="saving()"
+        [failureCode]="saveFailureCode()"
+        [serverErrors]="saveFieldErrors()"
+        (saved)="save($event)"
+        (cancelled)="cancelAdd()"
+      />
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading students…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">Could not load the students</strong>
+        <span>Check your connection and try again. Nothing has been changed.</span>
+        <p class="banner__action">
+          <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+        </p>
+      </div>
+    </div>
+  } @else if (view().length === 0) {
+    @if (filtered()) {
+      <p class="page-status" role="status">
+        No student matches this search. Try part of a name, or clear the filters.
+      </p>
+    } @else {
+      <p class="page-status" role="status">
+        No students yet. Add the first one, then put them in a class from their record.
+      </p>
+    }
+  } @else {
+    <!--
+      One table, two shapes (ADR-0010). At expanded widths it is a real table; below that the same
+      elements become cards and the table semantics go with the layout, which is correct — at 360px
+      this is a list of cards, and announcing it as a five-column grid would describe something the
+      reader cannot see. Rendering it twice would double the DOM on the cheapest devices.
+    -->
+    <div class="list">
+      <table class="list__table">
+        <caption class="list__caption">
+          Students, by name.
+        </caption>
+        <thead class="list__head">
+          <tr>
+            <th scope="col">Admission no.</th>
+            <th scope="col">Name</th>
+            <th scope="col">Class and section</th>
+            <th scope="col">Roll no.</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of view(); track row.id) {
+            <tr class="row">
+              <td class="cell cell--admission">
+                <span class="cell__label">Admission no.</span>
+                <span class="admission">{{ row.admissionNumber }}</span>
+              </td>
+
+              <td class="cell cell--name">
+                <!--
+                  The href is `/students/<uuid>` and carries nothing about the child. A link whose
+                  address contained a name or a date of birth would put Confidential data into
+                  browser history and into every screenshot of the address bar (ADR-0014).
+                -->
+                <a class="name" [routerLink]="row.link">{{ row.fullName }}</a>
+                <span class="gender">{{ row.gender }}</span>
+              </td>
+
+              <td class="cell cell--placement">
+                <span class="cell__label">Class and section</span>
+                @if (row.placement) {
+                  <span class="placement">{{ row.placement }}</span>
+                  @if (row.session) {
+                    <span class="session">{{ row.session }}</span>
+                  }
+                } @else {
+                  <!--
+                    A real state, not missing data: a student is admitted before the class lists
+                    settle, so saying so beats an empty cell that reads as something we lost.
+                  -->
+                  <span class="muted">Not enrolled yet</span>
+                }
+              </td>
+
+              <td class="cell cell--roll">
+                <span class="cell__label">Roll no.</span>
+                @if (row.rollNumber) {
+                  <span class="roll">{{ row.rollNumber }}</span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+
+              <td class="cell cell--status">
+                <!-- The word, not only the colour: photocopies and colour-blind readers. -->
+                <span [class]="row.statusClass">{{ row.statusLabel }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="paging" aria-label="Student list pages">
+      <p class="paging__position" role="status">Showing {{ position() }}</p>
+      <div class="paging__buttons">
+        <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+          Previous
+        </cb-button>
+        <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+      </div>
+    </nav>
+  }
+}

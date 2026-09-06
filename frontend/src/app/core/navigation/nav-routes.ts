@@ -57,6 +57,17 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['academics', { path: '/academics', icon: 'academics' }],
   ['academics.sessions', { path: '/academics/sessions', icon: 'academics' }],
   ['academics.classes', { path: '/academics/classes', icon: 'academics' }],
+  // Students, and the two screens under it. The container needs an entry of its own even though
+  // it only ever renders as a heading — `NavigationStore` drops an unresolvable id along with its
+  // children, so without this both screens would vanish from the menu with the parent.
+  //
+  // All three share the one glyph: a nested group that changes icon per child reads as three
+  // unrelated destinations rather than as one section, and the label is what tells them apart.
+  ['students', { path: '/students', icon: 'students' }],
+  ['students.all', { path: '/students', icon: 'students' }],
+  ['students.guardians', { path: '/students/guardians', icon: 'students' }],
+  // `/students/:id` is deliberately not here and never will be. The registry maps ids the *server*
+  // sends to menu destinations, and a student's record is reached from the list, not from a menu.
   // `settings.access` is deliberately absent. The backend emits it, it has no screen in this
   // build, and so it stays dropped-and-logged — an entry here would be a menu item that 404s,
   // which is the one thing this registry exists to prevent.

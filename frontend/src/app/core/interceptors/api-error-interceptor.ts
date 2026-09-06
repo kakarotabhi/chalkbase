@@ -41,8 +41,13 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // The trace id is the whole point of logging this: it is what ties a user's report to the
       // backend log line for the same request.
+      //
+      // **The path, never the query string.** `GET /api/students?q=Aarav%20Sharma` failing would
+      // otherwise print a child's name into the console, and a name is Confidential under
+      // ADR-0014 — never logged, at any level. The query adds nothing here anyway: the trace id
+      // is what leads to the backend's own record of the same request.
       console.error(
-        `[api] ${req.method} ${req.url} -> ${error.status} ${apiError?.code ?? 'UNKNOWN'} ` +
+        `[api] ${req.method} ${pathOf(req.url)} -> ${error.status} ${apiError?.code ?? 'UNKNOWN'} ` +
           `(traceId ${traceId}): ${apiError?.message ?? error.message}`,
         apiError?.details ?? '',
       );
@@ -71,6 +76,16 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
  * works until the day somebody adds the longer path.
  */
 function isEndpoint(url: string, path: string): boolean {
-  const withoutQuery = url.split(/[?#]/)[0];
-  return withoutQuery === path;
+  return pathOf(url) === path;
+}
+
+/**
+ * The address without its query string.
+ *
+ * A search box sends what the user typed as `?q=…`, and on these screens that is a child's or a
+ * guardian's name (ADR-0014). It may travel to the server, because typing it was the user's own
+ * choice; it may not be written to a log, and the browser console is a log.
+ */
+function pathOf(url: string): string {
+  return url.split(/[?#]/)[0];
 }

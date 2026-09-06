@@ -1,0 +1,301 @@
+<p class="crumbs">Students <span aria-hidden="true">›</span> Guardians</p>
+<h1 class="page-title">Guardians</h1>
+
+<!--
+  The shared record, said at the top. It is the difference between this screen being useful and
+  being a second place to type a phone number: a guardian here is one person, and their children
+  all read from this row (ADR-0020 §5).
+-->
+<p class="page-lede">
+  Every parent and guardian at this school, as one record each. A guardian with four children here
+  appears once, and correcting their phone number corrects it for all four. Attach one to a student
+  from that student's own record.
+</p>
+
+@if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view guardians</strong>
+      <span>Ask your principal to add "View guardians" to your role.</span>
+    </div>
+  </div>
+} @else {
+  <!--
+    `(submit)`, not `(ngSubmit)`: there is no `formGroup` on this element, so nothing would emit
+    `ngSubmit` and Enter in the search box would submit natively and reload the page.
+  -->
+  <form class="filters" (submit)="$event.preventDefault()">
+    <!-- `autocomplete="off"`: this is the machine at the front counter. See the class comment. -->
+    <cb-form-field
+      #searchField
+      label="Search"
+      controlId="guardian-search"
+      hint="Name, phone number or email."
+    >
+      <cb-text-input
+        [formControl]="search"
+        autocomplete="off"
+        placeholder="Search guardians"
+        [id]="searchField.controlId()"
+        [describedBy]="searchField.describedById()"
+      />
+    </cb-form-field>
+  </form>
+
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  @if (!editing()) {
+    <div class="toolbar">
+      <cb-button [id]="'guardian-add'" (click)="startAdd()">Add a guardian</cb-button>
+    </div>
+  } @else {
+    <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <h2 class="editor__heading">{{ editorHeading() }}</h2>
+
+      @if (adding()) {
+        <!--
+          Said at the point of creating, because this is the second place a duplicate can be born
+          — the first being the attach panel on a student's record.
+        -->
+        <p class="editor__warning">
+          Search above first. If this person already has a child at this school, edit the record
+          that is already here rather than adding a second one.
+        </p>
+      }
+
+      @if (saveFailure(); as message) {
+        <div class="banner banner--danger" role="alert">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+          <div>
+            <strong class="banner__title">{{ message.title }}</strong>
+            <span>{{ message.detail }}</span>
+          </div>
+        </div>
+      }
+
+      <div class="editor__fields">
+        <cb-form-field
+          #nameField
+          class="editor__field--wide"
+          label="Full name"
+          controlId="guardian-name"
+          [required]="true"
+          [error]="fieldErrors().fullName"
+        >
+          <cb-text-input
+            formControlName="fullName"
+            autocapitalize="words"
+            autocomplete="off"
+            [id]="nameField.controlId()"
+            [describedBy]="nameField.describedById()"
+            [invalid]="nameField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #phoneField
+          label="Phone"
+          controlId="guardian-phone"
+          hint="The number the school will actually ring."
+          [error]="fieldErrors().phone"
+        >
+          <cb-text-input
+            formControlName="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="off"
+            [id]="phoneField.controlId()"
+            [describedBy]="phoneField.describedById()"
+            [invalid]="phoneField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #emailField
+          label="Email"
+          controlId="guardian-email"
+          [error]="fieldErrors().email"
+        >
+          <cb-text-input
+            formControlName="email"
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            [id]="emailField.controlId()"
+            [describedBy]="emailField.describedById()"
+            [invalid]="emailField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #occupationField
+          label="Occupation"
+          controlId="guardian-occupation"
+          [error]="fieldErrors().occupation"
+        >
+          <cb-text-input
+            formControlName="occupation"
+            autocomplete="off"
+            [id]="occupationField.controlId()"
+            [describedBy]="occupationField.describedById()"
+            [invalid]="occupationField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+      </div>
+
+      <div class="editor__actions">
+        <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">
+          Cancel
+        </cb-button>
+        <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">
+          Save guardian
+        </cb-button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading guardians…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">Could not load the guardians</strong>
+        <span>Check your connection and try again. Nothing has been changed.</span>
+        <p class="banner__action">
+          <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+        </p>
+      </div>
+    </div>
+  } @else if (view().length === 0) {
+    @if (searching()) {
+      <p class="page-status" role="status">No guardian matches this search.</p>
+    } @else {
+      <p class="page-status" role="status">
+        No guardians yet. They are usually added while attaching one to a student's record.
+      </p>
+    }
+  } @else {
+    <!--
+      A card list at every width, and that is the per-screen decision ADR-0010 asks for rather than
+      a default. A guardian is four short facts and one action, which reads as well on a desktop as
+      on a phone — and unlike the student list, nobody scans a column of guardians looking for one
+      value, which is the case a table would be earning its keep for.
+    -->
+    <ul class="guardians">
+      @for (row of view(); track row.id) {
+        <li class="guardian">
+          <div class="guardian__who">
+            <span class="guardian__name">{{ row.fullName }}</span>
+            <!--
+              The number that says this record reaches beyond one child, and the reason editing it
+              is worth doing here rather than on a student's page.
+            -->
+            <span class="guardian__count">{{ row.linkedTo }}</span>
+          </div>
+
+          <dl class="guardian__contact">
+            <div class="guardian__pair">
+              <dt>Phone</dt>
+              <dd class="guardian__number">
+                @if (row.phone) {
+                  {{ row.phone }}
+                } @else {
+                  <span class="muted">Not recorded</span>
+                }
+              </dd>
+            </div>
+            <div class="guardian__pair">
+              <dt>Email</dt>
+              <dd class="guardian__wrap">
+                @if (row.email) {
+                  {{ row.email }}
+                } @else {
+                  <span class="muted">Not recorded</span>
+                }
+              </dd>
+            </div>
+            <div class="guardian__pair">
+              <dt>Occupation</dt>
+              <dd>
+                @if (row.occupation) {
+                  {{ row.occupation }}
+                } @else {
+                  <span class="muted">Not recorded</span>
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <div class="guardian__actions">
+            <cb-button
+              variant="secondary"
+              [id]="row.editButtonId"
+              [disabled]="!!editing()"
+              (click)="startEdit(row)"
+            >
+              Edit
+            </cb-button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <nav class="paging" aria-label="Guardian list pages">
+      <p class="paging__position" role="status">Showing {{ position() }}</p>
+      <div class="paging__buttons">
+        <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+          Previous
+        </cb-button>
+        <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+      </div>
+    </nav>
+  }
+}

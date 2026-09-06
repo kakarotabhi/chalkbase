@@ -17,7 +17,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0019) | ✅ Done |
+| Architecture decisions (ADR-0001…0020) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Done |
@@ -27,7 +27,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
 | Academic sessions, classes and sections | ✅ Done |
-| Students and guardians | ⬜ Not started |
+| Students, guardians and enrolment | ✅ Done |
 | Deployment to Coolify | ⬜ Not started |
 
 ## Done
@@ -53,6 +53,7 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
 | Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
 | Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
+| Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
 
 ## Next, in order
 
@@ -84,8 +85,11 @@ Each line says what it unblocks, because the order is not arbitrary.
    a partial unique index, and the class ladder with its sections — structural rather than
    per-session (ADR-0019). Reordering is one endpoint taking the whole ladder, because two separate
    updates cannot swap two positions past a unique constraint.
-9. **Subjects**, then **students and guardians** — the reason all of the above exists.
-10. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
+9. ~~**Students and guardians.**~~ ✅ Done. One name field rather than three, guardians shared
+   between siblings, and enrolment carrying the session. Restricted category fields are deliberately
+   absent — see the blocker below.
+10. **Subjects**, then **documents, import/export and dashboards** to close Phase 1.
+11. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
     it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
     showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
     interceptor does this for 401 only.
@@ -100,6 +104,18 @@ Also queued, not blocking:
   cheapest to add before there are many DTOs, not after.
 - Synthetic school seeder for the `dev` profile: ~600 students, 14 classes, one term of attendance,
   fixed seed. Needed to make list screens and performance real.
+
+## Blocking the first real school
+
+- **Encryption at rest does not exist, and the student record now needs it.** Caste and community,
+  religion, disability/CWSN, EWS/BPL/RTE category, guardian income, APAAR and Aadhaar are Restricted
+  under [ADR-0014](architecture/adr/0014-data-classification.md): encrypted at rest, masked in the
+  UI, every read audited. None of that machinery is built, so
+  [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) leaves those columns out entirely
+  rather than store a child's caste in plaintext. **UDISE+ returns need them**, so this is on the
+  critical path to onboarding a real school, not a later nicety.
+- **Audit retention is unset.** ADR-0014 requires a period per category; the table grows unbounded
+  until a purge exists. The number is a legal question, not an engineering one.
 
 ## Waiting on a decision
 

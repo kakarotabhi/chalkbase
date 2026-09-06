@@ -30,6 +30,10 @@ public final class RoleTemplates {
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String CLASS_READ = "academics:class:read";
     private static final String CLASS_MANAGE = "academics:class:manage";
+    private static final String STUDENT_READ = "student:student:read";
+    private static final String STUDENT_MANAGE = "student:student:manage";
+    private static final String GUARDIAN_READ = "student:guardian:read";
+    private static final String GUARDIAN_MANAGE = "student:guardian:manage";
     private static final String USER_READ = "identity:user:read";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
@@ -50,6 +54,27 @@ public final class RoleTemplates {
      * about the school, so only the two templates that run it hold {@code manage}. A school that
      * wants its office administrator to add sections adds the permission to that role itself, which
      * is the whole point of roles being data.
+     *
+     * <p>The student permissions are the widest read grant in the product, and deliberately: six of
+     * the twelve templates hold both reads. Everyone who teaches a child, admits one, or bills one
+     * has to be able to find them — the accountant included, because fees are charged to a student
+     * and chased through a guardian's phone number. {@code manage} is the three roles that actually
+     * run admissions and the school's rolls.
+     *
+     * <p><strong>{@code student:guardian:read} on the two teaching templates is the entry worth
+     * looking at twice.</strong> A subject teacher needs the guardians of the children they teach,
+     * and today's permission model has no scope narrower than the school — so what they are actually
+     * granted is a searchable directory of every parent's phone number. Shipping the narrower grant
+     * instead would leave a class teacher unable to ring a parent, which is worse; shipping it wide
+     * is honest about what the model can currently express. A school that wants it narrower removes
+     * it from that role, and ADR-0005's section-scoped grants are where a real answer will come
+     * from.
+     *
+     * <p>{@code PARENT} and {@code STUDENT} still hold nothing, and that is still honest rather than
+     * an omission. What they may see is their own child's record or their own — a SELF-scoped read
+     * derived from the guardian-of relationship, which this module now has the data for but no
+     * scope resolution to enforce with. Granting them {@code student:student:read} would give every
+     * parent the whole school's roster.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -62,6 +87,10 @@ public final class RoleTemplates {
                     SESSION_MANAGE,
                     CLASS_READ,
                     CLASS_MANAGE,
+                    STUDENT_READ,
+                    STUDENT_MANAGE,
+                    GUARDIAN_READ,
+                    GUARDIAN_MANAGE,
                     USER_READ,
                     ROLE_MANAGE),
             new RoleTemplate(
@@ -74,6 +103,10 @@ public final class RoleTemplates {
                     SESSION_MANAGE,
                     CLASS_READ,
                     CLASS_MANAGE,
+                    STUDENT_READ,
+                    STUDENT_MANAGE,
+                    GUARDIAN_READ,
+                    GUARDIAN_MANAGE,
                     USER_READ),
             new RoleTemplate(
                     "CLASS_TEACHER",
@@ -81,22 +114,45 @@ public final class RoleTemplates {
                     "Owns one section: its attendance, its results and its parents.",
                     SCHOOL_READ,
                     SESSION_READ,
-                    CLASS_READ),
+                    CLASS_READ,
+                    STUDENT_READ,
+                    GUARDIAN_READ),
+            // Reads students, because marks are recorded against a child. Deliberately does NOT read
+            // guardians, and the distinction is the point: with no scope narrower than the school,
+            // that permission is a searchable directory of every parent's mobile number, handed to
+            // anyone who teaches one period a week. Ringing a parent is the class teacher's job and
+            // that template holds it. When ADR-0005's section-scoped grants arrive this can be
+            // revisited as "the guardians of children I actually teach", which is the honest version
+            // of what a subject teacher needs.
             new RoleTemplate(
                     "SUBJECT_TEACHER",
                     "Subject Teacher",
                     "Teaches one subject across several sections.",
                     SCHOOL_READ,
                     SESSION_READ,
-                    CLASS_READ),
-            new RoleTemplate("ACCOUNTANT", "Accountant", "Fees, receipts and the day book.", SCHOOL_READ),
+                    CLASS_READ,
+                    STUDENT_READ),
+            // Reads students and guardians because a fee is charged to a child and chased through a
+            // parent's phone number. Holds neither manage: an accountant corrects a ledger, not a
+            // date of birth.
+            new RoleTemplate(
+                    "ACCOUNTANT",
+                    "Accountant",
+                    "Fees, receipts and the day book.",
+                    SCHOOL_READ,
+                    STUDENT_READ,
+                    GUARDIAN_READ),
             new RoleTemplate(
                     "ADMISSION_COUNSELLOR",
                     "Admission Counsellor",
                     "Enquiries and applications, from the first call to the admission.",
                     SCHOOL_READ,
                     SESSION_READ,
-                    CLASS_READ),
+                    CLASS_READ,
+                    STUDENT_READ,
+                    STUDENT_MANAGE,
+                    GUARDIAN_READ,
+                    GUARDIAN_MANAGE),
             new RoleTemplate("LIBRARIAN", "Librarian", "The catalogue, issues, returns and fines.", SCHOOL_READ),
             new RoleTemplate(
                     "TRANSPORT_MANAGER",
