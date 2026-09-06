@@ -9,6 +9,10 @@
 | Node | 24 (Active LTS) | Angular 22 requires ≥ 22.22.3. Use `nvm use 24`. |
 | Docker | any recent | Integration tests start a PostgreSQL container. |
 
+> **Just want to see it running?** [Running locally](running-locally.md) has the step-by-step,
+> including IntelliJ and WebStorm setup, what the demo school contains, and what to check once you
+> are signed in. The rest of this page is standards and workflow.
+
 ## Setup
 
 ```bash

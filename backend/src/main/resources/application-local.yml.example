@@ -34,3 +34,32 @@ logging:
   level:
     in.chalkbase: DEBUG
     org.hibernate.SQL: DEBUG
+
+chalkbase:
+  dev:
+    # Builds one invented school the first time the application starts against an empty database, so
+    # that `./mvnw spring-boot:run` opens on a school you can sign into rather than on an empty login
+    # screen. See `in.chalkbase.platform.devdata.DemoSchoolSeeder`.
+    #
+    # What it creates: school DEMO-001 (schema `demo_school`), the current April–March academic year,
+    # Nursery through Class 8 with sections A and B, sixty invented students with enrolments and roll
+    # numbers, guardians deliberately shared between siblings (ADR-0020 §5), and four accounts —
+    # `principal`, `classteacher`, `auditor` and `newteacher` — all with one password, which is
+    # printed in a block at the end of startup. Every person in it is invented; none of it is real
+    # student data and none of it ever may be (AGENTS rule 9).
+    #
+    # It runs ONCE. On every later start it finds DEMO-001 already registered, logs one line and does
+    # nothing, so restarting twenty times does not produce twenty schools. To rebuild it, drop the
+    # schema and the registry row by hand:
+    #
+    #     drop schema demo_school cascade;
+    #     delete from public.school where code = 'DEMO-001';
+    #
+    # It is `local` only, three times over: the bean exists only on that profile, this property gates
+    # it, and the seeder itself re-checks the active profiles at run time and refuses to start the
+    # application if `prod` or `test` is among them.
+    #
+    # Set this to false if you would rather onboard a school yourself. Omitting it entirely is the
+    # same as true — a developer whose application-local.yml predates this property still gets a
+    # school to look at.
+    seed-demo-school: true

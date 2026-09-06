@@ -30,96 +30,57 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Students, guardians and enrolment | ✅ Done |
 | Deployment to Coolify | ⬜ Not started |
 
-## Done
+## What to do next
 
-| What | Where |
-|---|---|
-| Requirement pack imported | [`docs/requirements`](requirements/README.md) |
-| Monorepo structure, agent instructions, docs skeleton | `AGENTS.md`, `docs/` |
-| Split backend/frontend pipelines, image build checks | [`.github/workflows`](../.github/workflows) |
-| `main` protected: no direct pushes, both checks required, admins included | — |
-| Spring Boot 4.1 · Java 21 · Modulith 2.1, `school` vertical slice, boundary test | `backend/` |
-| Angular 22 · TS 6 · Vitest, adaptive shell at three window size classes | `frontend/` |
-| PostgreSQL 17 on Supabase; profiles `local`/`test`/`prod`; Testcontainers | PR #2 |
-| One response envelope, module error codes, constraint registry, trace ids | PR #3 |
-| Server-driven navigation and hand-built component decisions | PR #5 |
-| Responsive layout, verified at 360 / 700 / 1280 | PR #6 |
-| Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark) | `frontend/src/styles/` |
-| Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
-| Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy | [Phase 0 decisions](requirements/07-phase-0-decisions.md) |
-| Fee ledger, provider ports, data classification, deployment baseline | ADR-0012…0015 |
-| Audit log: one generic table per school, field NAMES only, two transaction semantics | [ADR-0018](architecture/adr/0018-audit-log.md) |
-| School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
-| Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
-| Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
-| Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
-| Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
-| `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
-| Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
-| Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
+**Only live work is listed here.** Anything finished moves to [Done](#done) — a queue where nine of
+thirteen entries are struck through is a queue nobody can read.
 
-## Next, in order
+### 1. Encryption at rest — decided, not built
 
-Each line says what it unblocks, because the order is not arbitrary.
+[ADR-0022](architecture/adr/0022-encryption-at-rest.md) settles both open questions: a 256-bit
+`CHALKBASE_ENCRYPTION_KEY` from the environment with a `v1:` key id on every ciphertext so rotation
+is possible, and `@Encrypted` on the entity bound to the DTO's `@Classification` by a build-failing
+test.
 
-1. ~~**Identity — schema and login.**~~ ✅ Done. `user_account`, `user_identifier`, `user_credential`
-   per tenant; Spring Session in `public`; login, logout and forced password change; the session
-   filter binding `TenantContext`; `permitAll` off except onboarding (ADR-0017).
-2. ~~**Permissions, roles, grants.**~~ ✅ Done. Permission registry per module seeded per tenant,
-   twelve role templates copied on onboarding, scoped grants with validity windows, effective
-   permissions resolved once at login, `@PreAuthorize` enforcement, and the test that fails the
-   build when a controller method carries no authorization annotation (ADR-0005).
-3. ~~**`GET /api/me`**~~ ✅ Done. Bootstrap returns user, school, permissions, a
-   `permissionsVersion` hash and the permission-filtered navigation tree; the shell renders from it,
-   unknown ids are dropped and logged, and the guard now asks the server (ADR-0008).
-4. ~~**Tenant resolution from the session.**~~ ✅ Done. `SessionTenantFilter` binds `TenantContext`
-   per request and unbinds it in a `finally`; a rejected tenant name no longer leaks its pooled
-   connection (ADR-0011).
-5. ~~**Audit log (FR-008).**~~ ✅ Done, end to end. One `audit_event` table per school, field names
-   and never values, data changes in the caller's transaction and security events in their own
-   (ADR-0018), and the screen at `/audit`. **The screen landed with zero backend changes**, which
-   was the real test of ADR-0008: the backend had been emitting the `audit` id since the previous
-   PR and the frontend was dropping it with a log line until a route resolved it.
-6. ~~**School profile.**~~ ✅ Done. `GET`/`PUT /api/school/profile` and `/settings/school-profile`,
-   with the registry row written back on save so the register cannot disagree with the school.
-7. **Shared components** as the admin screens need them: dialog and toast remain (ADR-0009).
-   Designed already — see [`docs/artifacts`](artifacts/README.md).
-8. ~~**Academic sessions and classes.**~~ ✅ Done. Sessions with exactly one current year enforced by
-   a partial unique index, and the class ladder with its sections — structural rather than
-   per-session (ADR-0019). Reordering is one endpoint taking the whole ladder, because two separate
-   updates cannot swap two positions past a unique constraint.
-9. ~~**Students and guardians.**~~ ✅ Done. One name field rather than three, guardians shared
-   between siblings, and enrolment carrying the session. Restricted category fields are deliberately
-   absent — see the blocker below.
-10. **Encryption at rest** — **decided, not yet built**
-    ([ADR-0022](architecture/adr/0022-encryption-at-rest.md)). Both open questions are settled: the
-    key is a 256-bit `CHALKBASE_ENCRYPTION_KEY` from the environment with a key id prefixed to every
-    ciphertext so rotation is possible, and storage is marked with `@Encrypted` on the entity while
-    `@Classification` stays on the DTO, bound by a build-failing test rather than by repeating the
-    tier in two places that can disagree. **This is the next slice**, and it unblocks the Restricted
-    student fields and therefore UDISE+.
-11. ~~**Student import.**~~ ✅ Done. Validate as its own call, all-or-nothing on commit, every
-    problem listed at once. **Export is deliberately not built**: ADR-0014 requires exports masked by
-    classification with the unmasked one audited, and neither the masking nor the permission that
-    lifts it exists — an export ignoring that would be the largest unaudited disclosure surface in
-    the product.
-12. **Subjects**, then **guardian import, documents and dashboards** to close Phase 1.
-13. **ADR-0008's staleness rule**, promoted out of the debt list: the audit screen is the exact case
-    it describes. A 403 should make the client refetch `/api/me` and re-render navigation before
-    showing the error, so a permission revoked mid-session stops leaving a menu entry that lies. The
-    interceptor does this for 401 only.
+**This is the top item because it is the only thing standing between the product and a real
+school.** Without it the student record cannot hold caste, religion, disability or EWS/RTE category
+([ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2), and without those there are no
+UDISE+ returns.
 
-Also queued, not blocking:
+Shape of the work: an `EncryptedStringConverter`, the `@Encrypted` marker, the binding test, then the
+columns ADR-0020 §2 left out.
 
-- ~~`PageResponse<T>`~~ ✅ Built with `GET /api/audit`, the first list endpoint: offset pagination
-  inside the ADR-0007 envelope, page size capped at 100, and an unknown `?sort=` property answered
-  with a 400 rather than a 500.
-- Deploy to Coolify on the Hostinger Mumbai box once authentication exists (ADR-0015).
-- ~~`@Classification` annotation and the build-failing test for unclassified DTO fields~~ ✅ Built
-  (PR #22), on every record under a `*/api/` package. The remaining hole is the accessor case, which
-  is listed under Blocking below rather than here.
-- Synthetic school seeder for the `dev` profile: ~600 students, 14 classes, one term of attendance,
-  fixed seed. Needed to make list screens and performance real.
+### 2. Subjects
+
+The last piece of master data. Small, and it unblocks marks and the timetable later.
+
+### 3. ADR-0008's staleness rule
+
+A `403` should make the client refetch `/api/me` and re-render navigation before showing the error,
+so a permission revoked mid-session stops leaving a menu entry that lies. The interceptor does this
+for `401` only. Cross-cutting but small.
+
+### 4. A Confidential value can still reach a log through an accessor
+
+`@Classification` stops `log.info("saving {}", dto)`. Nothing stops
+`log.info("saving {}", dto.fullName())`. The cheap fix is a static rule flagging a `CONFIDENTIAL`
+accessor inside a logger argument — worth more than export masking, and cheaper now than after
+another thousand call sites.
+
+### 5. Guardian import, documents, dashboards
+
+What is left of Phase 1 after the above. Guardian import specifically needs matching each row
+against the existing directory by phone, or it recreates the duplicate problem
+[ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §5 exists to prevent.
+
+### Also queued, not blocking
+
+- Deploy to Coolify on the Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)).
+- Export, which is deliberately unbuilt: ADR-0014 wants exports masked by classification with the
+  unmasked one audited, and neither exists. An export ignoring that would be the largest unaudited
+  disclosure surface in the product.
+- A larger synthetic seed — the `local` profile seeds one school with a few dozen students
+  ([running locally](development/running-locally.md)); list screens and performance want ~600.
 
 ## Blocking the first real school
 
@@ -149,6 +110,35 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | SMS / WhatsApp provider | Chosen once DLT registration completes — that process shows which providers are painless. | After DLT |
 | Payment gateway | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter. | Before online fees |
 | Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating. | Before first real data |
+
+## Done
+
+| What | Where |
+|---|---|
+| Requirement pack imported | [`docs/requirements`](requirements/README.md) |
+| Local run guide and a demo school seeded on the `local` profile | [running locally](development/running-locally.md) |
+| Monorepo structure, agent instructions, docs skeleton | `AGENTS.md`, `docs/` |
+| Split backend/frontend pipelines, image build checks | [`.github/workflows`](../.github/workflows) |
+| `main` protected: no direct pushes, both checks required, admins included | — |
+| Spring Boot 4.1 · Java 21 · Modulith 2.1, `school` vertical slice, boundary test | `backend/` |
+| Angular 22 · TS 6 · Vitest, adaptive shell at three window size classes | `frontend/` |
+| PostgreSQL 17 on Supabase; profiles `local`/`test`/`prod`; Testcontainers | PR #2 |
+| One response envelope, module error codes, constraint registry, trace ids | PR #3 |
+| Server-driven navigation and hand-built component decisions | PR #5 |
+| Responsive layout, verified at 360 / 700 / 1280 | PR #6 |
+| Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark) | `frontend/src/styles/` |
+| Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
+| Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy | [Phase 0 decisions](requirements/07-phase-0-decisions.md) |
+| Fee ledger, provider ports, data classification, deployment baseline | ADR-0012…0015 |
+| Audit log: one generic table per school, field NAMES only, two transaction semantics | [ADR-0018](architecture/adr/0018-audit-log.md) |
+| School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
+| Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
+| Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
+| Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
+| Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
+| `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
+| Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
+| Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
 
 ## Known gaps and debt
 
@@ -196,6 +186,18 @@ Recorded so they are decided rather than discovered.
 - `MaxUploadSizeExceededException → VAL_003` is untested: `MockMvcRequestBuilders.multipart()` builds
   the request object directly and never runs the multipart resolver, so the limit cannot be exercised
   from MockMvc at all.
+- **A module's `api/` records cannot actually be used by another module.** Found while building the
+  demo seeder, and confirmed by `ModularityTests`: `SaveStudentRequest` names
+  `student.domain.Gender` and `StudentStatus`, `CreateSchoolRequest` names `school.domain.Board`,
+  `LinkGuardianRequest` names `GuardianRelation` — all of them types the owning module does not
+  expose. So the named interface leaks types that are themselves not exposed, and referencing the
+  record from outside fails the boundary test:
+
+  > `Module 'platform' depends on non-exposed type in.chalkbase.student.domain.Gender within module 'student'!`
+
+  The fix is small — move those four enums into their `api/` packages, or mark them
+  `@NamedInterface` — but it is a contract change and was not worth making from inside a dev tool.
+  It matters the first time one feature module genuinely needs another's request shape.
 - `guardian.phone` is `varchar(20)`. `+91 98765 43210` fits at 16; a longer international number
   with an extension would not.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
