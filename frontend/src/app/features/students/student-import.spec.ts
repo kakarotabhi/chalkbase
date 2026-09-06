@@ -118,9 +118,18 @@ describe('StudentImport', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
+  /** Set by the one test that patches URL's statics, so they are put back however it ends. */
+  let restoreUrl: (() => void) | null = null;
+
   afterEach(() => {
     httpMock.verify();
+    restoreUrl?.();
+    restoreUrl = null;
     vi.restoreAllMocks();
+    // `restoreAllMocks` does not undo `vi.stubGlobal`. Nothing here should be stubbing a global,
+    // and this makes that true rather than hoped for: a stub that escapes this file breaks whichever
+    // suites happen to share the worker, which is a different set on every machine.
+    vi.unstubAllGlobals();
   });
 
   // ── Choosing ─────────────────────────────────────────────────────────────────────────────
@@ -455,7 +464,23 @@ describe('StudentImport', () => {
       blobs.push(blob);
       return 'blob:test';
     });
-    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL: vi.fn() });
+
+    // Patch the two STATIC methods, never the `URL` global itself.
+    //
+    // `vi.stubGlobal('URL', { ...URL, createObjectURL })` is the obvious spelling and it breaks
+    // every other suite in the same worker: spreading a class copies none of its construct
+    // behaviour, so the global becomes a plain object and `new URL(...)` anywhere else throws
+    // "URL is not a constructor". `vi.restoreAllMocks()` does not undo `stubGlobal` either, so the
+    // damage outlives the file. It cost a green local run and a red CI one, because which files
+    // share a worker differs between machines.
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+    restoreUrl = () => {
+      URL.createObjectURL = originalCreate;
+      URL.revokeObjectURL = originalRevoke;
+    };
 
     button('Download the template')!.click();
     fixture.detectChanges();
