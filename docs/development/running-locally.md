@@ -3,6 +3,11 @@
 Two processes: the backend on `:8080` and the Angular dev server on `:4200`. You use `:4200` — it
 proxies `/api` to the backend, so the browser sees one origin and the session cookie works.
 
+> **There is a deployed copy** at <https://chalkbase-web.onrender.com>, signed in with the same
+> demo credentials this page describes. It is a free instance, so the first request after a quiet
+> spell takes about ninety seconds. Running locally is still faster to work against, and is the only
+> way to see your own changes.
+
 ## What you need
 
 | | Version | Why that one |

@@ -28,7 +28,39 @@ Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
 | Academic sessions, classes and sections | ✅ Done |
 | Students, guardians and enrolment | ✅ Done |
-| Deployment to Coolify | ⬜ Not started |
+| Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
+
+## Deployed
+
+A personal dev environment on Render's free tier, deployed from `main` on every merge. The Coolify
+path on the Mumbai VPS ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) is unchanged and
+remains the production plan.
+
+| | |
+|---|---|
+| App | <https://chalkbase-web.onrender.com> |
+| API | <https://chalkbase-api.onrender.com> |
+| API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html> |
+| Database | the same Supabase project the local profile uses — so the demo school is shared |
+
+Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
+`auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
+
+**Two things that look like faults and are not.**
+
+The first request after fifteen minutes of idle takes about ninety seconds — measured at 86s to a
+200. Free instances sleep, and this one runs a per-tenant Flyway pass on wake. Nothing in the
+configuration fixes that; it is the tier.
+
+`POST /api/schools` requires an `X-Chalkbase-Setup-Key` header on this deployment and answers 404
+without it, byte-identical to any unmapped path. Onboarding creates a PostgreSQL schema, and leaving
+it open on a public URL is a way for anyone who finds it to fill the database with junk. The
+application refuses to start on `prod` if the key is unset, because a deployment that silently falls
+back to open onboarding is worse than one that will not boot.
+
+**Numbers worth keeping.** Spring context startup on a free instance: 102 s. Tenant migration:
+**4,019 ms for one school**, which is the figure that makes ADR-0011's "move startup migration to a
+deploy step" expiry concrete — fifty schools would be over three minutes of every cold start.
 
 ## What to do next
 
