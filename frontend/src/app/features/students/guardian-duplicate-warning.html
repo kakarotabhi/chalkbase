@@ -1,0 +1,64 @@
+<!--
+  `role="status"`, not `role="alert"`. This is information arriving beside a field that is still
+  being filled in; an alert interrupts, and interrupting somebody mid-number to tell them something
+  they may already know is how a warning gets ignored. Nothing here is disabled and nothing is
+  blocked — see the class comment.
+-->
+@if (matches().length > 0) {
+  <div class="duplicate" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 4.5 2.8 19.5h18.4z" />
+      <path d="M12 10v4" />
+      <path d="M12 17.2v.1" />
+    </svg>
+
+    <div class="duplicate__body">
+      <strong class="duplicate__title">{{ heading() }}</strong>
+
+      <ul class="duplicate__list">
+        @for (match of matches(); track match.guardian.id) {
+          <li class="duplicate__match">
+            <span class="duplicate__who">
+              <span class="duplicate__name">{{ match.fullName }}</span>
+              @if (match.phone) {
+                <span class="duplicate__phone">{{ match.phone }}</span>
+              }
+              <!--
+                The count is the argument, not decoration: it says that using this record reaches
+                children who already read from it, and that a second copy would not.
+              -->
+              <span class="duplicate__count">{{ match.linkedTo }}</span>
+            </span>
+
+            <cb-button variant="secondary" [id]="match.useButtonId" (click)="choose(match)">
+              Use this guardian
+            </cb-button>
+          </li>
+        }
+      </ul>
+
+      @if (moreThanShown(); as note) {
+        <p class="duplicate__note">{{ note }}</p>
+      }
+
+      <!--
+        Said plainly, because the opposite mistake is real and this must not be read as a refusal.
+        A couple share a number; so does a household with one handset.
+      -->
+      <p class="duplicate__note">
+        If this is a different person who shares the number — a mother and father usually do — carry
+        on and add them.
+      </p>
+    </div>
+  </div>
+}

@@ -39,3 +39,34 @@ $cb-breakpoint-expanded: 52.5rem; // 840px
     @content;
   }
 }
+
+/// A text button: it changes what is on screen rather than navigating, and it is deliberately
+/// quieter than the real buttons around it.
+///
+/// A `<button>` and not an `<a>`, because nothing is navigated to and a link that goes nowhere is a
+/// link a screen reader announces wrongly. Kept here rather than copied per feature: it started as
+/// one screen's private style and is now on two, and two copies of a focus ring is how the third
+/// one ends up without it.
+@mixin link-button {
+  min-height: var(--cb-touch-target-min);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--cb-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+
+  &:disabled {
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+}

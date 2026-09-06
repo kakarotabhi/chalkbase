@@ -172,8 +172,74 @@
   font-weight: 600;
 }
 
+/**
+ * The count, and — where there is anything behind it — the control that opens the children.
+ *
+ * A `<button>` rather than a clickable span: it toggles a region, it carries `aria-expanded`, and
+ * it has to be reachable by keyboard. Muted like the text it replaces, and underlined so it does
+ * not read as decoration.
+ */
 .guardian__count {
   font-size: var(--cb-font-size-sm);
+}
+
+button.guardian__count {
+  @include link-button;
+
+  color: var(--cb-text-muted);
+  font-weight: 500;
+}
+
+// ── Which students, though ─────────────────────────────────────────────────
+
+/**
+ * The answer the count could not give.
+ *
+ * Inside the row rather than in a dialog: this is somebody checking whether two similar records are
+ * the same person, and a dialog would hide the other record behind the answer about this one.
+ */
+.children {
+  margin-top: var(--cb-space-3);
+  padding: var(--cb-space-3);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-surface);
+}
+
+.children__status {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.children__list {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.child {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.child__name {
+  font-weight: 600;
+}
+
+// The admission number is what the office searches by, and it is read digit by digit.
+.child__number,
+.child__placement {
+  color: var(--cb-text-muted);
+}
+
+.child__number {
+  font-family: var(--cb-font-numeric);
 }
 
 .guardian__contact {

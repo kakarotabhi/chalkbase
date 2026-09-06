@@ -76,6 +76,13 @@
           Search above first. If this person already has a child at this school, edit the record
           that is already here rather than adding a second one.
         </p>
+
+        <!--
+          The check that runs while the number is being typed, because "search first" is advice and
+          this is the moment the advice is about. It warns and offers; it never refuses — two people
+          really do share a number (see the component).
+        -->
+        <cb-guardian-duplicate-warning [phone]="typedPhone()" (use)="useExisting($event)" />
       }
 
       @if (saveFailure(); as message) {
@@ -235,11 +242,62 @@
           <div class="guardian__who">
             <span class="guardian__name">{{ row.fullName }}</span>
             <!--
-              The number that says this record reaches beyond one child, and the reason editing it
-              is worth doing here rather than on a student's page.
+              The number that says this record reaches beyond one child — and, where there is
+              something behind it, the way to find out which children those are. A count is what
+              tells a clerk two records exist; the names are what tell them apart.
             -->
-            <span class="guardian__count">{{ row.linkedTo }}</span>
+            @if (row.hasChildren) {
+              <button
+                type="button"
+                class="linklike guardian__count"
+                [id]="row.childrenButtonId"
+                [attr.aria-expanded]="row.expanded"
+                [attr.aria-controls]="row.childrenPanelId"
+                (click)="toggleChildren(row)"
+              >
+                {{ row.linkedTo }}
+              </button>
+            } @else {
+              <span class="guardian__count">{{ row.linkedTo }}</span>
+            }
           </div>
+
+          @if (row.expanded) {
+            <div class="children" [id]="row.childrenPanelId">
+              @if (childrenLoadingId() === row.id) {
+                <p class="children__status" role="status">Loading students…</p>
+              } @else if (childrenForbidden()) {
+                <!--
+                  The permission that guards this is `student:student:read`, not the guardian read,
+                  because these are children's names. The count above is still true and still shown.
+                -->
+                <p class="children__status" role="status">
+                  Seeing which students needs the "View students" permission. Ask your principal.
+                </p>
+              } @else if (childrenFailed()) {
+                <p class="children__status" role="status">
+                  Could not load these students.
+                  <button type="button" class="linklike" (click)="retryChildren()">
+                    Try again
+                  </button>
+                </p>
+              } @else if (expandedChildren(); as children) {
+                <ul class="children__list">
+                  @for (child of children; track child.studentId) {
+                    <li class="child">
+                      <span class="child__name">{{ child.fullName }}</span>
+                      <span class="child__number">{{ child.admissionNumber }}</span>
+                      @if (child.placement) {
+                        <span class="child__placement">{{ child.placement }}</span>
+                      } @else {
+                        <span class="muted">Not in a class this year</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
 
           <dl class="guardian__contact">
             <div class="guardian__pair">

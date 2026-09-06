@@ -330,6 +330,22 @@ public class StudentService {
     }
 
     /**
+     * Where each of these students sits this year, for a caller that has not already resolved which
+     * year "this year" is.
+     *
+     * <p>Package-private, and it exists so {@code GuardianService} can put a class and a section
+     * against a guardian's children without a second copy of the rule below. "Current" is a
+     * judgement — the year the school has <em>declared</em>, not the newest one somebody typed in —
+     * and two implementations of a judgement disagree eventually. One screen would then show next
+     * year's class and another this year's, with nothing on either to say which.
+     */
+    Map<UUID, CurrentEnrolment> currentEnrolments(List<UUID> studentIds) {
+        return currentEnrolments(
+                studentIds,
+                academics.currentSession().map(AcademicSessionRef::id).orElse(null));
+    }
+
+    /**
      * Where each of these students sits <strong>this year</strong>.
      *
      * <p>"This year" is the session the school has flagged current, not the most recent one it has

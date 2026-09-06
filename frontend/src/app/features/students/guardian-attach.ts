@@ -23,6 +23,7 @@ import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
+import { GuardianDuplicateWarning } from './guardian-duplicate-warning';
 import {
   ACCESS_DENIED,
   CONFLICT,
@@ -83,7 +84,15 @@ interface ResultRow {
  */
 @Component({
   selector: 'cb-guardian-attach',
-  imports: [ReactiveFormsModule, Button, Checkbox, FormField, Select, TextInput],
+  imports: [
+    ReactiveFormsModule,
+    Button,
+    Checkbox,
+    FormField,
+    Select,
+    TextInput,
+    GuardianDuplicateWarning,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './guardian-attach.html',
   styleUrl: './guardian-attach.scss',
@@ -124,6 +133,14 @@ export class GuardianAttach {
 
   protected readonly step = signal<Step>('search');
   protected readonly chosen = signal<GuardianSummary | null>(null);
+
+  /**
+   * The phone number as it is being typed into the new-guardian form, for the duplicate check.
+   *
+   * A signal rather than a template expression reading the control: the check debounces off this,
+   * and a getter would give it nothing to react to.
+   */
+  protected readonly typedPhone = signal('');
 
   protected readonly searching = signal(true);
   protected readonly searchFailureCode = signal<string | null>(null);
@@ -286,9 +303,10 @@ export class GuardianAttach {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.revision.update((count) => count + 1));
 
-    this.newGuardian.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.revision.update((count) => count + 1));
+    this.newGuardian.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.revision.update((count) => count + 1);
+      this.typedPhone.set(value.phone ?? '');
+    });
 
     afterNextRender(() => this.focus('#guardian-search'), { injector: this.injector });
   }
@@ -314,6 +332,30 @@ export class GuardianAttach {
     this.focusAfterRender('#guardian-relation');
   }
 
+  /**
+   * "Use this guardian instead", from the duplicate warning under the phone field.
+   *
+   * The same destination as {@link choose}: the person exists, so this becomes an ordinary link and
+   * whatever was half-typed into the new-guardian form is dropped. It takes the guardian it was
+   * handed rather than looking one up in `results()`, because the check searches the whole directory
+   * and the match is very often not on the page being shown — which is the entire reason a name
+   * search missed them.
+   *
+   * Somebody already on this student never reaches here — they are excluded from the check, because
+   * the link would be refused by `uq_student_guardian_pair` and the list above already says they are
+   * attached.
+   */
+  protected useExisting(guardian: GuardianSummary): void {
+    if (this.busy()) {
+      return;
+    }
+    this.resetWrite();
+    this.link.reset({ relation: '', primary: false }, { emitEvent: false });
+    this.chosen.set(guardian);
+    this.step.set('link');
+    this.focusAfterRender('#guardian-relation');
+  }
+
   /** Leaves the search and offers a blank person, with whatever was typed already in the name. */
   protected startCreate(): void {
     this.resetWrite();
@@ -322,6 +364,7 @@ export class GuardianAttach {
       { fullName: this.searchText(), phone: '', email: '', occupation: '' },
       { emitEvent: false },
     );
+    this.typedPhone.set('');
     this.chosen.set(null);
     this.step.set('create');
     this.focusAfterRender('#guardian-new-name');

@@ -14,11 +14,12 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Observable, debounceTime, distinctUntilChanged } from 'rxjs';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { GUARDIAN_PAGE_SIZE, GuardiansApi } from '../../core/api/guardians-api';
-import { GuardianSummary } from '../../core/api/models';
+import { GuardianStudent, GuardianSummary } from '../../core/api/models';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
-import { ACCESS_DENIED, CONFLICT } from './students-shared';
+import { GuardianDuplicateWarning } from './guardian-duplicate-warning';
+import { ACCESS_DENIED, CONFLICT, classAndSection } from './students-shared';
 
 /** Same pause as the student search: eight characters is one request, not eight. */
 const SEARCH_DEBOUNCE_MS = 300;
@@ -31,7 +32,21 @@ interface GuardianRow {
   readonly email: string | null;
   readonly occupation: string | null;
   readonly linkedTo: string;
+  /** False when nobody points at this record: there is nothing to expand, so nothing offers to. */
+  readonly hasChildren: boolean;
+  readonly expanded: boolean;
   readonly editButtonId: string;
+  readonly childrenButtonId: string;
+  readonly childrenPanelId: string;
+}
+
+/** One of a guardian's children, as the expanded row reads them. */
+interface ChildRow {
+  readonly studentId: string;
+  readonly fullName: string;
+  readonly admissionNumber: string;
+  /** `Class 5 · A`, or null for a child admitted but not yet placed — a real state, not a fault. */
+  readonly placement: string | null;
 }
 
 /**
@@ -67,7 +82,7 @@ interface GuardianRow {
  */
 @Component({
   selector: 'cb-guardian-list',
-  imports: [ReactiveFormsModule, Button, FormField, TextInput],
+  imports: [ReactiveFormsModule, Button, FormField, TextInput, GuardianDuplicateWarning],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './guardian-list.html',
   styleUrl: './guardian-list.scss',
@@ -104,6 +119,22 @@ export class GuardianList {
   protected readonly page = signal(0);
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
+
+  /** The row whose children are open, or null. One at a time: this is a detail, not a second list. */
+  protected readonly expandedId = signal<string | null>(null);
+  /** Children already fetched, by guardian id. Kept for the life of one page of results. */
+  private readonly childrenById = signal<Readonly<Record<string, readonly GuardianStudent[]>>>({});
+  protected readonly childrenLoadingId = signal<string | null>(null);
+  /** The `error.code` from the open row's children, or null. Never the message (ADR-0007). */
+  protected readonly childrenFailureCode = signal<string | null>(null);
+
+  /**
+   * The phone number as it is being typed into the editor, for the duplicate check.
+   *
+   * A signal rather than reading the control in a template expression: the check is debounced off
+   * this value, and a getter would give it nothing to react to.
+   */
+  protected readonly typedPhone = signal('');
 
   /** null when closed, 'new' when adding, or the id of the guardian being edited. */
   protected readonly editing = signal<'new' | string | null>(null);
@@ -147,8 +178,51 @@ export class GuardianList {
       email: guardian.email?.trim() || null,
       occupation: guardian.occupation?.trim() || null,
       linkedTo: describeLinkCount(guardian.linkedStudentCount),
+      hasChildren: guardian.linkedStudentCount > 0,
+      expanded: this.expandedId() === guardian.id,
       editButtonId: `guardian-edit-${guardian.id}`,
+      childrenButtonId: `guardian-children-${guardian.id}`,
+      childrenPanelId: `guardian-children-panel-${guardian.id}`,
     })),
+  );
+
+  /**
+   * The open row's children, or null while they are still coming.
+   *
+   * Names, and where each child sits. That is the point: two records that both say "linked to 2
+   * students" are told apart by *which* two, and by nothing else on the screen.
+   */
+  protected readonly expandedChildren = computed<readonly ChildRow[] | null>(() => {
+    const id = this.expandedId();
+    if (id === null) {
+      return null;
+    }
+    const children = this.childrenById()[id];
+    if (!children) {
+      return null;
+    }
+    return children.map((child) => ({
+      studentId: child.studentId,
+      fullName: child.fullName,
+      admissionNumber: child.admissionNumber,
+      placement: child.currentEnrolment
+        ? classAndSection(child.currentEnrolment.className, child.currentEnrolment.sectionName)
+        : null,
+    }));
+  });
+
+  /**
+   * Somebody who may read the guardian directory but not student records.
+   *
+   * A real combination — the two permissions are separate on purpose, so a school can hand out a
+   * parent directory without handing out the roll. The count stays on the row; only the names are
+   * refused, and the row says so rather than looking broken.
+   */
+  protected readonly childrenForbidden = computed(
+    () => this.childrenFailureCode() === ACCESS_DENIED,
+  );
+  protected readonly childrenFailed = computed(
+    () => this.childrenFailureCode() !== null && this.childrenFailureCode() !== ACCESS_DENIED,
   );
 
   /** "1–25 of 613". Counted off the rows actually received, so the last page reads correctly. */
@@ -224,8 +298,9 @@ export class GuardianList {
         this.load();
       });
 
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       this.revision.update((count) => count + 1);
+      this.typedPhone.set(value.phone ?? '');
       if (Object.keys(this.saveFieldErrors()).length > 0) {
         this.saveFieldErrors.set({});
       }
@@ -252,11 +327,95 @@ export class GuardianList {
     this.load();
   }
 
+  // ── Which students, though ───────────────────────────────────────────────────────────────
+
+  /**
+   * Opens or closes the list of children behind a row's count.
+   *
+   * One row at a time, and the answer is fetched only when somebody asks for it: a page of
+   * twenty-five would otherwise be twenty-six requests to answer a question nobody had. Once
+   * fetched it is kept, so closing and reopening a row is free.
+   */
+  protected toggleChildren(row: GuardianRow): void {
+    if (!row.hasChildren) {
+      return;
+    }
+    if (this.expandedId() === row.id) {
+      this.expandedId.set(null);
+      return;
+    }
+
+    this.expandedId.set(row.id);
+    this.childrenFailureCode.set(null);
+    if (this.childrenById()[row.id]) {
+      return;
+    }
+
+    this.childrenLoadingId.set(row.id);
+    this.guardians
+      .students(row.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (children) => {
+          this.childrenById.update((cache) => ({ ...cache, [row.id]: children }));
+          if (this.childrenLoadingId() === row.id) {
+            this.childrenLoadingId.set(null);
+          }
+        },
+        error: (error: unknown) => {
+          if (this.childrenLoadingId() !== row.id) {
+            return;
+          }
+          this.childrenLoadingId.set(null);
+          this.childrenFailureCode.set(apiErrorCode(error));
+        },
+      });
+  }
+
+  protected retryChildren(): void {
+    const id = this.expandedId();
+    const row = this.view().find((candidate) => candidate.id === id);
+    if (row) {
+      // Closed and reopened, so the same guard runs rather than a second copy of it.
+      this.expandedId.set(null);
+      this.toggleChildren(row);
+    }
+  }
+
   // ── The editor ───────────────────────────────────────────────────────────────────────────
+
+  /**
+   * "Use this guardian instead", from the duplicate warning under the phone field.
+   *
+   * The person is already here, so the honest next move is to correct <em>their</em> record rather
+   * than to create a second one beside it — the editor switches to them with their own details in
+   * it, and whatever was typed into the new-guardian form is discarded. Nothing is saved by this:
+   * it changes which record the form is about, and the clerk still presses Save.
+   *
+   * They are not necessarily on the page being shown — the check searches the whole directory — so
+   * this takes the guardian it was handed rather than looking one up in `rows()`.
+   */
+  protected useExisting(guardian: GuardianSummary): void {
+    this.resetEditor();
+    this.form.reset(
+      {
+        fullName: guardian.fullName,
+        phone: guardian.phone ?? '',
+        email: guardian.email ?? '',
+        occupation: guardian.occupation ?? '',
+      },
+      { emitEvent: false },
+    );
+    this.typedPhone.set(guardian.phone ?? '');
+    this.editing.set(guardian.id);
+    this.announcement.set(`Editing ${guardian.fullName}, who is already at this school.`);
+    this.focusAfterRender('#guardian-name');
+  }
 
   protected startAdd(): void {
     this.resetEditor();
     this.form.reset({ fullName: '', phone: '', email: '', occupation: '' }, { emitEvent: false });
+    this.typedPhone.set('');
     this.editing.set('new');
     this.focusAfterRender('#guardian-name');
   }
@@ -276,6 +435,7 @@ export class GuardianList {
       },
       { emitEvent: false },
     );
+    this.typedPhone.set(guardian.phone ?? '');
     this.editing.set(guardian.id);
     this.focusAfterRender('#guardian-name');
   }
@@ -354,6 +514,12 @@ export class GuardianList {
     const request = ++this.latestRequest;
     this.loading.set(true);
     this.failureCode.set(null);
+    // A different page or a different search is a different set of rows, so the children fetched
+    // for the last set are not answers about this one. Closed and forgotten rather than carried.
+    this.expandedId.set(null);
+    this.childrenById.set({});
+    this.childrenLoadingId.set(null);
+    this.childrenFailureCode.set(null);
 
     this.guardians
       .search({ page: this.page(), size: this.pageSize, q: this.search.getRawValue() })
