@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -42,7 +43,10 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain apiFilterChain(
-            HttpSecurity http, SecurityErrorResponder securityErrors, ObjectProvider<SetupKeyFilter> setupKey)
+            HttpSecurity http,
+            SecurityErrorResponder securityErrors,
+            ObjectProvider<SetupKeyFilter> setupKey,
+            ObjectProvider<AuthenticatedApiFilter> moduleFilters)
             throws Exception {
         // Present only on the prod profile (SetupKeyConfiguration). Added here, inside the chain,
         // rather than as a servlet filter in front of it: FilterChainProxy has already run
@@ -51,6 +55,13 @@ public class SecurityConfig {
         // requests they are talking about. Placed ahead of CsrfFilter so a request with no key is
         // refused before any session or CSRF work is done for it.
         setupKey.ifAvailable(filter -> http.addFilterBefore(filter, CsrfFilter.class));
+
+        // Rules a feature module contributes about whether a session may be used at all, rather
+        // than about what it may reach. They go after AuthorizationFilter — the last filter in the
+        // chain — so the security context is restored, CSRF is settled and an anonymous or
+        // URL-denied request has already been answered before any of them runs. See
+        // AuthenticatedApiFilter for why the position, and the interface, are not negotiable.
+        moduleFilters.orderedStream().forEach(filter -> http.addFilterAfter(filter, AuthorizationFilter.class));
 
         // The plain (non-XOR) handler is what lets a browser read the XSRF-TOKEN cookie and echo it
         // back verbatim as X-XSRF-TOKEN. Setting the request attribute name to null opts out of

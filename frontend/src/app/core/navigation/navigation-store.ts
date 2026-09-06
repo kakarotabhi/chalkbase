@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { NavigationItem } from '../api/models';
 import { IconName } from '../../shared/components/icon/icon-glyphs';
 import { navLabel } from './nav-labels';
@@ -47,6 +47,32 @@ export class NavigationStore {
    * no items, and the shell must tell that apart from "we have not asked yet".
    */
   readonly loaded = this.hasLoaded.asReadonly();
+
+  /**
+   * Where a session with no destination of its own belongs: the first thing in *this* user's menu
+   * that this build can actually open, or null when there is nothing.
+   *
+   * The signed-in landing page used to be a constant in `app.routes.ts` — `schools`, then
+   * `students` — and both were a guess at what the person signing in is allowed to see. The
+   * auditor holds `platform:audit:read` and nothing else, so the guess put a 403 and four console
+   * errors in front of them as the first screen after sign-in. The server already answers this
+   * question: `/api/me` returns the menu it filtered for this user, and its first item is the
+   * first thing they may open. Reading that is reacting to what we were told, not re-deriving the
+   * authorization model here, which ADR-0008 forbids.
+   *
+   * Two details this cannot skip:
+   *
+   * - **The first item is not always a destination.** `students` is a heading with `students.all`
+   *   under it. Landing on a container means landing on whatever its route happens to redirect to,
+   *   which is a second guess in a second file; so this descends to the first leaf instead.
+   * - **The first item the *server* sent may not be the first item that resolves.** An id with no
+   *   entry in `nav-routes.ts` is dropped, along with its children. This reads the resolved tree,
+   *   after that filtering, so it can only ever name a path this build owns.
+   *
+   * Null is a real answer, not a failure to compute: a user whose whole menu was dropped has
+   * nowhere to be sent, and inventing a fallback route here would put the bug back.
+   */
+  readonly landingPath = computed(() => firstDestination(this.links()));
 
   load(navigation: readonly NavigationItem[]): void {
     this.links.set(this.resolveAll(navigation));
@@ -99,4 +125,18 @@ export class NavigationStore {
  */
 function byOrderThenId(a: NavigationItem, b: NavigationItem): number {
   return a.order - b.order || a.id.localeCompare(b.id);
+}
+
+/**
+ * The first leaf of a resolved menu, depth first.
+ *
+ * A container falls back to its own path only when nothing resolvable sits under it — its children
+ * may all have been dropped, and its own entry is then the closest thing to a destination we have.
+ */
+function firstDestination(links: readonly NavLink[]): string | null {
+  const first = links[0];
+  if (!first) {
+    return null;
+  }
+  return firstDestination(first.children) ?? first.path;
 }
