@@ -136,3 +136,98 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # ── Staging API ────────────────────────────────────────────────────────────────────────────────
+  #
+  # A second pair of services, tracking the `staging` branch, so a feature can be verified running
+  # before it reaches `main`.
+  #
+  # WHY THIS EXISTS, AND WHY IT NEEDED A SECOND DATABASE. The two services above and every
+  # developer's `local` profile point at the same Supabase project. `TenantMigrations` fans out at
+  # startup against every school's schema with Flyway's defaults — `validateOnMigrate=true`,
+  # `outOfOrder=false`. So a branch deployed against that database applies its unmerged migration to
+  # the real `demo_school` and records its checksum, and the moment the branch edits that file
+  # again — which is normal while work is in progress — every other backend refuses to start on a
+  # checksum mismatch, with a manual fix. docs/development/parallel-work.md records that as the
+  # second and larger of the two migration hazards. Deploying branches would turn it from a hazard
+  # into a routine, so staging gets its own Supabase project (ap-southeast-1, beside these
+  # services) and the dev environment above is left alone.
+  #
+  # ONE BLUEPRINT, FOUR SERVICES. `branch` is a service-level field, so the staging pair lives in
+  # the same render.yaml rather than in a second file on a second branch. The alternative — a
+  # `staging` branch carrying a different render.yaml — makes every merge in either direction
+  # conflict on this file, forever, for no gain.
+  - type: web
+    name: chalkbase-api-staging
+    runtime: docker
+    plan: free
+    region: singapore
+    # `repo` is required alongside `branch`: naming a branch makes this a git-based service in its
+    # own right rather than one inheriting the Blueprint's repository, and Render's validator
+    # rejects the half of that pair on its own.
+    repo: https://github.com/kakarotabhi/chalkbase
+    branch: staging
+
+    dockerfilePath: ./ops/docker/Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /actuator/health
+
+    envVars:
+      # `prod`, not a new profile. Staging is worth having only if it runs what main will run;
+      # a `staging` profile would be a third configuration nobody tests.
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: 8080
+      - key: JAVA_OPTS
+        value: -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC
+
+      # The SECOND Supabase project — not the one the two services above use. Session pooler or
+      # direct connection, never port 6543 in transaction mode: ADR-0011 hands each connection a
+      # `search_path` per school, and a pooler that hands out a different backend per statement
+      # breaks tenancy.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+      # Same reasoning as the dev API: POST /api/schools creates a PostgreSQL schema and is
+      # permitAll until platform-operator accounts exist. A staging URL is no less public.
+      - key: CHALKBASE_SETUP_KEY
+        sync: false
+
+      # ADR-0022. A distinct key from the dev environment's, because a staging key is handled more
+      # loosely than a real one and a shared key would make that looseness the real one's problem.
+      # `openssl rand -base64 32`. A lost key is lost data, with no recovery path.
+      - key: CHALKBASE_ENCRYPTION_KEY
+        sync: false
+
+  # ── Staging web ────────────────────────────────────────────────────────────────────────────────
+  - type: web
+    name: chalkbase-web-staging
+    runtime: static
+    # `repo` is required alongside `branch`: naming a branch makes this a git-based service in its
+    # own right rather than one inheriting the Blueprint's repository, and Render's validator
+    # rejects the half of that pair on its own.
+    repo: https://github.com/kakarotabhi/chalkbase
+    branch: staging
+
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist/chalkbase-web/browser
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+
+    # Same ordering rule as the dev site: the SPA fallback must come last, and the /api destination
+    # is hardcoded because a route's `destination` cannot interpolate a service reference. Check it
+    # against the service's real hostname after the first deploy.
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://chalkbase-api-staging.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html

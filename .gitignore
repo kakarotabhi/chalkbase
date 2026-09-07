@@ -42,3 +42,7 @@ backend/target/spring-modulith-docs/
 # The negation matters — without it this also swallows the artboard sources.
 docs/artifacts/*.html
 !docs/artifacts/*.dc.html
+
+# Supabase CLI scratch state — a linked-project ref, written by whichever project you last
+# linked. Machine-local, not a property of the repository.
+supabase/.temp/

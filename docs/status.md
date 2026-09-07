@@ -237,6 +237,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
 | ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts` |
 | A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line | `LoggingClassificationTests` |
+| A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school` | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md) |
 
 ## Known gaps and debt
 
