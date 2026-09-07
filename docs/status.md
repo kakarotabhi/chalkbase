@@ -230,6 +230,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Signing in lands on the first item of the user's own menu, never a constant | `landingGuard`, `features/landing/` |
 | Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
+| `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
 
 ## Known gaps and debt
 
