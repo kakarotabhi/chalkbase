@@ -51,8 +51,16 @@ class AuditRetentionPurgeJobTests {
     @Autowired
     JdbcClient jdbc;
 
+    /**
+     * The real, Spring-managed bean — never {@code new AuditRetentionBatchExecutor(...)}. Its
+     * {@code @Transactional(REQUIRES_NEW)} only exists on the proxy Spring wraps around it; a
+     * plain instance built by hand has no transaction to open at all, and the delete fails with
+     * "No active transaction for update or delete query" the moment it reaches the repository —
+     * silently, from this test's point of view, because {@link AuditRetentionPurgeJob} catches
+     * exactly that and logs it rather than letting it propagate.
+     */
     @Autowired
-    AuditEventRepository events;
+    AuditRetentionBatchExecutor batches;
 
     @Autowired
     TenantRegistry registry;
@@ -159,8 +167,7 @@ class AuditRetentionPurgeJobTests {
     void doesNothingWhenDisabled() {
         seed(MAPLEGROVE_SCHEMA, 3, Instant.now().minus(3 * 365, ChronoUnit.DAYS));
 
-        AuditRetentionPurgeJob disabled =
-                new AuditRetentionPurgeJob(registry, new AuditRetentionBatchExecutor(events), audit, 2, 100, false);
+        AuditRetentionPurgeJob disabled = new AuditRetentionPurgeJob(registry, batches, audit, 2, 100, false);
         disabled.purgeExpiredEvents();
 
         assertThat(countRows(MAPLEGROVE_SCHEMA)).as("nothing ran").isEqualTo(3);
@@ -168,15 +175,13 @@ class AuditRetentionPurgeJobTests {
 
     @Test
     void refusesARetentionPeriodShorterThanOneYear() {
-        assertThat(catchThrown(() -> new AuditRetentionPurgeJob(
-                        registry, new AuditRetentionBatchExecutor(events), audit, 0, 100, true)))
+        assertThat(catchThrown(() -> new AuditRetentionPurgeJob(registry, batches, audit, 0, 100, true)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void refusesABatchSizeSmallerThanOne() {
-        assertThat(catchThrown(() -> new AuditRetentionPurgeJob(
-                        registry, new AuditRetentionBatchExecutor(events), audit, 2, 0, true)))
+        assertThat(catchThrown(() -> new AuditRetentionPurgeJob(registry, batches, audit, 2, 0, true)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -186,7 +191,7 @@ class AuditRetentionPurgeJobTests {
         // retentionYears is fixed at 2 for every test: everything seeded at Instant.now().minus(3 years) is
         // older than "now minus 2 years" and everything seeded at Instant.now().minus(1 day) is not, whatever
         // day the test actually runs on.
-        return new AuditRetentionPurgeJob(registry, new AuditRetentionBatchExecutor(events), audit, 2, batchSize, true);
+        return new AuditRetentionPurgeJob(registry, batches, audit, 2, batchSize, true);
     }
 
     private void seed(String schema, int count, Instant occurredAt) {
