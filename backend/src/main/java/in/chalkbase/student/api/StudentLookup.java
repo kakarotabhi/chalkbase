@@ -23,6 +23,13 @@ import java.util.UUID;
  *
  * <p>Every count is scoped to <em>active</em> enrolments only — a student who left the school two
  * years ago does not belong in "students enrolled" today, however their historical rows still read.
+ *
+ * <p><strong>{@link #rosterOfSection} is a second contract change</strong>, added for the
+ * attendance module (Phase 2): the first caller of this interface that needs more than a number.
+ * It is still read-only and still scoped to active enrolments, and it still answers nothing about a
+ * student that {@code student:student:read} does not already guard — a caller outside this module
+ * receives names and admission numbers, exactly what {@link EnrolledStudentRef} declares, and
+ * nothing this module would not already show on a class list.
  */
 public interface StudentLookup {
 
@@ -59,4 +66,22 @@ public interface StudentLookup {
      * held (ADR-0020 §6 keeps the person on file when that happens).
      */
     long guardiansWithoutAStudentCount();
+
+    /**
+     * The students actively enrolled in one section for one session, ordered by roll number (an
+     * unassigned roll number sorts last) then by name — the order a class register is read in.
+     *
+     * @return empty if the section, or the session, resolves to nothing in this school
+     */
+    List<EnrolledStudentRef> rosterOfSection(UUID sectionId, UUID academicSessionId);
+
+    /**
+     * Names and admission numbers for a set of students, keyed by id, whether or not they hold an
+     * active enrolment today. An id with no match in this school is simply absent from the map.
+     *
+     * <p>For a caller that already has a student id from a record it owns — attendance's
+     * correction-request queue is the first — and needs to label the row, without a roster to
+     * resolve it against.
+     */
+    Map<UUID, StudentNameRef> namesOf(Collection<UUID> studentIds);
 }

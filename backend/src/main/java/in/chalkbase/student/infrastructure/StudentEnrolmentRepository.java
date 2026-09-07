@@ -87,4 +87,19 @@ public interface StudentEnrolmentRepository extends JpaRepository<StudentEnrolme
     @Query("select count(e) from StudentEnrolment e where e.active = true and e.academicSessionId = :sessionId"
             + " and not exists (select 1 from StudentGuardianLink l where l.student = e.student)")
     long countActiveWithoutGuardian(@Param("sessionId") UUID sessionId);
+
+    /**
+     * A section's live roster for one session, in class-register order — roll number first
+     * (unassigned last), then name. For {@code StudentLookupService#rosterOfSection}, in support of
+     * the attendance module's marking screen.
+     *
+     * <p>Fetches the student eagerly in the same statement: every caller of this query wants the
+     * name and admission number alongside the enrolment, and a lazy load per row would turn one
+     * statement into one per student on the roster.
+     */
+    @Query("select e from StudentEnrolment e join fetch e.student"
+            + " where e.active = true and e.academicSessionId = :sessionId and e.sectionId = :sectionId"
+            + " order by case when e.rollNumber is null then 1 else 0 end, e.rollNumber, e.student.fullName")
+    List<StudentEnrolment> findRosterOfSection(
+            @Param("sessionId") UUID academicSessionId, @Param("sectionId") UUID sectionId);
 }
