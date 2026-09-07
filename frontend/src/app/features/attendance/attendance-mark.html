@@ -234,7 +234,12 @@
         </p>
       }
 
-      <cb-button type="submit" block [loading]="correctionSaving()" loadingLabel="Sending…">
+      <cb-button
+        type="submit"
+        [block]="true"
+        [loading]="correctionSaving()"
+        loadingLabel="Sending…"
+      >
         Send request
       </cb-button>
     </form>
