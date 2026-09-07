@@ -596,6 +596,54 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/students/{studentId}/compliance": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["saveCompliance"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/{studentId}/compliance/restricted": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["revealCompliance"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/{studentId}/contact": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["saveContact"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/students/{studentId}/guardians": {
         readonly parameters: {
             readonly query?: never;
@@ -623,6 +671,54 @@ export interface paths {
         readonly put: operations["update"];
         readonly post?: never;
         readonly delete: operations["unlink"];
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/{studentId}/medical": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["saveMedical"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/{studentId}/medical/restricted": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["revealMedical"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/{studentId}/previous-school": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["savePreviousSchool"];
+        readonly post?: never;
+        readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
         readonly patch?: never;
@@ -683,6 +779,30 @@ export interface components {
         };
         readonly ApiResponseAcademicSessionResponse: {
             readonly data?: components["schemas"]["AcademicSessionResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseComplianceDetail: {
+            readonly data?: components["schemas"]["ComplianceDetail"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseComplianceSummary: {
+            readonly data?: components["schemas"]["ComplianceSummary"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseContactDetail: {
+            readonly data?: components["schemas"]["ContactDetail"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -793,6 +913,22 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseMedicalDetail: {
+            readonly data?: components["schemas"]["MedicalDetail"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseMedicalSummary: {
+            readonly data?: components["schemas"]["MedicalSummary"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseMeResponse: {
             readonly data?: components["schemas"]["MeResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -835,6 +971,14 @@ export interface components {
         };
         readonly ApiResponsePageResponseSubjectResponse: {
             readonly data?: components["schemas"]["PageResponseSubjectResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponsePreviousSchoolDetail: {
+            readonly data?: components["schemas"]["PreviousSchoolDetail"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -972,6 +1116,29 @@ export interface components {
         readonly ChangePasswordRequest: {
             readonly currentPassword: string;
             readonly newPassword: string;
+        };
+        readonly ComplianceDetail: {
+            readonly apaarId?: string;
+            readonly casteCategory?: string;
+            readonly religion?: string;
+            readonly specialCategory?: string;
+        };
+        readonly ComplianceSummary: {
+            readonly apaarConsentGiven: boolean;
+            /** Format: date-time */
+            readonly apaarConsentGivenAt?: string;
+            readonly apaarConsentGivenBy?: string;
+            readonly boardRegistrationNumber?: string;
+            readonly hasApaarId: boolean;
+            readonly hasCasteCategory: boolean;
+            readonly hasReligion: boolean;
+            readonly hasSpecialCategory: boolean;
+            readonly penUdiseId?: string;
+        };
+        readonly ContactDetail: {
+            readonly address?: string;
+            readonly email?: string;
+            readonly phone?: string;
         };
         readonly CreateEnrolmentRequest: {
             /** Format: uuid */
@@ -1124,6 +1291,25 @@ export interface components {
             /** Format: uuid */
             readonly userId: string;
         };
+        readonly MedicalDetail: {
+            readonly allergies?: string;
+            readonly bloodGroup?: string;
+            readonly chronicConditions?: string;
+            readonly cwsnStatus?: string;
+            readonly disabilityDetails?: string;
+            readonly medication?: string;
+        };
+        readonly MedicalSummary: {
+            readonly emergencyContactName?: string;
+            readonly emergencyContactPhone?: string;
+            readonly emergencyContactRelation?: string;
+            readonly hasAllergies: boolean;
+            readonly hasBloodGroup: boolean;
+            readonly hasChronicConditions: boolean;
+            readonly hasCwsnStatus: boolean;
+            readonly hasDisabilityDetails: boolean;
+            readonly hasMedication: boolean;
+        };
         readonly MeResponse: {
             readonly navigation: readonly components["schemas"]["NavigationItem"][];
             readonly permissions: readonly string[];
@@ -1209,6 +1395,14 @@ export interface components {
             readonly label: string;
             readonly module: string;
         };
+        readonly PreviousSchoolDetail: {
+            readonly previousSchoolBoard?: string;
+            readonly previousSchoolName?: string;
+            readonly reasonForLeaving?: string;
+            /** Format: date */
+            readonly transferCertificateIssuedOn?: string;
+            readonly transferCertificateNumber?: string;
+        };
         readonly ReorderSchoolClassesRequest: {
             readonly classIds: readonly string[];
         };
@@ -1228,12 +1422,47 @@ export interface components {
             /** Format: date */
             readonly startsOn: string;
         };
+        readonly SaveComplianceRequest: {
+            readonly apaarConsentGiven?: boolean;
+            readonly apaarConsentGivenBy?: string;
+            readonly apaarId?: string;
+            readonly boardRegistrationNumber?: string;
+            readonly casteCategory?: string;
+            readonly penUdiseId?: string;
+            readonly religion?: string;
+            readonly specialCategory?: string;
+        };
+        readonly SaveContactRequest: {
+            readonly address?: string;
+            /** Format: email */
+            readonly email?: string;
+            readonly phone?: string;
+        };
         readonly SaveGuardianRequest: {
             /** Format: email */
             readonly email?: string;
             readonly fullName: string;
             readonly occupation?: string;
             readonly phone?: string;
+        };
+        readonly SaveMedicalRequest: {
+            readonly allergies?: string;
+            readonly bloodGroup?: string;
+            readonly chronicConditions?: string;
+            readonly cwsnStatus?: string;
+            readonly disabilityDetails?: string;
+            readonly emergencyContactName?: string;
+            readonly emergencyContactPhone?: string;
+            readonly emergencyContactRelation?: string;
+            readonly medication?: string;
+        };
+        readonly SavePreviousSchoolRequest: {
+            readonly previousSchoolBoard?: string;
+            readonly previousSchoolName?: string;
+            readonly reasonForLeaving?: string;
+            /** Format: date */
+            readonly transferCertificateIssuedOn?: string;
+            readonly transferCertificateNumber?: string;
         };
         readonly SaveStudentRequest: {
             readonly admissionNumber: string;
@@ -1310,6 +1539,8 @@ export interface components {
             readonly admissionNumber: string;
             /** Format: date */
             readonly admittedOn?: string;
+            readonly compliance: components["schemas"]["ComplianceSummary"];
+            readonly contact?: components["schemas"]["ContactDetail"];
             readonly currentEnrolment?: components["schemas"]["CurrentEnrolment"];
             /** Format: date */
             readonly dateOfBirth: string;
@@ -1320,6 +1551,8 @@ export interface components {
             readonly guardians: readonly components["schemas"]["StudentGuardian"][];
             /** Format: uuid */
             readonly id: string;
+            readonly medical: components["schemas"]["MedicalSummary"];
+            readonly previousSchool?: components["schemas"]["PreviousSchoolDetail"];
             /** @enum {string} */
             readonly status: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
         };
@@ -2547,6 +2780,80 @@ export interface operations {
             };
         };
     };
+    readonly saveCompliance: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveComplianceRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseComplianceSummary"];
+                };
+            };
+        };
+    };
+    readonly revealCompliance: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseComplianceDetail"];
+                };
+            };
+        };
+    };
+    readonly saveContact: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveContactRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseContactDetail"];
+                };
+            };
+        };
+    };
     readonly link: {
         readonly parameters: {
             readonly query?: never;
@@ -2618,6 +2925,80 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    readonly saveMedical: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveMedicalRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseMedicalSummary"];
+                };
+            };
+        };
+    };
+    readonly revealMedical: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseMedicalDetail"];
+                };
+            };
+        };
+    };
+    readonly savePreviousSchool: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SavePreviousSchoolRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePreviousSchoolDetail"];
+                };
             };
         };
     };

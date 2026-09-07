@@ -77,6 +77,81 @@
         ],
         "type": "object"
       },
+      "ApiResponseComplianceDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ComplianceDetail"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseComplianceSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ComplianceSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseContactDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ContactDetail"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseEnrolment": {
         "properties": {
           "data": {
@@ -451,6 +526,56 @@
         ],
         "type": "object"
       },
+      "ApiResponseMedicalDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MedicalDetail"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseMedicalSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MedicalSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseNewUserAccountResponse": {
         "properties": {
           "data": {
@@ -555,6 +680,31 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/PageResponseSubjectResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePreviousSchoolDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PreviousSchoolDetail"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -1020,6 +1170,77 @@
           "currentPassword",
           "newPassword"
         ],
+        "type": "object"
+      },
+      "ComplianceDetail": {
+        "properties": {
+          "apaarId": {
+            "type": "string"
+          },
+          "casteCategory": {
+            "type": "string"
+          },
+          "religion": {
+            "type": "string"
+          },
+          "specialCategory": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ComplianceSummary": {
+        "properties": {
+          "apaarConsentGiven": {
+            "type": "boolean"
+          },
+          "apaarConsentGivenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "apaarConsentGivenBy": {
+            "type": "string"
+          },
+          "boardRegistrationNumber": {
+            "type": "string"
+          },
+          "hasApaarId": {
+            "type": "boolean"
+          },
+          "hasCasteCategory": {
+            "type": "boolean"
+          },
+          "hasReligion": {
+            "type": "boolean"
+          },
+          "hasSpecialCategory": {
+            "type": "boolean"
+          },
+          "penUdiseId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "apaarConsentGiven",
+          "hasApaarId",
+          "hasCasteCategory",
+          "hasReligion",
+          "hasSpecialCategory"
+        ],
+        "type": "object"
+      },
+      "ContactDetail": {
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CreateEnrolmentRequest": {
@@ -1609,6 +1830,69 @@
         ],
         "type": "object"
       },
+      "MedicalDetail": {
+        "properties": {
+          "allergies": {
+            "type": "string"
+          },
+          "bloodGroup": {
+            "type": "string"
+          },
+          "chronicConditions": {
+            "type": "string"
+          },
+          "cwsnStatus": {
+            "type": "string"
+          },
+          "disabilityDetails": {
+            "type": "string"
+          },
+          "medication": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MedicalSummary": {
+        "properties": {
+          "emergencyContactName": {
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "type": "string"
+          },
+          "emergencyContactRelation": {
+            "type": "string"
+          },
+          "hasAllergies": {
+            "type": "boolean"
+          },
+          "hasBloodGroup": {
+            "type": "boolean"
+          },
+          "hasChronicConditions": {
+            "type": "boolean"
+          },
+          "hasCwsnStatus": {
+            "type": "boolean"
+          },
+          "hasDisabilityDetails": {
+            "type": "boolean"
+          },
+          "hasMedication": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hasAllergies",
+          "hasBloodGroup",
+          "hasChronicConditions",
+          "hasCwsnStatus",
+          "hasDisabilityDetails",
+          "hasMedication"
+        ],
+        "type": "object"
+      },
       "NavigationItem": {
         "properties": {
           "children": {
@@ -1843,6 +2127,27 @@
         ],
         "type": "object"
       },
+      "PreviousSchoolDetail": {
+        "properties": {
+          "previousSchoolBoard": {
+            "type": "string"
+          },
+          "previousSchoolName": {
+            "type": "string"
+          },
+          "reasonForLeaving": {
+            "type": "string"
+          },
+          "transferCertificateIssuedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "transferCertificateNumber": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ReorderSchoolClassesRequest": {
         "properties": {
           "classIds": {
@@ -1914,6 +2219,70 @@
         ],
         "type": "object"
       },
+      "SaveComplianceRequest": {
+        "properties": {
+          "apaarConsentGiven": {
+            "type": "boolean"
+          },
+          "apaarConsentGivenBy": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "apaarId": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "boardRegistrationNumber": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "casteCategory": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "penUdiseId": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "religion": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "specialCategory": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SaveContactRequest": {
+        "properties": {
+          "address": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SaveGuardianRequest": {
         "properties": {
           "email": {
@@ -1941,6 +2310,85 @@
         "required": [
           "fullName"
         ],
+        "type": "object"
+      },
+      "SaveMedicalRequest": {
+        "properties": {
+          "allergies": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "bloodGroup": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "chronicConditions": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cwsnStatus": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "disabilityDetails": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "emergencyContactName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "emergencyContactPhone": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "emergencyContactRelation": {
+            "maxLength": 60,
+            "minLength": 0,
+            "type": "string"
+          },
+          "medication": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SavePreviousSchoolRequest": {
+        "properties": {
+          "previousSchoolBoard": {
+            "maxLength": 60,
+            "minLength": 0,
+            "type": "string"
+          },
+          "previousSchoolName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "reasonForLeaving": {
+            "maxLength": 4000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "transferCertificateIssuedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "transferCertificateNumber": {
+            "maxLength": 60,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "SaveStudentRequest": {
@@ -2210,6 +2658,12 @@
             "format": "date",
             "type": "string"
           },
+          "compliance": {
+            "$ref": "#/components/schemas/ComplianceSummary"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/ContactDetail"
+          },
           "currentEnrolment": {
             "$ref": "#/components/schemas/CurrentEnrolment"
           },
@@ -2244,6 +2698,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "medical": {
+            "$ref": "#/components/schemas/MedicalSummary"
+          },
+          "previousSchool": {
+            "$ref": "#/components/schemas/PreviousSchoolDetail"
+          },
           "status": {
             "enum": [
               "ACTIVE",
@@ -2257,12 +2717,14 @@
         },
         "required": [
           "admissionNumber",
+          "compliance",
           "dateOfBirth",
           "enrolments",
           "fullName",
           "gender",
           "guardians",
           "id",
+          "medical",
           "status"
         ],
         "type": "object"
@@ -4320,6 +4782,119 @@
         ]
       }
     },
+    "/api/students/{studentId}/compliance": {
+      "put": {
+        "operationId": "saveCompliance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveComplianceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseComplianceSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/compliance/restricted": {
+      "get": {
+        "operationId": "revealCompliance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseComplianceDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/contact": {
+      "put": {
+        "operationId": "saveContact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseContactDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
+        ]
+      }
+    },
     "/api/students/{studentId}/guardians": {
       "post": {
         "operationId": "link",
@@ -4439,6 +5014,119 @@
         },
         "tags": [
           "student-guardian-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/medical": {
+      "put": {
+        "operationId": "saveMedical",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveMedicalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMedicalSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/medical/restricted": {
+      "get": {
+        "operationId": "revealMedical",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMedicalDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
+        ]
+      }
+    },
+    "/api/students/{studentId}/previous-school": {
+      "put": {
+        "operationId": "savePreviousSchool",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePreviousSchoolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePreviousSchoolDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-record-controller"
         ]
       }
     }
