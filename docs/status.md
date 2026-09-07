@@ -234,7 +234,42 @@ here. What is left is externally blocked rather than undecided.
 | **TRAI DLT registration** | Weeks of paperwork, and nothing can start it retroactively. Blocks SMS fee reminders, absence alerts and any phone-OTP login. Not blocking v1, since v1 ships email and web push only ([ADR-0013](architecture/adr/0013-external-provider-ports.md)). | **Start now** |
 | SMS / WhatsApp provider | Chosen once DLT registration completes — that process shows which providers are painless. | After DLT |
 | Payment gateway | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter. | Before online fees |
-| Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating. | Before first real data |
+| ~~Production migration off Supabase Seoul~~ | **Settled: not before Phase 4.** See *Decisions taken and not to be reopened* below. | Phase 4 |
+
+## Decisions taken and not to be reopened
+
+Recorded here so they are not asked again. Each was put to the product owner and answered; none is
+an open question, and a brief that treats one as undecided is wrong.
+
+**Production stays on Render until Phase 4.** [ADR-0015](architecture/adr/0015-deployment-baseline.md)
+names a self-hosted VPS under Coolify as the deployment baseline and that is still the eventual
+plan — but the Render dev environment is the *only* environment until Phase 4, deliberately. Nothing
+in Phases 1 to 3 is gated on it, `ops/docker/` and `ops/coolify/` already exist for when it happens,
+and standing up a second production path now would be a second thing to keep working for no user.
+The Supabase Seoul database therefore stays where it is; the move goes with the box, not before it.
+**Do not raise Coolify, the Mumbai VPS or the database migration as pending work again.**
+
+**Row Level Security stays off on the Supabase `public` tables.** Supabase's advisor flags all five
+as critical, because they are reachable by the `anon` and `authenticated` roles its client libraries
+use — and `spring_session` rows are enough to impersonate a signed-in user. The accepted reasoning:
+Chalkbase connects as the `postgres` owner over JDBC and never uses the anon key, the key is not
+published anywhere, and the tenant schemas holding student data are not exposed by PostgREST at all,
+which is only `public`. So this is an accepted risk on a dev environment with no real school on it,
+**not** a thing to ship a real school against. The remediation is four `ALTER TABLE … ENABLE ROW
+LEVEL SECURITY` statements and belongs in whatever change first puts real data on a deployment.
+
+**No platform-operator account before Phase 2.** [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
+weighed it and chose the setup-key bootstrap endpoint instead, which closed the actual gap:
+onboarding works. `/api/schools` list, get and create still require `school:school:create`, which no
+role holds, so they remain callable by nobody — harmless, because the bootstrap endpoint does not go
+through them. The operator account needs somewhere to live outside any tenant schema, its own
+authentication path, and its own answer to how the first operator is created; that is a Phase 2
+shaped piece of work, not a Phase 1 loose end.
+
+**Transport and hostel stay as Phase 4 modules with nothing on the student record.**
+[FR-028](requirements/02-functional-requirements.md) lists both as sections and they were considered
+as need-flags in Phase 1. Declined: a flag that nothing reads is a field a user has to fill in for
+no reason, and the sections land with the modules.
 
 ## Done
 
