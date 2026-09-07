@@ -601,6 +601,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseSchoolBootstrapResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SchoolBootstrapResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseSchoolClassResponse": {
         "properties": {
           "data": {
@@ -916,6 +941,65 @@
           "id",
           "occurredAt",
           "outcome"
+        ],
+        "type": "object"
+      },
+      "BootstrapSchoolRequest": {
+        "properties": {
+          "adminDisplayName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "adminUsername": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "board": {
+            "enum": [
+              "CBSE",
+              "CISCE",
+              "STATE",
+              "IB",
+              "CAIE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "schemaName": {
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]{2,62}$",
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "adminDisplayName",
+          "adminUsername",
+          "board",
+          "code",
+          "name",
+          "schemaName"
         ],
         "type": "object"
       },
@@ -1904,6 +1988,34 @@
           "fullName",
           "gender",
           "status"
+        ],
+        "type": "object"
+      },
+      "SchoolBootstrapResponse": {
+        "properties": {
+          "adminAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "adminMustChangePassword": {
+            "type": "boolean"
+          },
+          "adminTemporaryPassword": {
+            "type": "string"
+          },
+          "adminUsername": {
+            "type": "string"
+          },
+          "school": {
+            "$ref": "#/components/schemas/SchoolResponse"
+          }
+        },
+        "required": [
+          "adminAccountId",
+          "adminMustChangePassword",
+          "adminTemporaryPassword",
+          "adminUsername",
+          "school"
         ],
         "type": "object"
       },
@@ -3787,6 +3899,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSchoolResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-controller"
+        ]
+      }
+    },
+    "/api/schools/bootstrap": {
+      "post": {
+        "operationId": "bootstrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BootstrapSchoolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSchoolBootstrapResponse"
                 }
               }
             },
