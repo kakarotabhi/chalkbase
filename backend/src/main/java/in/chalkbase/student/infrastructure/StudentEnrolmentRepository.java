@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /** Placements, read for one student's record and in bulk for a page of the class list. */
 public interface StudentEnrolmentRepository extends JpaRepository<StudentEnrolment, UUID> {
