@@ -6,14 +6,15 @@ import in.chalkbase.student.application.StudentExportService;
 import in.chalkbase.student.application.StudentService;
 import in.chalkbase.student.domain.StudentQuery;
 import in.chalkbase.student.domain.StudentStatus;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /**
  * This school's students, and where each of them sits.
@@ -98,22 +98,28 @@ public class StudentController {
      * filters as {@link #list}, unpaged, because an export is "everything that matches", not one
      * page of it.
      *
-     * <p>Streamed straight into the response rather than built as a {@code String} or a
-     * {@code byte[]} first — see {@code StudentExportService}'s class Javadoc for why that matters
-     * on this deployment. The filename names no child and no filter: {@code app.routes.ts} already
-     * gives the reasoning for a student's own route using a UUID and the page title reading "Student
-     * record" rather than a name, and a downloaded filename sits in exactly the same browser download
-     * history.
+     * <p>Written straight into {@code response}'s own output stream, row by row, rather than built
+     * as a {@code String} or a {@code byte[]} first — see {@code StudentExportService}'s class
+     * Javadoc for why that matters on this deployment. Deliberately <strong>not</strong>
+     * {@code StreamingResponseBody}: that callback runs on a container async-dispatch thread, and
+     * this request's tenant schema (ADR-0011) is bound to the thread {@code SessionTenantFilter} ran
+     * on — writing from a different thread found no tenant bound and queried {@code public} instead,
+     * which is exactly the leak schema-per-tenant exists to make impossible in the first place. This
+     * method stays on that thread for its entire duration instead. The filename names no child and no
+     * filter: {@code app.routes.ts} already gives the reasoning for a student's own route using a
+     * UUID and the page title reading "Student record" rather than a name, and a downloaded filename
+     * sits in exactly the same browser download history.
      */
     @PreAuthorize("hasAuthority('student:student:read')")
     @GetMapping(value = "/export", produces = "text/csv")
-    public ResponseEntity<StreamingResponseBody> export(
+    public void export(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) StudentStatus status,
-            @RequestParam(required = false) UUID sectionId) {
-        StudentQuery query = new StudentQuery(q, status, sectionId);
-        StreamingResponseBody body = out -> exports.exportMasked(query, out);
-        return csvResponse(body, "students.csv");
+            @RequestParam(required = false) UUID sectionId,
+            HttpServletResponse response)
+            throws IOException {
+        prepareCsvResponse(response, "students.csv");
+        exports.exportMasked(new StudentQuery(q, status, sectionId), response.getOutputStream());
     }
 
     /**
@@ -128,25 +134,21 @@ public class StudentController {
      */
     @PreAuthorize("hasAuthority('student:student:export_unmasked')")
     @GetMapping(value = "/export/unmasked", produces = "text/csv")
-    public ResponseEntity<StreamingResponseBody> exportUnmasked(
+    public void exportUnmasked(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) StudentStatus status,
-            @RequestParam(required = false) UUID sectionId) {
-        StudentQuery query = new StudentQuery(q, status, sectionId);
-        StreamingResponseBody body = out -> exports.exportUnmasked(query, out);
-        return csvResponse(body, "students-unmasked.csv");
+            @RequestParam(required = false) UUID sectionId,
+            HttpServletResponse response)
+            throws IOException {
+        prepareCsvResponse(response, "students-unmasked.csv");
+        exports.exportUnmasked(new StudentQuery(q, status, sectionId), response.getOutputStream());
     }
 
-    private static ResponseEntity<StreamingResponseBody> csvResponse(StreamingResponseBody body, String filename) {
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment()
-                                .filename(filename)
-                                .build()
-                                .toString())
-                .body(body);
+    private static void prepareCsvResponse(HttpServletResponse response, String filename) {
+        response.setContentType("text/csv");
+        response.setHeader(
+                HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment().filename(filename).build().toString());
     }
 
     @PreAuthorize("hasAuthority('student:student:read')")

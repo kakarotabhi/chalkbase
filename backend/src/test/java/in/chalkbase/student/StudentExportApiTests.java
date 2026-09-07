@@ -2,12 +2,10 @@ package in.chalkbase.student;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -102,10 +100,7 @@ class StudentExportApiTests {
         setMedical(session, student, "O+", "Locomotor disability");
         setCompliance(session, student, "General", "Hindu");
 
-        MvcResult started = mockMvc.perform(get(STUDENTS + "/export").cookie(session))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        MvcResult result = mockMvc.perform(asyncDispatch(started))
+        MvcResult result = mockMvc.perform(get(STUDENTS + "/export").cookie(session))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -153,10 +148,7 @@ class StudentExportApiTests {
         setMedical(session, student, "B+", "None");
         setCompliance(session, student, "OBC", "Hindu");
 
-        MvcResult started = mockMvc.perform(get(STUDENTS + "/export/unmasked").cookie(session))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        MvcResult result = mockMvc.perform(asyncDispatch(started))
+        MvcResult result = mockMvc.perform(get(STUDENTS + "/export/unmasked").cookie(session))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -176,10 +168,7 @@ class StudentExportApiTests {
         Cookie session = signInWithPermissions("OFFICE2", "student:guardian:read", "student:guardian:manage");
         createGuardian(session, "Kunal Bhatt", "+91 90000 55555");
 
-        MvcResult started = mockMvc.perform(get(GUARDIANS + "/export").cookie(session))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        MvcResult result = mockMvc.perform(asyncDispatch(started))
+        MvcResult result = mockMvc.perform(get(GUARDIANS + "/export").cookie(session))
                 .andExpect(status().isOk())
                 .andReturn();
 

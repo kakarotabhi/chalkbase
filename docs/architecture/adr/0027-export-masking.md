@@ -113,17 +113,28 @@ role actually produces one; the shipped templates stay as conservative as
 Restricted field, so their export has no unmasked variant and no permission of its own beyond the
 existing `student:guardian:read`.
 
-### 5. Streaming, not buffering
+### 5. Streaming, not buffering — and not `StreamingResponseBody`
 
-The response is `ResponseEntity<StreamingResponseBody>`: the servlet's own output stream is written
-to directly, row by row, and nothing builds the CSV as a `String` or a `byte[]` first. A school of a
-few thousand students loading as JPA entities is an ordinary, bounded query — the same order of
-magnitude `StudentService#list` already loads for one page's related data, just without the page
-limit — but materialising the _file's text_ as a second, larger allocation on top of that is exactly
-the kind of spike that kills a 512 MB free-tier instance with no stack trace to show for it (see
+The controller writes directly into `HttpServletResponse#getOutputStream()`, row by row, and
+nothing builds the CSV as a `String` or a `byte[]` first. A school of a few thousand students
+loading as JPA entities is an ordinary, bounded query — the same order of magnitude
+`StudentService#list` already loads for one page's related data, just without the page limit — but
+materialising the _file's text_ as a second, larger allocation on top of that is exactly the kind of
+spike that kills a 512 MB free-tier instance with no stack trace to show for it (see
 `docs/operations/render-free-tier.md`). `ClassificationCsvExporter.write` takes a `Stream<T>` and
 writes-then-discards one row at a time for the same reason `CsvReader` reads one record at a time on
 the way in.
+
+**`ResponseEntity<StreamingResponseBody>` was the first attempt, and it does not work here.**
+Spring dispatches a `StreamingResponseBody`'s write callback on a container async thread, not the
+thread that handled the request — and this deployment binds the request's tenant schema
+(ADR-0011) to that original thread, in a filter (`SessionTenantFilter`) that runs before the
+controller. Writing from the async thread found no schema bound and queried `public`, where none of
+the tenant's tables exist — `relation "guardian" does not exist`, caught by
+`StudentExportApiTests` before this ever reached a real deployment. Writing synchronously into the
+response, on the same thread the whole request already runs on, keeps the tenant binding valid for
+the entire write and avoids the class of bug outright, at the cost of holding a request-handling
+thread for as long as the file takes to write — an acceptable trade at the school sizes this targets.
 
 ### 6. The filename names no child
 

@@ -3,7 +3,9 @@ package in.chalkbase.student.api;
 import in.chalkbase.platform.api.ApiResponse;
 import in.chalkbase.platform.api.PageResponse;
 import in.chalkbase.student.application.GuardianService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /**
  * The directory of guardians, as people rather than as somebody's parent.
@@ -80,22 +80,22 @@ public class GuardianController {
      *
      * <p>No masked/unmasked distinction here, unlike the student export: a guardian carries no
      * Restricted field, so there is nothing this endpoint could ever hide — see
-     * {@code GuardianService#exportCsv}. Streamed straight into the response for the same reason
-     * {@code StudentController#export} is.
+     * {@code GuardianService#exportCsv}. Written straight into {@code response}'s own output stream
+     * for the same reason {@code StudentController#export} is, and deliberately not
+     * {@code StreamingResponseBody}: see that method's Javadoc for the tenant-context leak an async
+     * dispatch thread would otherwise reproduce here.
      */
     @PreAuthorize("hasAuthority('student:guardian:read')")
     @GetMapping(value = "/export", produces = "text/csv")
-    public ResponseEntity<StreamingResponseBody> export(@RequestParam(required = false) String q) {
-        StreamingResponseBody body = out -> guardians.exportCsv(q, out);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment()
-                                .filename("guardians.csv")
-                                .build()
-                                .toString())
-                .body(body);
+    public void export(@RequestParam(required = false) String q, HttpServletResponse response) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader(
+                HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment()
+                        .filename("guardians.csv")
+                        .build()
+                        .toString());
+        guardians.exportCsv(q, response.getOutputStream());
     }
 
     /**

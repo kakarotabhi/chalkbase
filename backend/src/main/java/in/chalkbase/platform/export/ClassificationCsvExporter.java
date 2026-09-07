@@ -51,8 +51,9 @@ import java.util.stream.Stream;
  * on a free-tier instance with 512 MB of memory: building the whole response body as one
  * {@code String} or {@code byte[]} before sending it is exactly the kind of allocation that kills a
  * process with no stack trace to show for it, and streaming straight into the servlet's own output
- * stream never makes that allocation. See {@code StudentController#export} for the
- * {@code StreamingResponseBody} this feeds.
+ * stream never makes that allocation. See {@code StudentController#export} for the response this
+ * writes into directly, on the request thread — not {@code StreamingResponseBody}, whose async
+ * dispatch thread would leave this class writing with no tenant schema bound (ADR-0011).
  */
 public final class ClassificationCsvExporter {
 

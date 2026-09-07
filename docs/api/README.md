@@ -144,9 +144,11 @@ fail: a 403 or a 404 from either controller is the ordinary envelope.
 
 An export additionally:
 
-- **Streams.** The controller method returns `ResponseEntity<StreamingResponseBody>` and the file is
-  written straight to the response as it is built, row by row — never assembled as a `String` or a
-  `byte[]` first. See [ADR-0027](../architecture/adr/0027-export-masking.md) §5.
+- **Streams, on the request thread.** The controller writes straight into
+  `HttpServletResponse#getOutputStream()` as the file is built, row by row — never assembled as a
+  `String` or a `byte[]` first, and deliberately not `ResponseEntity<StreamingResponseBody>`, whose
+  async dispatch thread does not carry the tenant schema `SessionTenantFilter` bound to the request
+  thread. See [ADR-0027](../architecture/adr/0027-export-masking.md) §5.
 - **Masks by `@Classification`, not by a column list.** `platform.export.ClassificationCsvExporter`
   reads each exported row's own `@Classification` and omits every `RESTRICTED` column from the
   default (masked) file entirely — no empty cell, no marker. `CONFIDENTIAL` and `INTERNAL` columns
