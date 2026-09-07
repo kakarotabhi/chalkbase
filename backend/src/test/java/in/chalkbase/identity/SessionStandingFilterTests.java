@@ -228,8 +228,10 @@ class SessionStandingFilterTests {
     }
 
     private void lock(UUID accountId, Instant until) {
+        // The PostgreSQL driver cannot infer a SQL type for a bare java.time.Instant; Timestamp
+        // is what it maps to timestamptz through.
         jdbc.sql("update " + SCHEMA + ".user_account set locked_until = ? where id = ?")
-                .params(until, accountId)
+                .params(java.sql.Timestamp.from(until), accountId)
                 .update();
     }
 
