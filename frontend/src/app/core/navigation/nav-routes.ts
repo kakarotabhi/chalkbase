@@ -39,6 +39,9 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // was shown a menu item leading to a list of every other school. The route still exists for an
   // operator who types it; nothing puts it in a menu.
   ['schools', { path: '/schools', icon: 'school' }],
+  // The dashboard. No permission gates it on the backend, so it is the first item in every
+  // signed-in user's own menu (order 10) and, through `landingGuard`, everyone's landing screen.
+  ['dashboard', { path: '/dashboard', icon: 'dashboard' }],
   // The settings section. The backend has emitted this since the navigation catalogue landed and
   // it was being dropped every time, because there was nothing behind it; the school profile is
   // the first screen there is.

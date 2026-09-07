@@ -46,6 +46,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/landing/no-destination').then((m) => m.NoDestination),
       },
+      // The first basic dashboard. No guard, for the same reason the audit log has none: which
+      // tiles arrive is a server decision, per tile (`DashboardService`), and a caller with none
+      // of the four relevant permissions still gets 200 with every field absent rather than a 403
+      // on their own landing page.
+      {
+        path: 'dashboard',
+        title: 'Dashboard · Chalkbase',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
       {
         path: 'schools',
         title: 'Schools',
