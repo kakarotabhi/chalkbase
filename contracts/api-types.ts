@@ -11,7 +11,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_6"];
+        readonly get: operations["list_5"];
         readonly put?: never;
         readonly post: operations["create_6"];
         readonly delete?: never;
@@ -28,7 +28,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_7"];
+        readonly put: operations["update_6"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -91,7 +91,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_5"];
+        readonly get: operations["list_4"];
         readonly put?: never;
         readonly post: operations["create_5"];
         readonly delete?: never;
@@ -108,7 +108,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_6"];
+        readonly put: operations["update_5"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -139,7 +139,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_4"];
+        readonly get: operations["list_3"];
         readonly put?: never;
         readonly post: operations["create_4"];
         readonly delete?: never;
@@ -156,7 +156,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_5"];
+        readonly put: operations["update_4"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -404,46 +404,14 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
-    readonly "/api/documents": {
+    readonly "/api/dashboard": {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_3"];
-        readonly put?: never;
-        readonly post: operations["upload"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/documents/{id}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["get"];
-        readonly put: operations["update_4"];
-        readonly post?: never;
-        readonly delete: operations["delete"];
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/documents/{id}/content": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["content"];
+        readonly get: operations["dashboard"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -555,7 +523,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["get_1"];
+        readonly get: operations["get"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -857,8 +825,8 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
-        readonly ApiResponseDocumentSummary: {
-            readonly data?: components["schemas"]["DocumentSummary"];
+        readonly ApiResponseDashboardResponse: {
+            readonly data?: components["schemas"]["DashboardResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -899,14 +867,6 @@ export interface components {
         };
         readonly ApiResponseListAcademicSessionResponse: {
             readonly data?: readonly components["schemas"]["AcademicSessionResponse"][];
-            readonly error?: components["schemas"]["ApiError"];
-            readonly success: boolean;
-            /** Format: date-time */
-            readonly timestamp: string;
-            readonly traceId?: string;
-        };
-        readonly ApiResponseListDocumentSummary: {
-            readonly data?: readonly components["schemas"]["DocumentSummary"][];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1181,6 +1141,15 @@ export interface components {
             readonly currentPassword: string;
             readonly newPassword: string;
         };
+        readonly ClassEnrolmentCount: {
+            /** Format: uuid */
+            readonly classId: string;
+            readonly className: string;
+            /** Format: int64 */
+            readonly count: number;
+            /** Format: int32 */
+            readonly sequence: number;
+        };
         readonly ComplianceDetail: {
             readonly apaarId?: string;
             readonly casteCategory?: string;
@@ -1245,25 +1214,11 @@ export interface components {
             readonly sectionName: string;
             readonly sessionName: string;
         };
-        readonly DocumentSummary: {
-            readonly contentType: string;
-            /** Format: date-time */
-            readonly createdAt: string;
-            /** @enum {string} */
-            readonly documentType: "BIRTH_CERTIFICATE" | "TRANSFER_CERTIFICATE" | "REPORT_CARD" | "PHOTO" | "SIGNATURE" | "OTHER";
-            /** Format: date */
-            readonly expiryDate?: string;
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: date */
-            readonly issueDate?: string;
-            readonly originalFilename: string;
-            /** Format: int64 */
-            readonly sizeBytes: number;
-            /** Format: uuid */
-            readonly studentId: string;
-            /** @enum {string} */
-            readonly verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+        readonly DashboardResponse: {
+            readonly linkageGaps?: components["schemas"]["LinkageGapsTile"];
+            readonly recentAudit?: components["schemas"]["RecentAuditTile"];
+            readonly session?: components["schemas"]["SessionTile"];
+            readonly students?: components["schemas"]["StudentsTile"];
         };
         readonly Enrolment: {
             readonly active: boolean;
@@ -1352,6 +1307,12 @@ export interface components {
             readonly totalRows: number;
             /** Format: int32 */
             readonly validRows: number;
+        };
+        readonly LinkageGapsTile: {
+            /** Format: int64 */
+            readonly guardiansWithoutAStudent?: number;
+            /** Format: int64 */
+            readonly studentsWithoutAGuardian?: number;
         };
         readonly LinkGuardianRequest: {
             /** Format: uuid */
@@ -1487,6 +1448,9 @@ export interface components {
             readonly transferCertificateIssuedOn?: string;
             readonly transferCertificateNumber?: string;
         };
+        readonly RecentAuditTile: {
+            readonly events: readonly components["schemas"]["AuditEventResponse"][];
+        };
         readonly ReorderSchoolClassesRequest: {
             readonly classIds: readonly string[];
         };
@@ -1619,6 +1583,14 @@ export interface components {
             readonly id: string;
             readonly name: string;
         };
+        readonly SessionTile: {
+            readonly name?: string;
+            /** Format: uuid */
+            readonly sessionId?: string;
+            readonly set: boolean;
+            /** Format: date */
+            readonly startsOn?: string;
+        };
         readonly StudentDetail: {
             readonly admissionNumber: string;
             /** Format: date */
@@ -1653,6 +1625,11 @@ export interface components {
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
         };
+        readonly StudentsTile: {
+            readonly byClass: readonly components["schemas"]["ClassEnrolmentCount"][];
+            /** Format: int64 */
+            readonly enrolled: number;
+        };
         readonly StudentSummary: {
             readonly admissionNumber: string;
             readonly currentEnrolment?: components["schemas"]["CurrentEnrolment"];
@@ -1675,16 +1652,6 @@ export interface components {
             /** Format: uuid */
             readonly id: string;
             readonly temporaryPassword: string;
-        };
-        readonly UpdateDocumentRequest: {
-            /** @enum {string} */
-            readonly documentType: "BIRTH_CERTIFICATE" | "TRANSFER_CERTIFICATE" | "REPORT_CARD" | "PHOTO" | "SIGNATURE" | "OTHER";
-            /** Format: date */
-            readonly expiryDate?: string;
-            /** Format: date */
-            readonly issueDate?: string;
-            /** @enum {string} */
-            readonly verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
         };
         readonly UpdateEnrolmentRequest: {
             readonly active: boolean;
@@ -1757,7 +1724,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly list_6: {
+    readonly list_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1801,7 +1768,7 @@ export interface operations {
             };
         };
     };
-    readonly update_7: {
+    readonly update_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1903,7 +1870,7 @@ export interface operations {
             };
         };
     };
-    readonly list_5: {
+    readonly list_4: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1947,7 +1914,7 @@ export interface operations {
             };
         };
     };
-    readonly update_6: {
+    readonly update_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1995,7 +1962,7 @@ export interface operations {
             };
         };
     };
-    readonly list_4: {
+    readonly list_3: {
         readonly parameters: {
             readonly query: {
                 readonly pageable: components["schemas"]["Pageable"];
@@ -2042,7 +2009,7 @@ export interface operations {
             };
         };
     };
-    readonly update_5: {
+    readonly update_4: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2475,11 +2442,9 @@ export interface operations {
             };
         };
     };
-    readonly list_3: {
+    readonly dashboard: {
         readonly parameters: {
-            readonly query: {
-                readonly studentId: string;
-            };
+            readonly query?: never;
             readonly header?: never;
             readonly path?: never;
             readonly cookie?: never;
@@ -2492,129 +2457,7 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
-                    readonly "*/*": components["schemas"]["ApiResponseListDocumentSummary"];
-                };
-            };
-        };
-    };
-    readonly upload: {
-        readonly parameters: {
-            readonly query: {
-                readonly documentType: "BIRTH_CERTIFICATE" | "TRANSFER_CERTIFICATE" | "REPORT_CARD" | "PHOTO" | "SIGNATURE" | "OTHER";
-                readonly expiryDate?: string;
-                readonly issueDate?: string;
-                readonly studentId: string;
-            };
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly requestBody?: {
-            readonly content: {
-                readonly "multipart/form-data": {
-                    /** Format: binary */
-                    readonly file: string;
-                };
-            };
-        };
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseDocumentSummary"];
-                };
-            };
-        };
-    };
-    readonly get: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseDocumentSummary"];
-                };
-            };
-        };
-    };
-    readonly update_4: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["UpdateDocumentRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseDocumentSummary"];
-                };
-            };
-        };
-    };
-    readonly delete: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    readonly content: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": string;
+                    readonly "*/*": components["schemas"]["ApiResponseDashboardResponse"];
                 };
             };
         };
@@ -2822,7 +2665,7 @@ export interface operations {
             };
         };
     };
-    readonly get_1: {
+    readonly get: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
