@@ -13,27 +13,76 @@
     }
   </div>
 
-  <!--
-    Both ways of adding a child are gated on `student:student:manage`, which is what the server
-    enforces on `POST /api/students` and on both import endpoints. Someone holding only the read
-    sees the list, the filters and the paging, and nothing that would end in a 403.
-
-    Moving the controls did not move that line: same permission, same two affordances, and still
-    all-or-nothing. They are equally absent while the add form is open, and on the 403 screen,
-    which is where they were before.
-  -->
-  @if (canManageStudents() && !forbidden() && !adding()) {
+  @if (!forbidden() && !adding()) {
     <div class="page-head__actions">
       <!--
-        The way in to the bulk import (ADR-0021). Quieter than the button beside it on purpose:
-        typing one child in is the daily act, and importing six hundred happens once, when the
-        school is onboarding.
+        Export is gated on `student:student:read` on the server — the same permission that draws
+        this list — so it is offered to everyone who can see the list at all, not only to whoever
+        can also manage students. Whatever the filters currently hold is what is exported.
       -->
-      <a class="page-head__import" routerLink="/students/import">Import from a spreadsheet</a>
-      <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
+      <cb-button variant="secondary" [loading]="exportingMasked()" (click)="exportMasked()">
+        Export
+      </cb-button>
+      @if (canExportUnmasked()) {
+        <!--
+          Held by no shipped role template (ADR-0014, ADR-0027). Offered as its own, quieter
+          action rather than a checkbox on the button above: a checkbox that changes what a click
+          does depending on its state is the kind of control someone ticks once and forgets, and
+          an unmasked export is exactly the click that should never be an accident.
+        -->
+        <cb-button
+          [id]="'student-export-unmasked'"
+          variant="secondary"
+          (click)="startUnmaskedExport()"
+        >
+          Export unmasked
+        </cb-button>
+      }
+      <!--
+        Both ways of adding a child are gated on `student:student:manage`, which is what the
+        server enforces on `POST /api/students` and on both import endpoints. Someone holding
+        only the read sees the list, the filters, the paging and the export above, and nothing
+        that would end in a 403.
+      -->
+      @if (canManageStudents()) {
+        <!--
+          The way in to the bulk import (ADR-0021). Quieter than the button beside it on purpose:
+          typing one child in is the daily act, and importing six hundred happens once, when the
+          school is onboarding.
+        -->
+        <a class="page-head__import" routerLink="/students/import">Import from a spreadsheet</a>
+        <cb-button [id]="'student-add'" (click)="startAdd()">Add a student</cb-button>
+      }
     </div>
   }
 </div>
+
+@if (exportFailed()) {
+  <p class="banner banner--info" role="alert">
+    The export could not be downloaded. Try again in a moment.
+  </p>
+}
+
+@if (confirmingUnmaskedExport()) {
+  <cb-dialog
+    heading="Export every restricted field?"
+    confirmLabel="Export unmasked"
+    cancelLabel="Export the masked version instead"
+    [busy]="exportingUnmasked()"
+    (confirmed)="confirmUnmaskedExport()"
+    (cancelled)="cancelUnmaskedExport()"
+  >
+    <p>
+      This file will include caste, religion, category, CWSN/disability status, allergies, chronic
+      conditions, medication and blood group for every student the current filters match — not just
+      whether each is recorded, the real values.
+    </p>
+    <p>
+      The file leaves this screen once downloaded, and it is recorded in the audit log with the
+      fields it disclosed and how many students, so this is an action with a record attached.
+    </p>
+  </cb-dialog>
+}
 
 @if (forbidden()) {
   <!--

@@ -516,6 +516,22 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/guardians/export": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["export_1"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/me": {
         readonly parameters: {
             readonly query?: never;
@@ -781,6 +797,38 @@ export interface paths {
         };
         readonly get?: never;
         readonly put: operations["savePreviousSchool"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/export": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["export"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/students/export/unmasked": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["exportUnmasked"];
+        readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -2795,6 +2843,26 @@ export interface operations {
             };
         };
     };
+    readonly export_1: {
+        readonly parameters: {
+            readonly query?: {
+                readonly q?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     readonly me: {
         readonly parameters: {
             readonly query?: never;
@@ -3318,6 +3386,50 @@ export interface operations {
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponsePreviousSchoolDetail"];
                 };
+            };
+        };
+    };
+    readonly export: {
+        readonly parameters: {
+            readonly query?: {
+                readonly q?: string;
+                readonly sectionId?: string;
+                readonly status?: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly exportUnmasked: {
+        readonly parameters: {
+            readonly query?: {
+                readonly q?: string;
+                readonly sectionId?: string;
+                readonly status?: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -19,7 +19,7 @@ the way Phase 1's work was)
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0026) | ✅ Done |
+| Architecture decisions (ADR-0001…0027) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Enforced and manageable, with a screen · ⬜ impact preview |
@@ -33,7 +33,7 @@ the way Phase 1's work was)
 | Students, guardians and enrolment | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
 | Documents (FR-013, FR-032) | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render |
 | Basic dashboards | ✅ Done |
-| Export | ⬜ In progress — the last Phase 1 feature |
+| Export | ✅ Done |
 | Deployment | ✅ Render dev **and** staging, each on its own database · ⬜ Coolify/VPS (production) |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
@@ -57,7 +57,7 @@ glance and are not.
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | Documents | ✅ Port, module and screen · ⬜ configured on the deployed environment | [ADR-0025](architecture/adr/0025-document-storage.md) built the storage port, the `document` module, and a documents section on the student record ([FR-013](requirements/02-functional-requirements.md), [FR-032](requirements/02-functional-requirements.md)) — upload (with progress, failure and size-refusal states), list, download (proxied, never a signed URL), edit, verify and delete, all audited. The ADR's amendment settled the dependency question with AWS SDK v2 (`software.amazon.awssdk:s3` plus `url-connection-client`, with the SDK's own default Netty and Apache HttpClient 5 dependencies excluded — ~8.3 MB measured) over a hand-rolled signer, on the same reasoning already recorded here: signing is security-sensitive code where a subtle error costs more than jar weight. `local`/`test` keep the real filesystem adapter; `prod` uses the S3-compatible adapter once five `CHALKBASE_STORAGE_*` variables are set ([docs/operations/document-storage.md](operations/document-storage.md)) and otherwise still answers a clean 503 — those variables are not yet set on Render, so nothing persists on the deployed environment until that operational step happens. Renewal reminders are modelled (`expiry_date`) but not built — no scheduler exists to run one. Restricted-category document types (a caste certificate, an Aadhaar copy) are deliberately excluded until the same encryption machinery ADR-0020 §2 is waiting on lands. |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
-| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited. **The masking now exists** — the student record's Restricted fields are encrypted at rest, returned as presence flags by an ordinary read, and decrypted only by a separate endpoint that requires `student:student:reveal_restricted` and writes an audit event. So the reason this was deliberately unbuilt is gone, and what remains is the work itself. Decided: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields, never the values. |
+| **Export** | ✅ Done | `GET /api/students/export` and `GET /api/guardians/export` (masked, `student:student:read`/`student:guardian:read`) and `GET /api/students/export/unmasked` (`student:student:export_unmasked`, held by no shipped role template). Masking is derived from `@Classification` at write time, not a hand-written column list ([ADR-0027](architecture/adr/0027-export-masking.md)): a Restricted column is omitted from the file entirely in the masked mode, never blanked or marked. Every export — masked included, because a masked file still carries Confidential names — writes `AuditAction.DATA_EXPORTED` naming the columns disclosed and the row count, in its own transaction. Streamed straight into the response as CSV; nothing builds the file in memory first. |
 | **Basic dashboards** | ✅ Done | `GET /api/dashboard` and its screen: the current session, students enrolled and by class, guardians without a student or students without a guardian, and recent audit activity for whoever holds `platform:audit:read` — each tile gated on its own module's read permission, server-side. The landing screen for most users now; see [Done](#done). |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, record counts, and a scheduled seven-year retention purge ([ADR-0026](architecture/adr/0026-audit-retention-purge.md)). |
 
@@ -185,9 +185,8 @@ not build one here.
 ### Also queued, not blocking
 
 - Deploy to Coolify on the Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)).
-- Export, which is deliberately unbuilt: ADR-0014 wants exports masked by classification with the
-  unmasked one audited, and neither exists. An export ignoring that would be the largest unaudited
-  disclosure surface in the product.
+- ~~Export, which is deliberately unbuilt~~ ✅ Closed. See the Export row above and
+  [ADR-0027](architecture/adr/0027-export-masking.md).
 - A larger synthetic seed — the `local` profile seeds one school with a few dozen students
   ([running locally](development/running-locally.md)); list screens and performance want ~600.
 
@@ -321,6 +320,7 @@ no reason, and the sections land with the modules.
 | The users roster on the server-driven menu: `settings.users`, gated on `identity:user:read` | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | The role-edit impact preview: who holds a role, and whether saving signs them out immediately or waits for their next login | `features/access/access-roles.ts` |
 | Session cleanup investigated: `JdbcIndexedSessionRepository` already purges `public.spring_session` itself, on its own scheduler, on by default — no second job needed, made explicit in configuration | [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md) |
+| Student and guardian CSV export, masked by classification with an audited unmasked permission of its own | [ADR-0027](architecture/adr/0027-export-masking.md), `platform/export/`, `StudentExportService` |
 
 ## What is left on the frontend
 
@@ -330,7 +330,7 @@ separated them.
 
 | Gap | Where |
 |---|---|
-| **Export has no screen yet** — it is the feature currently being built, and the action belongs on the students and guardians lists. | `features/students/` |
+| ~~Export has no screen yet.~~ ✅ Closed. The students and guardians lists carry an export action, and a dialog that makes the masked/unmasked choice and its audit consequence explicit. | `features/students/` |
 | ~~The users roster has no menu entry.~~ ✅ Closed. `IdentityNavigation` now emits `settings.users`, gated on `identity:user:read` rather than `identity:user:manage` — `AUDITOR` and `VICE_PRINCIPAL` hold the first without the second, and can legitimately see the roster without acting on it — and `nav-routes.ts` resolves it. | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | ~~No impact preview when editing a role.~~ ✅ Closed. The edit form now shows who holds the role and, from ADR-0023, whether saving signs them out immediately (removing a permission) or waits for their next login (adding one) — built from `GET /api/access/roles/{id}/holders`, no new endpoint. | `features/access/access-roles.ts` |
 | **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other. | [the assessment](design-drift-assessment.md) |
