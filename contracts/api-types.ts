@@ -1723,7 +1723,6 @@ export interface components {
             /** Format: date */
             readonly startsOn?: string;
         };
-        readonly StreamingResponseBody: unknown;
         readonly StudentDetail: {
             readonly admissionNumber: string;
             /** Format: date */
@@ -2860,9 +2859,7 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content: {
-                    readonly "text/csv": components["schemas"]["StreamingResponseBody"];
-                };
+                content?: never;
             };
         };
     };
@@ -3410,9 +3407,7 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content: {
-                    readonly "text/csv": components["schemas"]["StreamingResponseBody"];
-                };
+                content?: never;
             };
         };
     };
@@ -3434,9 +3429,7 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content: {
-                    readonly "text/csv": components["schemas"]["StreamingResponseBody"];
-                };
+                content?: never;
             };
         };
     };

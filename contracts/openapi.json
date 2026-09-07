@@ -2883,7 +2883,6 @@
         ],
         "type": "object"
       },
-      "StreamingResponseBody": {},
       "StudentDetail": {
         "properties": {
           "admissionNumber": {
@@ -4745,13 +4744,6 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamingResponseBody"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -5138,13 +5130,6 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamingResponseBody"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -5192,13 +5177,6 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "$ref": "#/components/schemas/StreamingResponseBody"
-                }
-              }
-            },
             "description": "OK"
           }
         },
