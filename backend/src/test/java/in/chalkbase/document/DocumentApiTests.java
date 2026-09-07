@@ -263,7 +263,7 @@ class DocumentApiTests {
         return idOf(uploadPdf(session, studentId, "OTHER", null, null).andExpect(status().isCreated()));
     }
 
-    private static org.springframework.test.web.servlet.result.ResultMatcher id() {
+    private static org.springframework.test.web.servlet.ResultMatcher id() {
         return jsonPath("$.data.id").exists();
     }
 
