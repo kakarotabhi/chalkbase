@@ -17,7 +17,7 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0022) | ✅ Done |
+| Architecture decisions (ADR-0001…0026) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Enforced and manageable, with a screen · ⬜ impact preview |
@@ -28,8 +28,11 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
 | Academic sessions, classes and sections | ✅ Done |
 | Subjects | ✅ Done |
-| Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport or hostel sections |
-| Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
+| Students, guardians and enrolment | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
+| Documents (FR-013, FR-032) | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render |
+| Basic dashboards | ✅ Done |
+| Export | ⬜ In progress — the last Phase 1 feature |
+| Deployment | ✅ Render dev **and** staging, each on its own database · ⬜ Coolify/VPS (production) |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
 [Phase 1 in detail](#phase-1-in-detail) is the per-feature account.
@@ -50,9 +53,9 @@ glance and are not.
 | User management | ✅ Done | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. The screen is `/settings/users`: the roster, with status, and all five actions. It cannot show a lockout badge per row — `GET /api/access/users` answers no `lockedUntil` — so **Clear lockout** is offered on every active account rather than only the ones known to need it; see [Known gaps and debt](#known-gaps-and-debt). |
 | Student profile | ⚠️ Core, contact, medical and compliance done | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. Added: contact (`student_contact`), previous school and transfer certificate (`student_transfer`, FR-033), medical (`student_medical`, FR-034 — CWSN/disability, allergies, chronic conditions, medication and blood group Restricted, encrypted, masked and read-audited; emergency contact Confidential) and compliance identifiers (`student_compliance`, FR-029 — PEN/UDISE and board registration number Confidential; caste, religion, EWS/BPL/RTE category and a consent-gated APAAR id Restricted). [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2, amended, and [ADR-0022](architecture/adr/0022-encryption-at-rest.md) cover the design. A documents section (certificates, photo, signature) now sits alongside these on the record — see the Documents row below. **Still absent:** transport and hostel — both are Phase 4 modules and are a need-flag only on this record, not built yet. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
-| Documents | ✅ Port, module and screen · ⬜ configured on the deployed environment | [ADR-0025](architecture/adr/0025-document-storage.md) built the storage port, the `document` module, and a documents section on the student record ([FR-013](requirements/02-functional-requirements.md), [FR-032](requirements/02-functional-requirements.md)) — upload (with progress, failure and size-refusal states), list, download (proxied, never a signed URL), edit, verify and delete, all audited. The ADR's amendment picked AWS SDK v2 (`software.amazon.awssdk:s3` plus `url-connection-client`, with the SDK's own default Netty and Apache HttpClient 5 dependencies excluded — ~8.3 MB added) over a hand-rolled signer. `local`/`test` keep the real filesystem adapter; `prod` uses the S3-compatible adapter once five `CHALKBASE_STORAGE_*` variables are set ([docs/operations/document-storage.md](operations/document-storage.md)) and otherwise still answers a clean 503 — those variables are not yet set on Render, so nothing persists on the deployed environment until that operational step happens. Renewal reminders are modelled (`expiry_date`) but not built — no scheduler exists to run one. Restricted-category document types (a caste certificate, an Aadhaar copy) are deliberately excluded until the same encryption machinery ADR-0020 §2 is waiting on lands. |
+| Documents | ✅ Port, module and screen · ⬜ configured on the deployed environment | [ADR-0025](architecture/adr/0025-document-storage.md) built the storage port, the `document` module, and a documents section on the student record ([FR-013](requirements/02-functional-requirements.md), [FR-032](requirements/02-functional-requirements.md)) — upload (with progress, failure and size-refusal states), list, download (proxied, never a signed URL), edit, verify and delete, all audited. The ADR's amendment settled the dependency question with AWS SDK v2 (`software.amazon.awssdk:s3` plus `url-connection-client`, with the SDK's own default Netty and Apache HttpClient 5 dependencies excluded — ~8.3 MB measured) over a hand-rolled signer, on the same reasoning already recorded here: signing is security-sensitive code where a subtle error costs more than jar weight. `local`/`test` keep the real filesystem adapter; `prod` uses the S3-compatible adapter once five `CHALKBASE_STORAGE_*` variables are set ([docs/operations/document-storage.md](operations/document-storage.md)) and otherwise still answers a clean 503 — those variables are not yet set on Render, so nothing persists on the deployed environment until that operational step happens. Renewal reminders are modelled (`expiry_date`) but not built — no scheduler exists to run one. Restricted-category document types (a caste certificate, an Aadhaar copy) are deliberately excluded until the same encryption machinery ADR-0020 §2 is waiting on lands. |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
-| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
+| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited. **The masking now exists** — the student record's Restricted fields are encrypted at rest, returned as presence flags by an ordinary read, and decrypted only by a separate endpoint that requires `student:student:reveal_restricted` and writes an audit event. So the reason this was deliberately unbuilt is gone, and what remains is the work itself. Decided: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields, never the values. |
 | **Basic dashboards** | ✅ Done | `GET /api/dashboard` and its screen: the current session, students enrolled and by class, guardians without a student or students without a guardian, and recent audit activity for whoever holds `platform:audit:read` — each tile gated on its own module's read permission, server-side. The landing screen for most users now; see [Done](#done). |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, record counts, and a scheduled seven-year retention purge ([ADR-0026](architecture/adr/0026-audit-retention-purge.md)). |
 
@@ -80,6 +83,18 @@ remains the production plan.
 | API | <https://chalkbase-api.onrender.com> |
 | API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html> |
 | Database | the same Supabase project the local profile uses — so the demo school is shared |
+
+A second, **staging** pair tracks the `staging` branch, so a change can be verified running before
+it reaches `main`. It has a Supabase project of its own — [why that was not optional](operations/render-free-tier.md#why-it-has-its-own-database)
+— and was bootstrapped over HTTP through [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
+rather than by a seeder, which is what proved that path works.
+
+| | |
+|---|---|
+| App | <https://chalkbase-web-staging.onrender.com> |
+| API | <https://chalkbase-api-staging.onrender.com> |
+| Database | a second Supabase project, `ap-southeast-1`, no shared data with dev |
+| Sign in | school code `STAGE-001`, user `admin` |
 
 Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
 `auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
@@ -160,11 +175,10 @@ against the existing directory by phone, or it recreates the duplicate problem
 ### 5. The student record's missing sections
 
 ~~The student record's missing sections~~ ✅ Closed for contact, medical, previous school/transfer
-certificate and compliance — see the Student profile row above.
-[FR-028](requirements/02-functional-requirements.md) still asks for transport, hostel and document
-sections. Transport and hostel are Phase 4 modules; on this record they are a need flag at most, not
-a model of their own — do not build one here. Document is a separate lane's work, waiting on the
-storage port item 4 describes.
+certificate, compliance and documents — see the Student profile and Documents rows above.
+[FR-028](requirements/02-functional-requirements.md) still asks for transport and hostel sections.
+Both are Phase 4 modules; on this record they are a need flag at most, not a model of their own — do
+not build one here.
 
 ### Also queued, not blocking
 
@@ -219,7 +233,42 @@ here. What is left is externally blocked rather than undecided.
 | **TRAI DLT registration** | Weeks of paperwork, and nothing can start it retroactively. Blocks SMS fee reminders, absence alerts and any phone-OTP login. Not blocking v1, since v1 ships email and web push only ([ADR-0013](architecture/adr/0013-external-provider-ports.md)). | **Start now** |
 | SMS / WhatsApp provider | Chosen once DLT registration completes — that process shows which providers are painless. | After DLT |
 | Payment gateway | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter. | Before online fees |
-| Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating. | Before first real data |
+| ~~Production migration off Supabase Seoul~~ | **Settled: not before Phase 4.** See *Decisions taken and not to be reopened* below. | Phase 4 |
+
+## Decisions taken and not to be reopened
+
+Recorded here so they are not asked again. Each was put to the product owner and answered; none is
+an open question, and a brief that treats one as undecided is wrong.
+
+**Production stays on Render until Phase 4.** [ADR-0015](architecture/adr/0015-deployment-baseline.md)
+names a self-hosted VPS under Coolify as the deployment baseline and that is still the eventual
+plan — but the Render dev environment is the *only* environment until Phase 4, deliberately. Nothing
+in Phases 1 to 3 is gated on it, `ops/docker/` and `ops/coolify/` already exist for when it happens,
+and standing up a second production path now would be a second thing to keep working for no user.
+The Supabase Seoul database therefore stays where it is; the move goes with the box, not before it.
+**Do not raise Coolify, the Mumbai VPS or the database migration as pending work again.**
+
+**Row Level Security stays off on the Supabase `public` tables.** Supabase's advisor flags all five
+as critical, because they are reachable by the `anon` and `authenticated` roles its client libraries
+use — and `spring_session` rows are enough to impersonate a signed-in user. The accepted reasoning:
+Chalkbase connects as the `postgres` owner over JDBC and never uses the anon key, the key is not
+published anywhere, and the tenant schemas holding student data are not exposed by PostgREST at all,
+which is only `public`. So this is an accepted risk on a dev environment with no real school on it,
+**not** a thing to ship a real school against. The remediation is four `ALTER TABLE … ENABLE ROW
+LEVEL SECURITY` statements and belongs in whatever change first puts real data on a deployment.
+
+**No platform-operator account before Phase 2.** [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
+weighed it and chose the setup-key bootstrap endpoint instead, which closed the actual gap:
+onboarding works. `/api/schools` list, get and create still require `school:school:create`, which no
+role holds, so they remain callable by nobody — harmless, because the bootstrap endpoint does not go
+through them. The operator account needs somewhere to live outside any tenant schema, its own
+authentication path, and its own answer to how the first operator is created; that is a Phase 2
+shaped piece of work, not a Phase 1 loose end.
+
+**Transport and hostel stay as Phase 4 modules with nothing on the student record.**
+[FR-028](requirements/02-functional-requirements.md) lists both as sections and they were considered
+as need-flags in Phase 1. Declined: a flag that nothing reads is a field a user has to fill in for
+no reason, and the sections land with the modules.
 
 ## Done
 
@@ -268,19 +317,38 @@ here. What is left is externally blocked rather than undecided.
 | Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
 | Document storage's S3-compatible adapter (AWS SDK v2, path-style addressing, `local`/`test` untouched) and a documents section on the student record: upload with progress/failure/size-refusal states, list, proxied download, edit, verify, delete | [ADR-0025](architecture/adr/0025-document-storage.md) amendment, `platform/storage/S3StorageService.java`, `features/students/student-documents.ts` |
 
+## What is left on the frontend
+
+Every backend controller has a screen except one, so this list is short and specific. It exists
+because "the endpoint exists" and "a person can do it" are different claims, and this file has never
+separated them.
+
+| Gap | Where |
+|---|---|
+| **Export has no screen yet** — it is the feature currently being built, and the action belongs on the students and guardians lists. | `features/students/` |
+| **The users roster has no menu entry.** `IdentityNavigation` declares `settings` and `settings.access` but no `settings.users`, so the screen is reachable only by URL or by the cross-link from the access screen. Deliberately not invented client-side: a nav id the server never emits is a menu entry nobody can wait for, which `nav-routes.ts` already records for `students.import`. Closing it is a one-line backend change. | `identity/infrastructure/IdentityNavigation.java` |
+| **No impact preview when editing a role.** FR-004's acceptance note asks for one; `GET /api/access/roles/{id}/holders` is the read it would be built from. Deferred deliberately as frontend-shaped work. | `features/access/` |
+| **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other. | [the assessment](design-drift-assessment.md) |
+
+Transport and hostel sections on the student record are **not** on this list: they are Phase 4
+modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
+model until those exist.
+
 ## Known gaps and debt
 
 Recorded so they are decided rather than discovered.
 
-- **There is no HTTP timeout anywhere in the app.** No `timeout()` on any call in `core/api`, and
-  nothing configured on `HttpClient`, so a request that hangs waits until the browser or the network
-  gives up — which on a mobile connection can be minutes. For `GET /api/me` that is now a
-  considered decision: a timeout there would resolve `authGuard` as "not signed in" and drop the
-  user on a login screen served by the same slow server, so they would loop between two screens
-  instead of waiting once, and the app says what it is waiting for instead
-  (`layout/boot-state/`). For every other call it is not a decision, it is an absence — a hung
-  save on the student form spins its button indefinitely with no way back. Deciding it properly
-  means one number, one place, and an error state that offers a retry.
+- ~~There is no HTTP timeout anywhere in the app.~~ ✅ Closed. `timeoutInterceptor`
+  (`core/interceptors/timeout-interceptor.ts`) applies one number, one place: 150 seconds, chosen
+  against the Render free tier's own measured worst case — a cold wake answers in 86 to 121
+  seconds, so a shorter number would fail a save that was only ever slow, not stuck, on the one
+  environment this app is actually deployed to
+  ([the free-tier runbook](operations/render-free-tier.md)). `GET /api/me` stays exempt, exactly as
+  this bullet already decided: a timeout there would still resolve `authGuard` as "not signed in"
+  and loop the user between two screens. Every other call now fails instead of hanging, and every
+  screen's existing generic-failure branch — already reached by an ordinary network error, never
+  reading anything but `apiErrorCode()` — is what shows the retry: nothing is cleared but the
+  spinner, because a form here only ever resets itself on success.
 - ~~The app showed a blank white page for the whole of the first `/api/me`~~ ✅ Closed. `authGuard`
   guards the shell route and the router renders nothing until its guards resolve, so a bare
   `<router-outlet />` root meant an empty document for the length of that call — 121 seconds
@@ -402,11 +470,15 @@ Recorded so they are decided rather than discovered.
   with the same `permissionsVersion` still shows the same error — see the comment at the call site
   for why that case is not reworded.
 - Expired sessions are never purged.
-- **The forced password change is enforced at two points, not everywhere.** The login screen sends
-  someone holding a temporary password to `/change-password`, and `landingGuard` sends them there
-  again on a reload of `/`. Typing a deep link still gets past both. Closing it properly is a guard
-  on the shell rather than a third copy of the same check — worth doing the next time anything in
-  `core/auth` is opened.
+- ~~The forced password change is enforced at two points, not everywhere.~~ ✅ Closed.
+  `passwordChangeGuard` (`core/auth/password-change-guard.ts`) sits on the shell route in
+  `app.routes.ts`, after `authGuard` in the same `canActivate` array, so it runs in front of every
+  child route rather than in front of one reload path — a deep link to `/students/1234` now lands
+  on `/change-password` the same way a reload of `/` already did. The login screen's own redirect
+  and `landingGuard`'s are both still there and still correct; this closes the gap between them
+  rather than replacing either. `landingGuard`'s own `mustChangePassword` check is now unreachable
+  in practice, left alone rather than removed here because `core/navigation` belongs to a different
+  lane while several are running in parallel.
 - **A deactivated class keeps its name.** `uq_school_class_name` does not account for `active`, and
   there is no delete (ADR-0019), so a school that retires "Class 5" and later wants it back must
   reactivate that row rather than create a new one. That is the intended behaviour, but it makes
