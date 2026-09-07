@@ -16,6 +16,7 @@ const STUDENT = '018f3a10-0000-7000-8000-000000000001';
 const RECORD = `/api/students/${STUDENT}`;
 const SESSIONS = '/api/academics/sessions';
 const CLASSES = '/api/academics/classes';
+const DOCUMENTS = '/api/documents';
 
 const sessions: AcademicSession[] = [
   { id: 'y1', name: '2026–27', startsOn: '2026-04-01', endsOn: '2027-03-31', current: true },
@@ -158,6 +159,12 @@ describe('StudentDetail', () => {
     fixture.detectChanges();
     httpMock.expectOne({ url: SESSIONS, method: 'GET' }).flush(envelope(sessions));
     httpMock.expectOne({ url: CLASSES, method: 'GET' }).flush(envelope(ladder));
+    // `cb-student-documents` fetches itself from `studentId` rather than riding along in the
+    // record above — see its own class comment — so it asks for its list the moment it renders,
+    // same as the enrolments panel does for sessions and classes.
+    httpMock
+      .expectOne((request) => request.url === DOCUMENTS && request.method === 'GET')
+      .flush(envelope([]));
     fixture.detectChanges();
   };
 
@@ -392,6 +399,11 @@ describe('StudentDetail', () => {
     httpMock
       .expectOne({ url: SESSIONS, method: 'GET' })
       .flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
+    // `cb-student-documents` fetches its own list regardless of what happens to the enrolments
+    // panel above — a different module, on a different permission.
+    httpMock
+      .expectOne((request) => request.url === DOCUMENTS && request.method === 'GET')
+      .flush(envelope([]));
     fixture.detectChanges();
 
     expect(text()).toContain('You cannot change enrolments');

@@ -22,6 +22,7 @@ import { Button } from '../../shared/components/button/button';
 import { formatDay } from '../../shared/formatting/day';
 import { StudentCompliance } from './student-compliance';
 import { StudentContact } from './student-contact';
+import { StudentDocuments } from './student-documents';
 import { StudentEnrolments } from './student-enrolments';
 import { StudentForm } from './student-form';
 import { StudentGuardians } from './student-guardians';
@@ -79,6 +80,7 @@ import {
     StudentPreviousSchool,
     StudentMedical,
     StudentCompliance,
+    StudentDocuments,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-detail.html',
@@ -213,6 +215,16 @@ export class StudentDetail {
       .get(this.id())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (student) => this.student.set(student), error: () => {} });
+  }
+
+  /**
+   * A document was uploaded, edited or deleted. Says so in the same live region every other
+   * section uses, but never re-reads the student — `GET /api/students/{id}` does not carry
+   * documents (they are `document`'s own module, ADR-0025), so nothing in that payload would have
+   * changed.
+   */
+  protected onDocumentsChanged(announcement: string): void {
+    this.announcement.set(announcement);
   }
 
   // ── internals ────────────────────────────────────────────────────────────────────────────

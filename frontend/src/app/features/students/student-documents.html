@@ -1,0 +1,354 @@
+<div class="section__head">
+  <h2 class="section__heading">Documents</h2>
+  @if (canManage() && !adding() && !editingId()) {
+    <div class="section__actions">
+      <cb-button id="document-add" variant="secondary" (click)="startAdd()">
+        Add a document
+      </cb-button>
+    </div>
+  }
+</div>
+
+<p class="section__lede">
+  Certificates, a photo, a signature and anything else on file for this student. A download goes
+  through this app on every request, so a permission removed a moment ago is honoured on the very
+  next attempt — nothing here is ever a link straight to where the file is stored.
+</p>
+
+@if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view documents</strong>
+    <span>Ask your principal to add "View documents" to your role.</span>
+  </div>
+} @else {
+  @if (adding()) {
+    <form class="editor" (ngSubmit)="submitUpload()" [formGroup]="uploadForm" novalidate>
+      <h3 class="editor__heading">Add a document</h3>
+
+      @if (uploadTooLarge()) {
+        <div class="banner banner--danger" role="alert">
+          <strong class="banner__title">That file is larger than the limit</strong>
+          <span>
+            Documents are capped at 8 MB. It was not uploaded, so nothing has changed — try a
+            smaller scan or photo, or ask whoever runs Chalkbase for this school to raise the limit.
+          </span>
+        </div>
+      } @else if (uploadFailure(); as message) {
+        <div class="banner banner--danger" role="alert">
+          <strong class="banner__title">Could not upload this document</strong>
+          <span>{{ message }}</span>
+        </div>
+      }
+
+      <div class="editor__fields">
+        <cb-form-field #typeField label="Type" controlId="document-type" [required]="true">
+          <cb-select
+            formControlName="documentType"
+            [id]="typeField.controlId()"
+            [options]="documentTypeOptions"
+            placeholder="Choose a type"
+            [describedBy]="typeField.describedById()"
+            [readOnly]="uploading()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #issueField
+          label="Issue date"
+          controlId="document-issue-date"
+          hint="Leave blank if this document has none, such as a photo."
+        >
+          <cb-text-input
+            formControlName="issueDate"
+            type="date"
+            [id]="issueField.controlId()"
+            [describedBy]="issueField.describedById()"
+            [readOnly]="uploading()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #expiryField
+          label="Expiry date"
+          controlId="document-expiry-date"
+          hint="Leave blank if this document does not expire."
+        >
+          <cb-text-input
+            formControlName="expiryDate"
+            type="date"
+            [id]="expiryField.controlId()"
+            [describedBy]="expiryField.describedById()"
+            [readOnly]="uploading()"
+          />
+        </cb-form-field>
+
+        <!--
+          A plain `<input type="file">`, and it stays plain on purpose — see `cb-student-import`'s
+          own comment on the same choice. Nothing here reads the file; the name below is the whole
+          of what this screen learns about it before it travels to the server (ADR-0014).
+        -->
+        <cb-form-field
+          #fileField
+          label="The file"
+          controlId="document-file"
+          [required]="true"
+          hint="A PDF, JPEG or PNG, up to 8 MB."
+        >
+          <input
+            #fileInput
+            class="file"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            [id]="fileField.controlId()"
+            [attr.aria-describedby]="fileField.describedById()"
+            [disabled]="uploading()"
+            (change)="chooseFile($event)"
+          />
+        </cb-form-field>
+      </div>
+
+      @if (fileName(); as name) {
+        <p class="chosen" role="status">
+          Chosen: <strong class="chosen__name">{{ name }}</strong>
+        </p>
+      }
+
+      @if (uploading()) {
+        <!--
+          `[attr.value]` rather than `[value]`, and conditional on it: this app's `HttpClient` runs
+          on the Fetch backend (`provideHttpClient(withFetch())`), which does not report upload
+          progress at all, so `uploadPercent()` stays 0 for the length of the request on this
+          deployment. Removing the `value` attribute at 0 is what turns the bar into the browser's
+          own indeterminate animation instead of one frozen at "0%", which would read as stuck
+          rather than working. It becomes a real bar the moment a percentage does arrive — from a
+          slower upload behind a different backend, or a future change to this one.
+        -->
+        <div class="progress" role="status">
+          <progress
+            class="progress__bar"
+            [attr.value]="uploadPercent() > 0 ? uploadPercent() : null"
+            max="100"
+          ></progress>
+          <span class="progress__label">
+            Uploading…
+            @if (uploadPercent() > 0) {
+              {{ uploadPercent() }}%
+            }
+          </span>
+        </div>
+      }
+
+      <div class="editor__actions">
+        <cb-button variant="secondary" [disabled]="uploading()" (click)="cancelAdd()">
+          Cancel
+        </cb-button>
+        <cb-button
+          type="submit"
+          [disabled]="!canSubmitUpload()"
+          [loading]="uploading()"
+          loadingLabel="Uploading…"
+        >
+          Upload
+        </cb-button>
+      </div>
+      @if (!fileName()) {
+        <p class="step__why">Choose a file above first.</p>
+      }
+    </form>
+  }
+
+  @if (editingRow(); as row) {
+    <form class="editor" (ngSubmit)="saveEdit()" [formGroup]="editForm" novalidate>
+      <h3 class="editor__heading">Edit — {{ row.originalFilename }}</h3>
+
+      @if (saveFailure(); as message) {
+        <div class="banner banner--danger" role="alert">
+          <strong class="banner__title">Could not save these changes</strong>
+          <span>{{ message }}</span>
+        </div>
+      }
+
+      <div class="editor__fields">
+        <cb-form-field
+          #editTypeField
+          label="Type"
+          [controlId]="'document-edit-type-' + row.id"
+          [required]="true"
+        >
+          <cb-select
+            formControlName="documentType"
+            [id]="editTypeField.controlId()"
+            [options]="documentTypeOptions"
+            [describedBy]="editTypeField.describedById()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #editStatusField
+          label="Verification"
+          [controlId]="'document-edit-status-' + row.id"
+          [required]="true"
+        >
+          <cb-select
+            formControlName="verificationStatus"
+            [id]="editStatusField.controlId()"
+            [options]="verificationStatusOptions"
+            [describedBy]="editStatusField.describedById()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #editIssueField
+          label="Issue date"
+          [controlId]="'document-edit-issue-' + row.id"
+        >
+          <cb-text-input
+            formControlName="issueDate"
+            type="date"
+            [id]="editIssueField.controlId()"
+            [describedBy]="editIssueField.describedById()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #editExpiryField
+          label="Expiry date"
+          [controlId]="'document-edit-expiry-' + row.id"
+        >
+          <cb-text-input
+            formControlName="expiryDate"
+            type="date"
+            [id]="editExpiryField.controlId()"
+            [describedBy]="editExpiryField.describedById()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+      </div>
+
+      <div class="editor__actions">
+        <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">
+          Cancel
+        </cb-button>
+        <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">Save</cb-button>
+      </div>
+    </form>
+  }
+
+  @if (deleteFailure(); as message) {
+    <div class="banner banner--danger" role="alert">
+      <strong class="banner__title">Could not delete this document</strong>
+      <span>{{ message }}</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading documents…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <strong class="banner__title">Could not load the documents</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  } @else if (view().length === 0) {
+    <p class="page-status" role="status">
+      No documents yet.
+      @if (canManage()) {
+        Add the first one above.
+      }
+    </p>
+  } @else {
+    <ul class="documents">
+      @for (row of view(); track row.id) {
+        <li class="document">
+          <div class="document__who">
+            <span class="document__type">{{ row.documentTypeLabel }}</span>
+            <span
+              class="document__status document__status--{{ row.verificationStatus.toLowerCase() }}"
+            >
+              {{ row.verificationStatusLabel }}
+            </span>
+          </div>
+
+          <p class="document__filename">{{ row.originalFilename }}</p>
+
+          <dl class="facts">
+            <div class="facts__pair">
+              <dt>Issue date</dt>
+              <dd>
+                @if (row.issueDate) {
+                  {{ row.issueDate }}
+                } @else {
+                  <span class="muted">Not recorded</span>
+                }
+              </dd>
+            </div>
+            <div class="facts__pair">
+              <dt>Expiry date</dt>
+              <dd>
+                @if (row.expiryDate) {
+                  {{ row.expiryDate }}
+                } @else {
+                  <span class="muted">Not recorded</span>
+                }
+              </dd>
+            </div>
+            <div class="facts__pair">
+              <dt>Uploaded</dt>
+              <dd>{{ row.uploadedOn }} · {{ row.sizeLabel }}</dd>
+            </div>
+          </dl>
+
+          <div class="document__actions">
+            <!--
+              A plain anchor, not `cb-button`: this is a real navigation to
+              `GET /api/documents/{id}/content` (ADR-0025), not an action this component performs.
+              `target="_blank"` keeps a failure — a 403, a 503 — from replacing this record with a
+              bare JSON page; a success is a download the browser handles itself, via the server's
+              own `Content-Disposition: attachment`, and never opens anything to look at.
+            -->
+            <a class="btn-like" [href]="row.contentUrl" target="_blank" rel="noopener">Download</a>
+
+            @if (canManage()) {
+              <cb-button
+                variant="secondary"
+                [id]="row.editButtonId"
+                [disabled]="!!editingId() || adding()"
+                (click)="startEdit(row)"
+              >
+                Edit
+              </cb-button>
+              <cb-button
+                variant="danger"
+                [disabled]="!!editingId() || adding()"
+                (click)="askToRemove(row)"
+              >
+                Delete
+              </cb-button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}
+
+@if (removing(); as target) {
+  <cb-dialog
+    [heading]="'Delete ' + target.originalFilename + '?'"
+    confirmLabel="Delete this document"
+    cancelLabel="Keep it"
+    confirmVariant="danger"
+    [busy]="deleting()"
+    (confirmed)="confirmRemove()"
+    (cancelled)="cancelRemove()"
+  >
+    <p>
+      This removes the file and its record. There is no undo — it will need to be uploaded again.
+    </p>
+  </cb-dialog>
+}
