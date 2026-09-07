@@ -75,6 +75,11 @@ class StudentImportApiTests {
     private static final String STUDENTS = "/api/students";
     private static final String SESSIONS = "/api/academics/sessions";
     private static final String CLASSES = "/api/academics/classes";
+    private static final String GUARDIANS = "/api/guardians";
+
+    /** The header for a file that also carries one guardian per row (ADR-0021 §4). */
+    private static final String GUARDIAN_HEADER = "admission_number,full_name,date_of_birth,gender,class,section,"
+            + "guardian_name,guardian_phone,guardian_relation,guardian_email,guardian_primary";
 
     /** Every column, in the order the contract lists them. Individual tests reorder and drop them. */
     private static final String HEADER =
@@ -636,7 +641,9 @@ class StudentImportApiTests {
                 .andExpect(jsonPath("$.data.imported").value(1));
 
         assertThat(names(RIVERBANK_SCHEMA)).containsExactly("Aarav Kulkarni");
-        // The guardian columns are read past, not imported (ADR-0021 §4).
+        // "Father's Name" is not one of this import's recognised guardian_* columns (ADR-0021
+        // §4), so it is read past like any other column this import does not know, and no guardian
+        // is created from it.
         assertThat(guardianCount(RIVERBANK_SCHEMA)).isZero();
     }
 
@@ -989,6 +996,215 @@ class StudentImportApiTests {
                 .doesNotContain(admissionNumber);
     }
 
+    // ── Guardians (ADR-0021 §4) ──────────────────────────────────────────────────────────────
+
+    /**
+     * The case ADR-0021 §4 exists to get right: four rows naming the same father produce one
+     * guardian, not four — whether or not the file spells his phone number the same way twice.
+     */
+    @Test
+    void importsFourSiblingsIntoOneNewGuardian() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/1001,Aarav Kulkarni,2015-03-09,MALE,Class 5,A,Suresh Kulkarni,"
+                                        + "+91 98765 43210,FATHER,,TRUE",
+                                "2026/1002,Isha Kulkarni,2016-01-01,FEMALE,Class 5,A,Suresh Kulkarni,"
+                                        + "9876543210,FATHER,,TRUE",
+                                "2026/1003,Vikram Kulkarni,2014-06-06,MALE,Class 5,A,Suresh Kulkarni,"
+                                        + "98765-43210,FATHER,,TRUE",
+                                "2026/1004,Meera Kulkarni,2013-09-09,FEMALE,Class 5,A,Suresh Kulkarni,"
+                                        + "+919876543210,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imported").value(4))
+                .andExpect(jsonPath("$.data.guardiansCreated").value(1))
+                .andExpect(jsonPath("$.data.guardiansMatched").value(0))
+                .andExpect(jsonPath("$.data.guardianLinksCreated").value(4))
+                .andExpect(jsonPath("$.data.studentsLinkedToExistingGuardians").value(0));
+
+        assertThat(guardianCount(RIVERBANK_SCHEMA)).isEqualTo(1);
+        assertThat(studentGuardianLinkCount(RIVERBANK_SCHEMA)).isEqualTo(4);
+        // The first row's own spelling is what gets stored, verbatim — not a normalised form.
+        assertThat(guardianPhoneByName(RIVERBANK_SCHEMA, "Suresh Kulkarni")).isEqualTo("+91 98765 43210");
+    }
+
+    /**
+     * The other half of the promise: a phone number already in the directory is matched, even
+     * typed with a country code the directory entry does not carry.
+     */
+    @Test
+    void matchesAnExistingDirectoryGuardianDespitePhoneFormatting() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+        createGuardian(session, "Ramesh Rao", "+91 98765 12345");
+
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/2001,Kiran Rao,2015-05-05,MALE,Class 5,A,Ramesh Rao,9876512345,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imported").value(1))
+                .andExpect(jsonPath("$.data.guardiansCreated").value(0))
+                .andExpect(jsonPath("$.data.guardiansMatched").value(1))
+                .andExpect(jsonPath("$.data.guardianLinksCreated").value(1))
+                .andExpect(jsonPath("$.data.studentsLinkedToExistingGuardians").value(1));
+
+        // Still one guardian in the directory — the import did not duplicate him.
+        assertThat(guardianCount(RIVERBANK_SCHEMA)).isEqualTo(1);
+        assertThat(studentGuardianLinkCount(RIVERBANK_SCHEMA)).isEqualTo(1);
+    }
+
+    /**
+     * The decision ADR-0021 §4 records: two rows in one file sharing a phone number under two
+     * different names is refused rather than guessed at, and nothing is written for either row.
+     */
+    @Test
+    void refusesTheWholeFileWhenTwoRowsShareAPhoneUnderDifferentNames() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/3001,Child One,2015-01-01,MALE,Class 5,A,Prakash Iyer,9988776655,FATHER,,TRUE",
+                                "2026/3002,Child Two,2015-01-01,FEMALE,Class 5,A,Someone Else,9988776655,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imported").value(0))
+                .andExpect(jsonPath("$.data.errors[0].row").value(3))
+                .andExpect(jsonPath("$.data.errors[0].column").value("guardian_phone"))
+                .andExpect(jsonPath("$.data.errors[0].message")
+                        .value(org.hamcrest.Matchers.containsString("different name earlier in this file")));
+
+        assertThat(studentCount(RIVERBANK_SCHEMA)).isZero();
+        assertThat(guardianCount(RIVERBANK_SCHEMA)).isZero();
+    }
+
+    /**
+     * The same decision against the directory rather than within the file: a phone number that
+     * already belongs to somebody else at this school refuses the row instead of guessing which
+     * person was meant.
+     */
+    @Test
+    void refusesARowWhosePhoneMatchesADirectoryGuardianUnderADifferentName() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+        createGuardian(session, "Suresh Rao", "9876500000");
+
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/4001,Child Three,2015-01-01,MALE,Class 5,A,Suresh Kumar,9876500000,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imported").value(0))
+                .andExpect(jsonPath("$.data.errors[0].column").value("guardian_phone"))
+                .andExpect(jsonPath("$.data.errors[0].message")
+                        .value(org.hamcrest.Matchers.containsString("different guardian at this school")));
+
+        // Only the one guardian that was already there — nothing was created, and no student
+        // landed on either person's record.
+        assertThat(guardianCount(RIVERBANK_SCHEMA)).isEqualTo(1);
+        assertThat(studentCount(RIVERBANK_SCHEMA)).isZero();
+    }
+
+    /**
+     * {@code guardian.phone} is {@code varchar(20)} — a number that does not fit is a row error a
+     * school can read and fix, never a 500 from a database refusing the insert.
+     */
+    @Test
+    void reportsAnOverlongGuardianPhoneAsARowErrorRatherThanFailing() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+
+        upload(
+                        VALIDATE,
+                        session,
+                        ladder.year,
+                        guardianFile("2026/5001,Child Four,2015-01-01,MALE,Class 5,A,Someone Long,"
+                                + "123456789012345678901,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.errors[0].column").value("guardian_phone"))
+                .andExpect(jsonPath("$.data.errors[0].message")
+                        .value(org.hamcrest.Matchers.containsString("longer than the 20 characters")));
+    }
+
+    /** {@code guardian_name} and {@code guardian_phone} are required together — matching needs both. */
+    @Test
+    void requiresGuardianNameAndPhoneTogether() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+
+        upload(
+                        VALIDATE,
+                        session,
+                        ladder.year,
+                        guardianFile("2026/6001,Child Five,2015-01-01,MALE,Class 5,A,,,MOTHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.errorCount").value(2))
+                .andExpect(jsonPath("$.data.errors[?(@.column == 'guardian_name')]")
+                        .exists())
+                .andExpect(jsonPath("$.data.errors[?(@.column == 'guardian_phone')]")
+                        .exists());
+    }
+
+    /**
+     * A separate bulk row for the guardians actually created (StudentAudit#GUARDIANS_IMPORTED),
+     * and none at all when a second import only matches an existing one — an audit row for zero
+     * would be worse than no row.
+     */
+    @Test
+    void recordsAGuardianAuditRowOnlyWhenANewOneWasActuallyCreated() throws Exception {
+        Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
+        Ladder ladder = ladder(session);
+
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/7001,Child Six,2015-01-01,MALE,Class 5,A,Deepak Nair,9123456780,FATHER,,TRUE"))
+                .andExpect(status().isOk());
+
+        Map<String, Object> audited = jdbc.sql("select entity_type, changed_fields, record_count from "
+                        + RIVERBANK_SCHEMA + ".audit_event where action = 'GUARDIANS_IMPORTED'")
+                .query()
+                .singleRow();
+        assertThat(audited.get("entity_type")).isEqualTo("GUARDIAN");
+        assertThat(audited.get("record_count")).isEqualTo(1);
+        assertThat(String.valueOf(audited.get("changed_fields")))
+                .contains("fullName")
+                .doesNotContain("Deepak Nair")
+                .doesNotContain("9123456780");
+
+        // A second import that only matches the guardian just created writes no second person and
+        // no second GUARDIANS_IMPORTED row.
+        upload(
+                        IMPORT,
+                        session,
+                        ladder.year,
+                        guardianFile(
+                                "2026/7002,Child Seven,2015-01-01,FEMALE,Class 5,A,Deepak Nair,9123456780,FATHER,,TRUE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.guardiansCreated").value(0))
+                .andExpect(jsonPath("$.data.guardiansMatched").value(1));
+
+        assertThat(jdbc.sql("select count(*) from " + RIVERBANK_SCHEMA
+                                + ".audit_event where action = 'GUARDIANS_IMPORTED'")
+                        .query(Integer.class)
+                        .single())
+                .isEqualTo(1);
+    }
+
     // ── fixtures ─────────────────────────────────────────────────────────────────────────────
 
     private static java.nio.charset.Charset UTF_8() {
@@ -998,6 +1214,15 @@ class StudentImportApiTests {
     /** A file: the full header, then the rows given, each ended with a newline. */
     private static String file(String... rows) {
         StringBuilder csv = new StringBuilder(HEADER).append('\n');
+        for (String row : rows) {
+            csv.append(row).append('\n');
+        }
+        return csv.toString();
+    }
+
+    /** As {@link #file}, but with {@link #GUARDIAN_HEADER} — the columns the guardian tests need. */
+    private static String guardianFile(String... rows) {
+        StringBuilder csv = new StringBuilder(GUARDIAN_HEADER).append('\n');
         for (String row : rows) {
             csv.append(row).append('\n');
         }
@@ -1090,6 +1315,16 @@ class StudentImportApiTests {
                 "id");
     }
 
+    /** A guardian already in the directory before an import runs, for the phone-match tests. */
+    private UUID createGuardian(Cookie session, String fullName, String phone) throws Exception {
+        return idOf(
+                mockMvc.perform(request(post(GUARDIANS), session, """
+                                {"fullName": "%s", "phone": "%s"}
+                                """.formatted(fullName, phone)))
+                        .andExpect(status().isCreated()),
+                "id");
+    }
+
     private static UUID idOf(ResultActions result, String field) throws Exception {
         JsonNode body = JSON.readTree(result.andReturn().getResponse().getContentAsString());
         return UUID.fromString(body.path("data").path(field).asText());
@@ -1112,6 +1347,20 @@ class StudentImportApiTests {
     private int guardianCount(String schema) {
         return jdbc.sql("select count(*) from " + schema + ".guardian")
                 .query(Integer.class)
+                .single();
+    }
+
+    private int studentGuardianLinkCount(String schema) {
+        return jdbc.sql("select count(*) from " + schema + ".student_guardian")
+                .query(Integer.class)
+                .single();
+    }
+
+    /** One guardian's stored phone, by their full name — for a directory of one or two people. */
+    private String guardianPhoneByName(String schema, String fullName) {
+        return jdbc.sql("select phone from " + schema + ".guardian where full_name = ?")
+                .param(fullName)
+                .query(String.class)
                 .single();
     }
 
