@@ -110,6 +110,15 @@ interface PermissionRow {
  * The roster screen's "Manage roles" link is the normal way in, and carries only an id in its query
  * parameter, never a name: a display name is Confidential (ADR-0014) and has no business in a URL.
  *
+ * ## The impact preview (FR-004)
+ *
+ * Editing a role's permissions shows who holds it and what the save would do to them, built from
+ * `GET /api/access/roles/{id}/holders` — the read `AccessController`'s Javadoc names as what a
+ * preview would be built from, rather than a new endpoint. See the "impact preview" section further
+ * down this file for the two ADR-0023 facts it exists to surface: removing a permission signs out
+ * every holder immediately, whatever else the role change did; adding one waits for their next
+ * login.
+ *
  * ## There is no guard on this route, deliberately
  *
  * ADR-0008: the server leaves the menu item out for anyone without `identity:role:manage`, and
@@ -274,6 +283,9 @@ export class AccessRoles {
     let control = this.permissionControls.get(code);
     if (!control) {
       control = this.formBuilder.control(false);
+      control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.permissionsRevision.update((count) => count + 1);
+      });
       this.permissionControls.set(code, control);
     }
     return control;
@@ -290,6 +302,13 @@ export class AccessRoles {
       this.permissionControl(code);
     }
   }
+
+  /**
+   * Bumped by every permission checkbox's `valueChanges` (wired once, in `permissionControl`
+   * below), so `impact` has something to recompute on — a `FormControl` is not a signal, the same
+   * reason `roleRevision` and `subjects.ts` exist.
+   */
+  private readonly permissionsRevision = signal(0);
 
   protected permissionRows(moduleName: string): readonly PermissionRow[] {
     return (this.permissionsByModule().get(moduleName) ?? []).map((permission) => ({
@@ -421,6 +440,10 @@ export class AccessRoles {
     this.roleForm.reset({ name: '', description: '' }, { emitEvent: false });
     this.setCheckedPermissions([]);
     this.roleEditing.set('new');
+    // A role that does not exist yet has no holders — see the class Javadoc's "impact preview"
+    // section. Cleared rather than left stale from whichever role was last edited.
+    this.editingHolders.set([]);
+    this.editingHoldersFailed.set(false);
     this.focusAfterRender('#role-name');
   }
 
@@ -439,6 +462,7 @@ export class AccessRoles {
     );
     this.setCheckedPermissions(role.permissions);
     this.roleEditing.set(role.id);
+    this.loadEditingHolders(role.id);
     this.focusAfterRender('#role-name');
   }
 
@@ -449,6 +473,87 @@ export class AccessRoles {
     const id = this.roleEditingId();
     this.roleEditing.set(null);
     this.focusAfterRender(id ? `#role-edit-${id}` : '#role-add');
+  }
+
+  // ── The impact preview: who is affected if this save goes through ───────────────────────
+  //
+  // FR-004's acceptance note asks "who is affected if I save this" to be answerable before the
+  // click, not after — `AccessController`'s Javadoc names `GET .../holders` as the read this was
+  // left for. Two facts from ADR-0023 make it more than a headcount:
+  //
+  // - **Removing any permission ends every holder's whole session, immediately** —
+  //   `RoleManagementService#endSessionsOfEveryHolderOf` runs the moment *any* permission is
+  //   removed, for *everyone* holding the role, not only the ones whose specific access changed.
+  //   A principal about to sign nine teachers out mid-lesson should read that before clicking Save.
+  // - **Adding a permission changes nothing until the next login** (ADR-0005's "effective
+  //   permissions are computed once per session"), so it is worded as calmly as the other case is
+  //   worded urgently.
+  //
+  // `GET /api/access/roles/{id}/holders` is already the read the screen's own "Who holds this"
+  // toggle uses, further down this file — this fetches it again, into its own state, because the
+  // toggle's `openHoldersFor` is about a row in the *list*, and the preview is about the role
+  // currently open in the *editor*. Conflating the two would make opening one collapse the other.
+
+  protected readonly editingHolders = signal<readonly UserSummary[]>([]);
+  protected readonly editingHoldersLoading = signal(false);
+  protected readonly editingHoldersFailed = signal(false);
+
+  /** What the role being edited holds right now, or `null` while adding a new one (no "before"). */
+  private readonly editingRoleBefore = computed<RoleResponse | null>(() => {
+    const id = this.roleEditingId();
+    return id ? (this.roles().find((role) => role.id === id) ?? null) : null;
+  });
+
+  /**
+   * The permissions this save would add and remove, as full `PermissionDefinition`s so the
+   * template can show a label rather than a code. `null` while adding a new role: nobody holds it
+   * yet, so there is nothing to diff against.
+   */
+  protected readonly permissionImpact = computed<{
+    readonly adding: readonly PermissionDefinition[];
+    readonly removing: readonly PermissionDefinition[];
+  } | null>(() => {
+    this.permissionsRevision(); // See `permissionControl`: a checkbox toggling is not itself a signal.
+    const before = this.editingRoleBefore();
+    if (!before) {
+      return null;
+    }
+    const previous = new Set(before.permissions);
+    const checked = new Set(this.checkedPermissionCodes());
+    const byCode = new Map(this.permissions().map((permission) => [permission.code, permission]));
+    const resolve = (codes: readonly string[]): readonly PermissionDefinition[] =>
+      codes
+        .map((code) => byCode.get(code))
+        .filter((permission): permission is PermissionDefinition => permission !== undefined);
+    return {
+      adding: resolve([...checked].filter((code) => !previous.has(code))),
+      removing: resolve([...previous].filter((code) => !checked.has(code))),
+    };
+  });
+
+  private loadEditingHolders(roleId: string): void {
+    this.editingHoldersLoading.set(true);
+    this.editingHoldersFailed.set(false);
+    this.editingHolders.set([]);
+
+    this.api
+      .holders(roleId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.editingHoldersLoading.set(false);
+          this.editingHolders.set(result);
+        },
+        error: () => {
+          this.editingHoldersLoading.set(false);
+          this.editingHoldersFailed.set(true);
+        },
+      });
+  }
+
+  /** `[a, b]` → `"a, b"`, for the two permission lists the impact preview names in plain language. */
+  protected labelsOf(permissions: readonly PermissionDefinition[]): string {
+    return permissions.map((permission) => permission.label).join(', ');
   }
 
   protected saveRole(): void {
