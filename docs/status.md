@@ -133,11 +133,13 @@ columns ADR-0020 §2 left out.
 
 The last piece of master data. Small, and it unblocks marks and the timetable later.
 
-### 3. ADR-0008's staleness rule
+### 3. ~~ADR-0008's staleness rule~~ ✅ Closed
 
 A `403` should make the client refetch `/api/me` and re-render navigation before showing the error,
 so a permission revoked mid-session stops leaving a menu entry that lies. The interceptor does this
 for `401` only. Cross-cutting but small.
+
+Done — see [Known gaps and debt](#known-gaps-and-debt) and the [Done](#done) table below.
 
 ### 4. A Confidential value can still reach a log through an accessor
 
@@ -231,6 +233,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
+| ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts` |
 
 ## Known gaps and debt
 
@@ -345,9 +348,14 @@ Recorded so they are decided rather than discovered.
   screen. That is ADR-0008's designed behaviour, not a defect — but the guard against a genuine typo
   is a CI check comparing the backend's ids to the frontend's registry, which needs both artefacts
   and so belongs in neither agent's half. Both sides carry a matching `TODO(contract)`.
-- **ADR-0008's staleness rule is not implemented.** A `403` should make the client refetch
-  `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
-  without a refetch loop.
+- ~~ADR-0008's staleness rule is not implemented~~ ✅ Closed. Any `403` other than one on `/api/me`
+  itself now makes `apiErrorInterceptor` call `SessionBootstrap.refreshAfterForbidden()` before the
+  error reaches the screen: it refetches `/api/me`, re-renders navigation from the answer, and only
+  then rethrows. Concurrent `403`s share the one in-flight refetch; a failure of the refetch itself
+  (including a `401` that turns out to mean the session is actually gone) never replaces the
+  original error, it only decides whether the user also lands on `/login`. A refetch that comes back
+  with the same `permissionsVersion` still shows the same error — see the comment at the call site
+  for why that case is not reworded.
 - Expired sessions are never purged.
 - **The forced password change is enforced at two points, not everywhere.** The login screen sends
   someone holding a temporary password to `/change-password`, and `landingGuard` sends them there

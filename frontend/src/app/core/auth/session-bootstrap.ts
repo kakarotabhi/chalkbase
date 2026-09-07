@@ -46,6 +46,9 @@ export class SessionBootstrap {
 
   private inFlight: Observable<boolean> | null = null;
 
+  /** See `refreshAfterForbidden` — the in-flight cache for a `403`-triggered refetch. */
+  private forbiddenRefetch: Observable<void> | null = null;
+
   /** Whether the first `/api/me` has been answered — one way, and only ever set once. */
   private firstSettled = false;
 
@@ -102,6 +105,59 @@ export class SessionBootstrap {
     );
 
     return this.inFlight;
+  }
+
+  /**
+   * The refetch ADR-0008's staleness rule asks for: some other call came back `403`, so the menu
+   * and permissions this tab is holding might be built from a role that no longer applies.
+   * `apiErrorInterceptor` calls this before it lets that `403` reach the screen.
+   *
+   * ## Sharing one refetch
+   *
+   * A screen that fires several requests on load can have all of them come back `403` at once —
+   * the permission they all needed was just revoked. That must not mean several refetches racing
+   * each other, so this caches the observable exactly the way `ensure()` caches `inFlight`: the
+   * first caller creates it, everyone else gets the same one back, and it clears itself once the
+   * call settles so the *next* `403`, later, asks again.
+   *
+   * It is a separate field from `inFlight` on purpose. `ensure()` calls `isFresh()` first and skips
+   * the network whenever the stores already hold a session — which is exactly the situation this
+   * method is called in. The whole point here is to ask anyway, because that session is precisely
+   * what might be wrong.
+   *
+   * ## Never throws
+   *
+   * The caller is already holding the `403` the user needs to see; this must never replace it with
+   * a different failure. So a failure here is handled exactly like a failure of `ensure()`'s own
+   * call — `afterFailure` clears the session on a genuine 401 and otherwise just logs and keeps
+   * whatever this tab already had — and either way this observable completes normally.
+   *
+   * `/api/me` needs only a valid session (see `MeApi`), so it should not itself answer `403`; if it
+   * ever did, `apiErrorInterceptor` does not route back through this method for a `403` on `/api/me`
+   * itself, which is what keeps this from ever calling itself.
+   */
+  refreshAfterForbidden(): Observable<void> {
+    if (this.forbiddenRefetch) {
+      return this.forbiddenRefetch;
+    }
+
+    this.forbiddenRefetch = this.meApi.get().pipe(
+      tap((me) => {
+        this.session.bootstrapped(me);
+        this.navigation.load(me.navigation);
+      }),
+      map(() => undefined),
+      catchError((error: unknown) => {
+        this.afterFailure(error);
+        return of(undefined);
+      }),
+      finalize(() => {
+        this.forbiddenRefetch = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+
+    return this.forbiddenRefetch;
   }
 
   /**
