@@ -1,0 +1,11 @@
+<!--
+  The outlet is never conditional. The router activates into it as soon as its guards resolve, and
+  a `@if` around it would mean the element the router needs is missing at exactly the moment it
+  needs it. The boot state is a sibling that is shown instead, not a layer over the top: a
+  half-rendered screen underneath a loading panel is two answers to the same question.
+-->
+<router-outlet (activate)="outletFilled.set(true)" (deactivate)="outletFilled.set(false)" />
+
+@if (showBootState()) {
+  <cb-boot-state />
+}

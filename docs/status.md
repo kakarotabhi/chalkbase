@@ -3,7 +3,7 @@
 Living status. **Updated in the same pull request as the work it describes** — a status file that is
 updated "later" is worse than none, because people trust it.
 
-Last updated: 2026-09-06 · Roadmap phase: **1** — Phase 0 is complete
+Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 ([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md))
 
 ## At a glance
@@ -182,11 +182,31 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
 | Signing in lands on the first item of the user's own menu, never a constant | `landingGuard`, `features/landing/` |
 | Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
+| A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 
 ## Known gaps and debt
 
 Recorded so they are decided rather than discovered.
 
+- **There is no HTTP timeout anywhere in the app.** No `timeout()` on any call in `core/api`, and
+  nothing configured on `HttpClient`, so a request that hangs waits until the browser or the network
+  gives up — which on a mobile connection can be minutes. For `GET /api/me` that is now a
+  considered decision: a timeout there would resolve `authGuard` as "not signed in" and drop the
+  user on a login screen served by the same slow server, so they would loop between two screens
+  instead of waiting once, and the app says what it is waiting for instead
+  (`layout/boot-state/`). For every other call it is not a decision, it is an absence — a hung
+  save on the student form spins its button indefinitely with no way back. Deciding it properly
+  means one number, one place, and an error state that offers a retry.
+- ~~The app showed a blank white page for the whole of the first `/api/me`~~ ✅ Closed. `authGuard`
+  guards the shell route and the router renders nothing until its guards resolve, so a bare
+  `<router-outlet />` root meant an empty document for the length of that call — 121 seconds
+  against a sleeping API, with `<app-root>` present and no console error, which is why it read as a
+  crash. Three comments in `app.config.ts`, `auth-guard.ts` and `session-bootstrap.ts` asserted the
+  shell painted its chrome meanwhile; nothing had ever been built to do it, and the comments are
+  what kept anyone from noticing. `SessionBootstrap.bootstrapping` now drives a boot state that
+  `App` renders outside the outlet — held back 600ms so a warm load never sees it, escalating at
+  10s to say the wait is unusual. The lesson worth keeping is the one about the comments: a comment
+  that defends behaviour nobody wrote is worse than no comment.
 - `/api/schools/**` is still `permitAll`, because onboarding a campus has no caller to authenticate
   yet. It is CSRF-exempt for exactly as long as that is true — CSRF protects ambient cookie
   authority, and an endpoint that reads no cookie has none. Closes with a platform-operator account.
