@@ -59,6 +59,13 @@ export interface StudentSearchQuery {
   readonly sort?: string;
 }
 
+/** The filters an export accepts — {@link StudentSearchQuery} minus paging and sorting, which an export has neither of. */
+export interface StudentExportFilter {
+  readonly q?: string | null;
+  readonly status?: StudentStatus | null;
+  readonly sectionId?: string | null;
+}
+
 /**
  * HTTP access to the student module: students, their enrolments, and their guardian links
  * (ADR-0020).
@@ -127,6 +134,38 @@ export class StudentsApi {
         withCredentials: true,
       })
       .pipe(unwrap);
+  }
+
+  /**
+   * The whole matching roster as a CSV file, masked by default (ADR-0014, ADR-0027) — every
+   * Restricted field (caste, religion, category, CWSN/disability, health details, blood group,
+   * APAAR) is left out of the file entirely rather than sent empty or marked.
+   *
+   * Same filters as {@link search}, unpaged: an export is "everything that matches", not one page
+   * of it. `responseType: 'blob'` because this is the one request in this file that does not answer
+   * inside the ADR-0007 envelope — it answers with the file itself, the way
+   * `GET /api/documents/{id}/content` answers with a document's bytes on the backend.
+   */
+  export(filter: StudentExportFilter = {}): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export`, {
+      params: exportParams(filter),
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
+  /**
+   * As {@link export}, with every Restricted field included. Needs
+   * `Permissions.STUDENT_EXPORT_UNMASKED`, which no shipped role holds by default — a screen
+   * offering this must have already checked the permission itself, because the server's 403 for a
+   * caller who lacks it is otherwise indistinguishable from any other failed download.
+   */
+  exportUnmasked(filter: StudentExportFilter = {}): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export/unmasked`, {
+      params: exportParams(filter),
+      responseType: 'blob',
+      withCredentials: true,
+    });
   }
 
   /** The whole record: the student, their guardians and their enrolment history. */
@@ -356,4 +395,13 @@ function clampSize(size: number): number {
 function withOptional(params: HttpParams, name: string, value: string | null | undefined) {
   const trimmed = value?.trim();
   return trimmed ? params.set(name, trimmed) : params;
+}
+
+/** The three export filters, sent only when set — no `page`, `size` or `sort`, which an export has neither of. */
+function exportParams(filter: StudentExportFilter): HttpParams {
+  let params = new HttpParams();
+  params = withOptional(params, 'q', filter.q);
+  params = withOptional(params, 'status', filter.status);
+  params = withOptional(params, 'sectionId', filter.sectionId);
+  return params;
 }
