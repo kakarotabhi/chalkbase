@@ -152,7 +152,7 @@ class EncryptionBindingTests {
                 if (Classified.tierOf(component) != Tier.RESTRICTED) {
                     continue;
                 }
-                if (!hasEncryptedFieldNamed(entities, component.getName())) {
+                if (!hasProperlyEncryptedFieldNamed(entities, component.getName())) {
                     offenders.add(dto.getSimpleName() + "." + component.getName());
                 }
             }
@@ -160,10 +160,17 @@ class EncryptionBindingTests {
         return offenders;
     }
 
-    private static boolean hasEncryptedFieldNamed(List<Class<?>> entities, String fieldName) {
+    /**
+     * Whether some entity has a field of this name that is genuinely encrypted — {@link Encrypted}
+     * alone is not enough. A field carrying the marker without {@code @Convert(converter =
+     * EncryptedStringConverter.class)} is not encrypted, it only claims to be, so it must not satisfy
+     * "the DTO's Restricted counterpart is encrypted" — that is exactly the lie {@link Encrypted}'s
+     * Javadoc warns about.
+     */
+    private static boolean hasProperlyEncryptedFieldNamed(List<Class<?>> entities, String fieldName) {
         for (Class<?> entity : entities) {
             for (Field field : entity.getDeclaredFields()) {
-                if (field.getName().equals(fieldName) && field.isAnnotationPresent(Encrypted.class)) {
+                if (field.getName().equals(fieldName) && isWiredToTheConverter(field)) {
                     return true;
                 }
             }
@@ -175,16 +182,20 @@ class EncryptionBindingTests {
         List<String> offenders = new ArrayList<>();
         for (Class<?> entity : entities) {
             for (Field field : entity.getDeclaredFields()) {
-                if (!field.isAnnotationPresent(Encrypted.class)) {
-                    continue;
-                }
-                Convert convert = field.getAnnotation(Convert.class);
-                if (convert == null || !EncryptedStringConverter.class.equals(convert.converter())) {
+                if (field.isAnnotationPresent(Encrypted.class) && !isWiredToTheConverter(field)) {
                     offenders.add(entity.getSimpleName() + "." + field.getName());
                 }
             }
         }
         return offenders;
+    }
+
+    private static boolean isWiredToTheConverter(Field field) {
+        if (!field.isAnnotationPresent(Encrypted.class)) {
+            return false;
+        }
+        Convert convert = field.getAnnotation(Convert.class);
+        return convert != null && EncryptedStringConverter.class.equals(convert.converter());
     }
 
     // ── Scanning ──────────────────────────────────────────────────────────────────────────────

@@ -92,4 +92,17 @@ class EncryptionKeyConfigurationTests {
                     assertThat(context).getFailure().rootCause().hasMessageContaining("base64");
                 });
     }
+
+    /**
+     * {@code SetupKeyFilterTests} activates {@code {"test", "prod"}} together on purpose, to run
+     * {@code application-prod.yml}'s settings against a Testcontainers database rather than a real
+     * deployment — and never sets {@code CHALKBASE_ENCRYPTION_KEY}, because nothing about it is a
+     * production deployment. A bare {@code matchesProfiles("prod")} would enforce a key on it anyway
+     * and break a test this class has no business touching; the fix is "prod & !test", proven here.
+     */
+    @Test
+    void fallsBackToTheDevelopmentKeyWhenTestIsActiveAlongsideProd() {
+        contexts.withPropertyValues("spring.profiles.active=test,prod")
+                .run(context -> assertThat(context).hasNotFailed().hasSingleBean(EncryptedStringConverter.class));
+    }
 }

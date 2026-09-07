@@ -48,7 +48,13 @@ class EncryptionKeyConfiguration {
     EncryptionKeys encryptionKeys(
             @Value("${chalkbase.encryption.key:}") String configuredKey, Environment environment) {
         String currentKeyId = EncryptionKeys.ID_V1;
-        boolean prod = environment.matchesProfiles("prod");
+        // "prod & !test", not "prod" alone: SetupKeyFilterTests activates {"test", "prod"} together
+        // deliberately, to exercise application-prod.yml's settings (SecurityConfig's cookie flags,
+        // SetupKeyConfiguration) against a Testcontainers database rather than a real deployment. A
+        // bare `matchesProfiles("prod")` would enforce a real key on that test the same as on Render
+        // or Coolify, which is wrong: nothing about it is production, and it never set
+        // CHALKBASE_ENCRYPTION_KEY on purpose, in the same way it never had to touch this class.
+        boolean prod = environment.matchesProfiles("prod & !test");
 
         if (!StringUtils.hasText(configuredKey)) {
             if (prod) {
