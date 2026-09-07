@@ -281,6 +281,7 @@ here. What is left is externally blocked rather than undecided.
 | Document storage: a `StorageService` port, a real filesystem adapter for `local`/`test`, and attaching a certificate, photo, signature or other document to a student — upload, list, proxied download, edit, delete, all audited | [ADR-0025](architecture/adr/0025-document-storage.md), `document/` |
 | The first basic dashboard: `GET /api/dashboard`, gated tile by tile through two new SPIs (`AcademicsDashboardContributor`, `StudentDashboardContributor`) so the shared kernel never imports a feature module, and `student.api.StudentLookup`, the module's first cross-module read interface | `platform/dashboard/`, `student/api/StudentLookup.java` |
 | Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
+| The users roster on the server-driven menu: `settings.users`, gated on `identity:user:read` | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 
 ## What is left on the frontend
 
@@ -292,7 +293,7 @@ separated them.
 |---|---|
 | **Documents has six endpoints and no screen at all.** List, upload, download, edit and delete are all reachable only by an API client. | `document/api/DocumentController.java` · nothing under `features/` |
 | **Export has no screen yet** — it is the feature currently being built, and the action belongs on the students and guardians lists. | `features/students/` |
-| **The users roster has no menu entry.** `IdentityNavigation` declares `settings` and `settings.access` but no `settings.users`, so the screen is reachable only by URL or by the cross-link from the access screen. Deliberately not invented client-side: a nav id the server never emits is a menu entry nobody can wait for, which `nav-routes.ts` already records for `students.import`. Closing it is a one-line backend change. | `identity/infrastructure/IdentityNavigation.java` |
+| ~~The users roster has no menu entry.~~ ✅ Closed. `IdentityNavigation` now emits `settings.users`, gated on `identity:user:read` rather than `identity:user:manage` — `AUDITOR` and `VICE_PRINCIPAL` hold the first without the second, and can legitimately see the roster without acting on it — and `nav-routes.ts` resolves it. | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | **No impact preview when editing a role.** FR-004's acceptance note asks for one; `GET /api/access/roles/{id}/holders` is the read it would be built from. Deferred deliberately as frontend-shaped work. | `features/access/` |
 | **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other. | [the assessment](design-drift-assessment.md) |
 

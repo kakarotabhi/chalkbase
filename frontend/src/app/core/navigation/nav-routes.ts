@@ -87,12 +87,12 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // three settings entries sharing one icon is this file's own existing convention for a section,
   // and the label is what tells them apart.
   ['settings.access', { path: '/settings/access', icon: 'settings' }],
-  // The account roster is deliberately **not** here. `IdentityNavigation` (backend) declares only
-  // `settings` and `settings.access` — there is no `settings.users` id for this map to resolve, so
-  // adding one would be inventing a route the server-driven menu can never send and this registry
-  // exists to prevent exactly that (see the header comment). The screen still exists at
-  // `/settings/users` and is reachable from a link on the access screen and by typing the URL; see
-  // `docs/status.md` and the PR that added this comment for the backend id this is waiting on.
+  // The account roster. `IdentityNavigation` (backend) now emits `settings.users`, gated on
+  // `identity:user:read`; this entry is what switches the menu item on, with no other change —
+  // the same bargain `audit` and `settings.access` already describe above. Same glyph as the other
+  // two settings entries, for the same reason: three items sharing one icon read as one section,
+  // and the label is what tells them apart.
+  ['settings.users', { path: '/settings/users', icon: 'settings' }],
 ]);
 
 /**
