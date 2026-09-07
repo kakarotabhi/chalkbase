@@ -4772,6 +4772,29 @@
         ]
       }
     },
+    "/api/guardians/export": {
+      "get": {
+        "operationId": "export_1",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "guardian-controller"
+        ]
+      }
+    },
     "/api/guardians/{id}": {
       "put": {
         "operationId": "update_3",
@@ -5143,6 +5166,100 @@
                 }
               }
             },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/export": {
+      "get": {
+        "operationId": "export",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "TRANSFERRED",
+                "GRADUATED",
+                "WITHDRAWN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectionId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "student-controller"
+        ]
+      }
+    },
+    "/api/students/export/unmasked": {
+      "get": {
+        "operationId": "exportUnmasked",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "TRANSFERRED",
+                "GRADUATED",
+                "WITHDRAWN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectionId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "OK"
           }
         },

@@ -2,7 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { GrantResponse, PermissionDefinition, RoleResponse } from '../../core/api/models';
+import {
+  GrantResponse,
+  PermissionDefinition,
+  RoleResponse,
+  UserSummary,
+} from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
 import { AccessRoles } from './access-roles';
@@ -24,6 +29,13 @@ const role = (over: Partial<RoleResponse> = {}): RoleResponse => ({
   code: 'FRONT_OFFICE',
   name: 'Front Office',
   permissions: ['identity:role:manage'],
+  ...over,
+});
+
+const holder = (over: Partial<UserSummary> = {}): UserSummary => ({
+  id: 'acct-priya',
+  displayName: 'Priya Sharma',
+  status: 'ACTIVE',
   ...over,
 });
 
@@ -227,6 +239,13 @@ describe('AccessRoles', () => {
     button('Edit permissions').click();
     fixture.detectChanges();
 
+    // Opening the editor also loads the impact preview's holders — see "the impact preview"
+    // tests further down for what this response feeds into.
+    httpMock
+      .expectOne({ url: `${ROLES_URL}/role-front-office/holders`, method: 'GET' })
+      .flush(envelope([]));
+    fixture.detectChanges();
+
     // Unchecking the one this role already has — allowed even though the actor's own session
     // does not hold `student:student:read` either, because removing is never guarded.
     checkbox('student:student:read').click();
@@ -247,6 +266,71 @@ describe('AccessRoles', () => {
     httpMock
       .expectOne((request) => request.url === ROLES_URL && request.method === 'GET')
       .flush(envelope([role({ permissions: ['identity:role:manage'] })]));
+  });
+
+  // ── The impact preview (FR-004) ──────────────────────────────────────────────────────────
+
+  it('says nobody is affected when nobody holds the role being edited', () => {
+    arrive();
+
+    button('Edit permissions').click();
+    fixture.detectChanges();
+    httpMock
+      .expectOne({ url: `${ROLES_URL}/role-front-office/holders`, method: 'GET' })
+      .flush(envelope([]));
+    fixture.detectChanges();
+
+    expect(text()).toContain('Nobody holds this role yet, so saving affects nobody directly.');
+  });
+
+  it('warns that removing a permission signs every holder out immediately', () => {
+    arrive(
+      [permission(), permission({ code: 'student:student:read', label: 'View students' })],
+      [role({ permissions: ['identity:role:manage', 'student:student:read'] })],
+    );
+
+    button('Edit permissions').click();
+    fixture.detectChanges();
+    httpMock
+      .expectOne({ url: `${ROLES_URL}/role-front-office/holders`, method: 'GET' })
+      .flush(envelope([holder(), holder({ id: 'acct-arun', displayName: 'Arun Shetty' })]));
+    fixture.detectChanges();
+
+    expect(text()).toContain('2 accounts hold this role right now');
+    expect(text()).toContain('Priya Sharma');
+    expect(text()).toContain('Arun Shetty');
+
+    // No change checked yet: the preview names holders but nothing is at stake until a box moves.
+    expect(text()).not.toContain('signed out the moment you save');
+
+    checkbox('student:student:read').click();
+    fixture.detectChanges();
+
+    expect(text()).toContain('These accounts are');
+    expect(text()).toContain('signed out the moment you save');
+    expect(text()).toContain('Removed: View students.');
+  });
+
+  it('says an added permission waits for the holder’s next login, not this one', () => {
+    arrive(
+      [permission(), permission({ code: 'student:student:read', label: 'View students' })],
+      [role()],
+    );
+
+    button('Edit permissions').click();
+    fixture.detectChanges();
+    httpMock
+      .expectOne({ url: `${ROLES_URL}/role-front-office/holders`, method: 'GET' })
+      .flush(envelope([holder()]));
+    fixture.detectChanges();
+
+    checkbox('student:student:read').click();
+    fixture.detectChanges();
+
+    expect(text()).toContain('This account gains access');
+    expect(text()).toContain('but not immediately');
+    expect(text()).toContain('Added: View students.');
+    expect(text()).not.toContain('signed out the moment you save');
   });
 
   // ── Grants ───────────────────────────────────────────────────────────────────────────────

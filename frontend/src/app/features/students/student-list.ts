@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -25,6 +26,7 @@ import { STUDENT_PAGE_SIZE, StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { StudentForm } from './student-form';
@@ -34,6 +36,7 @@ import {
   STATUS_LABELS,
   STATUS_OPTIONS,
   classAndSection,
+  downloadBlob,
   labelFor,
 } from './students-shared';
 
@@ -102,7 +105,7 @@ interface StudentRow {
  */
 @Component({
   selector: 'cb-student-list',
-  imports: [ReactiveFormsModule, RouterLink, Button, Select, TextInput, StudentForm],
+  imports: [ReactiveFormsModule, RouterLink, Button, Dialog, Select, TextInput, StudentForm],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-list.html',
   styleUrl: './student-list.scss',
@@ -115,6 +118,7 @@ export class StudentList {
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly pageSize = STUDENT_PAGE_SIZE;
   protected readonly statusFilterOptions = STATUS_FILTER_OPTIONS;
@@ -127,6 +131,19 @@ export class StudentList {
    * able to enable it, and a greyed-out button is a question the screen cannot answer.
    */
   protected readonly canManageStudents = permitted(Permissions.STUDENT_MANAGE);
+
+  /**
+   * Whether to offer the unmasked export at all (ADR-0014, ADR-0027). Held by no shipped role
+   * template — see `Permissions.STUDENT_EXPORT_UNMASKED` — so this is ordinarily false, and the
+   * masked "Export" action is the only one most sessions ever see.
+   */
+  protected readonly canExportUnmasked = permitted(Permissions.STUDENT_EXPORT_UNMASKED);
+
+  protected readonly exportingMasked = signal(false);
+  protected readonly exportingUnmasked = signal(false);
+  protected readonly exportFailed = signal(false);
+  /** The confirmation dialog for the unmasked export — see `startUnmaskedExport`. */
+  protected readonly confirmingUnmaskedExport = signal(false);
 
   protected readonly filters = this.formBuilder.group({
     q: '',
@@ -366,6 +383,84 @@ export class StudentList {
           this.saveFieldErrors.set(apiErrorDetails(error));
         },
       });
+  }
+
+  // ── Export (ADR-0014, ADR-0027) ──────────────────────────────────────────────────────────
+
+  /**
+   * Downloads the roster, masked by default: every Restricted field — caste, religion, category,
+   * CWSN/disability status, health details, blood group, APAAR — is left out of the file, not sent
+   * empty. Whatever the search box and the two filters currently hold is what is exported, so a
+   * class teacher who has filtered to one section downloads that section, not the whole school.
+   */
+  protected exportMasked(): void {
+    if (this.exportingMasked()) {
+      return;
+    }
+    this.exportingMasked.set(true);
+    this.exportFailed.set(false);
+
+    this.students
+      .export(this.exportFilter())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          this.exportingMasked.set(false);
+          downloadBlob(this.document, 'students.csv', blob);
+        },
+        error: () => {
+          this.exportingMasked.set(false);
+          this.exportFailed.set(true);
+        },
+      });
+  }
+
+  /** Opens the confirmation dialog. The download itself only starts once that is answered. */
+  protected startUnmaskedExport(): void {
+    this.exportFailed.set(false);
+    this.confirmingUnmaskedExport.set(true);
+  }
+
+  protected cancelUnmaskedExport(): void {
+    this.confirmingUnmaskedExport.set(false);
+    this.focusAfterRender('#student-export-unmasked');
+  }
+
+  /**
+   * The dangerous one. Every call is recorded in the audit log with the fields it disclosed and how
+   * many rows — the dialog this answers is what makes that consequence visible before it happens
+   * rather than only in a log somebody reads afterwards.
+   */
+  protected confirmUnmaskedExport(): void {
+    if (this.exportingUnmasked()) {
+      return;
+    }
+    this.exportingUnmasked.set(true);
+
+    this.students
+      .exportUnmasked(this.exportFilter())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          this.exportingUnmasked.set(false);
+          this.confirmingUnmaskedExport.set(false);
+          downloadBlob(this.document, 'students-unmasked.csv', blob);
+        },
+        error: () => {
+          this.exportingUnmasked.set(false);
+          this.confirmingUnmaskedExport.set(false);
+          this.exportFailed.set(true);
+        },
+      });
+  }
+
+  private exportFilter() {
+    const { q, status, sectionId } = this.filters.getRawValue();
+    return {
+      q: q.trim() || null,
+      status: (status as StudentStatus) || null,
+      sectionId: sectionId || null,
+    };
   }
 
   // ── internals ────────────────────────────────────────────────────────────────────────────

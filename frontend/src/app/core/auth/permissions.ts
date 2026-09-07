@@ -66,6 +66,14 @@ export const Permissions = {
    * neither of those implies. `StudentPermissions.STUDENT_REVEAL_RESTRICTED`.
    */
   STUDENT_REVEAL_RESTRICTED: 'student:student:reveal_restricted',
+  /**
+   * Downloading a CSV of students with every Restricted field included — caste, religion, category,
+   * CWSN/disability status, health details and APAAR, not just whether each is recorded. Separate
+   * from `STUDENT_REVEAL_RESTRICTED`: revealing one field on one screen and downloading a bulk file
+   * of everyone's are different orders of consequence. Held by no shipped role template.
+   * `StudentPermissions.STUDENT_EXPORT_UNMASKED`.
+   */
+  STUDENT_EXPORT_UNMASKED: 'student:student:export_unmasked',
   /** Seeing the guardian directory and the guardians on a child's record. */
   GUARDIAN_READ: 'student:guardian:read',
   /** Adding and correcting guardians, and attaching or detaching them from a child. */

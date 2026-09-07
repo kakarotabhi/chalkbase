@@ -173,6 +173,105 @@
           }
         </fieldset>
 
+        @if (permissionImpact(); as impact) {
+          <section class="impact-preview" aria-labelledby="impact-heading">
+            <h3 class="impact-preview__heading" id="impact-heading">Who this affects</h3>
+
+            @if (editingHoldersLoading()) {
+              <p class="page-status" role="status">Checking who holds this role…</p>
+            } @else if (editingHoldersFailed()) {
+              <p class="page-status page-status--error">
+                Could not check who holds this role. Saving may affect accounts this screen could
+                not list.
+              </p>
+            } @else if (editingHolders().length === 0) {
+              <p class="impact-preview__none">
+                Nobody holds this role yet, so saving affects nobody directly.
+              </p>
+            } @else {
+              <p class="impact-preview__count">
+                {{ editingHolders().length }}
+                {{ editingHolders().length === 1 ? 'account holds' : 'accounts hold' }} this role
+                right now:
+                <span class="impact-preview__holders">
+                  @for (holder of editingHolders(); track holder.id; let last = $last) {
+                    {{ holder.displayName }}{{ last ? '' : ', ' }}
+                  }
+                </span>
+              </p>
+
+              @if (impact.removing.length > 0) {
+                <div class="banner banner--danger" role="alert">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9.5" />
+                    <path d="M12 7.5v5" />
+                    <path d="M12 16.2v.1" />
+                  </svg>
+                  <div>
+                    <strong class="banner__title">
+                      {{ editingHolders().length === 1 ? 'This account is' : 'These accounts are' }}
+                      signed out the moment you save
+                    </strong>
+                    <span>
+                      Removing
+                      {{ impact.removing.length === 1 ? 'a permission' : 'permissions' }} from a
+                      role ends the whole session for everyone who holds it right now — not only
+                      their access to what changed — so they will need to sign in again. Removed:
+                      {{ labelsOf(impact.removing) }}.
+                    </span>
+                  </div>
+                </div>
+              }
+
+              @if (impact.adding.length > 0) {
+                <div class="banner banner--info" role="status">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9.5" />
+                    <path d="M12 7.5v5" />
+                    <path d="M12 16.2v.1" />
+                  </svg>
+                  <div>
+                    <strong class="banner__title">
+                      {{
+                        editingHolders().length === 1
+                          ? 'This account gains access'
+                          : 'These accounts gain access'
+                      }}, but not immediately
+                    </strong>
+                    <span>
+                      Added: {{ labelsOf(impact.adding) }}. Nobody sees it until they next sign in.
+                    </span>
+                  </div>
+                </div>
+              }
+
+              @if (impact.adding.length === 0 && impact.removing.length === 0) {
+                <p class="impact-preview__none">No permission changes yet.</p>
+              }
+            }
+          </section>
+        }
+
         <div class="editor__actions">
           <cb-button variant="secondary" [disabled]="roleSaving()" (click)="cancelRoleEdit()"
             >Cancel</cb-button

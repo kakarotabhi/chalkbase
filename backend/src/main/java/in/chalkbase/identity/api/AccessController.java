@@ -28,16 +28,15 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code identity:role:manage}, so keeping the two apart keeps a controller's permission story
  * legible at a glance.
  *
- * <p><strong>No impact preview.</strong> FR-004's acceptance note asks for one — "admin users must
- * be able to preview permission impact before assigning roles" — and it is deliberately not built
- * here. It is a genuinely interactive, frontend-shaped feature ("here is who would gain what, are
- * you sure"), and this wave is backend-only. What this wave does provide is the data such a screen
- * would need: {@link #holders} answers "who holds this role right now" for a role about to be
- * edited, and {@link #roles} already returns every role's current permission set for a client to
- * diff against what it is about to save. Building the preview itself is left to the frontend lane,
- * against these two reads — building half of it here in a shape nobody has confirmed would be the
- * kind of thing that reads as done and is not, which is exactly the trap {@code docs/status.md}
- * already names elsewhere in this codebase.
+ * <p><strong>The impact preview</strong> FR-004's acceptance note asks for — "admin users must be
+ * able to preview permission impact before assigning roles" — is built entirely from two reads
+ * already here, with no endpoint of its own: {@link #holders} answers "who holds this role right
+ * now" for a role about to be edited, and {@link #roles} already returns every role's current
+ * permission set for a client to diff against what it is about to save. {@code AccessRoles} (the
+ * frontend, {@code features/access/access-roles.ts}) is where the diff happens and where the two
+ * ADR-0023 facts a preview has to tell the truth about — removing a permission ends every holder's
+ * session immediately, adding one waits for their next login — are worded for whoever is about to
+ * click Save.
  *
  * <p>The permission strings in the annotations are literals rather than references to
  * {@code IdentityPermissions}, because a constant in an annotation must be a compile-time constant

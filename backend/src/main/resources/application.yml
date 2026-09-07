@@ -103,6 +103,16 @@ spring:
       # served (ADR-0011), so an unqualified `spring_session` would resolve inside a tenant schema —
       # where it does not exist. The session store is the one thing that lives in `public`.
       table-name: public.spring_session
+      # `JdbcIndexedSessionRepository` purges expired rows itself: unless this is `-` (disabled) it
+      # runs `DELETE ... WHERE expiry_time < ?` against `table-name` above, on its own dedicated
+      # `ThreadPoolTaskScheduler` — entirely independent of `chalkbase`'s own
+      # `@EnableScheduling`/`TaskScheduler` (`AuditRetentionSchedulingConfiguration`, ADR-0026), and
+      # of `TenantRegistry`'s per-school fan-out, because `public.spring_session` is one table for
+      # every school rather than one per tenant. So this line changes nothing at runtime — it is the
+      # vendor default, made discoverable by reading this file rather than the
+      # `spring-session-jdbc` source (ADR-0028). Set to `-` to disable, the same tripwire shape
+      # `chalkbase.audit.retention.enabled` uses for the other scheduled job in this codebase.
+      cleanup-cron: '0 * * * * *'
 
 server:
   port: ${PORT:8080}

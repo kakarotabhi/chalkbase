@@ -119,3 +119,25 @@ export function classAndSection(
   const parts = [className?.trim(), sectionName?.trim()].filter(Boolean);
   return parts.join(' · ');
 }
+
+/**
+ * Hands the browser a file the server just answered with — an export, not a file this app built
+ * itself (`student-import.ts#download` is that one, and keeps its own copy for exactly the values
+ * it constructs from data already in memory).
+ *
+ * An object URL rather than reading the blob into a string first: the file may be a few hundred
+ * kilobytes of a school's whole roster, and there is no reason to hold a second copy of it as text.
+ * Revoked on the next tick, once the browser has taken it — see `student-import.ts` for the same
+ * pattern and the same reason.
+ *
+ * @param doc `inject(DOCUMENT)` from the calling component. A plain function rather than a service
+ *     so a spec can call it with a stub document with nothing to provide.
+ */
+export function downloadBlob(doc: Document, filename: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = doc.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}

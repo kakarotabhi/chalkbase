@@ -53,6 +53,28 @@ public class StudentPermissions {
      */
     public static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
 
+    /**
+     * Downloading the roster with every Restricted field included — a child's caste, religion,
+     * EWS/BPL/RTE category, CWSN/disability status, allergies, chronic conditions, medication and
+     * blood group, in one file, for every student a filter matches (ADR-0014, ADR-0027).
+     *
+     * <p><strong>Deliberately its own permission, not {@link #STUDENT_REVEAL_RESTRICTED}.</strong>
+     * Revealing one field on one child's screen and downloading every Restricted field for every
+     * child the school has are different orders of consequence — the file outlives the session, it
+     * can be re-shared, and it is the kind of disclosure a school's own data-protection policy would
+     * want a named decision behind. Holding {@code reveal_restricted} does not imply this, and
+     * holding this does not imply {@code reveal_restricted}: an office that reveals one child's
+     * blood group on request need not also be trusted with a bulk file of everyone's.
+     *
+     * <p><strong>No shipped role template holds this by default</strong> (see
+     * {@code RoleTemplates}) — a school grants it deliberately, to whichever role actually needs a
+     * bulk Restricted export (a UDISE+ return, typically), the same reasoning that keeps
+     * {@code school:school:create} off every template. Every use writes
+     * {@code AuditAction#DATA_EXPORTED} naming the fields disclosed and how many rows, in its own
+     * transaction — see {@code StudentExportService}.
+     */
+    public static final String STUDENT_EXPORT_UNMASKED = "student:student:export_unmasked";
+
     /** Seeing the guardian directory and the guardians on a child's record. */
     public static final String GUARDIAN_READ = "student:guardian:read";
 
@@ -75,6 +97,13 @@ public class StudentPermissions {
                         "Reveal restricted student data",
                         "See the real value of a caste, religion, category, disability, health or APAAR field"
                                 + " that is otherwise masked. Every use is recorded in the audit log."),
+                new PermissionDefinition(
+                        STUDENT_EXPORT_UNMASKED,
+                        "student",
+                        "Export unmasked student data",
+                        "Download a CSV of students that includes caste, religion, category, disability, health"
+                                + " and APAAR fields, not just whether they are recorded. Every export is recorded"
+                                + " in the audit log with the fields it disclosed and how many rows."),
                 new PermissionDefinition(
                         GUARDIAN_READ,
                         "student",

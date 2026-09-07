@@ -9,12 +9,20 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
 import { SessionBootstrap } from './core/auth/session-bootstrap';
 import { apiErrorInterceptor } from './core/interceptors/api-error-interceptor';
+import { timeoutInterceptor } from './core/interceptors/timeout-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withFetch(), withInterceptors([apiErrorInterceptor])),
+    // Order matters: interceptors run outer-to-inner in the order listed, so `apiErrorInterceptor`
+    // wraps `timeoutInterceptor` rather than the other way round. That puts the timeout closer to
+    // the backend call, so a request that times out flows up *into* `apiErrorInterceptor`'s own
+    // `catchError` — logged with a trace id like any other failure, and safe to do so because it
+    // is not an `HttpErrorResponse` and so cannot match that interceptor's 401/403 branches. See
+    // `timeoutInterceptor`'s doc comment for the number chosen and the one endpoint it leaves
+    // alone.
+    provideHttpClient(withFetch(), withInterceptors([apiErrorInterceptor, timeoutInterceptor])),
     // Asks the server who is signed in as early as the app can ask, and deliberately returns
     // nothing so Angular does not wait for it: by the time the router's guard needs an answer the
     // request is usually already on the wire. Starting early shortens the wait; it does not remove
