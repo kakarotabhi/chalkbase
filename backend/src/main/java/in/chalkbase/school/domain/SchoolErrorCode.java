@@ -23,7 +23,19 @@ public enum SchoolErrorCode implements ErrorCode {
 
     INVALID_CONTACT("SCHOOL_005", "That phone number, e-mail address or website is not usable", HttpStatus.BAD_REQUEST),
 
-    UNKNOWN_BOARD("SCHOOL_006", "That is not a board Chalkbase knows", HttpStatus.BAD_REQUEST);
+    UNKNOWN_BOARD("SCHOOL_006", "That is not a board Chalkbase knows", HttpStatus.BAD_REQUEST),
+
+    /**
+     * {@code POST /api/schools/bootstrap} (ADR-0024) retried with the same {@code code} but a
+     * different {@code schemaName} than the school already registered under it. Refused rather than
+     * silently keeping the first schema: a caller who believes it is retrying with the intended
+     * schema deserves to be told it disagrees with what is on record, not to have the difference
+     * quietly dropped.
+     */
+    BOOTSTRAP_SCHEMA_MISMATCH(
+            "SCHOOL_007",
+            "A school with this code is already registered under a different schema name",
+            HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

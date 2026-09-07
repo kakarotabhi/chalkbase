@@ -90,8 +90,10 @@ public class SecurityConfig {
                         // request that sets one is preflighted. The exemption stays correct for the
                         // same reason it always was — there is nothing here a victim's browser can
                         // be made to spend.
-                        // TODO(identity): remove this exemption in the same change that makes
-                        // /api/schools/** authenticated.
+                        // This exemption is permanent, not provisional: ADR-0024 keeps
+                        // POST /api/schools/bootstrap reachable with no session at all, by design, so
+                        // there will never be a cookie for it to echo. See the authorizeHttpRequests
+                        // block below for what changed and what did not.
                         .ignoringRequestMatchers("/api/auth/login", "/api/schools/**"))
                 .securityContext(context -> context.securityContextRepository(securityContextRepository()))
                 .authorizeHttpRequests(auth ->
@@ -105,16 +107,20 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                                 .permitAll()
-                                // TODO(identity): onboarding a school is a platform-operator action and has
-                                // no principal to authenticate until the authorization model of ADR-0005
-                                // lands. Left open so onboarding still works; close it in the same change
-                                // that introduces platform-operator accounts.
-                                // permitAll() is the truth on local and test. On prod it is not the whole
-                                // truth: SetupKeyFilter, added above, has already turned away anything
-                                // without a matching X-Chalkbase-Setup-Key by the time a request reaches
-                                // this rule. That is a stopgap for the deployed environment having a
-                                // public URL, not a substitute for the operator account — a single shared
-                                // secret names nobody, expires never, and cannot be audited.
+                                // ADR-0024 looked at a platform-operator account to hold the permission
+                                // that gates the rest of /api/schools/** and rejected it, for now, as the
+                                // larger fix for a smaller problem: SchoolController#list, #get and
+                                // #create require school:school:create, which no shipped role holds, so
+                                // this rule never actually opens them to anyone. What it does open is
+                                // POST /api/schools/bootstrap, which has no principal to authenticate
+                                // against by design — there is nobody signed in yet, which is exactly the
+                                // gap it exists to close — and is not undefended for it: permitAll() is
+                                // the truth on local and test, and on prod SetupKeyFilter, added above,
+                                // has already turned away anything without a matching
+                                // X-Chalkbase-Setup-Key by the time a request reaches this rule. Bootstrap
+                                // additionally refuses (AUTH_014, unconditionally, on every profile) once
+                                // the target school already has an account, so the setup key is a second
+                                // lock rather than the only one.
                                 .requestMatchers("/api/schools/**")
                                 .permitAll()
                                 .requestMatchers("/api/**")

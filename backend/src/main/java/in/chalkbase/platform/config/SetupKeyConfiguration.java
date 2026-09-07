@@ -23,8 +23,10 @@ import tools.jackson.databind.json.JsonMapper;
  * below. Note that this also applies to the Coolify deployment, which is the other consumer of the
  * {@code prod} profile: see {@code ops/coolify/.env.example}.
  *
- * <p>TODO(identity): delete this class, {@link SetupKeyFilter} and the {@code CHALKBASE_SETUP_KEY}
- * variable in the change that gives {@code /api/schools/**} a real platform-operator principal.
+ * <p>ADR-0024 keeps this class rather than replacing it with a platform-operator account: the
+ * account would be the larger fix for a smaller problem. The setup key stops a stranger reaching
+ * onboarding at all; {@code POST /api/schools/bootstrap}'s own refusal once a school already has an
+ * account is what stops the key's holder creating a second administrator.
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("prod")
@@ -35,8 +37,8 @@ class SetupKeyConfiguration {
         if (!StringUtils.hasText(setupKey)) {
             // The message names the variable and not the value, and there is no value to name yet.
             throw new IllegalStateException("CHALKBASE_SETUP_KEY must be set on the prod profile. It is the only thing"
-                    + " standing in front of POST /api/schools, which creates a database schema. Generate one"
-                    + " (openssl rand -base64 32) and set it in the deployment's environment.");
+                    + " standing in front of POST /api/schools/bootstrap, which creates a database schema."
+                    + " Generate one (openssl rand -base64 32) and set it in the deployment's environment.");
         }
         return new SetupKeyFilter(setupKey, jsonMapper);
     }
