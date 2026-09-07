@@ -89,8 +89,12 @@ The rest is ordinary: JVM start, Spring context, Hibernate, and the per-tenant F
 
 Removing `spring-modulith-runtime`, `spring-modulith-actuator` and `spring-modulith-observability-*`
 from the runtime classpath was proposed, and **the product owner decided they stay.** The module
-artifacts remain, `/actuator/modulith` keeps working, and the ~59 s is a known and accepted cost of
+artifacts remain and the ~59 s is a known and accepted cost of
 running on a free instance. It is written down here so nobody re-proposes it as a discovery.
+
+(An earlier version of this paragraph said the decision keeps `/actuator/modulith` working. It does
+not: only `health` and `info` are exposed, so that endpoint answers 404 either way. The reason to
+keep the dependencies is the module model itself, not an endpoint nobody can reach.)
 
 One lead is worth checking someday and is **unverified**: Spring Modulith can in principle compute
 the module metadata at build time rather than scanning at boot, which would keep every dependency

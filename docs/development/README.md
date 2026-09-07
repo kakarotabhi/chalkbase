@@ -52,7 +52,7 @@ cd frontend && npm start                  # http://localhost:4200 (proxies /api 
 |---|---|
 | http://localhost:8080/swagger-ui.html | API explorer |
 | http://localhost:8080/actuator/health | Health |
-| http://localhost:8080/actuator/modulith | Live module structure |
+| http://localhost:8080/actuator/info | Build and version |
 
 ## Profiles
 
