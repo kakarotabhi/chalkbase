@@ -9,6 +9,18 @@ import { signInWith } from '../../core/auth/session-fixture';
 import { SchoolProfile } from './school-profile';
 
 const URL = '/api/school/profile';
+const BOARDS_URL = '/api/schools/boards';
+const STATES_URL = '/api/reference/states';
+
+/** What the API answers for the two pickers, unless a test overrides it. */
+const BOARDS = [
+  { value: 'CBSE', label: 'CBSE' },
+  { value: 'CISCE', label: 'CISCE (ICSE / ISC)' },
+];
+const STATES = [
+  { value: 'Delhi', label: 'Delhi' },
+  { value: 'Maharashtra', label: 'Maharashtra' },
+];
 
 /** An invented school. Never real school, staff or student data in a fixture. */
 const SAVED_PROFILE = {
@@ -62,10 +74,21 @@ describe('SchoolProfile', () => {
     fixture.detectChanges();
   };
 
-  /** Creates the screen and answers its one bootstrap request. */
+  /**
+   * The screen fires three independent requests on construction: the profile itself, and the two
+   * reference lists (ADR-0029). Flushing only the profile and leaving the other two outstanding
+   * is exactly the mistake `httpMock.verify()` in `afterEach` exists to catch.
+   */
+  const flushReferenceData = () => {
+    httpMock.expectOne(BOARDS_URL).flush(envelope(BOARDS));
+    httpMock.expectOne(STATES_URL).flush(envelope(STATES));
+  };
+
+  /** Creates the screen and answers its bootstrap requests: the profile and both reference lists. */
   const arrive = (profile: unknown = SAVED_PROFILE) => {
     fixture = TestBed.createComponent(SchoolProfile);
     httpMock.expectOne(URL).flush(envelope(profile));
+    flushReferenceData();
     fixture.detectChanges();
   };
 
@@ -137,6 +160,7 @@ describe('SchoolProfile', () => {
       },
       { status: 500, statusText: 'Internal Server Error' },
     );
+    flushReferenceData();
     fixture.detectChanges();
 
     expect(text()).toContain('Could not load the school profile');
@@ -147,6 +171,75 @@ describe('SchoolProfile', () => {
     fixture.detectChanges();
 
     expect(field('school-city').value).toBe('Pune');
+  });
+
+  // ── Reference data (ADR-0029) ────────────────────────────────────────────────────────────
+
+  it('fills the board and state pickers from the API, not a constant', () => {
+    arrive();
+
+    const boardOptions = Array.from(picker('school-board').options).map((option) => option.value);
+    const stateOptions = Array.from(picker('school-state').options).map((option) => option.value);
+    // The placeholder plus exactly what BOARDS/STATES answered — proof the list came off the
+    // wire rather than from a hardcoded array with more entries baked into this file.
+    expect(boardOptions).toEqual(['', 'CBSE', 'CISCE']);
+    expect(stateOptions).toEqual(['', 'Delhi', 'Maharashtra']);
+  });
+
+  it('does not let one reference list failing take the whole form down with it', () => {
+    fixture = TestBed.createComponent(SchoolProfile);
+    httpMock.expectOne(URL).flush(envelope(SAVED_PROFILE));
+    httpMock.expectOne(BOARDS_URL).flush(
+      {
+        success: false,
+        timestamp: '2026-09-06T10:00:00Z',
+        error: { code: 'GEN_001', message: 'Broken.' },
+      },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    httpMock.expectOne(STATES_URL).flush(envelope(STATES));
+    fixture.detectChanges();
+
+    // The profile still loaded and the rest of the form is exactly as usable as ever.
+    expect(field('school-city').value).toBe('Pune');
+    expect(text()).toContain('Could not load the list of boards.');
+    expect(picker('school-board').disabled).toBe(true);
+    // The other picker is unaffected by the first one's failure.
+    expect(picker('school-state').value).toBe('Maharashtra');
+    expect(picker('school-state').disabled).toBe(false);
+
+    // The board control's own value is still 'CBSE' even with no matching `<option>` rendered
+    // for it (`boards()` came back empty) — a save must send what the profile actually holds,
+    // not whatever a broken picker happens to display.
+    type('school-city', 'Nashik');
+    submit();
+    const request = httpMock.expectOne(URL);
+    expect(request.request.body).toMatchObject({ city: 'Nashik', board: 'CBSE' });
+  });
+
+  it('recovers a failed reference list without reloading the profile', () => {
+    fixture = TestBed.createComponent(SchoolProfile);
+    httpMock.expectOne(URL).flush(envelope(SAVED_PROFILE));
+    httpMock.expectOne(BOARDS_URL).flush(
+      {
+        success: false,
+        timestamp: '2026-09-06T10:00:00Z',
+        error: { code: 'GEN_001', message: 'Broken.' },
+      },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    httpMock.expectOne(STATES_URL).flush(envelope(STATES));
+    fixture.detectChanges();
+
+    button('Try loading boards again').click();
+    fixture.detectChanges();
+    // Retrying only the failed list — the profile is not asked for again.
+    httpMock.expectNone(URL);
+    httpMock.expectOne(BOARDS_URL).flush(envelope(BOARDS));
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('Could not load the list of boards.');
+    expect(picker('school-board').disabled).toBe(false);
   });
 
   // ── Validation ───────────────────────────────────────────────────────────────────────────

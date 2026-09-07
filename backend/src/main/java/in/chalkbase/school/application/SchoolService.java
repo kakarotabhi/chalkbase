@@ -2,6 +2,7 @@ package in.chalkbase.school.application;
 
 import in.chalkbase.platform.error.ChalkbaseException;
 import in.chalkbase.platform.error.NotFoundException;
+import in.chalkbase.platform.reference.ReferenceItemResponse;
 import in.chalkbase.platform.tenancy.FirstAdminAccount;
 import in.chalkbase.platform.tenancy.FirstAdminProvisioner;
 import in.chalkbase.platform.tenancy.SchoolProvisioning;
@@ -12,9 +13,11 @@ import in.chalkbase.school.api.SchoolBootstrapResponse;
 import in.chalkbase.school.api.SchoolLookup;
 import in.chalkbase.school.api.SchoolRef;
 import in.chalkbase.school.api.SchoolResponse;
+import in.chalkbase.school.domain.Board;
 import in.chalkbase.school.domain.School;
 import in.chalkbase.school.domain.SchoolErrorCode;
 import in.chalkbase.school.infrastructure.SchoolRepository;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,6 +57,17 @@ public class SchoolService implements SchoolLookup {
 
     public SchoolResponse findById(UUID id) {
         return schools.findById(id).map(SchoolResponse::from).orElseThrow(() -> new NotFoundException("School", id));
+    }
+
+    /**
+     * Every board a school may affiliate to, labelled the way Indian schools actually name them
+     * (ADR-0029). Enum declaration order, which is already the order the school-profile form
+     * presented them in before this existed.
+     */
+    public List<ReferenceItemResponse> boards() {
+        return Arrays.stream(Board.values())
+                .map(board -> new ReferenceItemResponse(board.name(), board.label()))
+                .toList();
     }
 
     /**

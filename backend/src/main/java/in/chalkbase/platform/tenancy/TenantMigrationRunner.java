@@ -1,5 +1,6 @@
 package in.chalkbase.platform.tenancy;
 
+import in.chalkbase.platform.reference.ReferenceDataSeeder;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ public class TenantMigrationRunner implements InitializingBean {
     private final TenantMigrations migrations;
     private final TenantRegistry registry;
     private final SchoolProvisioning provisioning;
+    private final ReferenceDataSeeder referenceData;
 
     /**
      * Each school goes through {@link SchoolProvisioning}, the same path onboarding uses, so a
@@ -37,15 +39,23 @@ public class TenantMigrationRunner implements InitializingBean {
      * exist yet.
      */
     public TenantMigrationRunner(
-            TenantMigrations migrations, TenantRegistry registry, SchoolProvisioning provisioning) {
+            TenantMigrations migrations,
+            TenantRegistry registry,
+            SchoolProvisioning provisioning,
+            ReferenceDataSeeder referenceData) {
         this.migrations = migrations;
         this.registry = registry;
         this.provisioning = provisioning;
+        this.referenceData = referenceData;
     }
 
     @Override
     public void afterPropertiesSet() {
         migrations.migratePlatform();
+        // Once, against `public` — not part of the per-school loop below, because there is exactly
+        // one `public.state` table, not one per school (ADR-0029). Runs before the early return so
+        // a deployment with zero schools registered yet still seeds it.
+        referenceData.seed();
 
         List<String> schemas = registry.activeSchemas();
         if (schemas.isEmpty()) {

@@ -34,12 +34,17 @@ const ACTION_LABELS: Readonly<Record<string, string>> = {
  * The actions offered in the filter, in the order a reader looks for them: what happened to
  * someone's access first, then what happened to the data.
  *
- * TODO(reference-data): hardcoded, exactly like the board and state lists on the school profile
- * and for the same reason — the set a school's log actually contains is data, and there is no
- * endpoint that reports it. A module that names its own verb will emit rows this filter cannot
- * select, which is a gap and not a bug: the rows are still listed, still labelled, and still
- * reachable by narrowing on the actor or the date instead. When the backend can report its
- * catalogue (or the distinct actions in this school's log), this list is replaced by that call.
+ * Hardcoded, and — unlike the board and state lists this comment used to compare itself to
+ * (`school-profile.ts`, now read from `GET /api/schools/boards` and `GET /api/reference/states`,
+ * ADR-0029) — that stays the decision rather than a gap still to close. ADR-0029 looked at
+ * `select distinct action from audit_event` and found no index on `action` behind it: only
+ * `occurred_at`, `actor_id` and `entity_type`/`entity_id` are indexed, so the query would be a
+ * full scan of a table that is append-only and unbounded until a seven-year purge — a bad trade
+ * on the one screen an administrator opens during an incident, to fix a gap that already degrades
+ * gracefully. A module that names its own verb will emit rows this filter cannot select, which is
+ * exactly that gap: the rows are still listed, still labelled, and still reachable by narrowing on
+ * the actor or the date instead. `idx_audit_event_action` is the prerequisite for revisiting this,
+ * not this file.
  */
 const FILTERABLE_ACTIONS: readonly string[] = [
   'LOGIN_SUCCEEDED',

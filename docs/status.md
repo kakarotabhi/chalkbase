@@ -321,6 +321,7 @@ no reason, and the sections land with the modules.
 | The role-edit impact preview: who holds a role, and whether saving signs them out immediately or waits for their next login | `features/access/access-roles.ts` |
 | Session cleanup investigated: `JdbcIndexedSessionRepository` already purges `public.spring_session` itself, on its own scheduler, on by default — no second job needed, made explicit in configuration | [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md) |
 | Student and guardian CSV export, masked by classification with an audited unmasked permission of its own | [ADR-0027](architecture/adr/0027-export-masking.md), `platform/export/`, `StudentExportService` |
+| Global reference data: states move to `public.state`, seeded from code, cached in memory, read through `GET /api/reference/states`; boards stay the `school` enum but drop their frontend-side label copy at `GET /api/schools/boards`; the audit action filter examined and deliberately left as is, with the index it would need first named | [ADR-0029](architecture/adr/0029-reference-data.md), `platform/reference/` |
 
 ## What is left on the frontend
 
@@ -509,11 +510,19 @@ Recorded so they are decided rather than discovered.
   classification tier rather than a schedule per tier — a per-category schedule stays possible
   later without a schema change, it is simply not what was built. See the **Blocking the first real
   school** section above for how the purge itself runs.
-- Indian states are a hardcoded list in the school-profile form (`TODO(reference-data)`). They are
-  Tier-1 master data and belong in `public` behind an endpoint (ADR-0006). The audit screen's action
-  filter is the same case: it lists the actions this build ships, so a verb a future module invents
-  is filterable by neither name nor dropdown — those rows still list, label legibly and are
-  reachable by actor or date. Closing it needs the distinct actions in a school's own log.
+- ~~Indian states are a hardcoded list in the school-profile form.~~ ✅ Closed by
+  [ADR-0029](architecture/adr/0029-reference-data.md): `public.state`, seeded from `IndianStates.java`
+  the way `PermissionCatalog` seeds `permission`, read through `GET /api/reference/states` and
+  cached in memory. The board list beside it is closed too, but differently — `Board` stays the
+  `school` module's enum rather than becoming a table (ADR-0029 explains why), and
+  `GET /api/schools/boards` serves its labels from there instead. **The audit screen's action filter
+  is not closed and, on inspection, should not be yet**: `audit_event` carries no index on `action`
+  (only on `occurred_at`, `actor_id` and `entity_type`/`entity_id`), so `select distinct action` is a
+  full scan of a table that is append-only, unbounded until a seven-year purge, and gets more
+  expensive every year a school stays on the platform — a bad trade on the one screen an
+  administrator opens during an incident. It lists the actions this build ships, so a verb a future
+  module invents is filterable by neither name nor dropdown — those rows still list, label legibly
+  and are reachable by actor or date. `idx_audit_event_action` first, then this is worth revisiting.
 - **A school has no timezone**, so the audit screen renders times in the reader's own device zone.
   India is one zone, so this is right for everyone in the country and wrong only for someone reading
   from abroad — the row detail names the zone so they are not misled. A `timezone` on the school

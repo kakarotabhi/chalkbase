@@ -5,8 +5,8 @@ or changes a module** — agents read it instead of scanning the whole backend.
 
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
-| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025), classification-driven CSV export (`platform.export`, ADR-0027). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit`, `/api/dashboard` | `audit_event` is | built, with its screen |
-| `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/schools/bootstrap`, `/api/school/profile` | registry is not; the profile is | built |
+| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025), classification-driven CSV export (`platform.export`, ADR-0027). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. Also owns `public.state` (ADR-0029) — global reference data, seeded once from `IndianStates.java`, not per tenant. | `/api/audit`, `/api/dashboard`, `/api/reference/states` | `audit_event` is; `state` (in `public`) is not | built, with its screen |
+| `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/schools/bootstrap`, `/api/schools/boards`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
 | `student` | `student`, `guardian`, `student_guardian`, `student_enrolment`, `student_contact`, `student_transfer`, `student_medical`, `student_compliance` (per tenant); alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment, CSV import, the contact/previous-school/medical/compliance sections, and masked/unmasked CSV export ([ADR-0027](adr/0027-export-masking.md)) built |
@@ -31,9 +31,13 @@ Modules are added in roadmap order — see
 
 - One module owns a table. Other modules read it through that module's `api`, never with a join.
 - A table without an owner in this file should not exist.
-- Global reference data (boards, states, districts, subject catalogue) lives in `platform` and is
-  created in the `public` schema by `db/migration/shared`. Everything else belongs to a school's own
-  schema, created by `db/migration/tenant` (ADR-0011).
+- Global reference data lives in `platform` and is created in the `public` schema by
+  `db/migration/shared` — landed for states (`public.state`, ADR-0029). **Boards are the deliberate
+  exception**: `Board` stays a `school.domain` enum rather than a table, for the reasons ADR-0029
+  gives (three request records and two response records already type it, and a table would need a
+  migration and a backfill to remove a list that changes roughly once a decade). Districts and the
+  subject catalogue are not built yet. Everything else belongs to a school's own schema, created by
+  `db/migration/tenant` (ADR-0011).
 - **Registry versus profile.** `public.school` is identity and routing — code, name and schema name,
   read before any tenant is bound. A school's editable detail lives in `school_profile`, inside its
   own schema. The registry's copy of name, board, city and state is written back on every profile

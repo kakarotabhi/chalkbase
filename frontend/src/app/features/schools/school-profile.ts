@@ -11,6 +11,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { Board, SchoolProfile as SchoolProfileModel } from '../../core/api/models';
+import { ReferenceApi } from '../../core/api/reference-api';
 import { SchoolApi } from '../../core/api/school-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
@@ -28,63 +29,6 @@ import { TextInput } from '../../shared/components/text-input/text-input';
 const PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
 const PHONE_PATTERN = /^[+0-9][0-9 ()-]{6,19}$/;
 const WEBSITE_PATTERN = /^https?:\/\/\S+$/;
-
-/** Boards, under the names Indian schools actually use for them. */
-const BOARDS: readonly SelectOption[] = [
-  { value: 'CBSE', label: 'CBSE' },
-  { value: 'CISCE', label: 'CISCE (ICSE / ISC)' },
-  { value: 'STATE', label: 'State board' },
-  { value: 'IB', label: 'International Baccalaureate' },
-  { value: 'CAIE', label: 'Cambridge (CAIE)' },
-  { value: 'OTHER', label: 'Other' },
-];
-
-/**
- * States and union territories.
- *
- * TODO(reference-data): this is Tier-1 master data and belongs in `public` as shared reference
- * data read through an endpoint (ADR-0006). There is no such endpoint yet and the backend stores a
- * plain string, so the list lives here to keep the control a picker rather than a free-text box in
- * which every school spells Maharashtra differently. It moves wholesale when the table lands.
- */
-const STATES: readonly SelectOption[] = [
-  'Andaman and Nicobar Islands',
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chandigarh',
-  'Chhattisgarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jammu and Kashmir',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Ladakh',
-  'Lakshadweep',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Puducherry',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-].map((name) => ({ value: name, label: name }));
 
 /** Every editable control. `code` is not one of them — it identifies the tenant (ADR-0011). */
 type FieldName =
@@ -214,6 +158,7 @@ const MALFORMED: Readonly<Record<string, string>> = {
 })
 export class SchoolProfile implements HasUnsavedChanges {
   private readonly schoolApi = inject(SchoolApi);
+  private readonly referenceApi = inject(ReferenceApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
@@ -229,8 +174,27 @@ export class SchoolProfile implements HasUnsavedChanges {
    */
   protected readonly canEditProfile = permitted(Permissions.SCHOOL_UPDATE);
 
-  protected readonly boards = BOARDS;
-  protected readonly states = STATES;
+  /**
+   * Read from `GET /api/schools/boards` and `GET /api/reference/states` (ADR-0006, ADR-0029)
+   * instead of a constant baked into this file — the same list every school sees, and the one
+   * place its spelling can be fixed.
+   *
+   * Each starts empty and is filled in by {@link loadBoards} / {@link loadStates}; each has its
+   * own failure signal below rather than one shared one, because the two calls are independent
+   * and a school whose board loaded fine should not lose the state picker too because of one
+   * flaky request.
+   */
+  protected readonly boards = signal<readonly SelectOption[]>([]);
+  protected readonly states = signal<readonly SelectOption[]>([]);
+  /**
+   * True once its list has failed to load. The picker is put into its read-only state with a hint
+   * explaining why, rather than left as an interactive but empty dropdown — a native `<select>`
+   * with no options for the value it is bound to has nothing sensible to show, and disabling it
+   * is what stops a user from opening it and landing on a choice that is not the one the profile
+   * actually holds.
+   */
+  protected readonly boardsLoadFailed = signal(false);
+  protected readonly statesLoadFailed = signal(false);
   protected readonly fieldIds = FIELD_IDS;
   /** Not in `FIELD_IDS`: the code is not an editable field, so nothing focuses or validates it. */
   protected readonly codeFieldId = 'school-code';
@@ -336,6 +300,8 @@ export class SchoolProfile implements HasUnsavedChanges {
 
   constructor() {
     this.load();
+    this.loadBoards();
+    this.loadStates();
 
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.savedJustNow.set(false);
@@ -430,7 +396,44 @@ export class SchoolProfile implements HasUnsavedChanges {
     this.restore();
   }
 
+  /**
+   * Retries whichever picker's list failed to load. Independent of {@link reload}: the profile
+   * itself may already be showing, and re-fetching it too would restart the whole form for a
+   * problem that was only ever in one dropdown.
+   */
+  protected retryBoards(): void {
+    this.loadBoards();
+  }
+
+  protected retryStates(): void {
+    this.loadStates();
+  }
+
   // ── internals ────────────────────────────────────────────────────────────────────────────
+
+  private loadBoards(): void {
+    this.boardsLoadFailed.set(false);
+    this.referenceApi
+      .boards()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (boards) => this.boards.set(boards),
+        // Not fatal to the form (see the class doc on `boards`/`states`): the picker goes into its
+        // read-only state with an explanation, and everything else stays editable and saveable.
+        error: () => this.boardsLoadFailed.set(true),
+      });
+  }
+
+  private loadStates(): void {
+    this.statesLoadFailed.set(false);
+    this.referenceApi
+      .states()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (states) => this.states.set(states),
+        error: () => this.statesLoadFailed.set(true),
+      });
+  }
 
   private load(): void {
     this.loading.set(true);

@@ -442,6 +442,34 @@
         ],
         "type": "object"
       },
+      "ApiResponseListReferenceItemResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceItemResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseListRoleResponse": {
         "properties": {
           "data": {
@@ -2357,6 +2385,21 @@
         },
         "required": [
           "events"
+        ],
+        "type": "object"
+      },
+      "ReferenceItemResponse": {
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value"
         ],
         "type": "object"
       },
@@ -4844,6 +4887,26 @@
         ]
       }
     },
+    "/api/reference/states": {
+      "get": {
+        "operationId": "states",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListReferenceItemResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "reference-data-controller"
+        ]
+      }
+    },
     "/api/school/profile": {
       "get": {
         "operationId": "profile",
@@ -4929,6 +4992,26 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSchoolResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "school-controller"
+        ]
+      }
+    },
+    "/api/schools/boards": {
+      "get": {
+        "operationId": "boards",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListReferenceItemResponse"
                 }
               }
             },
