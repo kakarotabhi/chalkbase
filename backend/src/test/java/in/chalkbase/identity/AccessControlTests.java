@@ -59,6 +59,7 @@ class AccessControlTests {
     private static final String SCHOOL_READ = "school:school:read";
     private static final String SCHOOL_UPDATE = "school:school:update";
     private static final String USER_READ = "identity:user:read";
+    private static final String USER_MANAGE = "identity:user:manage";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
 
@@ -154,6 +155,7 @@ class AccessControlTests {
                             SESSION_MANAGE,
                             SESSION_READ,
                             ROLE_MANAGE,
+                            USER_MANAGE,
                             USER_READ,
                             SCHOOL_READ,
                             SCHOOL_UPDATE,
@@ -192,6 +194,7 @@ class AccessControlTests {
                         CLASS_READ,
                         SESSION_MANAGE,
                         SESSION_READ,
+                        USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
                         SCHOOL_UPDATE,
@@ -206,6 +209,7 @@ class AccessControlTests {
                         SESSION_MANAGE,
                         SESSION_READ,
                         ROLE_MANAGE,
+                        USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
                         SCHOOL_UPDATE,
@@ -234,6 +238,7 @@ class AccessControlTests {
                         CLASS_READ,
                         SESSION_MANAGE,
                         SESSION_READ,
+                        USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
                         SCHOOL_UPDATE,
@@ -340,6 +345,7 @@ class AccessControlTests {
                                 GUARDIAN_READ,
                                 GUARDIAN_MANAGE,
                                 USER_READ,
+                                USER_MANAGE,
                                 ROLE_MANAGE)));
     }
 

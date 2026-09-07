@@ -35,6 +35,7 @@ public final class RoleTemplates {
     private static final String GUARDIAN_READ = "student:guardian:read";
     private static final String GUARDIAN_MANAGE = "student:guardian:manage";
     private static final String USER_READ = "identity:user:read";
+    private static final String USER_MANAGE = "identity:user:manage";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
 
@@ -80,6 +81,13 @@ public final class RoleTemplates {
      * derived from the guardian-of relationship, which this module now has the data for but no
      * scope resolution to enforce with. Granting them {@code student:student:read} would give every
      * parent the whole school's roster.
+     *
+     * <p>{@code identity:user:manage} joins {@code identity:role:manage} on {@code PRINCIPAL} only,
+     * now that both exist. They are two different jobs — one runs the school's account roster, the
+     * other decides what any role may do — and a school that wants to split them (an outsourced IT
+     * administrator who creates and disables accounts but never touches a role) removes one from a
+     * copy of this template. Shipping them together by default is simply what a head of school
+     * already did before either had a screen.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -97,6 +105,7 @@ public final class RoleTemplates {
                     GUARDIAN_READ,
                     GUARDIAN_MANAGE,
                     USER_READ,
+                    USER_MANAGE,
                     ROLE_MANAGE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
