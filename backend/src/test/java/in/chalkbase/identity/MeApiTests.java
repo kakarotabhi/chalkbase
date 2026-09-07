@@ -226,14 +226,19 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
                 .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
                 .andExpect(jsonPath("$.data.navigation[2].children[2].id").value("academics.subjects"))
-                .andExpect(jsonPath("$.data.navigation[3].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("settings.access"))
+                // Attendance, at order 40 — just after academics (30) and ahead of settings, which
+                // is where a class teacher's daily work belongs relative to configuration screens.
+                .andExpect(jsonPath("$.data.navigation[3].id").value("attendance"))
+                .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("attendance.mark"))
+                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("attendance.corrections"))
+                .andExpect(jsonPath("$.data.navigation[4].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[4].children[0].id").value("settings.access"))
                 // The account roster, ordered right after Access (10) and ahead of the school
                 // module's Profile (20) — see IdentityNavigation's Javadoc for why 15.
-                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.users"))
+                .andExpect(jsonPath("$.data.navigation[4].children[1].id").value("settings.users"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees all three children.
-                .andExpect(jsonPath("$.data.navigation[3].children[2].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[4].children[2].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
