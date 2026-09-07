@@ -339,15 +339,17 @@ model until those exist.
 
 Recorded so they are decided rather than discovered.
 
-- **There is no HTTP timeout anywhere in the app.** No `timeout()` on any call in `core/api`, and
-  nothing configured on `HttpClient`, so a request that hangs waits until the browser or the network
-  gives up — which on a mobile connection can be minutes. For `GET /api/me` that is now a
-  considered decision: a timeout there would resolve `authGuard` as "not signed in" and drop the
-  user on a login screen served by the same slow server, so they would loop between two screens
-  instead of waiting once, and the app says what it is waiting for instead
-  (`layout/boot-state/`). For every other call it is not a decision, it is an absence — a hung
-  save on the student form spins its button indefinitely with no way back. Deciding it properly
-  means one number, one place, and an error state that offers a retry.
+- ~~There is no HTTP timeout anywhere in the app.~~ ✅ Closed. `timeoutInterceptor`
+  (`core/interceptors/timeout-interceptor.ts`) applies one number, one place: 150 seconds, chosen
+  against the Render free tier's own measured worst case — a cold wake answers in 86 to 121
+  seconds, so a shorter number would fail a save that was only ever slow, not stuck, on the one
+  environment this app is actually deployed to
+  ([the free-tier runbook](operations/render-free-tier.md)). `GET /api/me` stays exempt, exactly as
+  this bullet already decided: a timeout there would still resolve `authGuard` as "not signed in"
+  and loop the user between two screens. Every other call now fails instead of hanging, and every
+  screen's existing generic-failure branch — already reached by an ordinary network error, never
+  reading anything but `apiErrorCode()` — is what shows the retry: nothing is cleared but the
+  spinner, because a form here only ever resets itself on success.
 - ~~The app showed a blank white page for the whole of the first `/api/me`~~ ✅ Closed. `authGuard`
   guards the shell route and the router renders nothing until its guards resolve, so a bare
   `<router-outlet />` root meant an empty document for the length of that call — 121 seconds
@@ -469,11 +471,15 @@ Recorded so they are decided rather than discovered.
   with the same `permissionsVersion` still shows the same error — see the comment at the call site
   for why that case is not reworded.
 - Expired sessions are never purged.
-- **The forced password change is enforced at two points, not everywhere.** The login screen sends
-  someone holding a temporary password to `/change-password`, and `landingGuard` sends them there
-  again on a reload of `/`. Typing a deep link still gets past both. Closing it properly is a guard
-  on the shell rather than a third copy of the same check — worth doing the next time anything in
-  `core/auth` is opened.
+- ~~The forced password change is enforced at two points, not everywhere.~~ ✅ Closed.
+  `passwordChangeGuard` (`core/auth/password-change-guard.ts`) sits on the shell route in
+  `app.routes.ts`, after `authGuard` in the same `canActivate` array, so it runs in front of every
+  child route rather than in front of one reload path — a deep link to `/students/1234` now lands
+  on `/change-password` the same way a reload of `/` already did. The login screen's own redirect
+  and `landingGuard`'s are both still there and still correct; this closes the gap between them
+  rather than replacing either. `landingGuard`'s own `mustChangePassword` check is now unreachable
+  in practice, left alone rather than removed here because `core/navigation` belongs to a different
+  lane while several are running in parallel.
 - **A deactivated class keeps its name.** `uq_school_class_name` does not account for `active`, and
   there is no delete (ADR-0019), so a school that retires "Class 5" and later wants it back must
   reactivate that row rather than create a new one. That is the intended behaviour, but it makes
