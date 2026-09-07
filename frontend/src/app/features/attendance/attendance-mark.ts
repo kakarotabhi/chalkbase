@@ -125,7 +125,17 @@ export class AttendanceMark {
   );
   protected readonly locked = computed(() => this.view()?.locked ?? false);
 
-  protected readonly sectionChosen = computed(() => this.sectionControl.value !== '');
+  /**
+   * Mirrors {@link sectionControl}'s value as a signal.
+   *
+   * A `FormControl`'s own `.value` is a plain getter, not a signal — reading it inside a
+   * `computed()` establishes no dependency, so {@link sectionChosen} would compute once and never
+   * again. This is kept in step by the same `valueChanges` subscription that already triggers
+   * {@link load}.
+   */
+  private readonly selectedSectionId = signal('');
+
+  protected readonly sectionChosen = computed(() => this.selectedSectionId() !== '');
 
   /** Whether {@link save} would actually send anything — a status set, and changed since it was saved. */
   protected readonly hasUnsavedMarks = computed(() =>
@@ -144,9 +154,12 @@ export class AttendanceMark {
   constructor() {
     this.loadLadder();
 
-    this.sectionControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.load();
-    });
+    this.sectionControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        this.selectedSectionId.set(value);
+        this.load();
+      });
     this.dateControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.load();
     });
