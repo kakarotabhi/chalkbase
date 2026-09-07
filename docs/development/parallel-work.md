@@ -6,7 +6,8 @@ so a work item can be handed out with the collision named in the brief.
 
 It is not a plan and it does not restate
 [the roadmap](../requirements/06-roadmap-and-mvp.md). For what is next, read
-[status.md](../status.md).
+[status.md](../status.md); for how to hand one of them out, read
+[assigning work](assigning-work.md).
 
 ## The boundary that works is module ownership
 
