@@ -1,0 +1,256 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-status {
+  @include page-status;
+
+  margin: 0 0 var(--cb-space-4);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.visually-hidden {
+  @include visually-hidden;
+}
+
+// ── The live region ──────────────────────────────────────────────────────────
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+// ── Section and date ─────────────────────────────────────────────────────────
+
+.controls {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+  max-width: 32rem;
+
+  @include from-medium {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.toolbar {
+  margin-bottom: var(--cb-space-4);
+
+  &--save {
+    margin-top: var(--cb-space-4);
+  }
+}
+
+// ── The roster, cards at every width ─────────────────────────────────────────
+//
+// This screen's primary user is a teacher on a 360px phone, and every row carries an interactive
+// six-way control that does not compress into a table cell — so unlike the students and subjects
+// lists, there is no wider "real table" layout here (ADR-0010's usual split does not apply to an
+// action list). A wider window simply gets more of the same card in a row.
+
+.roster {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0 0 var(--cb-space-4);
+  padding: 0;
+  list-style: none;
+
+  @include from-medium {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include from-expanded {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-2);
+  padding: var(--cb-space-3);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  background: var(--cb-surface-raised);
+}
+
+.card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cb-space-2);
+}
+
+.card__roll {
+  min-width: 1.75rem;
+  font-family: var(--cb-font-numeric);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+}
+
+.card__name {
+  font-weight: 600;
+}
+
+.card__admission {
+  margin-left: auto;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// ── The six-way status control ────────────────────────────────────────────────
+
+.status-group {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--cb-space-1);
+}
+
+.status-btn {
+  min-height: var(--cb-touch-target-min);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-surface);
+  color: var(--cb-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+
+  &:disabled {
+    color: var(--cb-text-muted);
+    cursor: not-allowed;
+  }
+
+  &--selected {
+    border-color: var(--cb-primary);
+    background: var(--cb-primary-surface);
+    color: var(--cb-primary);
+  }
+}
+
+.remarks-input {
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-3);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font: inherit;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--cb-focus);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.link-button {
+  @include link-button;
+
+  align-self: flex-start;
+  font-size: var(--cb-font-size-sm);
+}
+
+// ── The locked state ───────────────────────────────────────────────────────────
+
+.card__locked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+}
+
+.card__note {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--cb-space-1) var(--cb-space-2);
+  border-radius: var(--cb-radius-sm);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+
+  &--present {
+    background: var(--cb-success-surface);
+    color: var(--cb-success);
+  }
+
+  &--absent {
+    background: var(--cb-danger-surface);
+    color: var(--cb-danger);
+  }
+
+  &--late,
+  &--half_day {
+    background: var(--cb-warning-surface);
+    color: var(--cb-warning);
+  }
+
+  &--excused_leave {
+    background: var(--cb-info-surface);
+    color: var(--cb-info);
+  }
+
+  &--holiday {
+    background: var(--cb-surface);
+    color: var(--cb-text-muted);
+  }
+}
+
+// ── The correction sheet ────────────────────────────────────────────────────
+
+.sheet-lede {
+  margin: 0 0 var(--cb-space-4);
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}

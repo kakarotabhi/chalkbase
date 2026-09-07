@@ -1,0 +1,242 @@
+<p class="crumbs">Attendance <span aria-hidden="true">›</span> Mark attendance</p>
+<h1 class="page-title">Mark attendance</h1>
+
+<p class="page-lede">
+  Choose your section and the date. Today's date is already chosen — most mornings that is all you
+  need to change here.
+</p>
+
+<form class="controls" (submit)="$event.preventDefault()">
+  <cb-form-field #sectionField label="Section" controlId="attendance-section">
+    <cb-select
+      [formControl]="sectionControl"
+      ariaLabel="Section"
+      [id]="sectionField.controlId()"
+      [options]="sectionOptions()"
+    />
+  </cb-form-field>
+  <cb-form-field #dateField label="Date" controlId="attendance-date">
+    <cb-text-input type="date" [formControl]="dateControl" [id]="dateField.controlId()" />
+  </cb-form-field>
+</form>
+
+@if (ladderFailed()) {
+  <p class="page-status" role="status">
+    The list of classes could not be loaded, so the section picker is empty. Reload the page to try
+    again.
+  </p>
+}
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (!sectionChosen()) {
+  <p class="page-status" role="status">Choose a section to see its register.</p>
+} @else if (loading()) {
+  <p class="page-status" role="status">Loading the register…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view attendance</strong>
+      <span>Ask your principal to add "View attendance" to your role.</span>
+    </div>
+  </div>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load this section's register</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else if (rows().length === 0) {
+  <p class="page-status" role="status">Nobody is actively enrolled in this section yet.</p>
+} @else {
+  @if (locked()) {
+    <div class="banner banner--info" role="status">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="4.5" y="10.5" width="15" height="9.5" rx="1.5" />
+        <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
+      </svg>
+      <div>
+        <strong class="banner__title">This date is locked</strong>
+        <span>
+          It is more than a day old, so a mark can no longer be changed directly. Request a
+          correction on the student who needs one instead.
+        </span>
+      </div>
+    </div>
+  } @else if (canManage()) {
+    <div class="toolbar">
+      <cb-button variant="secondary" (click)="markAllPresent()">Mark all present</cb-button>
+    </div>
+  }
+
+  <ul class="roster">
+    @for (row of rows(); track row.studentId) {
+      <li class="card">
+        <div class="card__head">
+          @if (row.rollNumber) {
+            <span class="card__roll">{{ row.rollNumber }}</span>
+          }
+          <span class="card__name">{{ row.fullName }}</span>
+          <span class="card__admission">{{ row.admissionNumber }}</span>
+        </div>
+
+        @if (locked()) {
+          <div class="card__locked">
+            <span
+              class="status-pill"
+              [class]="'status-pill--' + (row.savedStatus ?? '').toLowerCase()"
+            >
+              {{ row.savedStatus ? statusLabel(row.savedStatus) : 'Not marked' }}
+            </span>
+            @if (canManage() && row.markId) {
+              @if (row.correctionRequested) {
+                <span class="card__note">Correction requested — awaiting approval.</span>
+              } @else {
+                <button type="button" class="link-button" (click)="openCorrection(row)">
+                  Request a correction
+                </button>
+              }
+            }
+          </div>
+        } @else {
+          <div class="status-group" role="group" [attr.aria-label]="'Status for ' + row.fullName">
+            @for (option of statusOptions; track option.value) {
+              <button
+                type="button"
+                class="status-btn"
+                [class.status-btn--selected]="row.draftStatus === option.value"
+                [disabled]="!canManage()"
+                [attr.aria-pressed]="row.draftStatus === option.value"
+                (click)="setStatus(row.studentId, option.value)"
+              >
+                <span aria-hidden="true">{{ option.shortLabel }}</span>
+                <span class="visually-hidden">{{ option.fullLabel }}</span>
+              </button>
+            }
+          </div>
+
+          @if (canManage()) {
+            @if (row.showRemarks) {
+              <input
+                class="remarks-input"
+                type="text"
+                placeholder="Add a note (optional)"
+                maxlength="500"
+                [value]="row.draftRemarks"
+                (input)="setRemarks(row.studentId, $any($event.target).value)"
+              />
+            } @else {
+              <button type="button" class="link-button" (click)="toggleRemarks(row.studentId)">
+                Add a note
+              </button>
+            }
+          }
+        }
+      </li>
+    }
+  </ul>
+
+  @if (canManage() && !locked()) {
+    <div class="toolbar toolbar--save">
+      <cb-button
+        [disabled]="!hasUnsavedMarks()"
+        [loading]="saving()"
+        loadingLabel="Saving…"
+        (click)="save()"
+      >
+        Save
+      </cb-button>
+    </div>
+    @if (saveFailureCode()) {
+      <div class="banner banner--danger" role="alert">
+        <strong class="banner__title">Could not save attendance</strong>
+        <span>Check your connection and try again. Nothing already saved was lost.</span>
+      </div>
+    }
+  }
+}
+
+@if (correctionTarget(); as target) {
+  <cb-bottom-sheet heading="Request a correction" (closed)="closeCorrection()">
+    <p class="sheet-lede">
+      {{ target.fullName }}, currently marked
+      {{ target.savedStatus ? statusLabel(target.savedStatus) : 'not marked' }}.
+    </p>
+    <form [formGroup]="correctionForm" (ngSubmit)="submitCorrection()" novalidate>
+      <cb-form-field #statusField label="Should have been" controlId="correction-status">
+        <cb-select
+          formControlName="requestedStatus"
+          ariaLabel="Should have been"
+          [id]="statusField.controlId()"
+          [options]="correctionStatusOptions"
+        />
+      </cb-form-field>
+      <cb-form-field
+        #reasonField
+        label="Why"
+        controlId="correction-reason"
+        hint="A sentence is enough — this is what your principal sees."
+      >
+        <cb-text-input
+          formControlName="reason"
+          [id]="reasonField.controlId()"
+          [describedBy]="reasonField.describedById()"
+        />
+      </cb-form-field>
+
+      @if (correctionFailureCode()) {
+        <p class="banner__title">
+          Could not send this request. Check your connection and try again.
+        </p>
+      }
+
+      <cb-button type="submit" block [loading]="correctionSaving()" loadingLabel="Sending…">
+        Send request
+      </cb-button>
+    </form>
+  </cb-bottom-sheet>
+}

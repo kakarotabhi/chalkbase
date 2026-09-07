@@ -22,6 +22,8 @@ const NAV_LABELS: Readonly<Record<string, string>> = {
   'nav.academics.classes': 'Classes and sections',
   'nav.academics.subjects': 'Subjects',
   'nav.attendance': 'Attendance',
+  'nav.attendance.mark': 'Mark attendance',
+  'nav.attendance.corrections': 'Corrections',
   'nav.exams': 'Exams',
   'nav.fees': 'Fees',
   'nav.fees.collect': 'Collect fees',

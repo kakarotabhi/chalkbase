@@ -98,6 +98,15 @@ export const Permissions = {
   DOCUMENT_READ: 'document:document:read',
   /** Uploading, editing, verifying and deleting a student's documents. */
   DOCUMENT_MANAGE: 'document:document:manage',
+  /** Seeing a section's attendance for a date, and a student's history. `AttendancePermissions.MARK_READ`. */
+  ATTENDANCE_READ: 'attendance:mark:read',
+  /**
+   * Marking or editing attendance while it is still within its edit window, and filing a
+   * correction request once it has locked. `AttendancePermissions.MARK_MANAGE`.
+   */
+  ATTENDANCE_MANAGE: 'attendance:mark:manage',
+  /** Approving or rejecting a correction request. `AttendancePermissions.CORRECTION_APPROVE`. */
+  ATTENDANCE_CORRECTION_APPROVE: 'attendance:correction:approve',
 } as const;
 
 /** One of the codes above. Nothing else may be passed to a permission check. */
