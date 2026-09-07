@@ -1,24 +1,25 @@
 package in.chalkbase.identity.infrastructure;
 
 import in.chalkbase.identity.application.UserAccountService;
+import in.chalkbase.platform.audit.AuditService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Wires {@link PasswordChangeRequiredFilter} into the API security chain.
+ * Wires {@link SessionStandingFilter} into the API security chain.
  *
  * <p>The filter is a {@code platform.config.AuthenticatedApiFilter}, which is how a feature module
  * puts a rule inside a chain that {@code platform} builds without {@code platform} having to name
  * an identity class.
  */
 @Configuration(proxyBeanMethods = false)
-class PasswordChangeEnforcementConfiguration {
+class SessionStandingFilterConfiguration {
 
     @Bean
-    PasswordChangeRequiredFilter passwordChangeRequiredFilter(UserAccountService users, JsonMapper jsonMapper) {
-        return new PasswordChangeRequiredFilter(users, jsonMapper);
+    SessionStandingFilter sessionStandingFilter(UserAccountService users, AuditService audit, JsonMapper jsonMapper) {
+        return new SessionStandingFilter(users, audit, jsonMapper);
     }
 
     /**
@@ -32,9 +33,9 @@ class PasswordChangeEnforcementConfiguration {
      * A silent, total bypass of the thing this filter exists to enforce.
      */
     @Bean
-    FilterRegistrationBean<PasswordChangeRequiredFilter> passwordChangeFilterNotRegisteredWithTheServletContainer(
-            PasswordChangeRequiredFilter filter) {
-        FilterRegistrationBean<PasswordChangeRequiredFilter> registration = new FilterRegistrationBean<>(filter);
+    FilterRegistrationBean<SessionStandingFilter> sessionStandingFilterNotRegisteredWithTheServletContainer(
+            SessionStandingFilter filter) {
+        FilterRegistrationBean<SessionStandingFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }

@@ -171,15 +171,16 @@ Restricted columns land with item 1. This is the largest remaining Phase 1 slice
   [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) leaves those columns out entirely
   rather than store a child's caste in plaintext. **UDISE+ returns need them**, so this is on the
   critical path to onboarding a real school, not a later nicety.
-- **A session survives its account being disabled or locked.** Closing the forced-password hole
-  (#36) made this visible rather than creating it: `must_change_password` is now re-read on every
-  API call, and it is the *only* thing that is. Account status, lockout and permissions are all
-  resolved once at login ([ADR-0005](architecture/adr/0005-authorization-model.md)) and never
-  revisited, so locking somebody out of a school's data currently means waiting for their session
-  to expire. We now re-check the least severe of the three, which reads oddly, and the fix wants
-  deciding as one thing: what a session re-validates, how often, and what it costs. Related: there
-  is **no admin password-reset endpoint** yet, and when one lands it must invalidate the target's
-  sessions or a reset will not dislodge anyone holding the old cookie.
+- ~~A session survives its account being disabled or locked.~~ ✅ Closed by
+  [ADR-0023](architecture/adr/0023-session-revalidation.md): `SessionStandingFilter` (renamed from
+  `PasswordChangeRequiredFilter`, which it supersedes) now re-reads `status` and `locked_until`
+  alongside `must_change_password` on every API call, at no extra cost — it is the same indexed
+  primary-key row the forced-password check already read, projecting three columns instead of one.
+  A disabled or locked account's session is invalidated the moment it is next used. Permissions stay
+  resolved once at login ([ADR-0005](architecture/adr/0005-authorization-model.md)), unchanged and
+  deliberately not re-read per request. Still **no admin password-reset endpoint** — that is the
+  next item below — and `SessionInvalidationService` (also new in ADR-0023) is what it will call to
+  dislodge anyone holding the old cookie.
 - **Audit retention is decided at seven years and not yet enforced.** ADR-0014 requires a period per
   category; the product owner has set one period for every category — seven years, the Indian
   financial-record convention — rather than a schedule per category, on the grounds that a uniform
@@ -235,6 +236,7 @@ here. What is left is externally blocked rather than undecided.
 | ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts` |
 | A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line | `LoggingClassificationTests` |
 | A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school` | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md) |
+| Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 
 ## Known gaps and debt
 
