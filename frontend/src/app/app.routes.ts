@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth-guard';
+import { passwordChangeGuard } from './core/auth/password-change-guard';
 import { unsavedChangesGuard } from './core/forms/unsaved-changes-guard';
 import { landingGuard } from './core/navigation/landing-guard';
 
@@ -27,9 +28,14 @@ export const routes: Routes = [
   },
   {
     path: '',
-    // One guard on the shell rather than one per feature: everything inside it needs a session,
-    // and a list that has to be added to is a list someone forgets.
-    canActivate: [authGuard],
+    // Two guards on the shell rather than one per feature: everything inside it needs a session
+    // (`authGuard`), and a session that still owes its forced password change belongs on
+    // `/change-password` no matter which child route was asked for (`passwordChangeGuard`) — a
+    // deep link used to get past both the login screen's own redirect and `landingGuard`'s, since
+    // neither sits in front of routing itself. Order matters: `authGuard` runs first, so a
+    // `UrlTree` from it short-circuits before `passwordChangeGuard` ever asks its own question. See
+    // `passwordChangeGuard`'s doc comment for why it cannot trap `/change-password` in a loop.
+    canActivate: [authGuard, passwordChangeGuard],
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     children: [
       // Where signing in lands — and deliberately not a constant. It was `schools`, then
