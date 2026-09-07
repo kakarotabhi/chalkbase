@@ -80,6 +80,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/academics/school-classes').then((m) => m.SchoolClasses),
       },
+      {
+        path: 'academics/subjects',
+        title: 'Subjects · Chalkbase',
+        loadComponent: () => import('./features/academics/subjects').then((m) => m.Subjects),
+      },
       // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.

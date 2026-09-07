@@ -285,6 +285,27 @@ export type CreateSectionRequest = Schemas['CreateSectionRequest'];
 
 export type UpdateSectionRequest = Schemas['UpdateSectionRequest'];
 
+/* ── Subjects (GET/POST/PUT /api/academics/subjects) ─────────────────────── */
+
+/**
+ * A subject this school teaches — English, Mathematics. `SubjectResponse` on the backend.
+ *
+ * A flat catalogue entry, unlike `SchoolClass`: a subject has no ladder position and no relation to
+ * a class or a section here. Which classes teach which subjects is a subject allocation, which
+ * belongs to the timetable and marks modules once they exist — not to this one.
+ *
+ * There is no delete, on purpose (ADR-0019, same reasoning as `Section`): by the time anything
+ * references a subject it is too late to decide that removing it was right, so a subject that stops
+ * being taught is deactivated and can be brought back.
+ */
+export type Subject = Schemas['SubjectResponse'];
+
+/** Creating a subject. No `active`: a subject is created active, same as a class. */
+export type CreateSubjectRequest = Schemas['CreateSubjectRequest'];
+
+/** Renaming, recoding, retiring or reinstating a subject. */
+export type UpdateSubjectRequest = Schemas['UpdateSubjectRequest'];
+
 /* ── Students and guardians (ADR-0020) ───────────────────────────────────── */
 
 /**
