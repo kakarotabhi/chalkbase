@@ -34,6 +34,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
  * The document module end to end: upload, list, read, download, edit and delete, against a real
@@ -100,12 +101,12 @@ class DocumentApiTests {
         Cookie session = signInAs(RIVERBANK_SCHEMA, RIVERBANK_CODE, "PRINCIPAL");
         UUID studentId = createStudent(RIVERBANK_SCHEMA, "Asha Verma");
 
-        UUID id = uploadPdf(session, studentId, "BIRTH_CERTIFICATE", "2015-06-14", null)
+        UUID id = idOf(uploadPdf(session, studentId, "BIRTH_CERTIFICATE", "2015-06-14", null)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.documentType").value("BIRTH_CERTIFICATE"))
                 .andExpect(jsonPath("$.data.verificationStatus").value("UNVERIFIED"))
                 .andExpect(jsonPath("$.data.contentType").value("application/pdf"))
-                .andExpect(id());
+                .andExpect(id()));
 
         mockMvc.perform(get(DOCUMENTS + "?studentId=" + studentId).cookie(session))
                 .andExpect(status().isOk())
