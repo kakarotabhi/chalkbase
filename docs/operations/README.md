@@ -5,6 +5,7 @@ Deployment target: a self-hosted VPS running [Coolify](https://coolify.io/docs/)
 | Page | Read it when |
 |---|---|
 | [The Render dev environment on the free tier](render-free-tier.md) | deploying to Render, or explaining why a cold start takes four minutes |
+| [The encryption key](encryption-key.md) | generating, setting, or backing up `CHALKBASE_ENCRYPTION_KEY` (ADR-0022) |
 
 ## Runbooks to write before the first school goes live
 
@@ -12,6 +13,8 @@ Deployment target: a self-hosted VPS running [Coolify](https://coolify.io/docs/)
 - [ ] Backup and restore — cluster PITR **plus** per-school logical export
       ([ADR-0011](../architecture/adr/0011-schema-per-tenant.md) makes per-school export a
       `pg_dump -n <schema>`)
+- [ ] Encryption key backup — see [the encryption key](encryption-key.md); unlike the rest of this
+      list, there is no restore procedure if this one is skipped
 - [ ] Database migration failure recovery
 - [ ] Certificate renewal
 - [ ] Incident response and parent/school communication

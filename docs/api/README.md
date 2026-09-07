@@ -96,6 +96,7 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `CONF_001` | 409 | Conflicts with existing data. |
 | `CONF_002` | 409 | Concurrent update; reload and retry. |
 | `GEN_001` | 500 | Unexpected server failure. Quote the trace id. |
+| `GEN_002` | 500 | A stored value could not be decrypted (ADR-0022) — the key is wrong or the row is corrupt. Quote the trace id. |
 | `SCHOOL_001` | 409 | A school with this code already exists. |
 
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing

@@ -83,6 +83,14 @@ services:
       - key: CHALKBASE_SETUP_KEY
         sync: false
 
+      # Without this the service also refuses to start (EncryptionKeyConfiguration), for a heavier
+      # reason: every Restricted column (ADR-0022) is encrypted under it, and there is no recovery
+      # from losing it — the key needs a backup that is not this Render service, see
+      # docs/operations/encryption-key.md. Generate a DIFFERENT key from CHALKBASE_SETUP_KEY with
+      # `openssl rand -base64 32`; the two must never be the same value.
+      - key: CHALKBASE_ENCRYPTION_KEY
+        sync: false
+
   # ── Web ────────────────────────────────────────────────────────────────────────────────────────
   - type: web
     name: chalkbase-web
