@@ -21,11 +21,30 @@ import java.util.List;
  * nowhere to put that list. What does produce a 4xx is a file that could not be read as a file at
  * all: no header, no rows, too many rows, a workbook instead of a CSV.
  *
+ * <p><strong>The four guardian counts follow {@code imported}'s own rule</strong> (ADR-0021 §4):
+ * zero from {@code validate}, and zero from a commit that found anything wrong, because nothing was
+ * written in either case. They do not say what a clean file <em>would</em> do — only what actually
+ * happened — for the same reason {@code imported} does not: a number that might not materialise once
+ * an unrelated row is fixed is a number that trains a school not to trust this report.
+ *
  * @param totalRows data rows in the file, not counting the header and not counting blank lines
  * @param validRows rows with nothing wrong with them. Equal to {@code totalRows} exactly when the
  *     file is clean, which is the only case in which the commit endpoint writes anything.
  * @param imported students actually created. Zero from {@code validate}, always; zero from a commit
  *     that found anything wrong; otherwise equal to {@code validRows}.
+ * @param guardiansCreated new guardian person records actually written — a phone number in the file
+ *     that matched nobody in this school's directory and nobody else in the file either.
+ * @param guardiansMatched distinct guardians the import's students were linked to
+ *     <strong>without</strong> creating a new person: already in the directory, or already claimed
+ *     by an earlier row in this same file.
+ * @param guardianLinksCreated student-guardian links actually written in total. Can exceed
+ *     {@code guardiansCreated + guardiansMatched}: four rows naming one father produce one guardian
+ *     and four links, so this is a count of <em>rows</em> with a guardian, not of guardians.
+ * @param studentsLinkedToExistingGuardians how many of those links pointed at a guardian that
+ *     already existed before this import ran, rather than one this import just created. The number
+ *     this report exists to make trustworthy — "created 12 guardians, linked 47 students to
+ *     existing guardians" is the difference between a clerk trusting this and a clerk checking six
+ *     hundred rows by hand.
  * @param errorCount how many problems were found in total. Equal to {@code errors.size()} unless
  *     the list was capped, in which case this is the honest number and the list is the first 200 of
  *     it — so a screen renders "showing 200 of 1,412" rather than silently hiding the rest, which on
@@ -40,6 +59,10 @@ public record ImportReport(
         @Classification(Tier.INTERNAL) int totalRows,
         @Classification(Tier.INTERNAL) int validRows,
         @Classification(Tier.INTERNAL) int imported,
+        @Classification(Tier.INTERNAL) int guardiansCreated,
+        @Classification(Tier.INTERNAL) int guardiansMatched,
+        @Classification(Tier.INTERNAL) int guardianLinksCreated,
+        @Classification(Tier.INTERNAL) int studentsLinkedToExistingGuardians,
         @Classification(Tier.INTERNAL) int errorCount,
         @Classification(Tier.CONFIDENTIAL) List<ImportError> errors) {
 

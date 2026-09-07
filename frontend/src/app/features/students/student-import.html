@@ -65,8 +65,14 @@
         }
       </strong>
       <span>
-        They are on the student list now, with their classes and sections. Anything the file did not
-        carry — guardians, for instance — is added from each child's record.
+        They are on the student list now, with their classes and sections.
+        @if (guardianSummary(); as summary) {
+          {{ summary }}
+        }
+      </span>
+      <span>
+        Anything the file did not carry — a second guardian, for instance — is added from each
+        child's own record.
       </span>
       <p class="banner__action">
         <a class="linklike" routerLink="/students">Go to the student list</a>
@@ -124,6 +130,15 @@
           <strong>class</strong> and <strong>section</strong> are the names you gave them under
           Academics — "Class 5", "A" — not codes. Set the class list up first, or every row will
           come back saying the class could not be found.
+        </p>
+        <p class="columns__note">
+          Leave every <strong>guardian_*</strong> column blank for a row with no guardian yet. Fill
+          in <strong>guardian_name</strong> and <strong>guardian_phone</strong> and this matches the
+          phone against a guardian already here, the same way the office does when it searches
+          before adding one — siblings with the same phone number become one guardian, not several,
+          whether or not that person is already in your directory. If the same phone number turns up
+          twice in the file under two different names, every row with that number is refused rather
+          than guessed at — fix the spelling, or add the second one by hand afterwards.
         </p>
       </details>
     </li>

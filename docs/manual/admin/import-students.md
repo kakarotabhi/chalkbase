@@ -37,10 +37,11 @@ can go wrong twice.
 ## The columns
 
 `admission_number`, `full_name`, `date_of_birth`, `gender`, `status`, `admitted_on`, `class`,
-`section`, `roll_number`.
+`section`, `roll_number`, `guardian_name`, `guardian_phone`, `guardian_relation`, `guardian_email`,
+`guardian_primary`.
 
-`status`, `admitted_on` and `roll_number` may be left empty. The order of the columns does not
-matter, and capitals do not matter.
+`status`, `admitted_on`, `roll_number` and all five `guardian_*` columns may be left empty. The
+order of the columns does not matter, and capitals do not matter.
 
 - **Dates** are `yyyy-MM-dd` — 14 June 2015 is `2015-06-14`.
 - **Gender** is `MALE`, `FEMALE` or `OTHER`. A single `M`, `F` or `O` is accepted too, since that is
@@ -51,6 +52,18 @@ matter, and capitals do not matter.
   saves as CSV.
 - **`class` and `section`** must match classes you have already set up. If they do not, the message
   lists the names your school actually has.
+- **The guardian columns are one guardian, and are optional as a group.** Leave all five blank for
+  a row with no guardian yet. Fill in `guardian_name` and `guardian_phone` together — they are
+  required together, because the phone number is what this matches against — and the row is linked
+  to a guardian already in your directory if that phone number belongs to one, or a new guardian is
+  created if it does not. Four rows all naming "Suresh Kulkarni" on the same number become one
+  guardian and four children, exactly as adding them by hand would. `guardian_relation` is `FATHER`,
+  `MOTHER`, `GUARDIAN`, `LOCAL_GUARDIAN` or `OTHER` (`GUARDIAN` if left blank); `guardian_email` is
+  optional; `guardian_primary` is `TRUE` or `FALSE` (`TRUE` if left blank), for whether the school
+  should ring this person first.
+- **Only one guardian per row.** If you also have a mother's details, add her afterwards from the
+  child's own record — search for her first, the same as you would for any guardian, in case she is
+  already here for another child.
 
 ## Common problems
 
@@ -68,16 +81,26 @@ two clash.
 **The list of problems says "showing the first 200".** There are more. Fix these, check again, and
 the rest will be listed.
 
+**"This phone number is already used by a guardian with a different name."** Two rows in your file
+give the same phone number to two different names. Check your spreadsheet for a typo in the name —
+if it is the same person spelled two ways, make the spelling match; if it is genuinely two different
+people sharing a number, take the second one out of the file and add them by hand afterwards from
+the guardian directory.
+
+**"This phone number already belongs to a different guardian at this school."** The number in your
+file matches someone already in your guardian directory, but under a different name. Open the
+guardian directory and check: if it is the same person spelled differently, fix the spelling in your
+file to match; if it is genuinely a different person who happens to share a number, take that row's
+guardian columns out of the file and add the guardian by hand afterwards instead.
+
 ## What Chalkbase does with the file
 
 It reads it and throws it away. The file is not stored, not kept, and never attached to any record.
 The problems it reports name the row and the column and **never quote what was in the cell**, so the
 list is safe to share with a colleague or print out while you work through it.
 
-Guardians are not imported yet — add them from each student's record, searching for a parent who is
-already here before creating a new one.
-
 ## What is recorded
 
-One entry in the audit log: who imported, into which academic year, and how many students. Not six
-hundred separate entries, and no child's name or date of birth.
+Two entries in the audit log at most: who imported, into which academic year, how many students, and
+— only when the file actually added a new guardian — how many new guardians. Not one entry per
+student or per guardian, and no child's or guardian's name or date of birth.
