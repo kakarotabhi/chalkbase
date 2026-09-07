@@ -87,6 +87,7 @@ class AccessControlTests {
     private static final String GUARDIAN_READ = "student:guardian:read";
     private static final String STUDENT_MANAGE = "student:student:manage";
     private static final String STUDENT_READ = "student:student:read";
+    private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
 
     @Autowired
     MockMvc mockMvc;
@@ -166,7 +167,8 @@ class AccessControlTests {
                             GUARDIAN_MANAGE,
                             GUARDIAN_READ,
                             STUDENT_MANAGE,
-                            STUDENT_READ);
+                            STUDENT_READ,
+                            STUDENT_REVEAL_RESTRICTED);
         }
     }
 
@@ -207,7 +209,8 @@ class AccessControlTests {
                         GUARDIAN_MANAGE,
                         GUARDIAN_READ,
                         STUDENT_MANAGE,
-                        STUDENT_READ);
+                        STUDENT_READ,
+                        STUDENT_REVEAL_RESTRICTED);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "PRINCIPAL"))
                 .containsExactly(
                         CLASS_MANAGE,
@@ -224,7 +227,8 @@ class AccessControlTests {
                         GUARDIAN_MANAGE,
                         GUARDIAN_READ,
                         STUDENT_MANAGE,
-                        STUDENT_READ);
+                        STUDENT_READ,
+                        STUDENT_REVEAL_RESTRICTED);
 
         assertThat(permissionsOf(HILLVIEW_SCHEMA, "LIBRARIAN")).containsExactly(USER_READ, SCHOOL_READ);
         assertThat(permissionsOf(SEAVIEW_SCHEMA, "LIBRARIAN")).containsExactly(SCHOOL_READ);
@@ -255,7 +259,8 @@ class AccessControlTests {
                         GUARDIAN_MANAGE,
                         GUARDIAN_READ,
                         STUDENT_MANAGE,
-                        STUDENT_READ);
+                        STUDENT_READ,
+                        STUDENT_REVEAL_RESTRICTED);
         assertThat(jdbc.sql("select count(*) from " + HILLVIEW_SCHEMA + ".role")
                         .query(Integer.class)
                         .single())
@@ -355,6 +360,7 @@ class AccessControlTests {
                                 SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,
+                                STUDENT_REVEAL_RESTRICTED,
                                 GUARDIAN_READ,
                                 GUARDIAN_MANAGE,
                                 USER_READ,

@@ -238,8 +238,13 @@ class StudentSensitiveApiTests {
         Cookie session = signInAs("PRINCIPAL");
         UUID student = createStudent(session, "2026/1006", "Rohan Verma");
 
+        // apaarConsentGiven is a primitive boolean and has to be sent explicitly — the same
+        // convention UpdateEnrolmentRequest.active and UpdateStudentGuardianRequest.primary
+        // already follow. A consent flag defaulting itself when a caller forgets it would be the
+        // wrong kind of lenient.
         mockMvc.perform(request(put(STUDENTS + "/" + student + "/compliance"), session, """
-                        {"penUdiseId": "27140100123", "boardRegistrationNumber": "CBSE-9981"}
+                        {"penUdiseId": "27140100123", "boardRegistrationNumber": "CBSE-9981",
+                         "apaarConsentGiven": false}
                         """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.penUdiseId").value("27140100123"));

@@ -80,6 +80,7 @@ class MeApiTests {
     private static final String SUBJECT_MANAGE = "academics:subject:manage";
     private static final String STUDENT_READ = "student:student:read";
     private static final String STUDENT_MANAGE = "student:student:manage";
+    private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
     private static final String GUARDIAN_READ = "student:guardian:read";
     private static final String GUARDIAN_MANAGE = "student:guardian:manage";
 
@@ -180,6 +181,7 @@ class MeApiTests {
                                 SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,
+                                STUDENT_REVEAL_RESTRICTED,
                                 GUARDIAN_READ,
                                 GUARDIAN_MANAGE,
                                 USER_READ,
