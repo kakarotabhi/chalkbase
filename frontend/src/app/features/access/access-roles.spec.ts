@@ -106,12 +106,20 @@ describe('AccessRoles', () => {
     httpMock.verify();
   });
 
-  it('lists the permission catalogue and this school’s roles', () => {
+  it('lists this school’s roles', () => {
     arrive();
 
-    expect(text()).toContain('Manage roles and permissions');
     expect(text()).toContain('Front Office');
     expect(text()).toContain('1 permission');
+  });
+
+  it('shows the permission catalogue, grouped by module, once the editor is open', () => {
+    arrive();
+
+    button('Add a role').click();
+    fixture.detectChanges();
+
+    expect(text()).toContain('Manage roles and permissions');
   });
 
   it('explains a 403 rather than crashing', () => {
@@ -229,6 +237,13 @@ describe('AccessRoles', () => {
       method: 'PUT',
     });
     expect(updated.request.body).toEqual({ permissions: ['identity:role:manage'] });
+    updated.flush(envelope(role({ permissions: ['identity:role:manage'] })));
+    fixture.detectChanges();
+
+    // A successful save re-reads the role list rather than trusting the one role in the response.
+    httpMock
+      .expectOne((request) => request.url === ROLES_URL && request.method === 'GET')
+      .flush(envelope([role({ permissions: ['identity:role:manage'] })]));
   });
 
   // ── Grants ───────────────────────────────────────────────────────────────────────────────
