@@ -120,6 +120,28 @@ public final class StudentAudit {
     public static final String RESTRICTED_DATA_REVEALED = "RESTRICTED_DATA_REVEALED";
 
     /**
+     * A CSV export of the student roster, masked or unmasked (ADR-0014, ADR-0027). {@code entityId}
+     * is null: an export has no single row it is about, and it can span every enrolment year at
+     * once, unlike {@link #STUDENT_IMPORT}, which at least ties to the academic session a school
+     * uploaded into. {@code changed_fields} carries the NAMES of the columns the file actually
+     * contained — never a value, per the rule {@code AuditService} already enforces — and
+     * {@code record_count} carries how many rows.
+     *
+     * <p>Written for <strong>every</strong> export, not only the unmasked one: ADR-0014 says a
+     * Confidential export is audited unconditionally, and a masked export still contains a child's
+     * name and admission number. The unmasked export is the same action with more field names in
+     * {@code changed_fields} and its own permission gating it — see
+     * {@code StudentPermissions#STUDENT_EXPORT_UNMASKED}.
+     */
+    public static final String STUDENT_EXPORT = "STUDENT_EXPORT";
+
+    /**
+     * As {@link #STUDENT_EXPORT}, for the guardian directory. Guardians carry no Restricted field,
+     * so this one has no masked/unmasked distinction.
+     */
+    public static final String GUARDIAN_EXPORT = "GUARDIAN_EXPORT";
+
+    /**
      * The guardian half of a student import (ADR-0021 §4): a phone number in the file that matched
      * nobody in this school's directory, so a new {@link #GUARDIAN} row was written for it.
      *

@@ -23,6 +23,19 @@ public interface StudentGuardianRepository extends JpaRepository<StudentGuardian
     List<StudentGuardianLink> findByStudentIdWithGuardian(UUID studentId);
 
     /**
+     * The same shape as {@link #findByStudentIdWithGuardian}, for a whole page of students at once
+     * rather than one at a time.
+     *
+     * <p>For the export (ADR-0027): building one row per student in a list of a few thousand must
+     * not be a few thousand queries. One fetch join for the whole set, ordered so that a caller
+     * grouping the results by {@code student.id} finds each student's own guardians already in
+     * primary-first, alphabetical order and never has to re-sort them.
+     */
+    @Query("select l from StudentGuardianLink l join fetch l.guardian g where l.student.id in :studentIds"
+            + " order by l.student.id, l.primary desc, l.relation asc, g.fullName asc")
+    List<StudentGuardianLink> findByStudentIdInWithGuardian(Collection<UUID> studentIds);
+
+    /**
      * One guardian's children, with the students themselves, in one query.
      *
      * <p>The mirror image of {@link #findByStudentIdWithGuardian}, and what turns "linked to 4

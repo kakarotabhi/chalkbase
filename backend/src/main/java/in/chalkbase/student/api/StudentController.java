@@ -2,6 +2,7 @@ package in.chalkbase.student.api;
 
 import in.chalkbase.platform.api.ApiResponse;
 import in.chalkbase.platform.api.PageResponse;
+import in.chalkbase.student.application.StudentExportService;
 import in.chalkbase.student.application.StudentService;
 import in.chalkbase.student.domain.StudentQuery;
 import in.chalkbase.student.domain.StudentStatus;
@@ -10,6 +11,9 @@ import java.net.URI;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 /**
  * This school's students, and where each of them sits.
@@ -53,9 +58,11 @@ public class StudentController {
     private static final int DEFAULT_PAGE_SIZE = 25;
 
     private final StudentService students;
+    private final StudentExportService exports;
 
-    public StudentController(StudentService students) {
+    public StudentController(StudentService students, StudentExportService exports) {
         this.students = students;
+        this.exports = exports;
     }
 
     /**
@@ -84,6 +91,62 @@ public class StudentController {
             @RequestParam(required = false) UUID sectionId,
             @PageableDefault(size = DEFAULT_PAGE_SIZE, sort = "fullName") Pageable pageable) {
         return ApiResponse.success(students.list(new StudentQuery(q, status, sectionId), pageable));
+    }
+
+    /**
+     * The whole matching roster as a CSV file, masked by default (ADR-0014, ADR-0027) — the same
+     * filters as {@link #list}, unpaged, because an export is "everything that matches", not one
+     * page of it.
+     *
+     * <p>Streamed straight into the response rather than built as a {@code String} or a
+     * {@code byte[]} first — see {@code StudentExportService}'s class Javadoc for why that matters
+     * on this deployment. The filename names no child and no filter: {@code app.routes.ts} already
+     * gives the reasoning for a student's own route using a UUID and the page title reading "Student
+     * record" rather than a name, and a downloaded filename sits in exactly the same browser download
+     * history.
+     */
+    @PreAuthorize("hasAuthority('student:student:read')")
+    @GetMapping(value = "/export", produces = "text/csv")
+    public ResponseEntity<StreamingResponseBody> export(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) StudentStatus status,
+            @RequestParam(required = false) UUID sectionId) {
+        StudentQuery query = new StudentQuery(q, status, sectionId);
+        StreamingResponseBody body = out -> exports.exportMasked(query, out);
+        return csvResponse(body, "students.csv");
+    }
+
+    /**
+     * As {@link #export}, with every Restricted field included — a child's caste, religion,
+     * category, CWSN/disability status, allergies, chronic conditions, medication and blood group,
+     * for every student the filter matches, in one file.
+     *
+     * <p><strong>The dangerous one.</strong> Gated on {@code student:student:export_unmasked}, a
+     * permission no shipped role holds by default (see {@code StudentPermissions}), and every call
+     * writes {@code AuditAction#DATA_EXPORTED} naming the fields disclosed and the row count —
+     * {@code StudentExportService} does this unconditionally, not only on a successful response.
+     */
+    @PreAuthorize("hasAuthority('student:student:export_unmasked')")
+    @GetMapping(value = "/export/unmasked", produces = "text/csv")
+    public ResponseEntity<StreamingResponseBody> exportUnmasked(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) StudentStatus status,
+            @RequestParam(required = false) UUID sectionId) {
+        StudentQuery query = new StudentQuery(q, status, sectionId);
+        StreamingResponseBody body = out -> exports.exportUnmasked(query, out);
+        return csvResponse(body, "students-unmasked.csv");
+    }
+
+    private static ResponseEntity<StreamingResponseBody> csvResponse(StreamingResponseBody body, String filename) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(filename)
+                                .build()
+                                .toString())
+                .body(body);
     }
 
     @PreAuthorize("hasAuthority('student:student:read')")
