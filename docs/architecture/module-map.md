@@ -5,7 +5,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
-| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | built, with its screen |
+| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit`, `/api/dashboard` | `audit_event` is | built, with its screen |
 | `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/schools/bootstrap`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
@@ -62,6 +62,8 @@ importing the other. Each is a `@Bean` inside the module, collected by the platf
 | `NavigationProvider` | where this module's screens sit in the menu | e.g. `SchoolNavigation` |
 | `ConstraintMappingProvider` | how this module's database constraints read to a user | e.g. `SchoolConstraintMappings` |
 | `AuditActorResolver` | who is acting, for the audit log's actor snapshot | `IdentityAuditActorResolver` |
+| `AcademicsDashboardContributor` | the current-session tile on `/api/dashboard` | `AcademicsDashboardTileService` |
+| `StudentDashboardContributor` | the enrolment-by-class and linkage-gap tiles on `/api/dashboard` | `StudentDashboardTileService` |
 
 The first dependency between two **feature** modules is `student` → `academics`, and it goes through
 a named interface rather than a package import: `academics.api.AcademicsLookup` answers "which
@@ -77,6 +79,21 @@ module needs from another is "this id must belong to a row over there", which th
 enforces on every write. `document` also uses `platform.storage.StorageService` (ADR-0025), which is
 not one of the four SPIs above: it is `platform`-owned infrastructure a module calls directly, the
 same way every module already calls `platform.audit.AuditService`.
+`student` also exposes its own named interface now, `student.api.StudentLookup`, mirroring
+`AcademicsLookup`: read-only counts (active enrolments, by section, and the two linkage gaps),
+never a `Student` or `Guardian` row. It exists for the dashboard — the first caller outside
+`student` to need anything from it in bulk — and answers a number, never a name or a phone number,
+so a tile cannot become a second, unaudited way to read data `student:student:read` and
+`student:guardian:read` already guard.
+
+The dashboard (`platform.dashboard`) is the first place the shared kernel needs data *from* a
+feature module, which is backwards from every dependency above: `platform` must not import a
+feature module (the same reason `AuditActorResolver` exists rather than the audit log reaching into
+`identity`'s principal type). `AcademicsDashboardContributor` and `StudentDashboardContributor`
+above are what keep that true — each module builds its own tile record from its own repositories
+(or, for `student`, from `StudentLookup` and `AcademicsLookup`, exactly as any other caller would),
+decides for itself whether the caller's permissions allow it, and hands the finished tile to
+`platform.dashboard.DashboardService`, which never imports `academics.api` or `student.api`.
 
 Navigation adds one rule worth knowing: a module contributes a screen to **another** module's
 section by declaring it at the top level under its dotted id — `school` declares `settings.profile`

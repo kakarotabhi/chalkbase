@@ -5,7 +5,7 @@ accountant never need the same page.
 
 | Role | Pages |
 |---|---|
-| [Admin / principal](admin/) | school setup, sessions, classes, staff, reports |
+| [Admin / principal](admin/) | dashboard, school setup, sessions, classes, staff, reports |
 | [Teacher](teacher/) | attendance, marks, timetable, homework, parent messages |
 | [Parent](parent/) | fees, attendance, report cards, notices |
 | [Student](student/) | timetable, assignments, results |

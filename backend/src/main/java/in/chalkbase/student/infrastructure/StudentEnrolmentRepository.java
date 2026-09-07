@@ -56,4 +56,33 @@ public interface StudentEnrolmentRepository extends JpaRepository<StudentEnrolme
      */
     List<StudentEnrolment> findByAcademicSessionIdAndRollNumberIn(
             UUID academicSessionId, Collection<String> rollNumbers);
+
+    // ── For StudentLookupService, in support of the first basic dashboard ──────────────────────
+
+    /** How many students hold a live enrolment in this year. See {@code StudentLookup}. */
+    long countByActiveTrueAndAcademicSessionId(UUID academicSessionId);
+
+    /**
+     * Live enrolment counts for one year, one row per section that has at least one.
+     *
+     * <p>{@code Object[]}, not a projection interface: two columns and one caller
+     * ({@code StudentLookupService}) do not earn a named projection type, and the alternative
+     * — {@code SectionEnrolmentCount} itself — is an {@code api} record and must not be the return
+     * type of a JPA query method (ADR-0014's boundary is the module's own API, not its
+     * repositories).
+     */
+    @Query("select e.sectionId, count(e) from StudentEnrolment e"
+            + " where e.active = true and e.academicSessionId = :sessionId group by e.sectionId")
+    List<Object[]> countActiveGroupedBySection(@Param("sessionId") UUID sessionId);
+
+    /**
+     * How many students with a live enrolment in this year have no guardian linked at all.
+     *
+     * <p>{@code not exists} against {@code StudentGuardianLink} rather than an outer join and a
+     * null check: both modules' entities are in this module, so this stays a single statement
+     * instead of the caller assembling two result sets by hand.
+     */
+    @Query("select count(e) from StudentEnrolment e where e.active = true and e.academicSessionId = :sessionId"
+            + " and not exists (select 1 from StudentGuardianLink l where l.student = e.student)")
+    long countActiveWithoutGuardian(@Param("sessionId") UUID sessionId);
 }
