@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,7 +22,7 @@ import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { GuardianDuplicateWarning } from './guardian-duplicate-warning';
-import { ACCESS_DENIED, CONFLICT, classAndSection } from './students-shared';
+import { ACCESS_DENIED, CONFLICT, classAndSection, downloadBlob } from './students-shared';
 
 /** Same pause as the student search: eight characters is one request, not eight. */
 const SEARCH_DEBOUNCE_MS = 300;
@@ -95,9 +96,13 @@ export class GuardianList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly document = inject(DOCUMENT);
 
   /** Whether to offer adding or correcting a guardian. `student:guardian:manage` on the wire. */
   protected readonly canManageGuardians = permitted(Permissions.GUARDIAN_MANAGE);
+
+  protected readonly exporting = signal(false);
+  protected readonly exportFailed = signal(false);
 
   protected readonly pageSize = GUARDIAN_PAGE_SIZE;
 
@@ -423,6 +428,29 @@ export class GuardianList {
     this.typedPhone.set('');
     this.editing.set('new');
     this.focusAfterRender('#guardian-name');
+  }
+
+  /** Downloads the directory — whatever the search box currently holds is what is exported. */
+  protected export(): void {
+    if (this.exporting()) {
+      return;
+    }
+    this.exporting.set(true);
+    this.exportFailed.set(false);
+
+    this.guardians
+      .export(this.search.value)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          this.exporting.set(false);
+          downloadBlob(this.document, 'guardians.csv', blob);
+        },
+        error: () => {
+          this.exporting.set(false);
+          this.exportFailed.set(true);
+        },
+      });
   }
 
   protected startEdit(row: GuardianRow): void {

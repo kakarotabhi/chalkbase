@@ -60,10 +60,22 @@
   <p class="announcement" role="status">{{ announcement() }}</p>
 
   @if (!editing()) {
-    @if (canManageGuardians()) {
-      <div class="toolbar">
+    <div class="toolbar">
+      <!--
+        Gated on `student:guardian:read` on the server — the same permission that draws this
+        directory — so it stands on its own rather than beside `canManageGuardians()`. Whatever the
+        search box currently holds is what is exported. No masked/unmasked choice: a guardian
+        carries no Restricted field under ADR-0014, so there is nothing this file could ever hide.
+      -->
+      <cb-button variant="secondary" [loading]="exporting()" (click)="export()">Export</cb-button>
+      @if (canManageGuardians()) {
         <cb-button [id]="'guardian-add'" (click)="startAdd()">Add a guardian</cb-button>
-      </div>
+      }
+    </div>
+    @if (exportFailed()) {
+      <p class="banner banner--info" role="alert">
+        The export could not be downloaded. Try again in a moment.
+      </p>
     }
   } @else {
     <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>

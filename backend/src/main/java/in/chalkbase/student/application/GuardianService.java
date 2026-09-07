@@ -2,9 +2,12 @@ package in.chalkbase.student.application;
 
 import in.chalkbase.platform.api.PageResponse;
 import in.chalkbase.platform.audit.AuditAction;
+import in.chalkbase.platform.audit.AuditOutcome;
 import in.chalkbase.platform.audit.AuditService;
 import in.chalkbase.platform.error.ChalkbaseException;
 import in.chalkbase.platform.error.NotFoundException;
+import in.chalkbase.platform.export.ClassificationCsvExporter;
+import in.chalkbase.platform.export.ClassificationCsvExporter.Mode;
 import in.chalkbase.student.api.CurrentEnrolment;
 import in.chalkbase.student.api.GuardianStudent;
 import in.chalkbase.student.api.GuardianSummary;
@@ -22,6 +25,8 @@ import in.chalkbase.student.infrastructure.PhoneDigits;
 import in.chalkbase.student.infrastructure.StudentGuardianRepository;
 import in.chalkbase.student.infrastructure.StudentRepository;
 import jakarta.persistence.criteria.Predicate;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -32,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,6 +106,39 @@ public class GuardianService {
                 .map(guardian -> GuardianSummary.of(guardian, counts.getOrDefault(guardian.getId(), 0L)))
                 .toList();
         return PageResponse.of(page, content);
+    }
+
+    /**
+     * The whole directory (or the rows matching {@code q}) as a CSV, unpaged.
+     *
+     * <p><strong>{@link GuardianSummary} doubles as the export row</strong> rather than a dedicated
+     * export type — unlike {@code StudentExportRow}, there is nothing to add: {@code Guardian} has
+     * no Restricted field (ADR-0014), so masked and unmasked would be byte-identical, and giving
+     * this a mode of its own would be ceremony with no column it could ever change. Every column is
+     * Confidential or Internal already, so {@code ClassificationCsvExporter}'s masking never removes
+     * anything here — the file simply carries every column {@link GuardianSummary} does.
+     *
+     * <p>Audited unconditionally, the same reasoning as the student export: ADR-0014 says a
+     * Confidential export is audited, and a guardian's name and phone number are Confidential.
+     */
+    public void exportCsv(String q, OutputStream out) throws IOException {
+        List<Guardian> matches = guardians.findAll(matching(q), Sort.by("fullName"));
+        Map<UUID, Long> counts =
+                linkedStudentCounts(matches.stream().map(Guardian::getId).toList());
+
+        List<GuardianSummary> rows = matches.stream()
+                .map(guardian -> GuardianSummary.of(guardian, counts.getOrDefault(guardian.getId(), 0L)))
+                .toList();
+
+        List<String> fields = ClassificationCsvExporter.write(out, GuardianSummary.class, rows.stream(), Mode.MASKED);
+
+        audit.recordSecurityEvent(
+                AuditAction.DATA_EXPORTED,
+                AuditOutcome.SUCCESS,
+                StudentAudit.GUARDIAN_EXPORT,
+                null,
+                fields,
+                rows.size());
     }
 
     /**

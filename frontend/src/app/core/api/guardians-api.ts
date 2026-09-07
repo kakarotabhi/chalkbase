@@ -74,6 +74,22 @@ export class GuardiansApi {
   }
 
   /**
+   * The whole matching directory as a CSV file, unpaged (ADR-0014, ADR-0027).
+   *
+   * No masked/unmasked choice here, unlike `StudentsApi.export` — a guardian carries no Restricted
+   * field, so there is nothing this file could ever hide. `responseType: 'blob'`: this is the one
+   * method here that does not answer inside the ADR-0007 envelope, the same as `StudentsApi.export`.
+   */
+  export(q?: string | null): Observable<Blob> {
+    const trimmed = q?.trim();
+    return this.http.get(`${this.baseUrl}/export`, {
+      params: trimmed ? new HttpParams().set('q', trimmed) : new HttpParams(),
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
+  /**
    * Which children this guardian is responsible for.
    *
    * The expansion of `linkedStudentCount`, and the thing that lets somebody tell two similar
