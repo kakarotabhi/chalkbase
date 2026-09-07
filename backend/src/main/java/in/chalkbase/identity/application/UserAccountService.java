@@ -62,28 +62,30 @@ public class UserAccountService {
     }
 
     /**
-     * Whether this account is still on the password its school issued it.
+     * What this session's account currently allows (ADR-0023), read fresh on every API call.
      *
-     * <p>Read from the account row rather than from the session, deliberately, and this is the one
-     * decision in the forced-change enforcement worth arguing about. The flag changes <em>during</em>
-     * a session — that is the whole point of it, and it is already why {@code SessionBootstrap}
-     * reads the row for {@code /api/me} instead of trusting the principal. A copy on the principal
-     * would be a second answer to the same question, and the two disagreeing means either
-     * {@code /api/me} tells a client to go and change a password the filter has already stopped
-     * requiring, or the filter keeps refusing an account that has changed it. Neither is a bug
-     * anyone would find quickly.
+     * <p>Read from the account row rather than from the session, deliberately — this is the
+     * decision {@code AuthenticationService}'s class Javadoc and ADR-0005 point at when they say
+     * permissions are resolved once and never revisited: status and lockout are the two things that
+     * <em>are</em> revisited, because each is one indexed column rather than a join across grants,
+     * roles and permissions. A copy on the principal would be a second answer to the same question,
+     * and the two disagreeing means a disabled account keeps reading the school's data until its
+     * session happens to expire — which is the exact defect this method closes.
      *
      * <p>The cost is one primary-key select per API call for a signed-in session, which is why
-     * {@link UserAccountRepository#findMustChangePassword} projects a single column instead of
-     * loading the entity.
+     * {@link UserAccountRepository#findStanding} projects three columns instead of loading the
+     * entity. It is not a new round trip: this replaces the single-column
+     * {@code findMustChangePassword} that {@code PasswordChangeRequiredFilter} already paid for on
+     * every request.
      *
-     * <p><strong>An account that no longer exists answers true.</strong> Fail closed: a session
-     * pointing at a deleted account is not a session that should keep reading a school's data while
-     * we decide what to call it. The client's next {@code /api/me} answers 401 and sends it to the
-     * login screen, which is where it can actually recover.
+     * <p><strong>An account that no longer exists answers "not usable, and owes a password
+     * change."</strong> Fail closed: a session pointing at a deleted account is not a session that
+     * should keep reading a school's data while we decide what to call it. The client's next
+     * {@code /api/me} answers 401 and sends it to the login screen, which is where it can actually
+     * recover.
      */
-    public boolean mustChangePassword(UUID accountId) {
-        return accounts.findMustChangePassword(accountId).orElse(true);
+    public AccountStanding standing(UUID accountId) {
+        return accounts.findStanding(accountId).orElseGet(AccountStanding::accountGone);
     }
 
     public Optional<UserCredential> activeCredential(UUID accountId, CredentialType type) {
