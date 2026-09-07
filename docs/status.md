@@ -19,7 +19,7 @@ the way Phase 1's work was)
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0026) | ✅ Done |
+| Architecture decisions (ADR-0001…0027) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Enforced and manageable, with a screen · ⬜ impact preview |
@@ -33,7 +33,7 @@ the way Phase 1's work was)
 | Students, guardians and enrolment | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
 | Documents (FR-013, FR-032) | ✅ Storage port, module and endpoints · ⬜ the S3 adapter and a screen |
 | Basic dashboards | ✅ Done |
-| Export | ⬜ In progress — the last Phase 1 feature |
+| Export | ✅ Done |
 | Deployment | ✅ Render dev **and** staging, each on its own database · ⬜ Coolify/VPS (production) |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
@@ -331,7 +331,7 @@ separated them.
 | Gap | Where |
 |---|---|
 | **Documents has six endpoints and no screen at all.** List, upload, download, edit and delete are all reachable only by an API client. | `document/api/DocumentController.java` · nothing under `features/` |
-| **Export has no screen yet** — it is the feature currently being built, and the action belongs on the students and guardians lists. | `features/students/` |
+| ~~Export has no screen yet.~~ ✅ Closed. The students and guardians lists carry an export action, and a dialog that makes the masked/unmasked choice and its audit consequence explicit. | `features/students/` |
 | ~~The users roster has no menu entry.~~ ✅ Closed. `IdentityNavigation` now emits `settings.users`, gated on `identity:user:read` rather than `identity:user:manage` — `AUDITOR` and `VICE_PRINCIPAL` hold the first without the second, and can legitimately see the roster without acting on it — and `nav-routes.ts` resolves it. | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | ~~No impact preview when editing a role.~~ ✅ Closed. The edit form now shows who holds the role and, from ADR-0023, whether saving signs them out immediately (removing a permission) or waits for their next login (adding one) — built from `GET /api/access/roles/{id}/holders`, no new endpoint. | `features/access/access-roles.ts` |
 | **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other. | [the assessment](design-drift-assessment.md) |
