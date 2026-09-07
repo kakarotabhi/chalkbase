@@ -532,6 +532,22 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/reference/states": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["states"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/school/profile": {
         readonly parameters: {
             readonly query?: never;
@@ -572,6 +588,22 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get: operations["get_1"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/schools/boards": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["boards"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -955,6 +987,14 @@ export interface components {
         };
         readonly ApiResponseListPermissionDefinition: {
             readonly data?: readonly components["schemas"]["PermissionDefinition"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListReferenceItemResponse: {
+            readonly data?: readonly components["schemas"]["ReferenceItemResponse"][];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1534,6 +1574,10 @@ export interface components {
         };
         readonly RecentAuditTile: {
             readonly events: readonly components["schemas"]["AuditEventResponse"][];
+        };
+        readonly ReferenceItemResponse: {
+            readonly label: string;
+            readonly value: string;
         };
         readonly ReorderSchoolClassesRequest: {
             readonly classIds: readonly string[];
@@ -2815,6 +2859,26 @@ export interface operations {
             };
         };
     };
+    readonly states: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListReferenceItemResponse"];
+                };
+            };
+        };
+    };
     readonly profile: {
         readonly parameters: {
             readonly query?: never;
@@ -2921,6 +2985,26 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseSchoolResponse"];
+                };
+            };
+        };
+    };
+    readonly boards: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListReferenceItemResponse"];
                 };
             };
         };
