@@ -1,6 +1,7 @@
 package in.chalkbase.school.api;
 
 import in.chalkbase.platform.api.ApiResponse;
+import in.chalkbase.platform.reference.ReferenceItemResponse;
 import in.chalkbase.school.application.SchoolService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -58,6 +59,26 @@ public class SchoolController {
     @GetMapping("/{id}")
     public ApiResponse<SchoolResponse> get(@PathVariable UUID id) {
         return ApiResponse.success(schoolService.findById(id));
+    }
+
+    /**
+     * Every board a school may affiliate to (ADR-0006, ADR-0029) — the other half of the two
+     * hardcoded lists the school-profile form used to carry, alongside {@code
+     * platform.reference.ReferenceDataController#states}. It lives here rather than there because
+     * {@code Board} is this module's own domain enum, and {@code platform} — the shared kernel every
+     * module depends on — must not import a feature module's type the other way round.
+     *
+     * <p>{@code isAuthenticated()}, mirroring {@code ReferenceDataController#states}: this is not
+     * one of the three platform-operator endpoints above, and sits under {@code /api/schools/**}'s
+     * URL-level {@code permitAll()} only because that is this controller's existing prefix — the
+     * method annotation is what actually decides who may call it, and it still refuses an anonymous
+     * caller. No shipped screen calls it without a session; the day one does (a public onboarding
+     * form, say) this is the annotation to relax, deliberately, not by omission.
+     */
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/boards")
+    public ApiResponse<List<ReferenceItemResponse>> boards() {
+        return ApiResponse.success(schoolService.boards());
     }
 
     @PreAuthorize("hasAuthority('school:school:create')")
