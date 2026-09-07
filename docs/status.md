@@ -281,6 +281,7 @@ here. What is left is externally blocked rather than undecided.
 | Document storage: a `StorageService` port, a real filesystem adapter for `local`/`test`, and attaching a certificate, photo, signature or other document to a student — upload, list, proxied download, edit, delete, all audited | [ADR-0025](architecture/adr/0025-document-storage.md), `document/` |
 | The first basic dashboard: `GET /api/dashboard`, gated tile by tile through two new SPIs (`AcademicsDashboardContributor`, `StudentDashboardContributor`) so the shared kernel never imports a feature module, and `student.api.StudentLookup`, the module's first cross-module read interface | `platform/dashboard/`, `student/api/StudentLookup.java` |
 | Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
+| Global reference data: states move to `public.state`, seeded from code, cached in memory, read through `GET /api/reference/states`; boards stay the `school` enum but drop their frontend-side label copy at `GET /api/schools/boards`; the audit action filter examined and deliberately left as is, with the index it would need first named | [ADR-0029](architecture/adr/0029-reference-data.md), `platform/reference/` |
 
 ## What is left on the frontend
 
@@ -458,11 +459,19 @@ Recorded so they are decided rather than discovered.
   classification tier rather than a schedule per tier — a per-category schedule stays possible
   later without a schema change, it is simply not what was built. See the **Blocking the first real
   school** section above for how the purge itself runs.
-- Indian states are a hardcoded list in the school-profile form (`TODO(reference-data)`). They are
-  Tier-1 master data and belong in `public` behind an endpoint (ADR-0006). The audit screen's action
-  filter is the same case: it lists the actions this build ships, so a verb a future module invents
-  is filterable by neither name nor dropdown — those rows still list, label legibly and are
-  reachable by actor or date. Closing it needs the distinct actions in a school's own log.
+- ~~Indian states are a hardcoded list in the school-profile form.~~ ✅ Closed by
+  [ADR-0029](architecture/adr/0029-reference-data.md): `public.state`, seeded from `IndianStates.java`
+  the way `PermissionCatalog` seeds `permission`, read through `GET /api/reference/states` and
+  cached in memory. The board list beside it is closed too, but differently — `Board` stays the
+  `school` module's enum rather than becoming a table (ADR-0029 explains why), and
+  `GET /api/schools/boards` serves its labels from there instead. **The audit screen's action filter
+  is not closed and, on inspection, should not be yet**: `audit_event` carries no index on `action`
+  (only on `occurred_at`, `actor_id` and `entity_type`/`entity_id`), so `select distinct action` is a
+  full scan of a table that is append-only, unbounded until a seven-year purge, and gets more
+  expensive every year a school stays on the platform — a bad trade on the one screen an
+  administrator opens during an incident. It lists the actions this build ships, so a verb a future
+  module invents is filterable by neither name nor dropdown — those rows still list, label legibly
+  and are reachable by actor or date. `idx_audit_event_action` first, then this is worth revisiting.
 - **A school has no timezone**, so the audit screen renders times in the reader's own device zone.
   India is one zone, so this is right for everyone in the country and wrong only for someone reading
   from abroad — the row detail names the zone so they are not misled. A `timezone` on the school
