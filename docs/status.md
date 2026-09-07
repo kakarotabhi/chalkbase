@@ -8,27 +8,27 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 
 ## At a glance
 
-| Area                                                                  | State                                                                  |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Repository, CI, branch protection                                     | ✅ Done                                                                |
-| Backend skeleton (Spring Boot 4.1, Modulith)                          | ✅ Done                                                                |
-| Frontend skeleton (Angular 22, adaptive shell)                        | ✅ Done                                                                |
-| PostgreSQL, profiles, Testcontainers                                  | ✅ Done                                                                |
-| API response envelope and error handling                              | ✅ Done                                                                |
-| Design tokens and palette                                             | ✅ Done                                                                |
-| Screen designs for the first six screens                              | ✅ Done                                                                |
-| Architecture decisions (ADR-0001…0022)                                | ✅ Done                                                                |
-| **Phase 0 discovery — all 13 deliverables**                           | ✅ Done                                                                |
-| Identity: login, sessions, forced password change                     | ✅ Done                                                                |
-| Permissions, roles, scoped grants                                     | ✅ Enforced · ⚠️ no way to manage them in the product                  |
-| Server-driven navigation (`GET /api/me`)                              | ✅ Done                                                                |
-| Schema-per-tenant: registry, migration orchestrator                   | ✅ Done                                                                |
-| Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done                                                                |
-| School profile — `GET`/`PUT /api/school/profile` and its screen       | ✅ Done                                                                |
-| Shared UI components                                                  | ✅ Button, field, inputs, checkbox, select, bottom sheet               |
-| Academic sessions, classes and sections                               | ✅ Done · ⬜ subjects                                                  |
-| Students, guardians and enrolment                                     | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
-| Deployment                                                            | ✅ Render (dev environment) · ⬜ Coolify/VPS (production)              |
+| Area | State |
+|---|---|
+| Repository, CI, branch protection | ✅ Done |
+| Backend skeleton (Spring Boot 4.1, Modulith) | ✅ Done |
+| Frontend skeleton (Angular 22, adaptive shell) | ✅ Done |
+| PostgreSQL, profiles, Testcontainers | ✅ Done |
+| API response envelope and error handling | ✅ Done |
+| Design tokens and palette | ✅ Done |
+| Screen designs for the first six screens | ✅ Done |
+| Architecture decisions (ADR-0001…0022) | ✅ Done |
+| **Phase 0 discovery — all 13 deliverables** | ✅ Done |
+| Identity: login, sessions, forced password change | ✅ Done |
+| Permissions, roles, scoped grants | ✅ Enforced · ⚠️ no way to manage them in the product |
+| Server-driven navigation (`GET /api/me`) | ✅ Done |
+| Schema-per-tenant: registry, migration orchestrator | ✅ Done |
+| Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
+| School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
+| Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
+| Academic sessions, classes and sections | ✅ Done · ⬜ subjects |
+| Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
+| Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
 [Phase 1 in detail](#phase-1-in-detail) is the per-feature account.
@@ -39,25 +39,25 @@ A ✅ in this table means the slice works end to end, not that the roadmap featu
 is deliberately coarse; this one is the honest state of each, because three of them read as done at a
 glance and are not.
 
-| Roadmap feature       | State                       | What exists · what does not                                                                                                                                                                                                                                                                                                                                                                                                   |
-| --------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| School profile        | ✅ Done                     | `GET`/`PUT /api/school/profile`, its screen, and the registry write-back.                                                                                                                                                                                                                                                                                                                                                     |
-| Academic session      | ✅ Done                     | Create, edit, and make-current, with its screen.                                                                                                                                                                                                                                                                                                                                                                              |
-| Classes and sections  | ✅ Done                     | The structural ladder (ADR-0019), reorder, retire and reinstate.                                                                                                                                                                                                                                                                                                                                                              |
-| **Subjects**          | ❌ Not started              | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished.                                                                                                                                                                                                                                                                                              |
-| Roles and permissions | ⚠️ Enforced, not manageable | 14 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen.                                                                                                                                                           |
-| User management       | ⚠️ Model only               | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them.                                                                                                                                                                                     |
-| Student profile       | ⚠️ Core only                | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
-| Guardian profile      | ✅ Done                     | Directory, attach and detach, relation, main contact, and digit-normalised phone search.                                                                                                                                                                                                                                                                                                                                      |
-| **Documents**         | ❌ Not started              | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task.                                                                       |
-| Import                | ✅ Done                     | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed.                                                                                                                                                                                                                                     |
-| **Export**            | ❌ Not started              | Deliberate. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product.                                                                                                                                                                      |
-| **Basic dashboards**  | ❌ Not started              | No route. Blocked less by effort than by having only three modules to summarise.                                                                                                                                                                                                                                                                                                                                              |
-| Audit log             | ✅ Done                     | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below.                                                                                                                                                                                                                                                                                                                              |
+| Roadmap feature | State | What exists · what does not |
+|---|---|---|
+| School profile | ✅ Done | `GET`/`PUT /api/school/profile`, its screen, and the registry write-back. |
+| Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
+| Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
+| **Subjects** | ❌ Not started | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished. |
+| Roles and permissions | ⚠️ Enforced, not manageable | 14 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen. |
+| User management | ⚠️ Model only | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them. |
+| Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
+| Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
+| **Documents** | ❌ Not started | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task. |
+| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
+| **Export** | ❌ Not started | Deliberate. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. |
+| **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
+| Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
 
 **The four exit criteria are met.** A school can be configured with a session; students and guardians
 can be created or imported; users sign in with the permissions their role grants; and creates,
-updates, deletes and logins are audited. Phase 1 is _usable_ and it is not _finished_ — the gap
+updates, deletes and logins are audited. Phase 1 is *usable* and it is not *finished* — the gap
 between those two is the four unstarted features and the three partials above.
 
 **Built in Phase 1 but not on its list**, because the roadmap assumed them rather than naming them:
@@ -73,12 +73,12 @@ A personal dev environment on Render's free tier, deployed from `main` on every 
 path on the Mumbai VPS ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) is unchanged and
 remains the production plan.
 
-|              |                                                                                 |
-| ------------ | ------------------------------------------------------------------------------- |
-| App          | <https://chalkbase-web.onrender.com>                                            |
-| API          | <https://chalkbase-api.onrender.com>                                            |
-| API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html>                            |
-| Database     | the same Supabase project the local profile uses — so the demo school is shared |
+| | |
+|---|---|
+| App | <https://chalkbase-web.onrender.com> |
+| API | <https://chalkbase-api.onrender.com> |
+| API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html> |
+| Database | the same Supabase project the local profile uses — so the demo school is shared |
 
 Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
 `auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
@@ -193,46 +193,46 @@ against the existing directory by phone, or it recreates the duplicate problem
 
 Phase 0 cleared this table. What is left is externally blocked rather than undecided.
 
-| Question                                | Why it matters                                                                                                                                                                                                                                        | Urgency                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **TRAI DLT registration**               | Weeks of paperwork, and nothing can start it retroactively. Blocks SMS fee reminders, absence alerts and any phone-OTP login. Not blocking v1, since v1 ships email and web push only ([ADR-0013](architecture/adr/0013-external-provider-ports.md)). | **Start now**          |
-| SMS / WhatsApp provider                 | Chosen once DLT registration completes — that process shows which providers are painless.                                                                                                                                                             | After DLT              |
-| Payment gateway                         | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter.                                                                                                                                         | Before online fees     |
-| Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating.                                                                                                           | Before first real data |
+| Question | Why it matters | Urgency |
+|---|---|---|
+| **TRAI DLT registration** | Weeks of paperwork, and nothing can start it retroactively. Blocks SMS fee reminders, absence alerts and any phone-OTP login. Not blocking v1, since v1 ships email and web push only ([ADR-0013](architecture/adr/0013-external-provider-ports.md)). | **Start now** |
+| SMS / WhatsApp provider | Chosen once DLT registration completes — that process shows which providers are painless. | After DLT |
+| Payment gateway | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter. | Before online fees |
+| Production migration off Supabase Seoul | The Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)) replaces it. Move before there is data worth migrating. | Before first real data |
 
 ## Done
 
-| What                                                                                                                                                          | Where                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Requirement pack imported                                                                                                                                     | [`docs/requirements`](requirements/README.md)                           |
-| Local run guide and a demo school seeded on the `local` profile                                                                                               | [running locally](development/running-locally.md)                       |
-| Monorepo structure, agent instructions, docs skeleton                                                                                                         | `AGENTS.md`, `docs/`                                                    |
-| Split backend/frontend pipelines, image build checks                                                                                                          | [`.github/workflows`](../.github/workflows)                             |
-| `main` protected: no direct pushes, both checks required, admins included                                                                                     | —                                                                       |
-| Spring Boot 4.1 · Java 21 · Modulith 2.1, `school` vertical slice, boundary test                                                                              | `backend/`                                                              |
-| Angular 22 · TS 6 · Vitest, adaptive shell at three window size classes                                                                                       | `frontend/`                                                             |
-| PostgreSQL 17 on Supabase; profiles `local`/`test`/`prod`; Testcontainers                                                                                     | PR #2                                                                   |
-| One response envelope, module error codes, constraint registry, trace ids                                                                                     | PR #3                                                                   |
-| Server-driven navigation and hand-built component decisions                                                                                                   | PR #5                                                                   |
-| Responsive layout, verified at 360 / 700 / 1280                                                                                                               | PR #6                                                                   |
-| Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark)                                                                                   | `frontend/src/styles/`                                                  |
-| Design mockups for the first six screens, every state, at 360 and 1280                                                                                        | [`docs/artifacts`](artifacts/README.md)                                 |
-| Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy                                                               | [Phase 0 decisions](requirements/07-phase-0-decisions.md)               |
-| Fee ledger, provider ports, data classification, deployment baseline                                                                                          | ADR-0012…0015                                                           |
-| Audit log: one generic table per school, field NAMES only, two transaction semantics                                                                          | [ADR-0018](architecture/adr/0018-audit-log.md)                          |
-| School profile: tenant-schema table, registry write-back, the settings screen                                                                                 | `school/`, `/settings/school-profile`                                   |
-| Navigation contributions: a module adds a child to another module's section by its dotted id                                                                  | `NavigationCatalog`                                                     |
-| Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class                                                                | `features/audit/`                                                       |
-| Academics: sessions, the class ladder and its sections, with transactional reordering                                                                         | [ADR-0019](architecture/adr/0019-classes-and-sections.md)               |
-| Students, shared guardians and per-session enrolment                                                                                                          | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md)         |
-| `@Classification` on every API record, enforced by a build-failing test                                                                                       | [ADR-0014](architecture/adr/0014-data-classification.md)                |
-| Guardian search matching a phone number however it was typed, and "which students?"                                                                           | `guardian.phone_digits`                                                 |
-| Bulk student import: validate first, all-or-nothing, every problem listed                                                                                     | [ADR-0021](architecture/adr/0021-bulk-import.md)                        |
-| Signing in lands on the first item of the user's own menu, never a constant                                                                                   | `landingGuard`, `features/landing/`                                     |
-| Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row                                                    | `cb-select` `pill` variant, `features/students/`                        |
-| A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page    | `app.ts`, `layout/boot-state/`                                          |
+| What | Where |
+|---|---|
+| Requirement pack imported | [`docs/requirements`](requirements/README.md) |
+| Local run guide and a demo school seeded on the `local` profile | [running locally](development/running-locally.md) |
+| Monorepo structure, agent instructions, docs skeleton | `AGENTS.md`, `docs/` |
+| Split backend/frontend pipelines, image build checks | [`.github/workflows`](../.github/workflows) |
+| `main` protected: no direct pushes, both checks required, admins included | — |
+| Spring Boot 4.1 · Java 21 · Modulith 2.1, `school` vertical slice, boundary test | `backend/` |
+| Angular 22 · TS 6 · Vitest, adaptive shell at three window size classes | `frontend/` |
+| PostgreSQL 17 on Supabase; profiles `local`/`test`/`prod`; Testcontainers | PR #2 |
+| One response envelope, module error codes, constraint registry, trace ids | PR #3 |
+| Server-driven navigation and hand-built component decisions | PR #5 |
+| Responsive layout, verified at 360 / 700 / 1280 | PR #6 |
+| Contrast-verified palette + `contrast-audit.mjs` (44 pairs, light and dark) | `frontend/src/styles/` |
+| Design mockups for the first six screens, every state, at 360 and 1280 | [`docs/artifacts`](artifacts/README.md) |
+| Phase 0 closed: board, state, school type, MVP, five workflows, providers, hosting, data policy | [Phase 0 decisions](requirements/07-phase-0-decisions.md) |
+| Fee ledger, provider ports, data classification, deployment baseline | ADR-0012…0015 |
+| Audit log: one generic table per school, field NAMES only, two transaction semantics | [ADR-0018](architecture/adr/0018-audit-log.md) |
+| School profile: tenant-schema table, registry write-back, the settings screen | `school/`, `/settings/school-profile` |
+| Navigation contributions: a module adds a child to another module's section by its dotted id | `NavigationCatalog` |
+| Audit log screen at `/audit`: filters, paging, per-row detail, cards below the wide size class | `features/audit/` |
+| Academics: sessions, the class ladder and its sections, with transactional reordering | [ADR-0019](architecture/adr/0019-classes-and-sections.md) |
+| Students, shared guardians and per-session enrolment | [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) |
+| `@Classification` on every API record, enforced by a build-failing test | [ADR-0014](architecture/adr/0014-data-classification.md) |
+| Guardian search matching a phone number however it was typed, and "which students?" | `guardian.phone_digits` |
+| Bulk student import: validate first, all-or-nothing, every problem listed | [ADR-0021](architecture/adr/0021-bulk-import.md) |
+| Signing in lands on the first item of the user's own menu, never a constant | `landingGuard`, `features/landing/` |
+| Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
+| A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
-| Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand                                | [ADR-0023](architecture/adr/0023-session-revalidation.md)               |
+| Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 
 ## Known gaps and debt
 
@@ -267,7 +267,7 @@ Recorded so they are decided rather than discovered.
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
 - **The built UI and the mockups differ, and most of the difference is not drift.**
   [The assessment](design-drift-assessment.md) compares `docs/artifacts/*.dc.html` against the
-  deployed screens, with screenshot pairs. The design _system_ has not moved — the mockups were
+  deployed screens, with screenshot pairs. The design *system* has not moved — the mockups were
   drawn from `_tokens.scss` and the tokens still match one-for-one — so the gap is mostly modules
   that do not exist yet (Dashboard, Attendance, Fees, Exams, Transport, Reports), which the
   server-driven menu reports honestly. What is real and cheap: the active nav item is white where
@@ -283,7 +283,7 @@ Recorded so they are decided rather than discovered.
 - **Hibernate was logging the whole failed INSERT, values included, at WARN** — one duplicate
   admission number put a child's name, date of birth and gender in the log, in every environment.
   `org.hibernate.orm.jdbc.error` is now at ERROR, and the unmapped-constraint branch of
-  `GlobalExceptionHandler` logs the constraint's _name_ instead of the exception, because
+  `GlobalExceptionHandler` logs the constraint's *name* instead of the exception, because
   PostgreSQL's `DETAIL` line carries the values that clashed. Both have tests.
 - ~~`linkedStudentCount` cannot be expanded into "which students"~~ ✅ Closed. It expands into the
   list, and the phone search now matches digits to digits — it had been comparing the raw stored
@@ -298,7 +298,7 @@ Recorded so they are decided rather than discovered.
   the extension is available on the dev database and not installed, and installing it is a
   database-wide change wanting a measurement behind it.
 - **The import reads CSV, not `.xlsx`.** The requirement says "import from Excel"; every Excel can
-  _Save As_ CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
+  *Save As* CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
   surface, which AGENTS rule 8 says to ask about. A `.xlsx` upload is detected by its magic bytes and
   refused with instructions rather than a parse error. **Open question for the product owner**: if
   "Save as CSV" is a genuine barrier for school offices, POI is the answer and it is a small change
@@ -326,7 +326,6 @@ Recorded so they are decided rather than discovered.
   The fix is small — move those four enums into their `api/` packages, or mark them
   `@NamedInterface` — but it is a contract change and was not worth making from inside a dev tool.
   It matters the first time one feature module genuinely needs another's request shape.
-
 - `guardian.phone` is `varchar(20)`. `+91 98765 43210` fits at 16; a longer international number
   with an extension would not.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
