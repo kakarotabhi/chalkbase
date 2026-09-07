@@ -1,0 +1,467 @@
+<p class="crumbs">Settings <span aria-hidden="true">›</span> Roles and access</p>
+<h1 class="page-title">Roles and access</h1>
+
+<p class="page-lede">
+  What each role may do at this school, and who holds it. Every permission a role carries, it hands
+  to everyone granted that role — so a role is only as careful as its permission list.
+</p>
+
+@if (canViewUsers()) {
+  <p class="page-lede">
+    <a routerLink="/settings/users">User accounts</a> is where an account is created, deactivated,
+    unlocked or reset.
+  </p>
+}
+
+@if (forbidden()) {
+  <!-- No client-side permission guard on this route (ADR-0008): see the class Javadoc. -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view roles</strong>
+      <span>Ask your principal to add "Manage roles and permissions" to your role.</span>
+    </div>
+  </div>
+} @else if (loading()) {
+  <p class="page-status" role="status">Loading roles and permissions…</p>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load roles and permissions</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else {
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  <section class="section" aria-labelledby="roles-heading">
+    <div class="section__head">
+      <h2 class="section__title" id="roles-heading">This school's roles</h2>
+      @if (!roleEditing()) {
+        <cb-button id="role-add" variant="secondary" (click)="startAddRole()">Add a role</cb-button>
+      }
+    </div>
+
+    @if (roleEditing()) {
+      <form class="editor" (submit)="$event.preventDefault(); saveRole()" novalidate>
+        <h3 class="editor__heading">{{ roleEditorHeading() }}</h3>
+
+        @if (roleSaveFailure(); as message) {
+          <div [class]="'banner banner--' + (message.tone ?? 'danger')" role="alert">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9.5" />
+              <path d="M12 7.5v5" />
+              <path d="M12 16.2v.1" />
+            </svg>
+            <div>
+              <strong class="banner__title">{{ message.title }}</strong>
+              <span>{{ message.detail }}</span>
+            </div>
+          </div>
+        }
+
+        <div class="editor__fields" [formGroup]="roleForm">
+          <cb-form-field
+            #roleNameField
+            label="Name"
+            controlId="role-name"
+            [required]="true"
+            [error]="roleFieldErrors().name"
+          >
+            <cb-text-input
+              formControlName="name"
+              autocapitalize="words"
+              autocomplete="off"
+              placeholder="Front Office"
+              [id]="roleNameField.controlId()"
+              [describedBy]="roleNameField.describedById()"
+              [invalid]="roleNameField.hasError()"
+              [readOnly]="roleSaving()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #roleDescriptionField
+            label="Description"
+            controlId="role-description"
+            hint="Optional. What this role is for, in a school office's own words."
+            [error]="roleFieldErrors().description"
+          >
+            <cb-text-input
+              formControlName="description"
+              autocomplete="off"
+              placeholder="Runs the front desk: enquiries, visitors, and the daily roster."
+              [id]="roleDescriptionField.controlId()"
+              [describedBy]="roleDescriptionField.describedById()"
+              [invalid]="roleDescriptionField.hasError()"
+              [readOnly]="roleSaving()"
+            />
+          </cb-form-field>
+        </div>
+
+        <fieldset class="permission-picker">
+          <legend>Permissions</legend>
+          <p class="permission-picker__hint">
+            A permission marked "not held by you" cannot be <em>added</em> to this role by you —
+            only removed — because you cannot hand out access you do not have yourself.
+          </p>
+          @for (moduleName of moduleNames(); track moduleName) {
+            <div class="permission-group">
+              <h4 class="permission-group__title">{{ moduleLabel(moduleName) }}</h4>
+              @for (permission of permissionRows(moduleName); track permission.code) {
+                <div class="permission-row">
+                  <cb-checkbox
+                    [label]="permission.label"
+                    [formControl]="permissionControl(permission.code)"
+                    [id]="'role-perm-' + permission.code"
+                    [describedBy]="'role-perm-' + permission.code + '-hint'"
+                  />
+                  <span
+                    class="permission-row__meta"
+                    [id]="'role-perm-' + permission.code + '-hint'"
+                  >
+                    <span class="permission-row__description">{{ permission.description }}</span>
+                    @if (!permission.held) {
+                      <span class="permission-row__unheld">Not held by you</span>
+                    }
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <div class="editor__actions">
+          <cb-button variant="secondary" [disabled]="roleSaving()" (click)="cancelRoleEdit()"
+            >Cancel</cb-button
+          >
+          <cb-button type="submit" [loading]="roleSaving()" loadingLabel="Saving…"
+            >Save role</cb-button
+          >
+        </div>
+      </form>
+    }
+
+    @if (roleRows().length === 0) {
+      @if (!roleEditing()) {
+        <p class="page-status" role="status">No roles yet. Add the first one.</p>
+      }
+    } @else {
+      <ul class="role-list">
+        @for (row of roleRows(); track row.id) {
+          <li class="role-card">
+            <div class="role-card__head">
+              <span class="role-card__name">{{ row.name }}</span>
+              @if (row.templateCode) {
+                <span class="role-card__badge">Started from {{ row.templateCode }}</span>
+              }
+            </div>
+            @if (row.description) {
+              <p class="role-card__description">{{ row.description }}</p>
+            }
+            <p class="role-card__count">
+              {{ row.permissionCount }}
+              {{ row.permissionCount === 1 ? 'permission' : 'permissions' }}
+            </p>
+            <div class="role-card__actions">
+              <button
+                type="button"
+                class="link"
+                [id]="row.editButtonId"
+                [disabled]="roleEditing() !== null"
+                (click)="startEditRole(row)"
+              >
+                Edit permissions<span class="hidden-label"> for {{ row.name }}</span>
+              </button>
+              <button
+                type="button"
+                class="link"
+                [id]="row.holdersButtonId"
+                (click)="toggleHolders(row)"
+              >
+                {{ openHoldersFor() === row.id ? 'Hide who holds this' : 'Who holds this' }}
+              </button>
+            </div>
+
+            @if (openHoldersFor() === row.id) {
+              <div class="holders">
+                @if (holdersLoading()) {
+                  <p class="page-status" role="status">Loading…</p>
+                } @else if (holdersFailed()) {
+                  <p class="page-status page-status--error">Could not load who holds this role.</p>
+                } @else if (holders().length === 0) {
+                  <p class="page-status">Nobody holds this role yet.</p>
+                } @else {
+                  <ul class="holders__list">
+                    @for (holder of holders(); track holder.id) {
+                      <li>
+                        {{ holder.displayName }}
+                        <span class="holders__status">— {{ statusLabel(holder.status) }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="section" aria-labelledby="grants-heading">
+    <h2 class="section__title" id="grants-heading">Grant and revoke</h2>
+    <p class="section__lede">Choose an account to see what it holds, and grant or revoke a role.</p>
+
+    <div class="account-picker">
+      @if (pickableUsers() !== null && !pickableUsersFailed()) {
+        <cb-form-field #accountField label="Account" controlId="grant-account">
+          <cb-select
+            [formControl]="accountIdControl"
+            [options]="accountOptions()"
+            [id]="accountField.controlId()"
+          />
+        </cb-form-field>
+        <cb-button
+          variant="secondary"
+          [disabled]="!accountIdControl.value"
+          (click)="selectAccount(accountIdControl.value)"
+        >
+          Show grants
+        </cb-button>
+      }
+      @if (pickableUsersFailed()) {
+        <cb-form-field
+          #accountIdField
+          label="Account id"
+          controlId="grant-account-id"
+          hint="You do not hold 'View users', so this screen cannot list accounts by name. Paste the id from a row on the User accounts screen, or open this screen from its 'Manage roles' link."
+        >
+          <cb-text-input
+            [formControl]="accountIdControl"
+            autocomplete="off"
+            [id]="accountIdField.controlId()"
+          />
+        </cb-form-field>
+        <cb-button
+          variant="secondary"
+          [disabled]="!accountIdControl.value"
+          (click)="selectAccount(accountIdControl.value)"
+        >
+          Show grants
+        </cb-button>
+      }
+    </div>
+
+    @if (accountIdControl.value) {
+      @if (selectedAccountName(); as name) {
+        <p class="account-picker__selected">
+          Showing grants for <strong>{{ name }}</strong
+          >.
+        </p>
+      }
+
+      @if (revokeFailure(); as message) {
+        <div [class]="'banner banner--' + message.tone" role="alert">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+          <div>
+            <strong class="banner__title">{{ message.title }}</strong>
+            <span>{{ message.detail }}</span>
+          </div>
+        </div>
+      }
+
+      @if (grantsLoading()) {
+        <p class="page-status" role="status">Loading grants…</p>
+      } @else if (grantsFailureCode()) {
+        <p class="page-status page-status--error">Could not load this account's grants.</p>
+      } @else {
+        @if (grants().length === 0) {
+          <p class="page-status">This account holds no role yet.</p>
+        } @else {
+          <ul class="grant-list">
+            @for (grant of grants(); track grant.id) {
+              <li class="grant-row">
+                <span class="grant-row__role">{{ grant.roleName }}</span>
+                <span class="grant-row__scope">{{ grant.scopeType }}</span>
+                @if (grant.validFrom || grant.validTo) {
+                  <span class="grant-row__dates">
+                    {{ grant.validFrom || 'now' }} – {{ grant.validTo || 'no end date' }}
+                  </span>
+                }
+                <button type="button" class="link" (click)="askToRevoke(grant)">
+                  Revoke<span class="hidden-label"> {{ grant.roleName }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (!grantAdding()) {
+          <cb-button variant="secondary" (click)="startAddGrant()">Grant a role</cb-button>
+        } @else {
+          <form class="editor" (submit)="onGrantSubmit($event)" novalidate [formGroup]="grantForm">
+            <h3 class="editor__heading">Grant a role</h3>
+
+            @if (grantSaveFailure(); as message) {
+              <div class="banner banner--danger" role="alert">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9.5" />
+                  <path d="M12 7.5v5" />
+                  <path d="M12 16.2v.1" />
+                </svg>
+                <div>
+                  <strong class="banner__title">{{ message.title }}</strong>
+                  <span>{{ message.detail }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="editor__fields">
+              <cb-form-field #grantRoleField label="Role" controlId="grant-role" [required]="true">
+                <cb-select
+                  formControlName="roleId"
+                  [options]="roleOptions()"
+                  [id]="grantRoleField.controlId()"
+                />
+              </cb-form-field>
+
+              <cb-form-field
+                #grantScopeField
+                label="Scope"
+                controlId="grant-scope"
+                [required]="true"
+              >
+                <cb-select
+                  formControlName="scopeType"
+                  [options]="scopeOptions"
+                  [id]="grantScopeField.controlId()"
+                />
+              </cb-form-field>
+
+              @if (grantScopeNeedsId()) {
+                <cb-form-field
+                  #grantScopeIdField
+                  label="Which one"
+                  controlId="grant-scope-id"
+                  hint="The id of the class, section or subject — copy it from Academics."
+                  [required]="true"
+                >
+                  <cb-text-input
+                    formControlName="scopeId"
+                    autocomplete="off"
+                    [id]="grantScopeIdField.controlId()"
+                  />
+                </cb-form-field>
+              }
+
+              <cb-form-field
+                label="Starts"
+                controlId="grant-valid-from"
+                hint="Optional. Defaults to now."
+              >
+                <cb-text-input type="date" formControlName="validFrom" id="grant-valid-from" />
+              </cb-form-field>
+
+              <cb-form-field
+                label="Ends"
+                controlId="grant-valid-to"
+                hint="Optional. Leave blank for no end date."
+              >
+                <cb-text-input type="date" formControlName="validTo" id="grant-valid-to" />
+              </cb-form-field>
+            </div>
+
+            <div class="editor__actions">
+              <cb-button variant="secondary" [disabled]="grantSaving()" (click)="cancelAddGrant()"
+                >Cancel</cb-button
+              >
+              <cb-button type="submit" [loading]="grantSaving()" loadingLabel="Granting…"
+                >Grant</cb-button
+              >
+            </div>
+          </form>
+        }
+      }
+    }
+  </section>
+}
+
+@if (revokingGrant(); as grant) {
+  <cb-dialog
+    heading="Revoke {{ grant.roleName }}?"
+    confirmLabel="Revoke"
+    confirmVariant="danger"
+    cancelLabel="Don't revoke"
+    (confirmed)="confirmRevoke()"
+    (cancelled)="cancelRevoke()"
+  >
+    <p>This account stops holding {{ grant.roleName }} immediately.</p>
+  </cb-dialog>
+}

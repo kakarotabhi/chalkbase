@@ -1,0 +1,332 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-lede,
+.page-status,
+.section__lede {
+  color: var(--cb-text-muted);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-2);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+
+  a {
+    color: inherit;
+    font-weight: 600;
+  }
+}
+
+.page-lede:last-of-type {
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+// ── Sections ─────────────────────────────────────────────────────────────
+
+.section {
+  margin-bottom: var(--cb-space-8);
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-3);
+}
+
+.section__title {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.section__lede {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+}
+
+// ── The editor: shared by "add a role" and "grant a role" ──────────────────
+
+.editor {
+  max-width: 40rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-start;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The permission picker ───────────────────────────────────────────────
+
+.permission-picker {
+  margin: 0 0 var(--cb-space-4);
+  padding: 0;
+  border: none;
+
+  legend {
+    padding: 0;
+    font-weight: 600;
+  }
+}
+
+.permission-picker__hint {
+  margin: var(--cb-space-1) 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.permission-group {
+  margin-bottom: var(--cb-space-4);
+}
+
+.permission-group__title {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.permission-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cb-space-2);
+  padding: var(--cb-space-2) 0;
+  border-bottom: 1px solid var(--cb-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.permission-row__meta {
+  display: block;
+  padding-top: calc((var(--cb-touch-target-min) - var(--cb-line-height) * 1em) / 2);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.permission-row__unheld {
+  display: inline-block;
+  margin-left: var(--cb-space-2);
+  color: var(--cb-warning);
+  font-weight: 600;
+}
+
+// ── Roles ────────────────────────────────────────────────────────────────
+
+.role-list {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include from-expanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.role-card {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.role-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-1);
+}
+
+.role-card__name {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.role-card__badge {
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+}
+
+.role-card__description,
+.role-card__count {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.role-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-3);
+}
+
+.link {
+  @include link-button;
+}
+
+.hidden-label {
+  @include visually-hidden;
+}
+
+.holders {
+  margin-top: var(--cb-space-3);
+  padding-top: var(--cb-space-3);
+  border-top: 1px solid var(--cb-border);
+}
+
+.holders__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--cb-font-size-sm);
+}
+
+.holders__status {
+  color: var(--cb-text-muted);
+}
+
+// ── Grants ───────────────────────────────────────────────────────────────
+
+.account-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-4);
+
+  cb-form-field {
+    flex: 1;
+    min-width: 16rem;
+  }
+}
+
+.account-picker__selected {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.grant-list {
+  display: grid;
+  gap: var(--cb-space-2);
+  margin: 0 0 var(--cb-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.grant-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  font-size: var(--cb-font-size-sm);
+}
+
+.grant-row__role {
+  font-weight: 600;
+}
+
+.grant-row__scope,
+.grant-row__dates {
+  color: var(--cb-text-muted);
+}
+
+.grant-row .link {
+  margin-left: auto;
+}
