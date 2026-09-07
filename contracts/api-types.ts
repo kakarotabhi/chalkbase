@@ -11,9 +11,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_4"];
+        readonly get: operations["list_5"];
         readonly put?: never;
-        readonly post: operations["create_5"];
+        readonly post: operations["create_6"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -28,7 +28,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_5"];
+        readonly put: operations["update_6"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -91,9 +91,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_3"];
+        readonly get: operations["list_4"];
         readonly put?: never;
-        readonly post: operations["create_4"];
+        readonly post: operations["create_5"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -108,7 +108,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_4"];
+        readonly put: operations["update_5"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -126,6 +126,38 @@ export interface paths {
         readonly get?: never;
         readonly put?: never;
         readonly post: operations["makeCurrent"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/academics/subjects": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_3"];
+        readonly put?: never;
+        readonly post: operations["create_4"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/academics/subjects/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["update_4"];
+        readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -785,6 +817,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponsePageResponseSubjectResponse: {
+            readonly data?: components["schemas"]["PageResponseSubjectResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseRoleResponse: {
             readonly data?: components["schemas"]["RoleResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -835,6 +875,14 @@ export interface components {
         };
         readonly ApiResponseStudentGuardian: {
             readonly data?: components["schemas"]["StudentGuardian"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseSubjectResponse: {
+            readonly data?: components["schemas"]["SubjectResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -915,6 +963,10 @@ export interface components {
             readonly state?: string;
         };
         readonly CreateSectionRequest: {
+            readonly name: string;
+        };
+        readonly CreateSubjectRequest: {
+            readonly code: string;
             readonly name: string;
         };
         readonly CreateUserAccountRequest: {
@@ -1001,7 +1053,15 @@ export interface components {
             readonly errorCount: number;
             readonly errors: readonly components["schemas"]["ImportError"][];
             /** Format: int32 */
+            readonly guardianLinksCreated: number;
+            /** Format: int32 */
+            readonly guardiansCreated: number;
+            /** Format: int32 */
+            readonly guardiansMatched: number;
+            /** Format: int32 */
             readonly imported: number;
+            /** Format: int32 */
+            readonly studentsLinkedToExistingGuardians: number;
             /** Format: int32 */
             readonly totalRows: number;
             /** Format: int32 */
@@ -1088,6 +1148,17 @@ export interface components {
         };
         readonly PageResponseStudentSummary: {
             readonly content: readonly components["schemas"]["StudentSummary"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        readonly PageResponseSubjectResponse: {
+            readonly content: readonly components["schemas"]["SubjectResponse"][];
             /** Format: int32 */
             readonly page: number;
             /** Format: int32 */
@@ -1233,6 +1304,13 @@ export interface components {
             /** @enum {string} */
             readonly status: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
         };
+        readonly SubjectResponse: {
+            readonly active: boolean;
+            readonly code: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly name: string;
+        };
         readonly TemporaryPasswordResponse: {
             /** Format: uuid */
             readonly id: string;
@@ -1278,6 +1356,11 @@ export interface components {
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
         };
+        readonly UpdateSubjectRequest: {
+            readonly active: boolean;
+            readonly code: string;
+            readonly name: string;
+        };
         readonly UserAccountResponse: {
             readonly displayName: string;
             /** Format: uuid */
@@ -1304,7 +1387,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly list_4: {
+    readonly list_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1324,7 +1407,7 @@ export interface operations {
             };
         };
     };
-    readonly create_5: {
+    readonly create_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1348,7 +1431,7 @@ export interface operations {
             };
         };
     };
-    readonly update_5: {
+    readonly update_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1450,7 +1533,7 @@ export interface operations {
             };
         };
     };
-    readonly list_3: {
+    readonly list_4: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1470,7 +1553,7 @@ export interface operations {
             };
         };
     };
-    readonly create_4: {
+    readonly create_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1494,7 +1577,7 @@ export interface operations {
             };
         };
     };
-    readonly update_4: {
+    readonly update_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1538,6 +1621,79 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseListAcademicSessionResponse"];
+                };
+            };
+        };
+    };
+    readonly list_3: {
+        readonly parameters: {
+            readonly query: {
+                readonly pageable: components["schemas"]["Pageable"];
+                readonly q?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseSubjectResponse"];
+                };
+            };
+        };
+    };
+    readonly create_4: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateSubjectRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseSubjectResponse"];
+                };
+            };
+        };
+    };
+    readonly update_4: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["UpdateSubjectRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseSubjectResponse"];
                 };
             };
         };

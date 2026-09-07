@@ -551,6 +551,31 @@
         ],
         "type": "object"
       },
+      "ApiResponsePageResponseSubjectResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseSubjectResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseRoleResponse": {
         "properties": {
           "data": {
@@ -705,6 +730,31 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/StudentGuardian"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseSubjectResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SubjectResponse"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -1009,6 +1059,25 @@
         ],
         "type": "object"
       },
+      "CreateSubjectRequest": {
+        "properties": {
+          "code": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
       "CreateUserAccountRequest": {
         "properties": {
           "displayName": {
@@ -1272,7 +1341,23 @@
             },
             "type": "array"
           },
+          "guardianLinksCreated": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "guardiansCreated": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "guardiansMatched": {
+            "format": "int32",
+            "type": "integer"
+          },
           "imported": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "studentsLinkedToExistingGuardians": {
             "format": "int32",
             "type": "integer"
           },
@@ -1288,7 +1373,11 @@
         "required": [
           "errorCount",
           "errors",
+          "guardianLinksCreated",
+          "guardiansCreated",
+          "guardiansMatched",
           "imported",
+          "studentsLinkedToExistingGuardians",
           "totalRows",
           "validRows"
         ],
@@ -1563,6 +1652,40 @@
           "content": {
             "items": {
               "$ref": "#/components/schemas/StudentSummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseSubjectResponse": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectResponse"
             },
             "type": "array"
           },
@@ -2120,6 +2243,30 @@
         ],
         "type": "object"
       },
+      "SubjectResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "code",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
       "TemporaryPasswordResponse": {
         "properties": {
           "id": {
@@ -2322,6 +2469,29 @@
         ],
         "type": "object"
       },
+      "UpdateSubjectRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
       "UserAccountResponse": {
         "properties": {
           "displayName": {
@@ -2388,7 +2558,7 @@
   "paths": {
     "/api/academics/classes": {
       "get": {
-        "operationId": "list_4",
+        "operationId": "list_5",
         "responses": {
           "200": {
             "content": {
@@ -2406,7 +2576,7 @@
         ]
       },
       "post": {
-        "operationId": "create_5",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2466,7 +2636,7 @@
     },
     "/api/academics/classes/{id}": {
       "put": {
-        "operationId": "update_5",
+        "operationId": "update_6",
         "parameters": [
           {
             "in": "path",
@@ -2589,7 +2759,7 @@
     },
     "/api/academics/sessions": {
       "get": {
-        "operationId": "list_3",
+        "operationId": "list_4",
         "responses": {
           "200": {
             "content": {
@@ -2607,7 +2777,7 @@
         ]
       },
       "post": {
-        "operationId": "create_4",
+        "operationId": "create_5",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2637,7 +2807,7 @@
     },
     "/api/academics/sessions/{id}": {
       "put": {
-        "operationId": "update_4",
+        "operationId": "update_5",
         "parameters": [
           {
             "in": "path",
@@ -2704,6 +2874,113 @@
         },
         "tags": [
           "academic-session-controller"
+        ]
+      }
+    },
+    "/api/academics/subjects": {
+      "get": {
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseSubjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "subject-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSubjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "subject-controller"
+        ]
+      }
+    },
+    "/api/academics/subjects/{id}": {
+      "put": {
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSubjectResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "subject-controller"
         ]
       }
     },
