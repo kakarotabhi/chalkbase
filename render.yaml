@@ -91,6 +91,23 @@ services:
       - key: CHALKBASE_ENCRYPTION_KEY
         sync: false
 
+      # The S3-compatible document storage adapter (ADR-0025, amended). Unlike the two keys above,
+      # leaving these unset does NOT stop the service starting — StorageConfiguration falls back to
+      # UnavailableStorageService and every document endpoint answers a mapped 503 until all five
+      # are set. Values and exactly where to find each one in the Supabase dashboard are in
+      # docs/operations/document-storage.md; the short version is Project Settings → Data API → S3
+      # Connection for the first three and Storage → S3 Access Keys for the last two.
+      - key: CHALKBASE_STORAGE_ENDPOINT
+        sync: false
+      - key: CHALKBASE_STORAGE_REGION
+        sync: false
+      - key: CHALKBASE_STORAGE_BUCKET
+        sync: false
+      - key: CHALKBASE_STORAGE_ACCESS_KEY
+        sync: false
+      - key: CHALKBASE_STORAGE_SECRET_KEY
+        sync: false
+
   # ── Web ────────────────────────────────────────────────────────────────────────────────────────
   - type: web
     name: chalkbase-web
@@ -210,6 +227,22 @@ services:
       # loosely than a real one and a shared key would make that looseness the real one's problem.
       # `openssl rand -base64 32`. A lost key is lost data, with no recovery path.
       - key: CHALKBASE_ENCRYPTION_KEY
+        sync: false
+
+      # ADR-0025, amended. A bucket in the SECOND Supabase project (see the note above
+      # SPRING_DATASOURCE_URL) — never the dev environment's bucket, for the same reason staging
+      # gets its own database. Unset is a supported state here too: the service still starts and
+      # every document endpoint answers 503 until these are set. See
+      # docs/operations/document-storage.md.
+      - key: CHALKBASE_STORAGE_ENDPOINT
+        sync: false
+      - key: CHALKBASE_STORAGE_REGION
+        sync: false
+      - key: CHALKBASE_STORAGE_BUCKET
+        sync: false
+      - key: CHALKBASE_STORAGE_ACCESS_KEY
+        sync: false
+      - key: CHALKBASE_STORAGE_SECRET_KEY
         sync: false
 
   # ── Staging web ────────────────────────────────────────────────────────────────────────────────
