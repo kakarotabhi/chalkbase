@@ -4,6 +4,7 @@ import in.chalkbase.platform.api.ApiError;
 import in.chalkbase.platform.api.ApiResponse;
 import in.chalkbase.platform.audit.AuditService;
 import in.chalkbase.platform.crypto.DecryptionFailedException;
+import in.chalkbase.platform.storage.ObjectStoreUnavailableException;
 import in.chalkbase.platform.web.RequestId;
 import jakarta.validation.ConstraintViolationException;
 import java.util.LinkedHashMap;
@@ -308,6 +309,16 @@ public class GlobalExceptionHandler {
                 ex.keyId(),
                 RequestId.current());
         return respond(PlatformErrorCode.DECRYPTION_FAILED);
+    }
+
+    /**
+     * No working {@code StorageService} adapter is configured on this deployment (ADR-0025) — the
+     * expected state of {@code prod} until the S3-compatible adapter is approved and configured.
+     */
+    @ExceptionHandler(ObjectStoreUnavailableException.class)
+    ResponseEntity<ApiResponse<Void>> handleStorageUnavailable(ObjectStoreUnavailableException ex) {
+        log.warn("A document storage operation was attempted with no adapter configured");
+        return respond(PlatformErrorCode.STORAGE_UNAVAILABLE);
     }
 
     // ── Everything else ──────────────────────────────────────────────────────────────────────

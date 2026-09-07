@@ -41,6 +41,8 @@ public final class RoleTemplates {
     private static final String USER_MANAGE = "identity:user:manage";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String AUDIT_READ = "platform:audit:read";
+    private static final String DOCUMENT_READ = "document:document:read";
+    private static final String DOCUMENT_MANAGE = "document:document:manage";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
@@ -104,6 +106,14 @@ public final class RoleTemplates {
      * {@code STUDENT_MANAGE} nor {@code VICE_PRINCIPAL}'s otherwise-wide grant carries it. A school
      * that wants its office administrator to hold it too adds it to that role, same as any other
      * permission here.
+     *
+     * <p>{@code document:document:*} (ADR-0025) follows {@code STUDENT_READ}/{@code STUDENT_MANAGE}
+     * closely but not exactly: {@code PRINCIPAL}, {@code VICE_PRINCIPAL} and
+     * {@code ADMISSION_COUNSELLOR} hold both, the same three that manage the student register itself
+     * — a certificate collected at admission is admission work. {@code CLASS_TEACHER} holds only
+     * {@code DOCUMENT_READ}: seeing a child's documents is daily work, uploading or deleting one is
+     * not. {@code SUBJECT_TEACHER} and {@code ACCOUNTANT} hold neither, the same as they hold neither
+     * guardian permission — narrower reach than a class teacher's, on the same reasoning.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -125,7 +135,9 @@ public final class RoleTemplates {
                     GUARDIAN_MANAGE,
                     USER_READ,
                     USER_MANAGE,
-                    ROLE_MANAGE),
+                    ROLE_MANAGE,
+                    DOCUMENT_READ,
+                    DOCUMENT_MANAGE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
                     "Vice Principal",
@@ -142,7 +154,9 @@ public final class RoleTemplates {
                     STUDENT_MANAGE,
                     GUARDIAN_READ,
                     GUARDIAN_MANAGE,
-                    USER_READ),
+                    USER_READ,
+                    DOCUMENT_READ,
+                    DOCUMENT_MANAGE),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
@@ -152,7 +166,8 @@ public final class RoleTemplates {
                     CLASS_READ,
                     SUBJECT_READ,
                     STUDENT_READ,
-                    GUARDIAN_READ),
+                    GUARDIAN_READ,
+                    DOCUMENT_READ),
             // Reads students, because marks are recorded against a child. Deliberately does NOT read
             // guardians, and the distinction is the point: with no scope narrower than the school,
             // that permission is a searchable directory of every parent's mobile number, handed to
@@ -190,7 +205,9 @@ public final class RoleTemplates {
                     STUDENT_READ,
                     STUDENT_MANAGE,
                     GUARDIAN_READ,
-                    GUARDIAN_MANAGE),
+                    GUARDIAN_MANAGE,
+                    DOCUMENT_READ,
+                    DOCUMENT_MANAGE),
             new RoleTemplate("LIBRARIAN", "Librarian", "The catalogue, issues, returns and fines.", SCHOOL_READ),
             new RoleTemplate(
                     "TRANSPORT_MANAGER",

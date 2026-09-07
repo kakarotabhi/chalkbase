@@ -5,11 +5,12 @@ or changes a module** — agents read it instead of scanning the whole backend.
 
 | Module | Owns | Endpoints | Tenant-scoped | Status |
 |---|---|---|---|---|
-| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config. Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | built, with its screen |
+| `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. | `/api/audit` | `audit_event` is | built, with its screen |
 | `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/schools/bootstrap`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
-| `student` | `student`, `guardian`, `student_guardian`, `student_enrolment`, `student_contact`, `student_transfer`, `student_medical`, `student_compliance` (per tenant); documents and alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment, CSV import, and the contact/previous-school/medical/compliance sections built |
+| `student` | `student`, `guardian`, `student_guardian`, `student_enrolment`, `student_contact`, `student_transfer`, `student_medical`, `student_compliance` (per tenant); alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment, CSV import, and the contact/previous-school/medical/compliance sections built |
+| `document` | `document` (per tenant) — a student's certificates, photo, signature and other documents; bytes held behind `platform`'s `StorageService`, not in this table (ADR-0025) | `/api/documents/**` | yes | port, module and student attachment built; renewal reminders and Restricted-category document types deliberately not built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
 | `academics` | `academic_session`, `school_class`, `section`, `subject` (per tenant); timetable and syllabus still planned | `/api/academics/**` | yes | sessions, classes and subjects built |
 | `attendance` | student and staff attendance | `/api/attendance` | yes | planned |
@@ -68,6 +69,14 @@ session is current", "what class is this section in". It is read-only by design 
 needs the academic structure *changed* asks a person, not another module. `student_enrolment` holds
 `academic_session_id` and `section_id` as plain UUIDs rather than JPA associations, so the foreign
 keys live in the database and the Java coupling does not exist at all.
+
+`document` reaches `student` the same way, but with no named interface at all: `document.student_id`
+is a plain `uuid` with a database foreign key (`fk_document_student`), and this module never imports
+`student` in either direction. There is nothing for a named interface to do when the only thing one
+module needs from another is "this id must belong to a row over there", which the database already
+enforces on every write. `document` also uses `platform.storage.StorageService` (ADR-0025), which is
+not one of the four SPIs above: it is `platform`-owned infrastructure a module calls directly, the
+same way every module already calls `platform.audit.AuditService`.
 
 Navigation adds one rule worth knowing: a module contributes a screen to **another** module's
 section by declaring it at the top level under its dotted id — `school` declares `settings.profile`
