@@ -148,6 +148,13 @@ Done — see [Known gaps and debt](#known-gaps-and-debt) and the [Done](#done) t
 accessor inside a logger argument — worth more than export masking, and cheaper now than after
 another thousand call sites.
 
+**Done.** `LoggingClassificationTests` (beside `ClassificationTests`) fails the build when
+production code calls a `CONFIDENTIAL`/`RESTRICTED` DTO accessor on the same source line as an
+SLF4J `Logger` call, `String.format`, or a `Throwable` constructor. It found no existing violations.
+See the Done table and that test's own Javadoc for what it does and does not catch — line-number
+correlation, not real data-flow, so a value handed to a logger through an intervening local variable
+still slips through.
+
 ### 5. Guardian import, documents, dashboards
 
 What is left of Phase 1 after the above. Guardian import specifically needs matching each row
@@ -165,11 +172,6 @@ against the existing directory by phone, or it recreates the duplicate problem
 
 ## Blocking the first real school
 
-- **A Confidential value can still reach a log through an accessor.** `@Classification` and the
-  redacting `toString` stop `log.info("saving {}", dto)`; nothing stops
-  `log.info("saving {}", dto.fullName())`. The cheap next step is a static rule flagging a
-  `CONFIDENTIAL` accessor inside a logger argument — worth more than export masking, and worth doing
-  before the codebase has many more call sites.
 - **Encryption at rest does not exist, and the student record now needs it.** The decisions are
   taken ([ADR-0022](architecture/adr/0022-encryption-at-rest.md)); the code is not written. Caste and community,
   religion, disability/CWSN, EWS/BPL/RTE category, guardian income, APAAR and Aadhaar are Restricted
@@ -234,6 +236,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
 | ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts` |
+| A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line | `LoggingClassificationTests` |
 
 ## Known gaps and debt
 
