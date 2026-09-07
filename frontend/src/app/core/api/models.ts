@@ -36,6 +36,31 @@ export type School = Schemas['SchoolResponse'];
 
 export type CreateSchoolRequest = Schemas['CreateSchoolRequest'];
 
+/* ── Documents (/api/documents) — w3-documents ────────────────────────────
+ * A student's certificates, photo, signature and other documents (ADR-0025). Placed here, right
+ * after the top-of-file type aliases, rather than appended at the end of the file: several lanes
+ * land features in the same wave, and a block that only ever grows at EOF is a block every one of
+ * them collides on. Nothing below depends on anything declared after it.
+ */
+
+/** What kind of document this is. `DocumentType` on the backend; see its own Javadoc for why every
+ * value here is Confidential and none is Restricted (ADR-0025). */
+export type DocumentType = Schemas['DocumentSummary']['documentType'];
+
+/** Whether the office has checked a document against the original. */
+export type VerificationStatus = Schemas['DocumentSummary']['verificationStatus'];
+
+/**
+ * One document's metadata — never its bytes, which is what `GET /api/documents/{id}/content` is
+ * for. Confidential (ADR-0014): the type and the original filename can be enough on their own to
+ * identify a child, so neither this record nor anything derived from it belongs in a page title,
+ * a route, or a log.
+ */
+export type DocumentSummary = Schemas['DocumentSummary'];
+
+/** A document's metadata, corrected or verified — never the file itself; a new file is a new upload. */
+export type UpdateDocumentRequest = Schemas['UpdateDocumentRequest'];
+
 /* ── School profile (GET/PUT /api/school/profile) ────────────────────────── */
 
 /**

@@ -1,4 +1,10 @@
-import { Gender, GuardianRelation, StudentStatus } from '../../core/api/models';
+import {
+  DocumentType,
+  Gender,
+  GuardianRelation,
+  StudentStatus,
+  VerificationStatus,
+} from '../../core/api/models';
 import { SelectOption } from '../../shared/components/select/select';
 
 /**
@@ -119,3 +125,32 @@ export function classAndSection(
   const parts = [className?.trim(), sectionName?.trim()].filter(Boolean);
   return parts.join(' · ');
 }
+
+/**
+ * What kind of document this is (ADR-0025). Deliberately no "Caste certificate" or "Aadhaar copy"
+ * here — see `DocumentType`'s own comment on the backend for why those categories are excluded
+ * from the enum itself rather than merely from this list.
+ */
+export const DOCUMENT_TYPE_LABELS: Readonly<Record<DocumentType, string>> = {
+  BIRTH_CERTIFICATE: 'Birth certificate',
+  TRANSFER_CERTIFICATE: 'Transfer certificate',
+  REPORT_CARD: 'Report card',
+  PHOTO: 'Photo',
+  SIGNATURE: 'Signature',
+  OTHER: 'Other',
+};
+
+export const DOCUMENT_TYPE_OPTIONS: readonly SelectOption[] = (
+  Object.keys(DOCUMENT_TYPE_LABELS) as DocumentType[]
+).map((type) => ({ value: type, label: DOCUMENT_TYPE_LABELS[type] }));
+
+/** Whether the office has checked a document against the original. */
+export const VERIFICATION_STATUS_LABELS: Readonly<Record<VerificationStatus, string>> = {
+  UNVERIFIED: 'Not yet checked',
+  VERIFIED: 'Verified',
+  REJECTED: 'Rejected',
+};
+
+export const VERIFICATION_STATUS_OPTIONS: readonly SelectOption[] = (
+  Object.keys(VERIFICATION_STATUS_LABELS) as VerificationStatus[]
+).map((status) => ({ value: status, label: VERIFICATION_STATUS_LABELS[status] }));
