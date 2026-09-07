@@ -199,7 +199,7 @@ public class AuditService {
      * @param entityId the identifier attempted or acted on — an identifier, never a value
      */
     public void recordSecurityEvent(String action, AuditOutcome outcome, String entityType, String entityId) {
-        recordSecurityEvent(action, outcome, entityType, entityId, null);
+        recordSecurityEventInternal(action, outcome, entityType, entityId, null, null, null);
     }
 
     /**
@@ -212,6 +212,59 @@ public class AuditService {
      */
     public void recordSecurityEvent(
             String action, AuditOutcome outcome, String entityType, String entityId, AuditActor actor) {
+        recordSecurityEventInternal(action, outcome, entityType, entityId, null, null, actor);
+    }
+
+    /**
+     * As {@link #recordSecurityEvent(String, AuditOutcome, String, String)}, additionally naming
+     * which fields a disclosure carried and how many rows — an export's own shape (ADR-0014,
+     * ADR-0018 §2b), not a general-purpose facility every future security event is expected to use.
+     *
+     * <p>{@code fields} holds NAMES only: rejected the same way {@link #recordChange} rejects a
+     * value dressed up as a name, so "which columns did this export contain" cannot become a way of
+     * smuggling a child's name or caste into the log through a parameter that looks safe.
+     * {@code recordCount} is a row count, a property of the event rather than a value of any field —
+     * ADR-0018 §2b is the reasoning, restated here because a security event had never needed it
+     * until an export did.
+     *
+     * @param fields the column names actually disclosed, never a value
+     * @param recordCount how many rows the export contained
+     */
+    public void recordSecurityEvent(
+            String action,
+            AuditOutcome outcome,
+            String entityType,
+            String entityId,
+            Collection<String> fields,
+            int recordCount) {
+        recordSecurityEventInternal(action, outcome, entityType, entityId, fields, recordCount, null);
+    }
+
+    /**
+     * As {@link #recordSecurityEvent(String, AuditOutcome, String, String, Collection, int)}, with
+     * the actor stated rather than resolved — see
+     * {@link #recordSecurityEvent(String, AuditOutcome, String, String, AuditActor)} for why that
+     * overload exists.
+     */
+    public void recordSecurityEvent(
+            String action,
+            AuditOutcome outcome,
+            String entityType,
+            String entityId,
+            Collection<String> fields,
+            int recordCount,
+            AuditActor actor) {
+        recordSecurityEventInternal(action, outcome, entityType, entityId, fields, recordCount, actor);
+    }
+
+    private void recordSecurityEventInternal(
+            String action,
+            AuditOutcome outcome,
+            String entityType,
+            String entityId,
+            Collection<String> fields,
+            Integer recordCount,
+            AuditActor actor) {
         try {
             AuditActor resolved = actor != null ? actor : currentActor(null);
             String schema =
@@ -224,7 +277,7 @@ public class AuditService {
                 return;
             }
 
-            AuditEvent event = build(action, outcome, entityType, entityId, null, resolved, null);
+            AuditEvent event = build(action, outcome, entityType, entityId, fieldNames(fields), resolved, recordCount);
             inSchema(schema, () -> {
                 writer.writeInOwnTransaction(event);
                 return null;
