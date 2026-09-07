@@ -132,6 +132,28 @@ public class AuditService {
      */
     public void recordBulkChange(
             String action, String entityType, String entityId, Collection<String> changedFields, int recordCount) {
+        recordBulkChange(action, entityType, entityId, changedFields, recordCount, null);
+    }
+
+    /**
+     * As {@link #recordBulkChange(String, String, String, Collection, int)}, with the actor stated
+     * rather than resolved from the security context.
+     *
+     * <p>Exists for a bulk change with no HTTP request behind it — a scheduled job has no
+     * {@code AuditActorResolver} that can answer for it, so it names itself explicitly with
+     * {@link AuditActor#system}. Still joins the caller's transaction: the same reasoning as the
+     * four-argument overload applies regardless of who the actor is.
+     *
+     * @param actor who or what performed the action, or null to resolve it from the security
+     *     context as the four-argument overload does
+     */
+    public void recordBulkChange(
+            String action,
+            String entityType,
+            String entityId,
+            Collection<String> changedFields,
+            int recordCount,
+            AuditActor actor) {
         String schema = TenantContext.currentSchema()
                 .orElseThrow(() -> new IllegalStateException("recordBulkChange(" + action
                         + ") with no tenant bound. A bulk change is always inside one school's schema."));
@@ -145,7 +167,7 @@ public class AuditService {
                 entityType,
                 entityId,
                 fieldNames(changedFields),
-                currentActor(schema),
+                actor != null ? actor : currentActor(schema),
                 recordCount);
         writer.writeJoiningCaller(event);
     }

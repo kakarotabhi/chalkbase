@@ -60,6 +60,20 @@ public final class AuditAction {
     public static final String ENTITY_UPDATED = "ENTITY_UPDATED";
     public static final String ENTITY_DELETED = "ENTITY_DELETED";
 
+    // ── Housekeeping. The audit log auditing itself; see AuditRetentionPurgeJob (ADR-0018, ADR-0026) ─
+
+    /**
+     * The scheduled retention purge removed rows older than the configured period from this
+     * school's {@code audit_event} table. Recorded once per school per run, after the rows are
+     * gone, carrying how many in {@code recordCount} — never which ones, because the rows that
+     * would identify them are exactly what was just deleted.
+     *
+     * <p>Never produced by an endpoint. {@link AuditController} has no write method and none of the
+     * retention machinery is reachable from one; this constant exists only for
+     * {@code AuditRetentionPurgeJob} to name what it did.
+     */
+    public static final String AUDIT_LOG_PURGED = "AUDIT_LOG_PURGED";
+
     /** Longest an action may be: {@code audit_event.action} is {@code varchar(60)}. */
     public static final int MAX_LENGTH = 60;
 

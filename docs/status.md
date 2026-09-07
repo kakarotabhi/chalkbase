@@ -54,7 +54,7 @@ glance and are not.
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
 | **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
 | **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
-| Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
+| Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, record counts, and a scheduled seven-year retention purge ([ADR-0026](architecture/adr/0026-audit-retention-purge.md)). |
 
 **The four exit criteria are met.** A school can be configured with a session; students and guardians
 can be created or imported; users sign in with the permissions their role grants; and creates,
@@ -195,12 +195,18 @@ storage port item 4 describes.
   deliberately not re-read per request. Still **no admin password-reset endpoint** — that is the
   next item below — and `SessionInvalidationService` (also new in ADR-0023) is what it will call to
   dislodge anyone holding the old cookie.
-- **Audit retention is decided at seven years and not yet enforced.** ADR-0014 requires a period per
-  category; the product owner has set one period for every category — seven years, the Indian
-  financial-record convention — rather than a schedule per category, on the grounds that a uniform
-  number errs long and errs long is the safe direction for an audit log. A per-category schedule
-  stays possible later without a schema change. **What does not exist is the purge**, so the table
-  still grows unbounded; this is now an implementation task rather than a question.
+- ~~Audit retention is decided at seven years and not yet enforced.~~ ✅ Closed by
+  [ADR-0026](architecture/adr/0026-audit-retention-purge.md): `AuditRetentionPurgeJob` runs per
+  tenant, on the same `TenantRegistry.activeSchemas()` fan-out `TenantMigrationRunner` uses at
+  startup, deleting rows older than `chalkbase.audit.retention.years` (default 7, configurable, not
+  a literal) in bounded batches of `chalkbase.audit.retention.batch-size` (default 500) rather than
+  one unbounded `delete`. The purge is itself audited — one `AUDIT_LOG_PURGED` row per school per
+  run, naming a count and never which rows, written by a new `AuditActor.system` actor — and cannot
+  be recursive, since that row is never older than the cutoff that produced it. Scheduled, never an
+  endpoint (ADR-0018 §6 already ruled that out), with `chalkbase.audit.retention.enabled` as the
+  operator tripwire. This is also the first `@Scheduled` job in the codebase, so it is the first
+  `TaskScheduler` bean too — `AuditRetentionSchedulingConfiguration` turns `@EnableScheduling` on
+  application-wide, not only for this job.
 
 ## Waiting on a decision
 
@@ -258,6 +264,7 @@ here. What is left is externally blocked rather than undecided.
 | `POST /api/schools/bootstrap`: a fresh deployment can be onboarded over HTTP — school and first administrator, atomically from the caller's side, refusing a second run | [ADR-0024](architecture/adr/0024-bootstrap-deployment.md) |
 | The account roster and roles/access screens: `/settings/users` (create, deactivate, reactivate, unlock, reset password, each with the confirmation and one-time password reveal the write endpoints need) and `/settings/access` (permission catalogue, this school's roles, create and edit a role, who holds it, grant and revoke for an account) | `features/access/` |
 | Document storage: a `StorageService` port, a real filesystem adapter for `local`/`test`, and attaching a certificate, photo, signature or other document to a student — upload, list, proxied download, edit, delete, all audited | [ADR-0025](architecture/adr/0025-document-storage.md), `document/` |
+| Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
 
 ## Known gaps and debt
 
@@ -412,10 +419,11 @@ Recorded so they are decided rather than discovered.
   the build for an unclassified field. Both were found by agents reading the file and trying to
   follow it. A rule that lies is worse than no rule; if ADR-0014's enforcement is wanted, it is
   still worth building while the DTO count is small.
-- **The audit log has no retention period and no purge job.** ADR-0014 requires every category to
-  carry one; seven years is the Indian financial-record convention, but the number is a legal
-  question for the board and the DPDP rules rather than an engineering choice. Needed before the
-  first school completes a full session, since nothing bounds the table until then.
+- ~~The audit log has no retention period and no purge job.~~ ✅ Closed by
+  [ADR-0026](architecture/adr/0026-audit-retention-purge.md). Seven years, one period for every
+  classification tier rather than a schedule per tier — a per-category schedule stays possible
+  later without a schema change, it is simply not what was built. See the **Blocking the first real
+  school** section above for how the purge itself runs.
 - Indian states are a hardcoded list in the school-profile form (`TODO(reference-data)`). They are
   Tier-1 master data and belong in `public` behind an endpoint (ADR-0006). The audit screen's action
   filter is the same case: it lists the actions this build ships, so a verb a future module invents
