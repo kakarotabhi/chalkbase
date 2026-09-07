@@ -102,6 +102,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseGrantResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GrantResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseGuardianSummary": {
         "properties": {
           "data": {
@@ -157,6 +182,34 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/AcademicSessionResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListGrantResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GrantResponse"
             },
             "type": "array"
           },
@@ -398,6 +451,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseNewUserAccountResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/NewUserAccountResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponsePageResponseAuditEventResponse": {
         "properties": {
           "data": {
@@ -452,6 +530,31 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/PageResponseStudentSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseRoleResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RoleResponse"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -623,6 +726,56 @@
         ],
         "type": "object"
       },
+      "ApiResponseTemporaryPasswordResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TemporaryPasswordResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseUserAccountResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/UserAccountResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseVoid": {
         "properties": {
           "data": {},
@@ -757,6 +910,32 @@
         ],
         "type": "object"
       },
+      "CreateRoleRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 400,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 0,
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
+        ],
+        "type": "object"
+      },
       "CreateSchoolClassRequest": {
         "properties": {
           "name": {
@@ -830,6 +1009,25 @@
         ],
         "type": "object"
       },
+      "CreateUserAccountRequest": {
+        "properties": {
+          "displayName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "username"
+        ],
+        "type": "object"
+      },
       "CurrentEnrolment": {
         "properties": {
           "className": {
@@ -896,6 +1094,81 @@
           "id",
           "sectionId",
           "sessionId"
+        ],
+        "type": "object"
+      },
+      "GrantResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "roleId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scopeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopeType": {
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "validTo": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "roleId",
+          "roleName",
+          "scopeType"
+        ],
+        "type": "object"
+      },
+      "GrantRoleRequest": {
+        "properties": {
+          "roleId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scopeType": {
+            "enum": [
+              "SCHOOL",
+              "CAMPUS",
+              "DEPARTMENT",
+              "CLASS",
+              "SECTION",
+              "SUBJECT",
+              "SELF",
+              "WARD"
+            ],
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "validTo": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "roleId",
+          "scopeType"
         ],
         "type": "object"
       },
@@ -1190,6 +1463,30 @@
           "id",
           "labelKey",
           "order"
+        ],
+        "type": "object"
+      },
+      "NewUserAccountResponse": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "id",
+          "temporaryPassword",
+          "username"
         ],
         "type": "object"
       },
@@ -1823,6 +2120,22 @@
         ],
         "type": "object"
       },
+      "TemporaryPasswordResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "temporaryPassword"
+        ],
+        "type": "object"
+      },
       "UpdateEnrolmentRequest": {
         "properties": {
           "active": {
@@ -1841,6 +2154,21 @@
         "required": [
           "active",
           "sectionId"
+        ],
+        "type": "object"
+      },
+      "UpdateRolePermissionsRequest": {
+        "properties": {
+          "permissions": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "permissions"
         ],
         "type": "object"
       },
@@ -1994,6 +2322,38 @@
         ],
         "type": "object"
       },
+      "UserAccountResponse": {
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lockedUntil": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "id",
+          "mustChangePassword",
+          "status"
+        ],
+        "type": "object"
+      },
       "UserSummary": {
         "properties": {
           "displayName": {
@@ -2046,7 +2406,7 @@
         ]
       },
       "post": {
-        "operationId": "create_4",
+        "operationId": "create_5",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2247,7 +2607,7 @@
         ]
       },
       "post": {
-        "operationId": "create_3",
+        "operationId": "create_4",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2385,6 +2745,106 @@
         "tags": [
           "access-controller"
         ]
+      },
+      "post": {
+        "operationId": "createRole",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseRoleResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/roles/{roleId}/holders": {
+      "get": {
+        "operationId": "holders",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListUserSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/roles/{roleId}/permissions": {
+      "put": {
+        "operationId": "updateRolePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRolePermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseRoleResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
       }
     },
     "/api/access/users": {
@@ -2403,7 +2863,262 @@
           }
         },
         "tags": [
+          "user-account-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseNewUserAccountResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-account-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/deactivate": {
+      "post": {
+        "operationId": "deactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseUserAccountResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-account-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/grants": {
+      "get": {
+        "operationId": "grants",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListGrantResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
           "access-controller"
+        ]
+      },
+      "post": {
+        "operationId": "grantRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseGrantResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/grants/{grantId}": {
+      "delete": {
+        "operationId": "revokeGrant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "grantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "access-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/reactivate": {
+      "post": {
+        "operationId": "reactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseUserAccountResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-account-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/reset-password": {
+      "post": {
+        "operationId": "resetPassword",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseTemporaryPasswordResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-account-controller"
+        ]
+      }
+    },
+    "/api/access/users/{accountId}/unlock": {
+      "post": {
+        "operationId": "unlock",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseUserAccountResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "user-account-controller"
         ]
       }
     },

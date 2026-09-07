@@ -13,7 +13,7 @@ export interface paths {
         };
         readonly get: operations["list_4"];
         readonly put?: never;
-        readonly post: operations["create_4"];
+        readonly post: operations["create_5"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -93,7 +93,7 @@ export interface paths {
         };
         readonly get: operations["list_3"];
         readonly put?: never;
-        readonly post: operations["create_3"];
+        readonly post: operations["create_4"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -157,6 +157,38 @@ export interface paths {
         };
         readonly get: operations["roles"];
         readonly put?: never;
+        readonly post: operations["createRole"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/roles/{roleId}/holders": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["holders"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/roles/{roleId}/permissions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["updateRolePermissions"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -173,7 +205,103 @@ export interface paths {
         };
         readonly get: operations["users"];
         readonly put?: never;
+        readonly post: operations["create_3"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/deactivate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["deactivate"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/grants": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["grants"];
+        readonly put?: never;
+        readonly post: operations["grantRole"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/grants/{grantId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
         readonly post?: never;
+        readonly delete: operations["revokeGrant"];
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/reactivate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["reactivate"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/reset-password": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["resetPassword"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/access/users/{accountId}/unlock": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["unlock"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -521,6 +649,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseGrantResponse: {
+            readonly data?: components["schemas"]["GrantResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseGuardianSummary: {
             readonly data?: components["schemas"]["GuardianSummary"];
             readonly error?: components["schemas"]["ApiError"];
@@ -539,6 +675,14 @@ export interface components {
         };
         readonly ApiResponseListAcademicSessionResponse: {
             readonly data?: readonly components["schemas"]["AcademicSessionResponse"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListGrantResponse: {
+            readonly data?: readonly components["schemas"]["GrantResponse"][];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -609,6 +753,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseNewUserAccountResponse: {
+            readonly data?: components["schemas"]["NewUserAccountResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponsePageResponseAuditEventResponse: {
             readonly data?: components["schemas"]["PageResponseAuditEventResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -627,6 +779,14 @@ export interface components {
         };
         readonly ApiResponsePageResponseStudentSummary: {
             readonly data?: components["schemas"]["PageResponseStudentSummary"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseRoleResponse: {
+            readonly data?: components["schemas"]["RoleResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -681,6 +841,22 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseTemporaryPasswordResponse: {
+            readonly data?: components["schemas"]["TemporaryPasswordResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseUserAccountResponse: {
+            readonly data?: components["schemas"]["UserAccountResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseVoid: {
             readonly data?: unknown;
             readonly error?: components["schemas"]["ApiError"];
@@ -721,6 +897,11 @@ export interface components {
             /** Format: uuid */
             readonly sectionId: string;
         };
+        readonly CreateRoleRequest: {
+            readonly description?: string;
+            readonly name: string;
+            readonly permissions: readonly string[];
+        };
         readonly CreateSchoolClassRequest: {
             readonly name: string;
         };
@@ -735,6 +916,10 @@ export interface components {
         };
         readonly CreateSectionRequest: {
             readonly name: string;
+        };
+        readonly CreateUserAccountRequest: {
+            readonly displayName: string;
+            readonly username: string;
         };
         readonly CurrentEnrolment: {
             readonly className: string;
@@ -758,6 +943,32 @@ export interface components {
             /** Format: uuid */
             readonly sessionId: string;
             readonly sessionName?: string;
+        };
+        readonly GrantResponse: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly roleId: string;
+            readonly roleName: string;
+            /** Format: uuid */
+            readonly scopeId?: string;
+            readonly scopeType: string;
+            /** Format: date */
+            readonly validFrom?: string;
+            /** Format: date */
+            readonly validTo?: string;
+        };
+        readonly GrantRoleRequest: {
+            /** Format: uuid */
+            readonly roleId: string;
+            /** Format: uuid */
+            readonly scopeId?: string;
+            /** @enum {string} */
+            readonly scopeType: "SCHOOL" | "CAMPUS" | "DEPARTMENT" | "CLASS" | "SECTION" | "SUBJECT" | "SELF" | "WARD";
+            /** Format: date */
+            readonly validFrom?: string;
+            /** Format: date */
+            readonly validTo?: string;
         };
         readonly GuardianStudent: {
             readonly admissionNumber: string;
@@ -838,6 +1049,13 @@ export interface components {
             readonly labelKey: string;
             /** Format: int32 */
             readonly order: number;
+        };
+        readonly NewUserAccountResponse: {
+            readonly displayName: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly temporaryPassword: string;
+            readonly username: string;
         };
         readonly Pageable: {
             /** Format: int32 */
@@ -1015,11 +1233,19 @@ export interface components {
             /** @enum {string} */
             readonly status: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
         };
+        readonly TemporaryPasswordResponse: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly temporaryPassword: string;
+        };
         readonly UpdateEnrolmentRequest: {
             readonly active: boolean;
             readonly rollNumber?: string;
             /** Format: uuid */
             readonly sectionId: string;
+        };
+        readonly UpdateRolePermissionsRequest: {
+            readonly permissions: readonly string[];
         };
         readonly UpdateSchoolClassRequest: {
             readonly active: boolean;
@@ -1051,6 +1277,17 @@ export interface components {
             readonly primary: boolean;
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
+        };
+        readonly UserAccountResponse: {
+            readonly displayName: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date-time */
+            readonly lastLoginAt?: string;
+            /** Format: date-time */
+            readonly lockedUntil?: string;
+            readonly mustChangePassword: boolean;
+            readonly status: string;
         };
         readonly UserSummary: {
             readonly displayName: string;
@@ -1087,7 +1324,7 @@ export interface operations {
             };
         };
     };
-    readonly create_4: {
+    readonly create_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1233,7 +1470,7 @@ export interface operations {
             };
         };
     };
-    readonly create_3: {
+    readonly create_4: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -1345,6 +1582,78 @@ export interface operations {
             };
         };
     };
+    readonly createRole: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateRoleRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseRoleResponse"];
+                };
+            };
+        };
+    };
+    readonly holders: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly roleId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListUserSummary"];
+                };
+            };
+        };
+    };
+    readonly updateRolePermissions: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly roleId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["UpdateRolePermissionsRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseRoleResponse"];
+                };
+            };
+        };
+    };
     readonly users: {
         readonly parameters: {
             readonly query?: never;
@@ -1361,6 +1670,187 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseListUserSummary"];
+                };
+            };
+        };
+    };
+    readonly create_3: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateUserAccountRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseNewUserAccountResponse"];
+                };
+            };
+        };
+    };
+    readonly deactivate: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
+                };
+            };
+        };
+    };
+    readonly grants: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListGrantResponse"];
+                };
+            };
+        };
+    };
+    readonly grantRole: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["GrantRoleRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseGrantResponse"];
+                };
+            };
+        };
+    };
+    readonly revokeGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+                readonly grantId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readonly reactivate: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
+                };
+            };
+        };
+    };
+    readonly resetPassword: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseTemporaryPasswordResponse"];
+                };
+            };
+        };
+    };
+    readonly unlock: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly accountId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
                 };
             };
         };
