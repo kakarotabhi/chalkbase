@@ -41,6 +41,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -334,6 +335,12 @@ public class AuthenticationService {
         session.setMaxInactiveInterval((int) idleTimeout.toSeconds());
         session.setAttribute(SessionAttributes.SCHEMA, school.schemaName());
         session.setAttribute(SessionAttributes.USER_ID, account.getId());
+        // The index SessionInvalidationService looks sessions up by (ADR-0023) — schema-qualified,
+        // because a bare username is unique only within one school and this table is shared by all
+        // of them (ADR-0017).
+        session.setAttribute(
+                FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+                SessionInvalidationService.principalIndexValue(school.schemaName(), account.getId()));
 
         // The permission codes become the authorities, so `hasAuthority('school:school:read')` in a
         // @PreAuthorize is checked against exactly the set resolved above, with no second lookup and

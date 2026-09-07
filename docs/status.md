@@ -176,15 +176,16 @@ against the existing directory by phone, or it recreates the duplicate problem
   [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) leaves those columns out entirely
   rather than store a child's caste in plaintext. **UDISE+ returns need them**, so this is on the
   critical path to onboarding a real school, not a later nicety.
-- **A session survives its account being disabled or locked.** Closing the forced-password hole
-  (#36) made this visible rather than creating it: `must_change_password` is now re-read on every
-  API call, and it is the *only* thing that is. Account status, lockout and permissions are all
-  resolved once at login ([ADR-0005](architecture/adr/0005-authorization-model.md)) and never
-  revisited, so locking somebody out of a school's data currently means waiting for their session
-  to expire. We now re-check the least severe of the three, which reads oddly, and the fix wants
-  deciding as one thing: what a session re-validates, how often, and what it costs. Related: there
-  is **no admin password-reset endpoint** yet, and when one lands it must invalidate the target's
-  sessions or a reset will not dislodge anyone holding the old cookie.
+- ~~A session survives its account being disabled or locked.~~ ✅ Closed by
+  [ADR-0023](architecture/adr/0023-session-revalidation.md): `SessionStandingFilter` (renamed from
+  `PasswordChangeRequiredFilter`, which it supersedes) now re-reads `status` and `locked_until`
+  alongside `must_change_password` on every API call, at no extra cost — it is the same indexed
+  primary-key row the forced-password check already read, projecting three columns instead of one.
+  A disabled or locked account's session is invalidated the moment it is next used. Permissions stay
+  resolved once at login ([ADR-0005](architecture/adr/0005-authorization-model.md)), unchanged and
+  deliberately not re-read per request. Still **no admin password-reset endpoint** — that is the
+  next item below — and `SessionInvalidationService` (also new in ADR-0023) is what it will call to
+  dislodge anyone holding the old cookie.
 - **Audit retention is unset.** ADR-0014 requires a period per category; the table grows unbounded
   until a purge exists. The number is a legal question, not an engineering one.
 
@@ -231,6 +232,7 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
+| Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 
 ## Known gaps and debt
 

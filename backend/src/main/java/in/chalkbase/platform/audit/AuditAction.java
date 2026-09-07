@@ -27,6 +27,18 @@ public final class AuditAction {
     public static final String PERMISSION_DENIED = "PERMISSION_DENIED";
 
     /**
+     * A session ended by the server rather than by the person holding it (ADR-0023).
+     *
+     * <p>Recorded exactly once per session, by {@code SessionStandingFilter}, the first time a
+     * request discovers the account behind it is no longer usable — disabled, or still locked out —
+     * and by an admin action that explicitly forces a session out (an admin password reset, a
+     * deactivation). Unlike {@link #LOGOUT} nobody asked for this; unlike
+     * {@link #PERMISSION_DENIED} it is not one request being refused, it is the session itself
+     * ending, so the client's cookie is now worthless rather than merely stale.
+     */
+    public static final String SESSION_REVOKED = "SESSION_REVOKED";
+
+    /**
      * An export of protected data. A security event rather than a data change: ADR-0014 makes an
      * export the moment masked data leaves the building, and it must be recorded whether or not the
      * request that asked for it went on to succeed.
