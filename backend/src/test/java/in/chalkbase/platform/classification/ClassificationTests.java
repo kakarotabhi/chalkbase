@@ -57,8 +57,13 @@ class ClassificationTests {
      * carries one {@link Classification} anywhere in the tree is in too, so a half-annotated record
      * outside an {@code api} package (an audit response, a query object) is caught rather than
      * quietly exempt.
+     *
+     * <p>Package-visible rather than {@code private}: {@code LoggingClassificationTests} reuses this
+     * exact list to know which record components are {@code CONFIDENTIAL} or {@code RESTRICTED} in
+     * the first place, rather than re-scanning the classpath a second time with a copy of this logic
+     * that could quietly drift from this one.
      */
-    private static final List<Class<?>> CLASSIFIED_DTOS = scanForDtos();
+    static final List<Class<?>> CLASSIFIED_DTOS = scanForDtos();
 
     // ── 1. Everything is classified ──────────────────────────────────────────────────────────
 
