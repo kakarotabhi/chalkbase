@@ -75,6 +75,8 @@ class MeApiTests {
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String CLASS_READ = "academics:class:read";
     private static final String CLASS_MANAGE = "academics:class:manage";
+    private static final String SUBJECT_READ = "academics:subject:read";
+    private static final String SUBJECT_MANAGE = "academics:subject:manage";
     private static final String STUDENT_READ = "student:student:read";
     private static final String STUDENT_MANAGE = "student:student:manage";
     private static final String GUARDIAN_READ = "student:guardian:read";
@@ -173,6 +175,8 @@ class MeApiTests {
                                 SESSION_MANAGE,
                                 CLASS_READ,
                                 CLASS_MANAGE,
+                                SUBJECT_READ,
+                                SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,
                                 GUARDIAN_READ,
@@ -189,12 +193,13 @@ class MeApiTests {
                 // every day. Both of its children are declared inline by the module that owns them.
                 .andExpect(jsonPath("$.data.navigation[0].children[0].id").value("students.all"))
                 .andExpect(jsonPath("$.data.navigation[0].children[1].id").value("students.guardians"))
-                // The academics container. It has no screen of its own; both of its children are
-                // declared inline by the module that owns them, which is what makes it a container
-                // rather than a leaf.
+                // The academics container. It has no screen of its own; all three of its children
+                // are declared inline by the module that owns them, which is what makes it a
+                // container rather than a leaf.
                 .andExpect(jsonPath("$.data.navigation[1].id").value("academics"))
                 .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("academics.sessions"))
                 .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("academics.classes"))
+                .andExpect(jsonPath("$.data.navigation[1].children[2].id").value("academics.subjects"))
                 .andExpect(jsonPath("$.data.navigation[2].id").value("settings"))
                 .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("settings.access"))
                 // Contributed by the school module under identity's settings container, placed by

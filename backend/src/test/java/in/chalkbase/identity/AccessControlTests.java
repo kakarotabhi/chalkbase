@@ -64,7 +64,7 @@ class AccessControlTests {
 
     /**
      * The academics permissions, ordered here as {@code order by permission_code} returns them.
-     * A principal now holds four more than when this file was written, which is the point: the
+     * A principal now holds six more than when this file was written, which is the point: the
      * assertions below are exact so that a release widening a shipped template has to say so here.
      */
     private static final String CLASS_MANAGE = "academics:class:manage";
@@ -72,6 +72,8 @@ class AccessControlTests {
     private static final String CLASS_READ = "academics:class:read";
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String SESSION_READ = "academics:session:read";
+    private static final String SUBJECT_MANAGE = "academics:subject:manage";
+    private static final String SUBJECT_READ = "academics:subject:read";
 
     /**
      * The student permissions, ordered as {@code order by permission_code} returns them — after both
@@ -153,6 +155,8 @@ class AccessControlTests {
                             CLASS_READ,
                             SESSION_MANAGE,
                             SESSION_READ,
+                            SUBJECT_MANAGE,
+                            SUBJECT_READ,
                             ROLE_MANAGE,
                             USER_READ,
                             SCHOOL_READ,
@@ -192,6 +196,8 @@ class AccessControlTests {
                         CLASS_READ,
                         SESSION_MANAGE,
                         SESSION_READ,
+                        SUBJECT_MANAGE,
+                        SUBJECT_READ,
                         USER_READ,
                         SCHOOL_READ,
                         SCHOOL_UPDATE,
@@ -205,6 +211,8 @@ class AccessControlTests {
                         CLASS_READ,
                         SESSION_MANAGE,
                         SESSION_READ,
+                        SUBJECT_MANAGE,
+                        SUBJECT_READ,
                         ROLE_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
@@ -234,6 +242,8 @@ class AccessControlTests {
                         CLASS_READ,
                         SESSION_MANAGE,
                         SESSION_READ,
+                        SUBJECT_MANAGE,
+                        SUBJECT_READ,
                         USER_READ,
                         SCHOOL_READ,
                         SCHOOL_UPDATE,
@@ -257,7 +267,7 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "LIBRARIAN", "SCHOOL", null, null, null);
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
-        // school:school:read comes from all three; the two academics reads and the two student
+        // school:school:read comes from all three; the three academics reads and the two student
         // reads only from the class teacher grant; identity:user:read and platform:audit:read only
         // from the auditor grant. identity:role:manage comes from none of them, and no union of
         // allows can produce it.
@@ -268,6 +278,7 @@ class AccessControlTests {
                                 SCHOOL_READ,
                                 SESSION_READ,
                                 CLASS_READ,
+                                SUBJECT_READ,
                                 STUDENT_READ,
                                 GUARDIAN_READ,
                                 USER_READ,
@@ -335,6 +346,8 @@ class AccessControlTests {
                                 SESSION_MANAGE,
                                 CLASS_READ,
                                 CLASS_MANAGE,
+                                SUBJECT_READ,
+                                SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,
                                 GUARDIAN_READ,
