@@ -20,11 +20,13 @@ import in.chalkbase.platform.error.PlatformErrorCode;
 import in.chalkbase.platform.security.AccessScope;
 import in.chalkbase.platform.security.PermissionCatalog;
 import in.chalkbase.platform.security.ScopeType;
+import in.chalkbase.platform.tenancy.TenantContext;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,7 @@ public class RoleManagementService {
     private final AccessGuardrails guardrails;
     private final AuditService audit;
     private final AuthenticationService authentication;
+    private final SessionInvalidationService sessionInvalidation;
 
     public RoleManagementService(
             RoleRepository roles,
@@ -64,7 +67,8 @@ public class RoleManagementService {
             PermissionCatalog catalog,
             AccessGuardrails guardrails,
             AuditService audit,
-            AuthenticationService authentication) {
+            AuthenticationService authentication,
+            SessionInvalidationService sessionInvalidation) {
         this.roles = roles;
         this.grants = grants;
         this.accounts = accounts;
@@ -72,6 +76,7 @@ public class RoleManagementService {
         this.guardrails = guardrails;
         this.audit = audit;
         this.authentication = authentication;
+        this.sessionInvalidation = sessionInvalidation;
     }
 
     @Transactional
@@ -116,10 +121,21 @@ public class RoleManagementService {
             return AccessDirectory.toResponse(role);
         }
 
+        Set<String> removed = new LinkedHashSet<>(current);
+        removed.removeAll(requested);
+
         role.replacePermissions(requested);
         roles.saveAndFlush(role);
 
         audit.recordChange(AuditAction.ENTITY_UPDATED, "ROLE", roleId.toString(), List.of("permissions"));
+
+        if (!removed.isEmpty()) {
+            // Taking a permission away must not wait up to seven days to matter (ADR-0023): every
+            // account currently holding this role loses whatever the removed permissions gave them,
+            // right now, not on their next login. Adding a permission is not guarded this way —
+            // ADR-0005 already accepts "takes effect on next login" for anything additive.
+            endSessionsOfEveryHolderOf(roleId);
+        }
 
         return AccessDirectory.toResponse(role);
     }
@@ -162,9 +178,28 @@ public class RoleManagementService {
 
         grants.delete(grant);
         audit.recordChange(AuditAction.ENTITY_DELETED, "USER_ROLE_GRANT", grantId.toString(), List.of());
+
+        // Losing access is exactly the case that must not wait for the holder's session to expire
+        // on its own (ADR-0023) — the same reasoning as an admin password reset or a deactivation.
+        sessionInvalidation.invalidateSessionsFor(currentSchema(), accountId);
     }
 
     // ── internals ────────────────────────────────────────────────────────────────────────────
+
+    private void endSessionsOfEveryHolderOf(UUID roleId) {
+        Set<UUID> holderIds = grants.findByRole_Id(roleId).stream()
+                .map(UserRoleGrant::getUserAccountId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        String schema = currentSchema();
+        for (UUID holderId : holderIds) {
+            sessionInvalidation.invalidateSessionsFor(schema, holderId);
+        }
+    }
+
+    private String currentSchema() {
+        return TenantContext.currentSchema()
+                .orElseThrow(() -> new IllegalStateException("No tenant bound for a role-management call"));
+    }
 
     private Set<String> actorPermissions() {
         return authentication.currentUser().permissions();

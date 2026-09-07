@@ -302,6 +302,62 @@ class RoleManagementTests {
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
 
+    /** Losing access must not wait up to seven days for the holder's session to expire (ADR-0023). */
+    @Test
+    void revokingAGrantEndsTheHoldersSessionImmediately() throws Exception {
+        UUID teacher = createAccount("teacher", "Some Teacher", "LIBRARIAN");
+        Cookie teacherSession = signIn("teacher");
+        mockMvc.perform(get("/api/me").cookie(teacherSession)).andExpect(status().isOk());
+
+        UUID theGrant = jdbc.sql("select id from " + SCHEMA + ".user_role_grant where user_account_id = ?")
+                .param(teacher)
+                .query(UUID.class)
+                .single();
+        mockMvc.perform(delete("/api/access/users/" + teacher + "/grants/" + theGrant)
+                        .cookie(signIn("principal"))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/me").cookie(teacherSession)).andExpect(status().isUnauthorized());
+    }
+
+    /** Same reasoning, for every holder of a role that loses a permission rather than for one grant. */
+    @Test
+    void removingAPermissionFromARoleEndsEveryHoldersSessionImmediately() throws Exception {
+        UUID teacher = createAccount("teacher", "Some Teacher", "LIBRARIAN");
+        Cookie teacherSession = signIn("teacher");
+        mockMvc.perform(get("/api/me").cookie(teacherSession)).andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/access/roles/" + roleId("LIBRARIAN") + "/permissions")
+                        .cookie(signIn("principal"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"permissions": []}
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/me").cookie(teacherSession)).andExpect(status().isUnauthorized());
+    }
+
+    /** Adding a permission is not urgent — ADR-0005 already accepts "next login" for anything additive. */
+    @Test
+    void addingAPermissionToARoleEndsNoOnesSession() throws Exception {
+        UUID teacher = createAccount("teacher", "Some Teacher", "LIBRARIAN");
+        Cookie teacherSession = signIn("teacher");
+
+        mockMvc.perform(put("/api/access/roles/" + roleId("LIBRARIAN") + "/permissions")
+                        .cookie(signIn("principal"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"permissions": ["school:school:read", "identity:user:read"]}
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/me").cookie(teacherSession)).andExpect(status().isOk());
+    }
+
     @Test
     void refusesToRevokeTheLastGrantThatCanManageAccess() throws Exception {
         Cookie session = signIn("principal");
