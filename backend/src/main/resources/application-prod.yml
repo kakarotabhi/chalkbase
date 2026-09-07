@@ -63,6 +63,20 @@ chalkbase:
     # not this machine — there is no way to recover a lost key, only the data it was protecting.
     key: ${CHALKBASE_ENCRYPTION_KEY:}
 
+  storage:
+    s3:
+      # The S3-compatible adapter (ADR-0025, amended). Blank here on purpose, but *unlike*
+      # setup-key and encryption.key above, a missing value is not a tripwire that refuses to
+      # start — StorageConfiguration falls back to UnavailableStorageService instead, and the
+      # deployment boots with every other feature working and every document endpoint answering a
+      # mapped 503. See docs/operations/document-storage.md for where each value comes from in the
+      # Supabase dashboard.
+      endpoint: ${CHALKBASE_STORAGE_ENDPOINT:}
+      region: ${CHALKBASE_STORAGE_REGION:}
+      bucket: ${CHALKBASE_STORAGE_BUCKET:}
+      access-key: ${CHALKBASE_STORAGE_ACCESS_KEY:}
+      secret-key: ${CHALKBASE_STORAGE_SECRET_KEY:}
+
 # Swagger stays ON, deliberately.
 #
 # This is not an oversight and not a leftover. This profile's public deployment is the owner's

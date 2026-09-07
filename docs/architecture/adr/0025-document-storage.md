@@ -233,7 +233,7 @@ purpose:
   everywhere else. `prod` therefore boots and serves every other feature normally; every document
   endpoint answers a clear 503 until the adapter below is approved and configured.
 
-## The dependency question, asked rather than assumed
+## The dependency question, resolved 2026-09-07: AWS SDK v2
 
 An S3-compatible adapter needs to sign requests (SigV4) and speak the S3 XML/REST API. Two ways to
 get there, and `AGENTS.md` rule 8 says this is not this build's call to make alone:
@@ -252,10 +252,42 @@ get there, and `AGENTS.md` rule 8 says this is not this build's call to make alo
    Cost: it is code this team now owns and maintains, and a subtle signing bug fails as an
    authentication error against the bucket rather than as a compile error.
 
-**This ADR does not choose.** The port and the `local`/`test` filesystem adapter are built and
-covered by the module's tests; `prod` deliberately serves a clear "not configured" answer instead of
-either dependency. The product owner's answer determines what `UnavailableStorageService` is
-replaced with, and needs nothing else in this module to change — that is the port doing its job.
+**This section originally said the ADR does not choose.** The product owner has since decided:
+option 1, **AWS SDK v2**, `software.amazon.awssdk:s3` plus `software.amazon.awssdk:url-connection-
+client`, with the SDK's own default HTTP client dependencies excluded from `s3` in `pom.xml`. The
+reasoning behind picking the well-maintained option over the hand-rolled one stands as written
+above — SigV4 is security-sensitive code where a subtle error is worse than jar size, and this
+project has one person maintaining it — and two things about *how* it is added are worth recording
+because they were not obvious going in:
+
+**The exclusion is not the one this ADR expected.** `software.amazon.awssdk:s3` does not, by
+itself, resolve any HTTP client — recent SDK v2 releases stopped shipping a default one on the `s3`
+artifact directly. What actually happens is that `software.amazon.awssdk:services`, the parent POM
+every service module (including `s3`) inherits from, declares **two** unconditional runtime
+dependencies: `netty-nio-client` (the async client this ADR expected to exclude) **and**
+`apache5-client` (Apache HttpClient 5 — a newer default synchronous client that did not exist when
+this ADR was first written). Excluding only one leaves the other on the classpath, and the SDK
+refuses to build a client at runtime when it finds two synchronous implementations there rather than
+guess which one a caller meant. `backend/pom.xml` excludes both from the `s3` dependency and adds
+`url-connection-client` explicitly — a thin wrapper over the JDK's own `HttpURLConnection`, chosen
+over both excluded clients for the reason already given here: a full async I/O stack or a full
+HTTP/1.1 stack with its own connection pool is more than a dozen synchronous PUT/GET/DELETE calls
+need. `mvn dependency:tree` confirms no Netty artifact reaches the final classpath.
+
+**The measured cost.** The `software.amazon.awssdk:s3` and `url-connection-client` artifacts
+together resolve twenty-nine jars totalling **~8.3 MB** on disk (no shared dependency already on
+this project's classpath — such as `reactive-streams` or `slf4j-api` — is double-counted in that
+figure). Against the 512 MB free instance this ADR's "Credentials and profiles" section already
+worries about, that is a real but bounded addition, and nothing about it is loaded eagerly:
+constructing the adapter's `S3Client` makes no network call, so a misconfigured or unreachable
+bucket cannot slow or fail application startup — only the first upload, download or delete notices.
+
+**Also decided, and easy to miss:** the client's credentials provider and region are set explicitly
+(`StaticCredentialsProvider` and a named `Region`) rather than left to the SDK's default provider
+chain, which would otherwise probe environment variables this application does not use, a shared
+credentials file this container does not have, and finally the EC2/ECS instance-metadata service —
+a network call this deployment never has an answer for and one the startup-time budget above has no
+room to wait out.
 
 ## Consequences
 
@@ -271,8 +303,8 @@ in review and in testing. `prod` cannot actually serve a document until the depe
 decided and configured — this module ships inert on the one environment that matters, by design,
 rather than half-built.
 
-**To revisit.** The dependency decision, above. Bucket-per-school, if isolation requirements
-outgrow a shared bucket with an enforced prefix. Reconciliation, once there is a scheduler to run it
-on. The renewal reminder, once `NotificationChannel` has a caller that runs on a schedule rather than
-inline with a request. Restricted-category document types, together with the student columns
-ADR-0020 §2 is also waiting on.
+**To revisit.** Bucket-per-school, if isolation requirements outgrow a shared bucket with an
+enforced prefix. Reconciliation, once there is a scheduler to run it on. The renewal reminder, once
+`NotificationChannel` has a caller that runs on a schedule rather than inline with a request.
+Restricted-category document types, together with the student columns ADR-0020 §2 is also waiting
+on. The dependency decision itself is closed, not revisited — see the amendment above.
