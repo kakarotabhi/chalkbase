@@ -85,6 +85,7 @@ class MeApiTests {
     private static final String GUARDIAN_MANAGE = "student:guardian:manage";
     private static final String DOCUMENT_READ = "document:document:read";
     private static final String DOCUMENT_MANAGE = "document:document:manage";
+    private static final String AUDIT_READ = "platform:audit:read";
 
     /**
      * Anything that would make a navigation node say <em>where</em> to go rather than <em>what</em>
@@ -221,9 +222,12 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[2].children[2].id").value("academics.subjects"))
                 .andExpect(jsonPath("$.data.navigation[3].id").value("settings"))
                 .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("settings.access"))
+                // The account roster, ordered right after Access (10) and ahead of the school
+                // module's Profile (20) — see IdentityNavigation's Javadoc for why 15.
+                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.users"))
                 // Contributed by the school module under identity's settings container, placed by
-                // its dotted id. A principal holding school:school:update sees both children.
-                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.profile"))
+                // its dotted id. A principal holding school:school:update sees all three children.
+                .andExpect(jsonPath("$.data.navigation[3].children[2].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
@@ -293,26 +297,29 @@ class MeApiTests {
     }
 
     /**
-     * The auditor holds {@code platform:audit:read} but not {@code identity:role:manage}. Settings
-     * has no permission of its own, so it survives on its own account and is then dropped because
-     * the only thing inside it is gone — a section that opens onto nothing is worse than no section.
-     * The one leaf the auditor may open is still there, which is what makes the dropped section a
-     * decision rather than an empty menu.
+     * A role holding {@code platform:audit:read} alone — not the shipped {@code AUDITOR} template,
+     * which now also holds {@code identity:user:read} (so it can see who has an account, the same
+     * oversight reasoning that gives it the audit log) and would therefore keep {@code settings}
+     * alive through {@code settings.users}. This test is about the *other* case: Settings has no
+     * permission of its own, so it survives filtering on its own account and is then dropped when
+     * the only thing left inside it is also gone — a section that opens onto nothing is worse than
+     * no section. A role this test builds, holding nothing settings-shaped, is what still exercises
+     * that drop.
      *
-     * <p>The auditor's menu is {@code dashboard, audit} — the dashboard first, because it carries
-     * no permission of its own and is gated per tile instead (the auditor's copy shows only recent
-     * activity), and the audit log because that is the one screen the auditor may open by name. It
-     * used to end at a single item, the audit log; the dashboard is what changed that, everywhere.
+     * <p>This account's menu is {@code dashboard, audit} — the dashboard first, because it carries
+     * no permission of its own and is gated per tile instead (its copy shows only recent activity),
+     * and the audit log because that is the one screen this account may open by name.
      */
     @Test
     void dropsASectionWhoseOnlyChildTheUserMayNotOpen() throws Exception {
-        createAccount(ORCHARD_SCHEMA, "auditor", "Sanjay Bhatt");
-        grant(ORCHARD_SCHEMA, "auditor", "AUDITOR");
+        createAccount(ORCHARD_SCHEMA, "inspector", "Sanjay Bhatt");
+        createRole(ORCHARD_SCHEMA, "AUDIT_ONLY", AUDIT_READ);
+        grant(ORCHARD_SCHEMA, "inspector", "AUDIT_ONLY");
 
-        JsonNode auditor = bootstrap("auditor");
+        JsonNode inspector = bootstrap("inspector");
 
-        assertThat(idsIn(auditor)).containsExactly("dashboard", "audit");
-        assertEveryItemIsOneTheCallerMayUse(auditor);
+        assertThat(idsIn(inspector)).containsExactly("dashboard", "audit");
+        assertEveryItemIsOneTheCallerMayUse(inspector);
     }
 
     /**
