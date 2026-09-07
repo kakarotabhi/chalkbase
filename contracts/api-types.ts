@@ -516,6 +516,22 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/schools/bootstrap": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["bootstrap"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/students": {
         readonly parameters: {
             readonly query?: never;
@@ -833,6 +849,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseSchoolBootstrapResponse: {
+            readonly data?: components["schemas"]["SchoolBootstrapResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseSchoolClassResponse: {
             readonly data?: components["schemas"]["SchoolClassResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -933,6 +957,17 @@ export interface components {
             readonly recordCount?: number;
             readonly traceId?: string;
             readonly userAgent?: string;
+        };
+        readonly BootstrapSchoolRequest: {
+            readonly adminDisplayName: string;
+            readonly adminUsername: string;
+            /** @enum {string} */
+            readonly board: "CBSE" | "CISCE" | "STATE" | "IB" | "CAIE" | "OTHER";
+            readonly city?: string;
+            readonly code: string;
+            readonly name: string;
+            readonly schemaName: string;
+            readonly state?: string;
         };
         readonly ChangePasswordRequest: {
             readonly currentPassword: string;
@@ -1211,6 +1246,14 @@ export interface components {
             readonly gender: "MALE" | "FEMALE" | "OTHER";
             /** @enum {string} */
             readonly status: "ACTIVE" | "INACTIVE" | "TRANSFERRED" | "GRADUATED" | "WITHDRAWN";
+        };
+        readonly SchoolBootstrapResponse: {
+            /** Format: uuid */
+            readonly adminAccountId: string;
+            readonly adminMustChangePassword: boolean;
+            readonly adminTemporaryPassword: string;
+            readonly adminUsername: string;
+            readonly school: components["schemas"]["SchoolResponse"];
         };
         readonly SchoolClassResponse: {
             readonly active: boolean;
@@ -2326,6 +2369,30 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseSchoolResponse"];
+                };
+            };
+        };
+    };
+    readonly bootstrap: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["BootstrapSchoolRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseSchoolBootstrapResponse"];
                 };
             };
         };

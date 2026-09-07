@@ -95,9 +95,15 @@ so **hit the health endpoint until it answers before triggering a deploy.** The 
 numbers and the version-skew this leaves behind are in
 [the free-tier runbook](operations/render-free-tier.md).
 
-`POST /api/schools` requires an `X-Chalkbase-Setup-Key` header on this deployment and answers 404
-without it, byte-identical to any unmapped path. Onboarding creates a PostgreSQL schema, and leaving
-it open on a public URL is a way for anyone who finds it to fill the database with junk. The
+`POST /api/schools` itself requires `school:school:create`, which no shipped role holds — nothing
+can call it, on this deployment or any other, until a platform-operator account exists
+([ADR-0024](architecture/adr/0024-bootstrap-deployment.md)). The setup key alone does not open
+onboarding; a correct `X-Chalkbase-Setup-Key` against that endpoint answers 403, not success. What
+actually onboards a school here is `POST /api/schools/bootstrap` (ADR-0024), guarded the same way —
+an `X-Chalkbase-Setup-Key` header on this deployment, answering 404 without it, byte-identical to any
+unmapped path — and additionally refusing on its own once a school already has an administrator. It
+creates the school and its first sign-in in one call; the roster of students and guardians the
+`local`-only seeder also builds is still a developer-only convenience, not part of onboarding. The
 application refuses to start on `prod` if the key is unset, because a deployment that silently falls
 back to open onboarding is worse than one that will not boot.
 
@@ -250,6 +256,7 @@ here. What is left is externally blocked rather than undecided.
 | Role management: create a role, replace its permission set, grant or revoke it for a user, with guards against privilege escalation and against locking a school out of its own access | `RoleManagementService`, `AccessGuardrails`, `AccessController` |
 | Encryption-at-rest machinery: AES-GCM `EncryptedStringConverter`, `@Encrypted`, the `EncryptionBindingTests` binding it to `@Classification`, and `EncryptionKeyConfiguration` | [ADR-0022](architecture/adr/0022-encryption-at-rest.md) |
 | Subjects: a flat, paged catalogue, retire and reinstate, the last piece of Phase 1 master data | `academics/` |
+| `POST /api/schools/bootstrap`: a fresh deployment can be onboarded over HTTP — school and first administrator, atomically from the caller's side, refusing a second run | [ADR-0024](architecture/adr/0024-bootstrap-deployment.md) |
 
 ## Known gaps and debt
 
@@ -274,9 +281,17 @@ Recorded so they are decided rather than discovered.
   `App` renders outside the outlet — held back 600ms so a warm load never sees it, escalating at
   10s to say the wait is unusual. The lesson worth keeping is the one about the comments: a comment
   that defends behaviour nobody wrote is worse than no comment.
-- `/api/schools/**` is still `permitAll`, because onboarding a campus has no caller to authenticate
-  yet. It is CSRF-exempt for exactly as long as that is true — CSRF protects ambient cookie
-  authority, and an endpoint that reads no cookie has none. Closes with a platform-operator account.
+- ~~`/api/schools/**` is still `permitAll`, because onboarding a campus has no caller to
+  authenticate yet. It is CSRF-exempt for exactly as long as that is true... Closes with a
+  platform-operator account.~~ Corrected: this was stale in both directions.
+  `SchoolController#list`, `#get` and `#create` require `school:school:create`, which no shipped
+  role holds, so they were never reachable and the CSRF exemption on them was never live authority a
+  forged request could spend. [ADR-0024](architecture/adr/0024-bootstrap-deployment.md) adds
+  `POST /api/schools/bootstrap`, which genuinely is `permitAll` and genuinely is CSRF-exempt, by
+  design rather than by accident: it is how a fresh deployment gets its first school and
+  administrator, guarded instead by the setup key on `prod` and by refusing a second run for a
+  school that already has one. ADR-0024 looked at a platform-operator account and decided against it
+  for now, as the larger fix for a smaller problem.
 - Durable cross-module events are not enabled; the Modulith event registry needs its own migration,
   which lands with the first published domain event (ADR-0001).
 - The generated OpenAPI client is not wired up; `frontend/src/app/core/api/models.ts` is hand-written

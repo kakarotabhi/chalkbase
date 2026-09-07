@@ -16,8 +16,11 @@ browser sees a single origin — no CORS configuration needed.
 Copy `.env.example` into the Coolify application's environment. Never commit real values.
 
 `CHALKBASE_SETUP_KEY` is not optional: the `prod` profile refuses to start without it, on this
-deployment as much as on Render's. It is the stopgap guarding `POST /api/schools` until
-platform-operator accounts land — see `SetupKeyConfiguration`.
+deployment as much as on Render's. It guards `POST /api/schools/bootstrap`, the endpoint that
+actually onboards a school on this deployment
+([ADR-0024](../../docs/architecture/adr/0024-bootstrap-deployment.md)) — see
+`SetupKeyConfiguration`. Run it once per school, with the key and a chosen admin username, to get a
+school and its first administrator; the response carries a one-time temporary password.
 
 Render's free tier is a second, separate deployment of the same `prod` profile, described in
 `render.yaml` at the repository root. It changes nothing here; ADR-0015 still names this one as the

@@ -85,7 +85,19 @@ public enum IdentityErrorCode implements ErrorCode {
      * for an existing identical grant before saving. Claimed defensively for two clicks of "grant"
      * landing at once.
      */
-    GRANT_ALREADY_EXISTS("AUTH_013", "That role is already granted to this user at this scope", HttpStatus.CONFLICT);
+    GRANT_ALREADY_EXISTS("AUTH_013", "That role is already granted to this user at this scope", HttpStatus.CONFLICT),
+
+    /**
+     * {@code FirstAdminProvisioningService} refuses rather than creating a second "first"
+     * administrator (ADR-0024). Reachable only through {@code POST /api/schools/bootstrap}, and
+     * only on a school whose schema already holds a {@code user_account} row — from an earlier,
+     * successful bootstrap, or from an administrator who has since created further accounts.
+     */
+    SCHOOL_ALREADY_BOOTSTRAPPED(
+            "AUTH_014",
+            "This school already has at least one account. Bootstrap creates the first administrator once;"
+                    + " use the school's own sign-in and account screens after that.",
+            HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

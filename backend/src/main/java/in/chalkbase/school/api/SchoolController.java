@@ -19,20 +19,24 @@ import org.springframework.web.bind.annotation.RestController;
  * The school register: which campuses exist on this deployment (ADR-0011).
  *
  * <p><strong>This is a platform-operator view, not a school one, and it took a test pass against a
- * deployed instance to notice that it was neither.</strong> These endpoints were
- * {@code permitAll()} — a leftover from before identity existed, when onboarding had no caller to
- * authenticate. That made {@code GET /api/schools} world-readable: every school's name, code and
- * PostgreSQL schema name, to anyone who asked. A signed-in principal of one school could enumerate
- * every other school on the deployment, which is the one thing schema-per-tenant exists to prevent.
+ * deployed instance to notice that it was neither.</strong> {@link #list}, {@link #get} and
+ * {@link #create} were {@code permitAll()} — a leftover from before identity existed, when
+ * onboarding had no caller to authenticate. That made {@code GET /api/schools} world-readable:
+ * every school's name, code and PostgreSQL schema name, to anyone who asked. A signed-in principal
+ * of one school could enumerate every other school on the deployment, which is the one thing
+ * schema-per-tenant exists to prevent.
  *
  * <p>They now require {@code school:school:create}, which <strong>no shipped role template
- * holds</strong> ({@code RoleTemplates} says so explicitly). That permission is standing in for a
- * platform-operator role that does not exist yet — the {@code TODO(identity)} in
- * {@code SecurityConfig} is the real answer, and when it lands these move onto it.
+ * holds</strong> ({@code RoleTemplates} says so explicitly). Nothing can call them today, and that
+ * is intentional rather than a bug still to close: ADR-0024 looked at introducing a
+ * platform-operator account to hold that permission and rejected it, for now, as the larger of two
+ * fixes for a smaller problem. These three stay reserved for that account if one is ever built.
  *
- * <p>The setup key on the {@code prod} profile is a second lock on the same door, not the only one.
- * It was added when the application got a public URL, and defending a cross-tenant read with a
- * filter alone would mean removing the filter re-opens the leak silently.
+ * <p>{@link #bootstrap} is the actual fix. It needs no operator principal because it is not an
+ * operator action in the ADR-0005 sense — there is nobody to authenticate yet, which is exactly the
+ * problem it exists to solve. It is guarded instead by the setup key on the {@code prod} profile
+ * ({@code SetupKeyFilter}) and by refusing to run twice for a school that already has an account.
+ * See ADR-0024 for the reasoning and the option that was not taken.
  */
 @RestController
 @RequestMapping("/api/schools")
@@ -61,6 +65,25 @@ public class SchoolController {
     public ResponseEntity<ApiResponse<SchoolResponse>> create(@Valid @RequestBody CreateSchoolRequest request) {
         SchoolResponse created = schoolService.create(request);
         return ResponseEntity.created(URI.create("/api/schools/" + created.id()))
+                .body(ApiResponse.success(created));
+    }
+
+    /**
+     * Brings one school online and creates its first administrator, atomically from the caller's
+     * point of view (ADR-0024). The only way to onboard a real school today: {@link #create} exists
+     * but nothing can reach it, and {@code DemoSchoolSeeder} is a {@code local}-only developer tool.
+     *
+     * <p>{@code permitAll()} is correct here, not a gap — see the class Javadoc. Guarded on
+     * {@code prod} by {@code SetupKeyFilter} ({@code /api/schools/**}) and, unconditionally, by
+     * refusing ({@code AUTH_014}) once the school's schema already holds an account.
+     */
+    @PreAuthorize("permitAll()")
+    @PostMapping("/bootstrap")
+    public ResponseEntity<ApiResponse<SchoolBootstrapResponse>> bootstrap(
+            @Valid @RequestBody BootstrapSchoolRequest request) {
+        SchoolBootstrapResponse created = schoolService.bootstrap(request);
+        return ResponseEntity.created(
+                        URI.create("/api/schools/" + created.school().id()))
                 .body(ApiResponse.success(created));
     }
 }

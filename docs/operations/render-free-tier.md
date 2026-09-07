@@ -165,13 +165,13 @@ staging pair on the next Blueprint sync. Four values are `sync: false` and have 
 | `SPRING_DATASOURCE_URL` | Supabase → the `chalkbase-staging` project → **Connect** → **Session pooler**, rewritten as `jdbc:postgresql://…`. **Not** port 6543 in transaction mode — ADR-0011 hands each connection a `search_path` per school, and a pooler that hands out a different backend per statement breaks tenancy. |
 | `SPRING_DATASOURCE_USERNAME` | the user from that same connection string |
 | `SPRING_DATASOURCE_PASSWORD` | the database password set when the project was created |
-| `CHALKBASE_SETUP_KEY` | `openssl rand -base64 32`. Without it the service refuses to start, deliberately: `POST /api/schools` creates a PostgreSQL schema and is `permitAll`, and a staging URL is no less public than any other. |
+| `CHALKBASE_SETUP_KEY` | `openssl rand -base64 32`. Without it the service refuses to start, deliberately: `POST /api/schools/bootstrap` ([ADR-0024](../architecture/adr/0024-bootstrap-deployment.md)) creates a PostgreSQL schema and is `permitAll`, and a staging URL is no less public than any other. |
 | `CHALKBASE_ENCRYPTION_KEY` | `openssl rand -base64 32`, and a **different** key from the dev environment's (ADR-0022). A staging key is handled more loosely than a real one; sharing one makes that looseness the real key's problem. |
 
 The database starts empty and does not need seeding by hand. The shared migrations create
-`public.school` and the session store at first boot; a school is then created through
-`POST /api/schools` with the `X-Chalkbase-Setup-Key` header, and the per-tenant migrations run for
-it. Use a school code that cannot be confused with the dev one.
+`public.school` and the session store at first boot; a school and its first administrator are then
+created in one call to `POST /api/schools/bootstrap` with the `X-Chalkbase-Setup-Key` header, and the
+per-tenant migrations run for it. Use a school code that cannot be confused with the dev one.
 
 ### Using it
 

@@ -17,8 +17,9 @@ That is a 256-bit key, base64-encoded, which is the only shape `EncryptionKeyCon
 naming the problem.
 
 **Generate a different value than `CHALKBASE_SETUP_KEY`.** They protect unrelated things — this key
-protects data at rest, that one protects who can call `POST /api/schools` — and there is no reason
-for them to share a value.
+protects data at rest, that one protects who can call `POST /api/schools/bootstrap`
+([ADR-0024](../architecture/adr/0024-bootstrap-deployment.md)) — and there is no reason for them to
+share a value.
 
 ## Set it
 

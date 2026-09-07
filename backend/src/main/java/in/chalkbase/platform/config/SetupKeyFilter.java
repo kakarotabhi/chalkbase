@@ -19,14 +19,14 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Hides school onboarding behind a shared secret on the {@code prod} profile.
  *
- * <p><strong>This is a stopgap, not the design.</strong> {@code /api/schools/**} is
- * {@code permitAll} because onboarding a campus happens before any account exists inside it, and
- * there are no platform-operator accounts yet — the {@code TODO(identity)} in
- * {@link SecurityConfig} and {@code SchoolController} is the real fix. What made the gap urgent is
- * only that the application now has a public URL: {@code POST /api/schools} creates a PostgreSQL
- * schema, so anyone who finds the endpoint can fill the database with junk schemas. A shared
- * header buys time until the authorization model of ADR-0005 covers platform operators. Delete
- * this class in that change.
+ * <p><strong>A second lock, not the only one, and permanent rather than provisional.</strong>
+ * {@code /api/schools/**} is {@code permitAll} because {@code POST /api/schools/bootstrap} happens
+ * before any account exists to authenticate (ADR-0024) — a platform-operator account was considered
+ * for this and rejected as the larger fix for a smaller problem. That endpoint creates a PostgreSQL
+ * schema, so anyone who finds it could fill the database with junk schemas; this filter is what
+ * stops a stranger reaching it. Bootstrap adds its own second refusal on top ({@code AUTH_014}, once
+ * a school already has an account), which is why losing this filter would be a nuisance rather than
+ * a full reopening of the chicken-and-egg ADR-0024 closes.
  *
  * <p><strong>A missing or wrong key is a 404, not a 401.</strong> A 401 confirms that the endpoint
  * exists and that a credential would open it, which turns an unauthenticated prober into an

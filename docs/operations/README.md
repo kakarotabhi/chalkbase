@@ -43,9 +43,13 @@ the OpenAPI files — nothing under `/api` gets to it. Per-endpoint permissions 
 on the controller, and `ControllerAuthorizationTests` fails the build for an endpoint that carries
 no annotation.
 
-The genuine caveats are narrower and are recorded in [status.md](../status.md): `/api/schools/**`
-is still open pending a platform-operator account, with `SetupKeyFilter` standing in for one on
-`prod`; and a session survives its account being disabled or locked.
+The genuine caveats are narrower and are recorded in [status.md](../status.md): a session survives
+its account being disabled or locked. `/api/schools/**` is not one of them any more — `GET`/`POST
+/api/schools` require `school:school:create`, which no shipped role holds, so they were never
+reachable; `POST /api/schools/bootstrap`
+([ADR-0024](../architecture/adr/0024-bootstrap-deployment.md)) is the one endpoint under that path
+genuinely open by design, with `SetupKeyFilter` guarding it on `prod` and its own refusal once a
+school already has an administrator.
 
 The database is PostgreSQL 17 ([ADR-0004](../architecture/adr/0004-h2-now-postgresql-next.md)).
 Development uses a hosted Supabase instance in `ap-northeast-2`; production belongs in `ap-south-1`
