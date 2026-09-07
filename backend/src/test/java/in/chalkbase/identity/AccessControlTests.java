@@ -89,6 +89,15 @@ class AccessControlTests {
     private static final String STUDENT_READ = "student:student:read";
     private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
 
+    /**
+     * ADR-0025's grants: {@code document:} sorts between {@code academics:} and {@code identity:},
+     * so these land there in every exact assertion below — the same widening this file's other
+     * comments describe, said once more.
+     */
+    private static final String DOCUMENT_MANAGE = "document:document:manage";
+
+    private static final String DOCUMENT_READ = "document:document:read";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -159,6 +168,8 @@ class AccessControlTests {
                             SESSION_READ,
                             SUBJECT_MANAGE,
                             SUBJECT_READ,
+                            DOCUMENT_MANAGE,
+                            DOCUMENT_READ,
                             ROLE_MANAGE,
                             USER_MANAGE,
                             USER_READ,
@@ -202,6 +213,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        DOCUMENT_MANAGE,
+                        DOCUMENT_READ,
                         USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
@@ -219,6 +232,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        DOCUMENT_MANAGE,
+                        DOCUMENT_READ,
                         ROLE_MANAGE,
                         USER_MANAGE,
                         USER_READ,
@@ -252,6 +267,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        DOCUMENT_MANAGE,
+                        DOCUMENT_READ,
                         USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
@@ -277,10 +294,10 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "LIBRARIAN", "SCHOOL", null, null, null);
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
-        // school:school:read comes from all three; the three academics reads and the two student
-        // reads only from the class teacher grant; identity:user:read and platform:audit:read only
-        // from the auditor grant. identity:role:manage comes from none of them, and no union of
-        // allows can produce it.
+        // school:school:read comes from all three; the three academics reads, the two student
+        // reads and document:document:read only from the class teacher grant; identity:user:read
+        // and platform:audit:read only from the auditor grant. identity:role:manage comes from
+        // none of them, and no union of allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
@@ -289,6 +306,7 @@ class AccessControlTests {
                                 SESSION_READ,
                                 CLASS_READ,
                                 SUBJECT_READ,
+                                DOCUMENT_READ,
                                 STUDENT_READ,
                                 GUARDIAN_READ,
                                 USER_READ,
@@ -357,6 +375,8 @@ class AccessControlTests {
                                 CLASS_READ,
                                 CLASS_MANAGE,
                                 SUBJECT_READ,
+                                DOCUMENT_MANAGE,
+                                DOCUMENT_READ,
                                 SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,
