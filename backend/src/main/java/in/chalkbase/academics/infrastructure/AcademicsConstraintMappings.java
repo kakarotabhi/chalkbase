@@ -31,7 +31,9 @@ public class AcademicsConstraintMappings {
                 mapping("ck_academic_session_dates", AcademicsErrorCode.INVALID_SESSION_DATES),
                 mapping("uq_school_class_name", AcademicsErrorCode.DUPLICATE_CLASS_NAME),
                 mapping("uq_school_class_sequence", AcademicsErrorCode.CLASS_SEQUENCE_TAKEN),
-                mapping("uq_section_name_in_class", AcademicsErrorCode.DUPLICATE_SECTION_NAME));
+                mapping("uq_section_name_in_class", AcademicsErrorCode.DUPLICATE_SECTION_NAME),
+                mapping("uq_subject_name", AcademicsErrorCode.DUPLICATE_SUBJECT_NAME),
+                mapping("uq_subject_code", AcademicsErrorCode.DUPLICATE_SUBJECT_CODE));
     }
 
     /** The common case: the error code's own sentence is the one to show. */

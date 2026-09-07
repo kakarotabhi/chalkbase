@@ -9,15 +9,16 @@ import org.springframework.context.annotation.Configuration;
 /**
  * What this module lets someone do (ADR-0005).
  *
- * <p>Two resources and two actions each, rather than one {@code academics:*} permission or four
+ * <p>Three resources and two actions each, rather than one {@code academics:*} permission or four
  * verbs per resource. The split that earns its place is read from manage: a subject teacher needs
  * to know which classes and sections exist to do anything at all, and must not be able to rename
  * one. Splitting {@code manage} further into create, update and reorder would be three permissions
  * a school has no reason to hold separately — nobody may add a class but not rename it.
  *
- * <p>Sessions and classes are separate resources because their audiences genuinely differ: an
- * admission counsellor reads both, and the person who declares that the school has moved into
- * 2027-28 is not necessarily the person who adds a section to Class 5.
+ * <p>Sessions, classes and subjects are separate resources because their audiences genuinely
+ * differ: an admission counsellor reads all three, and the person who declares that the school has
+ * moved into 2027-28 is not necessarily the person who adds a section to Class 5 or a subject to
+ * the catalogue.
  *
  * <p>These strings are stored in every school's {@code role_permission} table, so renaming one
  * needs a migration that rewrites those rows.
@@ -36,6 +37,12 @@ public class AcademicsPermissions {
 
     /** Adding, renaming, reordering, retiring and reinstating classes and sections. */
     public static final String CLASS_MANAGE = "academics:class:manage";
+
+    /** Seeing the subject catalogue. Needed by anything that names a subject. */
+    public static final String SUBJECT_READ = "academics:subject:read";
+
+    /** Adding, renaming, recoding, retiring and reinstating subjects. */
+    public static final String SUBJECT_MANAGE = "academics:subject:manage";
 
     @Bean
     PermissionProvider academicsPermissionProvider() {
@@ -59,6 +66,13 @@ public class AcademicsPermissions {
                         CLASS_MANAGE,
                         "academics",
                         "Manage classes and sections",
-                        "Add, rename, reorder and deactivate classes and their sections."));
+                        "Add, rename, reorder and deactivate classes and their sections."),
+                new PermissionDefinition(
+                        SUBJECT_READ, "academics", "View subjects", "See the school's catalogue of subjects."),
+                new PermissionDefinition(
+                        SUBJECT_MANAGE,
+                        "academics",
+                        "Manage subjects",
+                        "Add, rename, recode and deactivate subjects."));
     }
 }

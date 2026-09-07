@@ -19,6 +19,7 @@ public final class AcademicsAudit {
     public static final String ACADEMIC_SESSION = "ACADEMIC_SESSION";
     public static final String SCHOOL_CLASS = "SCHOOL_CLASS";
     public static final String SECTION = "SECTION";
+    public static final String SUBJECT = "SUBJECT";
 
     /**
      * The session a school is now in.
