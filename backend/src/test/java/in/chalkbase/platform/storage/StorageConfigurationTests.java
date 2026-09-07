@@ -88,11 +88,15 @@ class StorageConfigurationTests {
                         SECRET_KEY)
                 .run(context -> {
                     assertThat(context).hasFailed();
-                    assertThat(context)
-                            .getFailure()
-                            .rootCause()
-                            .isInstanceOf(IllegalStateException.class)
-                            .hasMessageContaining("CHALKBASE_STORAGE_ENDPOINT");
+                    // Not `.rootCause()`: `URI.create` wraps its own `URISyntaxException` inside
+                    // the `IllegalArgumentException` this configuration catches, so the actual
+                    // root is one level deeper than the `IllegalStateException` this test cares
+                    // about — the same reason `EncryptionKeyConfigurationTests` checks a message
+                    // rather than a type for every one of its own wrapped cases.
+                    // `hasStackTraceContaining` reads the whole printed chain, "Caused by"
+                    // sections included, so it finds this configuration's own message wherever it
+                    // sits in that chain.
+                    assertThat(context).getFailure().hasStackTraceContaining("CHALKBASE_STORAGE_ENDPOINT");
                 });
     }
 }
