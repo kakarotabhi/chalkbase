@@ -623,3 +623,110 @@ export type ImportError = Schemas['ImportError'];
  *   of 1,800 problems sends a school round the fix-and-re-upload loop believing it is nearly done.
  */
 export type ImportReport = Schemas['ImportReport'];
+
+/* ── Access: users, roles and permissions (/api/access/*, ADR-0005) ──────── */
+
+/**
+ * Enough of an account to list it, or to say who holds a role.
+ *
+ * `status` is a plain string on the wire (`UserAccount.status` is typed `String` on the entity, not
+ * the `AccountStatus` enum) — the same reason permission codes have no union in the contract, see
+ * `Permissions`. `access-shared.ts` carries the two values this build knows, `ACTIVE` and
+ * `DISABLED`, and copes with a third the way `navLabel` copes with an unknown navigation id.
+ *
+ * **No `lockedUntil` here.** The roster this backs (`GET /api/access/users`) answers this shape for
+ * every account in one call, and a lockout is not on it — only the four per-account write endpoints
+ * answer `UserAccountResponse`, which does carry it. So the roster screen cannot show "locked"
+ * as a fact about a row; it can only offer **Clear lockout** on every active account and say
+ * afterwards, from that response, whether anything was actually cleared. Adding a per-row lockout
+ * badge would mean fetching each account individually — the N+1 request list screens exist to
+ * avoid — so this is a known gap, not an oversight; see `docs/status.md`.
+ */
+export type UserSummary = Schemas['UserSummary'];
+
+/**
+ * A new account. Username and display name only — see `IdentityErrorCode.USERNAME_TAKEN` (`AUTH_009`)
+ * for the one way this is refused.
+ */
+export type CreateUserAccountRequest = Schemas['CreateUserAccountRequest'];
+
+/**
+ * The account just created, **with the temporary password it must be handed along with**.
+ *
+ * `temporaryPassword` is shown exactly once: nothing on the backend stores it, and no endpoint can
+ * retrieve it again — only `POST .../reset-password`, which issues a different one. It is
+ * Confidential (ADR-0014): never logged, never put in a URL or a page title, and never left on
+ * screen behind a route a back button can return to.
+ */
+export type NewUserAccountResponse = Schemas['NewUserAccountResponse'];
+
+/**
+ * One account's own state, as confirmed after deactivating, reactivating, unlocking it, or reading
+ * it back post-reset. The one shape in this section that carries `lockedUntil` — see `UserSummary`.
+ */
+export type UserAccountResponse = Schemas['UserAccountResponse'];
+
+/**
+ * What an admin password reset hands back. `temporaryPassword` is Confidential and shown exactly
+ * once, the same as `NewUserAccountResponse.temporaryPassword` — see there for what that means for
+ * this screen.
+ *
+ * The account's own sessions are already gone by the time this response arrives (ADR-0023): a reset
+ * ends every session the target holds, immediately, including the caller's own if they reset
+ * themselves. See `user-roster.ts` for what this screen does about that.
+ */
+export type TemporaryPasswordResponse = Schemas['TemporaryPasswordResponse'];
+
+/**
+ * One permission this build knows how to enforce, as `GET /api/access/permissions` answers it — the
+ * same list at every school, because permissions are code (ADR-0005). Not to be confused with
+ * `Permissions` in `core/auth/permissions.ts`, which is this app's own closed list of the codes it
+ * knows how to *ask about*; this is the backend's catalogue of every code that exists, used here to
+ * build a role's permission editor and to word `AUTH_011` against a label a person recognises.
+ */
+export type PermissionDefinition = Schemas['PermissionDefinition'];
+
+/**
+ * One of this school's roles, and the permissions it currently carries.
+ *
+ * `templateCode` is provenance only — the shipped template this role was copied from at onboarding,
+ * or absent if the school invented it from nothing. Editing the role changes nothing at any other
+ * school (ADR-0005): the template is where it started, not what it is tied to.
+ */
+export type RoleResponse = Schemas['RoleResponse'];
+
+/**
+ * A new, school-owned role: a name, an optional description, and the permissions it starts with.
+ *
+ * Every permission listed must already be held by the account creating the role — see
+ * `IdentityErrorCode.CANNOT_GRANT_PERMISSION_YOU_DO_NOT_HOLD` (`AUTH_011`). No `code` field: the
+ * backend derives one from the name.
+ */
+export type CreateRoleRequest = Schemas['CreateRoleRequest'];
+
+/**
+ * A role's complete replacement permission set, **never a delta**. `PUT` replaces the row wholesale;
+ * a screen that sends only what changed silently deletes the rest. Only the permissions being
+ * *added* — present here, absent from the role today — are checked against `AUTH_011`; removing one
+ * is never guarded, because taking access away cannot escalate anything.
+ */
+export type UpdateRolePermissionsRequest = Schemas['UpdateRolePermissionsRequest'];
+
+/** One grant a user holds: which role, over how much of the school, and for how long. */
+export type GrantResponse = Schemas['GrantResponse'];
+
+/**
+ * "This user holds this role, over this much of the school, for this long."
+ *
+ * `scopeId` is required for every `scopeType` except `SCHOOL` and `SELF`, and `WARD` is never a
+ * legal value here — a parent's reach is derived from the guardian-of relationship and is never
+ * assigned. Granting hands the holder every permission the role carries, so the acting account must
+ * already hold all of them itself (`AUTH_011`, same guard as `CreateRoleRequest`).
+ */
+export type GrantRoleRequest = Schemas['GrantRoleRequest'];
+
+/**
+ * What a grant is scoped to. Not a standalone schema on the wire — it appears only as the enum
+ * inline on `GrantRoleRequest.scopeType` — so it is derived from there rather than duplicated.
+ */
+export type ScopeType = Schemas['GrantRoleRequest']['scopeType'];

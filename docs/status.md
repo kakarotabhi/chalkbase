@@ -20,7 +20,7 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Architecture decisions (ADR-0001…0022) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
-| Permissions, roles, scoped grants | ✅ Enforced and manageable · ⬜ impact preview, ⬜ screen |
+| Permissions, roles, scoped grants | ✅ Enforced and manageable, with a screen · ⬜ impact preview |
 | Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
@@ -46,8 +46,8 @@ glance and are not.
 | Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
 | Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
 | Subjects | ✅ Done | The flat catalogue (no ladder, no relation to a class or section), paged, retire and reinstate. |
-| Roles and permissions | ✅ Backend done · ⬜ screen | 18 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` now creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred as a frontend-shaped feature; `GET /api/access/roles/{id}/holders` is the read a future screen would build it from. **No screen yet.** |
-| User management | ✅ Backend done · ⬜ screen | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` now creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. **No screen yet.** |
+| Roles and permissions | ✅ Done | 18 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). The screen is `/settings/access`: the permission catalogue, this school's roles, create and edit, who holds each role, and grant/revoke for an account. **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred; `GET /api/access/roles/{id}/holders` is the read the screen uses instead. |
+| User management | ✅ Done | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. The screen is `/settings/users`: the roster, with status, and all five actions. It cannot show a lockout badge per row — `GET /api/access/users` answers no `lockedUntil` — so **Clear lockout** is offered on every active account rather than only the ones known to need it; see [Known gaps and debt](#known-gaps-and-debt). |
 | Student profile | ⚠️ Core, contact, medical and compliance done | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. Added: contact (`student_contact`), previous school and transfer certificate (`student_transfer`, FR-033), medical (`student_medical`, FR-034 — CWSN/disability, allergies, chronic conditions, medication and blood group Restricted, encrypted, masked and read-audited; emergency contact Confidential) and compliance identifiers (`student_compliance`, FR-029 — PEN/UDISE and board registration number Confidential; caste, religion, EWS/BPL/RTE category and a consent-gated APAAR id Restricted). [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2, amended, and [ADR-0022](architecture/adr/0022-encryption-at-rest.md) cover the design. **Still absent:** transport, hostel and document sections — the first two are Phase 4 modules and are a need-flag only on this record, not built yet; document is another lane's work. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
@@ -146,10 +146,10 @@ built; see [Done](#done).
 
 ### 3. Roles, users, and what a session re-validates
 
-`/api/access` is three `@GetMapping`s. Nothing in the product can create a user, deactivate one,
-reset a password, or edit a role — and a session outlives its account being disabled, so an admin
-screen that disables an account would be worth very little on its own. The three are one piece of
-work because they all live in `identity/application` and all three change how a grant is resolved.
+~~`/api/access` is three `@GetMapping`s.~~ ✅ Closed. Session re-validation shipped first
+(ADR-0023) so a disabled or locked session stops working the moment it is next used; then the write
+endpoints (`UserAccountManagementService`, `RoleManagementService`, `AccessGuardrails`); and now the
+two screens, `/settings/users` and `/settings/access`. See [Done](#done).
 
 ### 4. Guardian import, documents, dashboards
 
@@ -256,6 +256,7 @@ here. What is left is externally blocked rather than undecided.
 | Encryption-at-rest machinery: AES-GCM `EncryptedStringConverter`, `@Encrypted`, the `EncryptionBindingTests` binding it to `@Classification`, and `EncryptionKeyConfiguration` | [ADR-0022](architecture/adr/0022-encryption-at-rest.md) |
 | Subjects: a flat, paged catalogue, retire and reinstate, the last piece of Phase 1 master data | `academics/` |
 | `POST /api/schools/bootstrap`: a fresh deployment can be onboarded over HTTP — school and first administrator, atomically from the caller's side, refusing a second run | [ADR-0024](architecture/adr/0024-bootstrap-deployment.md) |
+| The account roster and roles/access screens: `/settings/users` (create, deactivate, reactivate, unlock, reset password, each with the confirmation and one-time password reveal the write endpoints need) and `/settings/access` (permission catalogue, this school's roles, create and edit a role, who holds it, grant and revoke for an account) | `features/access/` |
 
 ## Known gaps and debt
 
@@ -436,6 +437,32 @@ Recorded so they are decided rather than discovered.
   a build that always warns is a build nobody reads. The shared page scaffolding was extracted to
   `styles/_page.scss` in the same change — three screens had their own copy and the copies had
   already drifted.
+- `GET /api/access/users` answers `UserSummary` — id, display name, status — for every account in
+  one call, and nothing else: no `lockedUntil`, no `lastLoginAt`. Only the four per-account write
+  endpoints answer the richer `UserAccountResponse`. So the account roster (`/settings/users`)
+  cannot paint a lockout badge per row without an N+1 request per account, which every list screen
+  in this app avoids; **Clear lockout** is offered on every active account instead, and the
+  confirmation that follows is where the truth about whether anything was locked actually comes
+  from. Closing it properly means a paged, filterable roster endpoint carrying the fuller shape,
+  which is a bigger change than the screen that surfaced the gap.
+- **Two of `ScopeType`'s values have nothing to scope to.** `CAMPUS` and `DEPARTMENT` are legal
+  values on the wire (ADR-0005 names them as a future capability) but no module owns a campus or a
+  department record, so the grant screen at `/settings/access` does not offer them — a free-text
+  UUID box would be a control nobody could fill in correctly. Closes when a module exists to look
+  one up against.
+- **`identity:user:read` and `identity:role:manage` are separate permissions, and the access
+  screen's grant picker needs the first to list accounts by name.** A role manager who does not
+  also hold "View users" cannot pick an account from a list, so the picker falls back to a plain id
+  field — usable from the roster's own "Manage roles" link (which carries only an id, never a name,
+  in its query parameter — a display name is Confidential under ADR-0014), but not a name-based
+  search on its own. Every shipped template that holds `identity:role:manage` also holds
+  `identity:user:read` (`RoleTemplates`), so this is a gap for a school's own invented roles rather
+  than the common case.
+- **`IdentityNavigation` declares `settings.access` but not `settings.users`.** The roles and access
+  screen is on the server-driven menu; the account roster is not, and is reached from a link on the
+  access screen or by typing the URL — the same trade `students.import` already made in the other
+  direction (an id registered here ahead of the backend emitting it). Adding a `settings.users`
+  navigation id is a small backend change and belongs with whichever lane is next in `identity`.
 
 ## Keeping this honest
 

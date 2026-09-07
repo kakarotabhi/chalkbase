@@ -1,0 +1,404 @@
+<p class="crumbs">Settings <span aria-hidden="true">›</span> User accounts</p>
+<h1 class="page-title">User accounts</h1>
+
+<p class="page-lede">
+  Everyone who holds an account at this school. Create an account when someone joins, deactivate one
+  when they leave, and clear a lockout or reset a password when someone is stuck.
+</p>
+
+@if (canManageRoles()) {
+  <p class="page-lede">
+    <a routerLink="/settings/access">Roles and access</a> is where a role's permissions are decided
+    and where a role is granted to or revoked from an account.
+  </p>
+}
+
+@if (forbidden()) {
+  <!-- No client-side permission guard on this route (ADR-0008): see the class Javadoc. -->
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view user accounts</strong>
+      <span>Ask your principal to add "View users" to your role.</span>
+    </div>
+  </div>
+} @else {
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  @if (canManageUsers() && !adding()) {
+    <div class="toolbar">
+      <cb-button id="account-add" [disabled]="saving()" (click)="startAdd()"
+        >Add an account</cb-button
+      >
+    </div>
+  }
+
+  @if (adding()) {
+    <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <h2 class="editor__heading">Add an account</h2>
+      <p class="editor__note">
+        A temporary password is generated automatically and shown once you save — write it down or
+        copy it before you close that screen, because it cannot be shown again.
+      </p>
+
+      @if (saveFailure(); as message) {
+        <div class="banner banner--danger" role="alert">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 7.5v5" />
+            <path d="M12 16.2v.1" />
+          </svg>
+          <div>
+            <strong class="banner__title">{{ message.title }}</strong>
+            <span>{{ message.detail }}</span>
+          </div>
+        </div>
+      }
+
+      <div class="editor__fields">
+        <cb-form-field
+          #usernameField
+          label="Username"
+          controlId="account-username"
+          hint="What this person types to sign in. Cannot be changed once used."
+          [required]="true"
+          [error]="fieldErrors().username"
+        >
+          <cb-text-input
+            formControlName="username"
+            autocomplete="off"
+            placeholder="priya.sharma"
+            [id]="usernameField.controlId()"
+            [describedBy]="usernameField.describedById()"
+            [invalid]="usernameField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+
+        <cb-form-field
+          #displayNameField
+          label="Name"
+          controlId="account-display-name"
+          [required]="true"
+          [error]="fieldErrors().displayName"
+        >
+          <cb-text-input
+            formControlName="displayName"
+            autocapitalize="words"
+            autocomplete="off"
+            placeholder="Priya Sharma"
+            [id]="displayNameField.controlId()"
+            [describedBy]="displayNameField.describedById()"
+            [invalid]="displayNameField.hasError()"
+            [readOnly]="saving()"
+          />
+        </cb-form-field>
+      </div>
+
+      <div class="editor__actions">
+        <cb-button variant="secondary" [disabled]="saving()" (click)="cancelAdd()"
+          >Cancel</cb-button
+        >
+        <cb-button type="submit" [loading]="saving()" loadingLabel="Creating…"
+          >Create account</cb-button
+        >
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading accounts…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">Could not load the account roster</strong>
+        <span>Check your connection and try again. Nothing has been changed.</span>
+        <p class="banner__action">
+          <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+        </p>
+      </div>
+    </div>
+  } @else if (view().length === 0) {
+    @if (!adding()) {
+      <p class="page-status" role="status">No accounts yet. Add the first one.</p>
+    }
+  } @else {
+    @if (statusFailure(); as message) {
+      <div [class]="'banner banner--' + message.tone" role="alert">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">{{ message.title }}</strong>
+          <span>{{ message.detail }}</span>
+        </div>
+      </div>
+    }
+    @if (resetFailure(); as message) {
+      <div class="banner banner--danger" role="alert">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9.5" />
+          <path d="M12 7.5v5" />
+          <path d="M12 16.2v.1" />
+        </svg>
+        <div>
+          <strong class="banner__title">{{ message.title }}</strong>
+          <span>{{ message.detail }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- One table, two shapes (ADR-0010): a real table from the expanded width, cards below it. -->
+    <div class="list">
+      <table class="list__table">
+        <caption class="list__caption">
+          This school's accounts, by name.
+        </caption>
+        <thead class="list__head">
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Status</th>
+            <th scope="col"><span class="hidden-label">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of view(); track row.id) {
+            <tr class="row" [class.row--inactive]="!row.active">
+              <td class="cell cell--name">
+                <span class="cell__label">Name</span>
+                <span class="name">
+                  {{ row.displayName }}
+                  @if (row.isSelf) {
+                    <span class="you-badge">You</span>
+                  }
+                </span>
+              </td>
+
+              <td class="cell cell--status">
+                <span class="cell__label">Status</span>
+                <span [class]="row.active ? 'status status--active' : 'status status--inactive'">
+                  {{ row.statusLabel }}
+                </span>
+              </td>
+
+              <td class="cell cell--actions">
+                <span class="cell__label">Actions</span>
+                <span class="row__actions">
+                  @if (canManageRoles()) {
+                    <a
+                      class="link"
+                      [routerLink]="['/settings/access']"
+                      [queryParams]="{ user: row.id }"
+                    >
+                      Manage roles<span class="hidden-label"> for {{ row.displayName }}</span>
+                    </a>
+                  }
+                  @if (canManageUsers()) {
+                    @if (row.active) {
+                      <button
+                        type="button"
+                        class="link"
+                        [id]="row.deactivateButtonId"
+                        [disabled]="busyId() !== null"
+                        (click)="askToDeactivate(row)"
+                      >
+                        Deactivate<span class="hidden-label"> {{ row.displayName }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="link"
+                        [id]="row.unlockButtonId"
+                        [disabled]="busyId() !== null"
+                        (click)="unlock(row)"
+                      >
+                        Clear lockout<span class="hidden-label"> for {{ row.displayName }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="link"
+                        [id]="row.resetButtonId"
+                        [disabled]="busyId() !== null"
+                        (click)="askToReset(row)"
+                      >
+                        Reset password<span class="hidden-label"> for {{ row.displayName }}</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="link"
+                        [id]="row.reactivateButtonId"
+                        [disabled]="busyId() !== null"
+                        (click)="reactivate(row)"
+                      >
+                        Reactivate<span class="hidden-label"> {{ row.displayName }}</span>
+                      </button>
+                    }
+                  }
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Deactivate: consequential (ends every session immediately) and needs confirming either way. -->
+@if (confirmingDeactivate(); as target) {
+  <cb-dialog
+    heading="Deactivate {{ target.displayName }}'s account?"
+    confirmLabel="Deactivate"
+    confirmVariant="danger"
+    cancelLabel="Don't deactivate"
+    [busy]="busyId() === target.id"
+    (confirmed)="confirmDeactivate()"
+    (cancelled)="cancelDeactivate()"
+  >
+    <p>
+      This ends every session {{ target.displayName }} is currently signed into, on every device,
+      immediately. The account can be reactivated at any time and nothing about it is lost.
+    </p>
+    @if (target.isSelf) {
+      <p>
+        <strong>This is your own account.</strong> You will be signed out immediately, on this
+        device too, and will need another administrator to reactivate you.
+      </p>
+    }
+  </cb-dialog>
+}
+
+<!-- Reset password: same session-ending consequence as deactivate, plus a secret to hand over. -->
+@if (confirmingReset(); as target) {
+  <cb-dialog
+    heading="Reset {{ target.displayName }}'s password?"
+    confirmLabel="Reset password"
+    confirmVariant="danger"
+    cancelLabel="Don't reset it"
+    [busy]="busyId() === target.id"
+    (confirmed)="confirmReset()"
+    (cancelled)="cancelReset()"
+  >
+    <p>
+      This ends every session {{ target.displayName }} is currently signed into, on every device,
+      and creates a new temporary password. It will be shown once, on the next screen — write it
+      down or copy it, because it cannot be retrieved again.
+    </p>
+    @if (target.isSelf) {
+      <p>
+        <strong>This is your own account.</strong> You will be signed out immediately, including
+        this session, and will need the new password to sign in again.
+      </p>
+    }
+  </cb-dialog>
+}
+
+<!--
+  The one-time password reveal. Deliberately not `cb-dialog`: there is nothing to cancel back to
+  (the password is issued either way by the time this is shown), so the only affordance is
+  acknowledging it has been copied. Escape and a backdrop click do nothing here, on purpose.
+-->
+@if (passwordReveal(); as reveal) {
+  <div class="reveal-scrim" aria-hidden="true"></div>
+  <div
+    class="reveal-panel"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="reveal-heading"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <h2 class="reveal-heading" id="reveal-heading">
+      {{ reveal.username ? 'Account created' : 'Password reset' }}
+    </h2>
+    <p>
+      @if (reveal.username) {
+        <strong>{{ reveal.displayName }}</strong> can now sign in as
+        <strong>{{ reveal.username }}</strong> with the temporary password below.
+      } @else {
+        <strong>{{ reveal.displayName }}</strong
+        >'s new temporary password is below.
+      }
+      They must change it the first time they sign in.
+    </p>
+    <div class="reveal-password">
+      <code>{{ reveal.temporaryPassword }}</code>
+      <cb-button variant="secondary" (click)="copyPassword(reveal.temporaryPassword)">
+        {{ copied() ? 'Copied' : 'Copy' }}
+      </cb-button>
+    </div>
+    <p class="reveal-warning">
+      <strong>This will not be shown again.</strong> Write it down or copy it now, and hand it to
+      {{ reveal.username ? 'them' : reveal.displayName }} directly — never by email or chat.
+    </p>
+    @if (reveal.isSelf) {
+      <p class="reveal-warning">
+        You will be signed out of this session as soon as you close this.
+      </p>
+    }
+    <div class="reveal-actions">
+      <cb-button (click)="acknowledgeReveal()">I've saved this password</cb-button>
+    </div>
+  </div>
+}
