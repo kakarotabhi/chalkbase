@@ -125,11 +125,11 @@ describe('AccessRoles', () => {
   it('explains a 403 rather than crashing', () => {
     fixture = TestBed.createComponent(AccessRoles);
     fixture.detectChanges();
+    // `loadScreen` wraps both reads in one `forkJoin`, so erroring either one is enough: RxJS
+    // cancels the sibling subscription immediately, which is why this test does not also try to
+    // flush `ROLES_URL` — a cancelled request refuses to be flushed at all.
     httpMock
       .expectOne((request) => request.url === PERMISSIONS_URL)
-      .flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
-    httpMock
-      .expectOne((request) => request.url === ROLES_URL && request.method === 'GET')
       .flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
     httpMock
       .expectOne((request) => request.url === USERS_URL)
