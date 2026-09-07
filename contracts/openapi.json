@@ -152,6 +152,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseCorrectionRequestResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CorrectionRequestResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseDashboardResponse": {
         "properties": {
           "data": {
@@ -307,6 +332,34 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/AcademicSessionResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListCorrectionRequestResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CorrectionRequestResponse"
             },
             "type": "array"
           },
@@ -554,6 +607,34 @@
         ],
         "type": "object"
       },
+      "ApiResponseListStudentAttendanceRecord": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StudentAttendanceRecord"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseListUserSummary": {
         "properties": {
           "data": {
@@ -711,6 +792,31 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/PageResponseAuditEventResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseCorrectionRequestResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseCorrectionRequestResponse"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -957,6 +1063,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseSectionAttendanceView": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SectionAttendanceView"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseSectionResponse": {
         "properties": {
           "data": {
@@ -1127,6 +1258,80 @@
         "required": [
           "success",
           "timestamp"
+        ],
+        "type": "object"
+      },
+      "AttendanceEntryRequest": {
+        "properties": {
+          "remarks": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "studentId"
+        ],
+        "type": "object"
+      },
+      "AttendanceStudentMark": {
+        "properties": {
+          "admissionNumber": {
+            "type": "string"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "markId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "rollNumber": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "editable",
+          "fullName",
+          "studentId"
         ],
         "type": "object"
       },
@@ -1375,6 +1580,86 @@
         },
         "type": "object"
       },
+      "CorrectionRequestResponse": {
+        "properties": {
+          "attendanceDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "attendanceMarkId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "decisionNote": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "previousStatus": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestedStatus": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "studentName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attendanceDate",
+          "attendanceMarkId",
+          "decision",
+          "id",
+          "previousStatus",
+          "reason",
+          "requestedAt",
+          "requestedStatus",
+          "studentId",
+          "studentName"
+        ],
+        "type": "object"
+      },
       "CreateEnrolmentRequest": {
         "properties": {
           "academicSessionId": {
@@ -1571,6 +1856,27 @@
             "$ref": "#/components/schemas/StudentsTile"
           }
         },
+        "type": "object"
+      },
+      "DecideCorrectionRequest": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
         "type": "object"
       },
       "DocumentSummary": {
@@ -2003,6 +2309,26 @@
         ],
         "type": "object"
       },
+      "MarkAttendanceRequest": {
+        "properties": {
+          "attendanceDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AttendanceEntryRequest"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "attendanceDate",
+          "entries"
+        ],
+        "type": "object"
+      },
       "MeResponse": {
         "properties": {
           "navigation": {
@@ -2178,6 +2504,40 @@
           "content": {
             "items": {
               "$ref": "#/components/schemas/AuditEventResponse"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseCorrectionRequestResponse": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/CorrectionRequestResponse"
             },
             "type": "array"
           },
@@ -2415,6 +2775,31 @@
         },
         "required": [
           "classIds"
+        ],
+        "type": "object"
+      },
+      "RequestCorrectionRequest": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "requestedStatus": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "requestedStatus"
         ],
         "type": "object"
       },
@@ -2884,6 +3269,47 @@
         ],
         "type": "object"
       },
+      "SectionAttendanceView": {
+        "properties": {
+          "academicSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "attendanceDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/AttendanceStudentMark"
+            },
+            "type": "array"
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "academicSessionId",
+          "attendanceDate",
+          "className",
+          "entries",
+          "locked",
+          "sectionId",
+          "sectionName"
+        ],
+        "type": "object"
+      },
       "SectionResponse": {
         "properties": {
           "active": {
@@ -2923,6 +3349,42 @@
         },
         "required": [
           "set"
+        ],
+        "type": "object"
+      },
+      "StudentAttendanceRecord": {
+        "properties": {
+          "attendanceDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "markId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "LATE",
+              "HALF_DAY",
+              "EXCUSED_LEAVE",
+              "HOLIDAY"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "attendanceDate",
+          "editable",
+          "markId",
+          "status"
         ],
         "type": "object"
       },
@@ -4302,6 +4764,275 @@
         },
         "tags": [
           "user-account-controller"
+        ]
+      }
+    },
+    "/api/attendance/correction-requests": {
+      "get": {
+        "operationId": "pending",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseCorrectionRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-correction-controller"
+        ]
+      }
+    },
+    "/api/attendance/correction-requests/{id}/decision": {
+      "post": {
+        "operationId": "decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideCorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCorrectionRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-correction-controller"
+        ]
+      }
+    },
+    "/api/attendance/marks/{markId}/correction-requests": {
+      "get": {
+        "operationId": "correctionHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "markId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListCorrectionRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
+        ]
+      },
+      "post": {
+        "operationId": "requestCorrection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "markId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestCorrectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCorrectionRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
+        ]
+      }
+    },
+    "/api/attendance/sections/{sectionId}": {
+      "get": {
+        "operationId": "view",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSectionAttendanceView"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
+        ]
+      },
+      "post": {
+        "operationId": "mark",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAttendanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseSectionAttendanceView"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
+        ]
+      }
+    },
+    "/api/attendance/students/{studentId}": {
+      "get": {
+        "operationId": "studentHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListStudentAttendanceRecord"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
         ]
       }
     },

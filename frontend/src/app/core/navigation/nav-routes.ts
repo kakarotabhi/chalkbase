@@ -93,6 +93,15 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // two settings entries, for the same reason: three items sharing one icon read as one section,
   // and the label is what tells them apart.
   ['settings.users', { path: '/settings/users', icon: 'settings' }],
+
+  // Attendance (Phase 2, ADR-0030). Both screens share the one glyph, same convention as academics
+  // and students above: a nested group that changes icon per child reads as unrelated destinations,
+  // and the label is what tells them apart. The container needs its own entry for the same reason
+  // every other container above does — `NavigationStore` drops an unresolvable id along with its
+  // children.
+  ['attendance', { path: '/attendance', icon: 'attendance' }],
+  ['attendance.mark', { path: '/attendance/mark', icon: 'attendance' }],
+  ['attendance.corrections', { path: '/attendance/corrections', icon: 'attendance' }],
 ]);
 
 /**

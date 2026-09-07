@@ -43,6 +43,9 @@ public final class RoleTemplates {
     private static final String AUDIT_READ = "platform:audit:read";
     private static final String DOCUMENT_READ = "document:document:read";
     private static final String DOCUMENT_MANAGE = "document:document:manage";
+    private static final String ATTENDANCE_READ = "attendance:mark:read";
+    private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
+    private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
@@ -114,6 +117,18 @@ public final class RoleTemplates {
      * {@code DOCUMENT_READ}: seeing a child's documents is daily work, uploading or deleting one is
      * not. {@code SUBJECT_TEACHER} and {@code ACCOUNTANT} hold neither, the same as they hold neither
      * guardian permission — narrower reach than a class teacher's, on the same reasoning.
+     *
+     * <p>{@code attendance:mark:*} (Phase 0 decision 8, ADR-0030) follows the description on
+     * {@code CLASS_TEACHER} itself — "owns one section: its attendance" — literally:
+     * {@code ATTENDANCE_MANAGE} is that template's, and {@code SUBJECT_TEACHER} holds only
+     * {@code ATTENDANCE_READ}, the same asymmetry {@code DOCUMENT_MANAGE} draws for the same
+     * reason — marking a whole section's daily register is the class teacher's job, not a subject
+     * teacher's, until the period-wise screen this build does not ship gives that role its own
+     * write path. {@code PRINCIPAL} and {@code VICE_PRINCIPAL} hold {@code ATTENDANCE_MANAGE} too,
+     * as an override rather than routine work — the same reasoning that gives both
+     * {@code STUDENT_MANAGE} — and {@code ATTENDANCE_CORRECTION_APPROVE} is theirs alone: deciding
+     * that a memory of a locked day overrides what was recorded at the time is oversight, the same
+     * shape as {@code STUDENT_REVEAL_RESTRICTED} on {@code PRINCIPAL}.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -137,7 +152,10 @@ public final class RoleTemplates {
                     USER_MANAGE,
                     ROLE_MANAGE,
                     DOCUMENT_READ,
-                    DOCUMENT_MANAGE),
+                    DOCUMENT_MANAGE,
+                    ATTENDANCE_READ,
+                    ATTENDANCE_MANAGE,
+                    ATTENDANCE_CORRECTION_APPROVE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
                     "Vice Principal",
@@ -156,7 +174,10 @@ public final class RoleTemplates {
                     GUARDIAN_MANAGE,
                     USER_READ,
                     DOCUMENT_READ,
-                    DOCUMENT_MANAGE),
+                    DOCUMENT_MANAGE,
+                    ATTENDANCE_READ,
+                    ATTENDANCE_MANAGE,
+                    ATTENDANCE_CORRECTION_APPROVE),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
@@ -167,7 +188,9 @@ public final class RoleTemplates {
                     SUBJECT_READ,
                     STUDENT_READ,
                     GUARDIAN_READ,
-                    DOCUMENT_READ),
+                    DOCUMENT_READ,
+                    ATTENDANCE_READ,
+                    ATTENDANCE_MANAGE),
             // Reads students, because marks are recorded against a child. Deliberately does NOT read
             // guardians, and the distinction is the point: with no scope narrower than the school,
             // that permission is a searchable directory of every parent's mobile number, handed to
@@ -183,7 +206,8 @@ public final class RoleTemplates {
                     SESSION_READ,
                     CLASS_READ,
                     SUBJECT_READ,
-                    STUDENT_READ),
+                    STUDENT_READ,
+                    ATTENDANCE_READ),
             // Reads students and guardians because a fee is charged to a child and chased through a
             // parent's phone number. Holds neither manage: an accountant corrects a ledger, not a
             // date of birth.

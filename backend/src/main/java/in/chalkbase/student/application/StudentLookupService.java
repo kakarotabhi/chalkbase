@@ -1,11 +1,18 @@
 package in.chalkbase.student.application;
 
+import in.chalkbase.student.api.EnrolledStudentRef;
 import in.chalkbase.student.api.SectionEnrolmentCount;
 import in.chalkbase.student.api.StudentLookup;
+import in.chalkbase.student.api.StudentNameRef;
 import in.chalkbase.student.infrastructure.GuardianRepository;
 import in.chalkbase.student.infrastructure.StudentEnrolmentRepository;
+import in.chalkbase.student.infrastructure.StudentRepository;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,10 +34,13 @@ public class StudentLookupService implements StudentLookup {
 
     private final StudentEnrolmentRepository enrolments;
     private final GuardianRepository guardians;
+    private final StudentRepository students;
 
-    public StudentLookupService(StudentEnrolmentRepository enrolments, GuardianRepository guardians) {
+    public StudentLookupService(
+            StudentEnrolmentRepository enrolments, GuardianRepository guardians, StudentRepository students) {
         this.enrolments = enrolments;
         this.guardians = guardians;
+        this.students = students;
     }
 
     @Override
@@ -56,5 +66,39 @@ public class StudentLookupService implements StudentLookup {
     @Override
     public long guardiansWithoutAStudentCount() {
         return guardians.countWithoutAnyStudent();
+    }
+
+    @Override
+    public List<EnrolledStudentRef> rosterOfSection(UUID sectionId, UUID academicSessionId) {
+        if (sectionId == null || academicSessionId == null) {
+            return List.of();
+        }
+        return enrolments.findRosterOfSection(academicSessionId, sectionId).stream()
+                .map(enrolment -> new EnrolledStudentRef(
+                        enrolment.getStudent().getId(),
+                        enrolment.getStudent().getAdmissionNumber(),
+                        enrolment.getStudent().getFullName(),
+                        enrolment.getRollNumber()))
+                .toList();
+    }
+
+    @Override
+    public Map<UUID, StudentNameRef> namesOf(Collection<UUID> studentIds) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return Map.of();
+        }
+        Collection<UUID> distinct = studentIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        if (distinct.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, StudentNameRef> byId = new LinkedHashMap<>();
+        for (var student : students.findAllById(distinct)) {
+            byId.put(
+                    student.getId(),
+                    new StudentNameRef(student.getId(), student.getAdmissionNumber(), student.getFullName()));
+        }
+        return byId;
     }
 }

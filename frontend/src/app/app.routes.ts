@@ -100,6 +100,27 @@ export const routes: Routes = [
         title: 'Subjects · Chalkbase',
         loadComponent: () => import('./features/academics/subjects').then((m) => m.Subjects),
       },
+      // Attendance (Phase 2, ADR-0030). No guard on either screen, same reasoning as academics
+      // above: the endpoints enforce `attendance:mark:read` / `attendance:correction:approve` on
+      // their own, and each screen's own menu item is already withheld from anyone without it.
+      //
+      // The container has no index screen of its own, so it lands on the marking screen — a class
+      // teacher's daily work, not the corrections queue an admin visits far less often.
+      { path: 'attendance', pathMatch: 'full', redirectTo: 'attendance/mark' },
+      {
+        path: 'attendance/mark',
+        title: 'Mark attendance · Chalkbase',
+        loadComponent: () =>
+          import('./features/attendance/attendance-mark').then((m) => m.AttendanceMark),
+      },
+      {
+        path: 'attendance/corrections',
+        title: 'Attendance corrections · Chalkbase',
+        loadComponent: () =>
+          import('./features/attendance/attendance-corrections').then(
+            (m) => m.AttendanceCorrections,
+          ),
+      },
       // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.

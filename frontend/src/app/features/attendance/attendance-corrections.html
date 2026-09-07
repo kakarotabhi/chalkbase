@@ -1,0 +1,84 @@
+<p class="crumbs">Attendance <span aria-hidden="true">›</span> Corrections</p>
+<h1 class="page-title">Attendance corrections</h1>
+
+<p class="page-lede">
+  Requests to change a locked attendance mark, oldest first. Approving changes the mark immediately;
+  rejecting leaves it as it was.
+</p>
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading the queue…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title"
+      >You do not have permission to approve attendance corrections</strong
+    >
+    <span>Ask your principal to add "Approve attendance corrections" to your role.</span>
+  </div>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load the queue</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else if (rows().length === 0) {
+  <p class="page-status" role="status">Nothing is waiting on a decision.</p>
+} @else {
+  <ul class="queue">
+    @for (row of rows(); track row.request.id) {
+      <li class="card">
+        <div class="card__head">
+          <span class="card__name">{{ row.request.studentName }}</span>
+          <span class="card__date">{{ row.request.attendanceDate }}</span>
+        </div>
+        <p class="card__change">
+          Currently <strong>{{ statusLabel(row.request.previousStatus) }}</strong> — requested
+          <strong>{{ statusLabel(row.request.requestedStatus) }}</strong>
+        </p>
+        <p class="card__reason">"{{ row.request.reason }}"</p>
+
+        <input
+          class="note-input"
+          type="text"
+          placeholder="Note for the teacher (optional)"
+          maxlength="500"
+          [value]="row.note"
+          [disabled]="decidingId() === row.request.id"
+          (input)="setNote(row.request.id, $any($event.target).value)"
+        />
+
+        <div class="card__actions">
+          <cb-button
+            variant="secondary"
+            [disabled]="!!decidingId() && decidingId() !== row.request.id"
+            [loading]="decidingId() === row.request.id"
+            (click)="decide(row.request.id, 'REJECTED')"
+          >
+            Reject
+          </cb-button>
+          <cb-button
+            [disabled]="!!decidingId() && decidingId() !== row.request.id"
+            [loading]="decidingId() === row.request.id"
+            (click)="decide(row.request.id, 'APPROVED')"
+          >
+            Approve
+          </cb-button>
+        </div>
+      </li>
+    }
+  </ul>
+
+  @if (totalPages() > 1) {
+    <nav class="paging" aria-label="Pages">
+      <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+        Previous
+      </cb-button>
+      <span class="paging__position">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+      <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+    </nav>
+  }
+}

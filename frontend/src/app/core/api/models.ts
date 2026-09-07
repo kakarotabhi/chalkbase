@@ -826,3 +826,63 @@ export type DashboardRecentAudit = Schemas['RecentAuditTile'];
  * which runs the dependency backwards.
  */
 export type ReferenceItem = Schemas['ReferenceItemResponse'];
+/* ── Attendance (Phase 2, GET/POST /api/attendance/**) ───────────────────── */
+
+/**
+ * A section's daily attendance for one date — the marking screen's whole read.
+ * `SectionAttendanceView` on the backend.
+ *
+ * `locked` is true once this date's edit window has passed (end of the attendance day plus 24
+ * hours, ADR-0030). The screen disables direct editing once it is, and offers a correction request
+ * per student instead.
+ */
+export type SectionAttendanceView = Schemas['SectionAttendanceView'];
+
+/**
+ * One student on a section's roster, and their mark for the date if one exists yet.
+ * `AttendanceStudentMark` on the backend.
+ *
+ * `markId` and `status` are both absent until this student has been marked at all today — treat
+ * that as "not yet marked", never as an implicit absence. `editable` mirrors the view's own
+ * `locked`, carried per row so a row never has to be cross-referenced against its parent to know
+ * whether it may still be changed directly.
+ */
+export type AttendanceStudentMark = Schemas['AttendanceStudentMark'];
+
+/** One of the six marks Phase 0 decision 8 settled on. A closed set on the backend, so a union here. */
+export type AttendanceStatus = Schemas['CorrectionRequestResponse']['previousStatus'];
+
+/**
+ * Marking or editing a section's attendance for one date, in one call.
+ *
+ * Whole and idempotent by design: every student the caller wants marked goes in `entries`, present
+ * included — a class teacher's "mark all present, then change the three who are not" is one
+ * request, not one per student. There is no `academicSessionId` here: the backend resolves the
+ * school's current session itself, so a client cannot mark today's roll call against a stale year.
+ */
+export type MarkAttendanceRequest = Schemas['MarkAttendanceRequest'];
+
+/** One student's status within a {@link MarkAttendanceRequest}. */
+export type AttendanceEntryRequest = Schemas['AttendanceEntryRequest'];
+
+/** One day of one student's attendance history. `StudentAttendanceRecord` on the backend. */
+export type StudentAttendanceRecord = Schemas['StudentAttendanceRecord'];
+
+/** A teacher's request to change a locked mark. `reason` is required — an admin decides on it. */
+export type RequestCorrectionRequest = Schemas['RequestCorrectionRequest'];
+
+/**
+ * One correction request, as the admin queue and a teacher's own history both read it.
+ * `CorrectionRequestResponse` on the backend.
+ *
+ * Carries the student's name and the attendance date directly rather than only an id, because this
+ * is always read as a queue someone acts on — "whose attendance, for which day" belongs on the row.
+ * `decidedAt` and `decisionNote` are both absent while `decision` is `PENDING`.
+ */
+export type CorrectionRequestResponse = Schemas['CorrectionRequestResponse'];
+
+/** Where a correction request stands. A closed set on the backend, so a union here. */
+export type CorrectionDecision = Schemas['CorrectionRequestResponse']['decision'];
+
+/** An administrator's decision on a correction request: `APPROVED` or `REJECTED`, never `PENDING`. */
+export type DecideCorrectionRequest = Schemas['DecideCorrectionRequest'];
