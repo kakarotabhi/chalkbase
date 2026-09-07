@@ -55,6 +55,14 @@ chalkbase:
   # start rather than coming up with onboarding open, so this default is a tripwire, not a fallback.
   setup-key: ${CHALKBASE_SETUP_KEY:}
 
+  encryption:
+    # Every Restricted column (ADR-0022) is encrypted under this, via EncryptedStringConverter.
+    # Blank here on purpose, same tripwire as setup-key above: EncryptionKeyConfiguration refuses to
+    # start on the prod profile rather than fall back to a fixed, publicly-known key the way local
+    # and test do. Generate with `openssl rand -base64 32` and back the value up somewhere that is
+    # not this machine — there is no way to recover a lost key, only the data it was protecting.
+    key: ${CHALKBASE_ENCRYPTION_KEY:}
+
 # Swagger stays ON, deliberately.
 #
 # This is not an oversight and not a leftover. This profile's public deployment is the owner's

@@ -114,20 +114,27 @@ is in [the free-tier runbook](operations/render-free-tier.md).
 **Only live work is listed here.** Anything finished moves to [Done](#done) — a queue where nine of
 thirteen entries are struck through is a queue nobody can read.
 
-### 1. Encryption at rest — decided, not built
+### 1. Encryption at rest — machinery built, columns still to land
 
 [ADR-0022](architecture/adr/0022-encryption-at-rest.md) settles both open questions: a 256-bit
 `CHALKBASE_ENCRYPTION_KEY` from the environment with a `v1:` key id on every ciphertext so rotation
 is possible, and `@Encrypted` on the entity bound to the DTO's `@Classification` by a build-failing
 test.
 
-**This is the top item because it is the only thing standing between the product and a real
-school.** Without it the student record cannot hold caste, religion, disability or EWS/RTE category
-([ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2), and without those there are no
-UDISE+ returns.
+**The mechanism is now built: `EncryptedStringConverter` (AES-GCM, multi-key reads), the
+`@Encrypted` marker, `EncryptionBindingTests` beside `ClassificationTests`, and
+`EncryptionKeyConfiguration` — `prod` refuses to start without `CHALKBASE_ENCRYPTION_KEY`, `local`
+and `test` fall back to a fixed checked-in key. See
+[the encryption key](operations/encryption-key.md) for generating and backing one up.**
 
-Shape of the work: an `EncryptedStringConverter`, the `@Encrypted` marker, the binding test, then the
-columns ADR-0020 §2 left out.
+**What is still missing is the columns themselves** — ADR-0020 §2 left caste, religion, disability,
+EWS/RTE category, guardian income and Aadhaar/APAAR out of the student record entirely, and
+`ClassificationTests.noRestrictedDataHasBeenIntroducedWithoutEncryption` still fails the build if any
+of them appear before that lane lands. Without those columns there are no UDISE+ returns, so this
+stays the top item.
+
+Shape of the remaining work: the columns ADR-0020 §2 left out, each paired with `@Encrypted` and its
+`@Convert`, on a tenant migration.
 
 ### 2. Subjects
 
@@ -237,6 +244,7 @@ here. What is left is externally blocked rather than undecided.
 | A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line | `LoggingClassificationTests` |
 | A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school` | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md) |
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
+| Encryption-at-rest machinery: AES-GCM `EncryptedStringConverter`, `@Encrypted`, the `EncryptionBindingTests` binding it to `@Classification`, and `EncryptionKeyConfiguration` | [ADR-0022](architecture/adr/0022-encryption-at-rest.md) |
 
 ## Known gaps and debt
 

@@ -3,6 +3,7 @@ package in.chalkbase.platform.error;
 import in.chalkbase.platform.api.ApiError;
 import in.chalkbase.platform.api.ApiResponse;
 import in.chalkbase.platform.audit.AuditService;
+import in.chalkbase.platform.crypto.DecryptionFailedException;
 import in.chalkbase.platform.web.RequestId;
 import jakarta.validation.ConstraintViolationException;
 import java.util.LinkedHashMap;
@@ -285,6 +286,28 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> handleConcurrentUpdate(OptimisticLockingFailureException ex) {
         log.warn("Concurrent update rejected: {}", ex.getMessage());
         return respond(PlatformErrorCode.CONCURRENT_UPDATE);
+    }
+
+    /**
+     * A Restricted column would not decrypt (ADR-0022): the key is wrong, or the row is corrupt.
+     *
+     * <p><strong>Deliberately does not log {@code ex} and does not read {@code ex.getMessage()}.</strong>
+     * Passing a {@code Throwable} to the logger — the natural thing to do, and what {@link
+     * #handleUnexpected} does for everything else — prints its full cause chain, and the cause here
+     * is a JCE exception one frame away from the key material. {@link DecryptionFailedException#keyId()}
+     * is the only thing read off it: a version label like {@code "v1"}, never secret, and enough for
+     * whoever reads the log to know which key to check. The response carries {@link
+     * PlatformErrorCode#DECRYPTION_FAILED}'s fixed sentence, never anything built from this
+     * exception, for the same reason {@link #handleChalkbase} must never be handed one of these.
+     */
+    @ExceptionHandler(DecryptionFailedException.class)
+    ResponseEntity<ApiResponse<Void>> handleDecryptionFailure(DecryptionFailedException ex) {
+        log.error(
+                "Could not decrypt a stored value under key id '{}' [traceId={}]. The key is wrong or the data"
+                        + " is corrupt.",
+                ex.keyId(),
+                RequestId.current());
+        return respond(PlatformErrorCode.DECRYPTION_FAILED);
     }
 
     // ── Everything else ──────────────────────────────────────────────────────────────────────
