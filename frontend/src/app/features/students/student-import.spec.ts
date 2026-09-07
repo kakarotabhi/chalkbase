@@ -546,7 +546,8 @@ describe('StudentImport', () => {
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     return blobs[0].text().then((csv) => {
       expect(csv).toBe(
-        'admission_number,full_name,date_of_birth,gender,status,admitted_on,class,section,roll_number\r\n',
+        'admission_number,full_name,date_of_birth,gender,status,admitted_on,class,section,roll_number,' +
+          'guardian_name,guardian_phone,guardian_relation,guardian_email,guardian_primary\r\n',
       );
     });
   });
