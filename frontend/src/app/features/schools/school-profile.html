@@ -144,23 +144,31 @@
             />
           </cb-form-field>
 
-          <cb-form-field
-            #boardField
-            label="Board"
-            [controlId]="fieldIds.board"
-            [required]="true"
-            [error]="fieldErrors().board"
-          >
-            <cb-select
-              formControlName="board"
-              [id]="boardField.controlId()"
-              [options]="boards"
-              placeholder="Choose a board"
-              [describedBy]="boardField.describedById()"
-              [invalid]="boardField.hasError()"
-              [readOnly]="saving()"
-            />
-          </cb-form-field>
+          <div>
+            <cb-form-field
+              #boardField
+              label="Board"
+              [controlId]="fieldIds.board"
+              [required]="true"
+              [error]="fieldErrors().board"
+              [hint]="boardsLoadFailed() ? 'Could not load the list of boards.' : null"
+            >
+              <cb-select
+                formControlName="board"
+                [id]="boardField.controlId()"
+                [options]="boards()"
+                placeholder="Choose a board"
+                [describedBy]="boardField.describedById()"
+                [invalid]="boardField.hasError()"
+                [readOnly]="saving() || boardsLoadFailed()"
+              />
+            </cb-form-field>
+            @if (boardsLoadFailed()) {
+              <cb-button variant="ghost" (click)="retryBoards()"
+                >Try loading boards again</cb-button
+              >
+            }
+          </div>
 
           <cb-form-field
             #affiliationField
@@ -236,23 +244,31 @@
             />
           </cb-form-field>
 
-          <cb-form-field
-            #stateField
-            label="State"
-            [controlId]="fieldIds.state"
-            [required]="true"
-            [error]="fieldErrors().state"
-          >
-            <cb-select
-              formControlName="state"
-              [id]="stateField.controlId()"
-              [options]="states"
-              placeholder="Choose a state"
-              [describedBy]="stateField.describedById()"
-              [invalid]="stateField.hasError()"
-              [readOnly]="saving()"
-            />
-          </cb-form-field>
+          <div>
+            <cb-form-field
+              #stateField
+              label="State"
+              [controlId]="fieldIds.state"
+              [required]="true"
+              [error]="fieldErrors().state"
+              [hint]="statesLoadFailed() ? 'Could not load the list of states.' : null"
+            >
+              <cb-select
+                formControlName="state"
+                [id]="stateField.controlId()"
+                [options]="states()"
+                placeholder="Choose a state"
+                [describedBy]="stateField.describedById()"
+                [invalid]="stateField.hasError()"
+                [readOnly]="saving() || statesLoadFailed()"
+              />
+            </cb-form-field>
+            @if (statesLoadFailed()) {
+              <cb-button variant="ghost" (click)="retryStates()"
+                >Try loading states again</cb-button
+              >
+            }
+          </div>
 
           <cb-form-field
             #pincodeField

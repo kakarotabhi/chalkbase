@@ -783,3 +783,21 @@ export type DashboardLinkageGaps = Schemas['LinkageGapsTile'];
  * "field names never values" (ADR-0018).
  */
 export type DashboardRecentAudit = Schemas['RecentAuditTile'];
+
+/* ── Reference data (GET /api/reference/states, GET /api/schools/boards) — ADR-0029 ───────── */
+
+/**
+ * One choice in a reference list — a state or a board — shaped for `cb-select`'s `SelectOption`.
+ *
+ * `value` is what a form submits and what the backend already stores: for a state this is the
+ * name itself (`school_profile.state` is, and remains, a plain string), not an internal seeding
+ * key nothing on the wire needs. For a board it is the enum constant's name, e.g. `"CBSE"`. `label`
+ * is what a person reads — equal to `value` for a state, and different for a board (`CISCE` /
+ * `"CISCE (ICSE / ISC)"`).
+ *
+ * Two endpoints share this shape rather than one: states are `platform`'s (global, seeded, one
+ * table for every school) and boards are `school`'s own enum (see `Board` above) — moving both
+ * behind one module would mean `platform`, the shared kernel, importing a feature module's type,
+ * which runs the dependency backwards.
+ */
+export type ReferenceItem = Schemas['ReferenceItemResponse'];
