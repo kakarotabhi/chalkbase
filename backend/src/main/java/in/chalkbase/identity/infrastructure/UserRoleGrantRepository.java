@@ -30,4 +30,30 @@ public interface UserRoleGrantRepository extends JpaRepository<UserRoleGrant, UU
               and (g.validTo is null or g.validTo >= :on)
             """)
     List<UserRoleGrant> findInForce(@Param("userAccountId") UUID userAccountId, @Param("on") LocalDate on);
+
+    /**
+     * Every grant, for every user in the school, that is in force on {@code on} and whose role
+     * carries {@code permission} — for {@code AccessGuardrails}, which asks "who could still manage
+     * access after this write?" rather than "what can one user do?", so it is not scoped to a user
+     * the way {@link #findInForce} is.
+     */
+    @Query("""
+            select distinct g from UserRoleGrant g
+                join fetch g.role r
+            where :permission member of r.permissions
+              and (g.validFrom is null or g.validFrom <= :on)
+              and (g.validTo is null or g.validTo >= :on)
+            """)
+    List<UserRoleGrant> findInForceGranting(@Param("permission") String permission, @Param("on") LocalDate on);
+
+    /** Every grant of one role, regardless of validity window — for simulating a role losing a permission. */
+    List<UserRoleGrant> findByRole_Id(UUID roleId);
+
+    /**
+     * Every grant one account holds, regardless of validity window, with its role loaded — an admin
+     * managing a user's access wants to see (and revoke) an expired or not-yet-started grant too, not
+     * just the ones {@link #findInForce} would count for authorization.
+     */
+    @Query("select g from UserRoleGrant g join fetch g.role where g.userAccountId = :userAccountId")
+    List<UserRoleGrant> findByUserAccountId(@Param("userAccountId") UUID userAccountId);
 }

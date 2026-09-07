@@ -18,4 +18,10 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
 
     @EntityGraph(attributePaths = "permissions")
     Optional<Role> findByCode(String code);
+
+    /** For deriving a new role's code from its name without colliding with one that already exists. */
+    boolean existsByCode(String code);
+
+    @EntityGraph(attributePaths = "permissions")
+    Optional<Role> findWithPermissionsById(UUID id);
 }
