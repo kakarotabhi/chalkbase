@@ -51,16 +51,17 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // of what it took to switch the menu item on, with no backend change — which is the bargain
   // ADR-0008 describes, arriving exactly as described.
   ['audit', { path: '/audit', icon: 'shield-check' }],
-  // Academics, and the two screens under it. All three share the one glyph: a nested group that
-  // changes icon per child reads as three unrelated destinations rather than as one section, and
-  // the label is what tells them apart.
+  // Academics, and the three screens under it. All four share the one glyph: a nested group that
+  // changes icon per child reads as unrelated destinations rather than as one section, and the
+  // label is what tells them apart.
   //
   // The container needs an entry of its own even though it is only a heading — `NavigationStore`
-  // drops an unresolvable id along with its children, so without this the two screens would
+  // drops an unresolvable id along with its children, so without this the three screens would
   // vanish from the menu with the parent.
   ['academics', { path: '/academics', icon: 'academics' }],
   ['academics.sessions', { path: '/academics/sessions', icon: 'academics' }],
   ['academics.classes', { path: '/academics/classes', icon: 'academics' }],
+  ['academics.subjects', { path: '/academics/subjects', icon: 'academics' }],
   // Students, and the two screens under it. The container needs an entry of its own even though
   // it only ever renders as a heading — `NavigationStore` drops an unresolvable id along with its
   // children, so without this both screens would vanish from the menu with the parent.

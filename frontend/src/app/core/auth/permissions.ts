@@ -45,6 +45,10 @@ export const Permissions = {
   CLASS_READ: 'academics:class:read',
   /** Adding, renaming, reordering, retiring and reinstating classes and sections. */
   CLASS_MANAGE: 'academics:class:manage',
+  /** Seeing the subject catalogue. */
+  SUBJECT_READ: 'academics:subject:read',
+  /** Adding, renaming, recoding, retiring and reinstating subjects. */
+  SUBJECT_MANAGE: 'academics:subject:manage',
 
   /** Seeing the student list and a child's record. `StudentPermissions.STUDENT_READ`. */
   STUDENT_READ: 'student:student:read',

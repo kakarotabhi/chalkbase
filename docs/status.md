@@ -26,7 +26,8 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
-| Academic sessions, classes and sections | ✅ Done · ⬜ subjects |
+| Academic sessions, classes and sections | ✅ Done |
+| Subjects | ✅ Done |
 | Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
 | Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
 
@@ -44,8 +45,8 @@ glance and are not.
 | School profile | ✅ Done | `GET`/`PUT /api/school/profile`, its screen, and the registry write-back. |
 | Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
 | Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
-| **Subjects** | ❌ Not started | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished. |
-| Roles and permissions | ⚠️ Enforced, not manageable | 14 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen. |
+| Subjects | ✅ Done | The flat catalogue (no ladder, no relation to a class or section), paged, retire and reinstate. |
+| Roles and permissions | ⚠️ Enforced, not manageable | 16 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen. |
 | User management | ⚠️ Model only | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them. |
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
@@ -138,7 +139,8 @@ Shape of the remaining work: the columns ADR-0020 §2 left out, each paired with
 
 ### 2. Subjects
 
-The last piece of master data. Small, and it unblocks marks and the timetable later.
+~~The last piece of master data.~~ ✅ Closed. `subject` (flat, paged, retire and reinstate) is
+built; see [Done](#done).
 
 ### 3. Roles, users, and what a session re-validates
 
@@ -245,6 +247,7 @@ here. What is left is externally blocked rather than undecided.
 | A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school` | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md) |
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 | Encryption-at-rest machinery: AES-GCM `EncryptedStringConverter`, `@Encrypted`, the `EncryptionBindingTests` binding it to `@Classification`, and `EncryptionKeyConfiguration` | [ADR-0022](architecture/adr/0022-encryption-at-rest.md) |
+| Subjects: a flat, paged catalogue, retire and reinstate, the last piece of Phase 1 master data | `academics/` |
 
 ## Known gaps and debt
 
@@ -380,6 +383,10 @@ Recorded so they are decided rather than discovered.
   reactivate that row rather than create a new one. That is the intended behaviour, but it makes
   showing inactive classes findable a correctness concern rather than a nicety — a user who cannot
   see the retired row hits a name clash they cannot explain.
+- **The same trap applies to a retired subject.** `uq_subject_name` and `uq_subject_code` do not
+  account for `active` either, so a school that retires "Hindi" and later adds it back must
+  reinstate that row rather than create a second one — and the subjects screen names the row
+  already holding a clash for exactly this reason, the same fix the classes screen still lacks.
 - **`AGENTS.md` claimed two things that were not true** and now does not: indexes are `idx_`, not
   `ix_`, and the `@Classification` annotation ADR-0014 describes does not exist, so nothing fails
   the build for an unclassified field. Both were found by agents reading the file and trying to

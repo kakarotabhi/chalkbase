@@ -45,7 +45,11 @@ public enum AcademicsErrorCode implements ErrorCode {
     INCOMPLETE_CLASS_ORDER(
             "ACAD_007",
             "The new order must list every class of this school exactly once",
-            HttpStatus.UNPROCESSABLE_ENTITY);
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    DUPLICATE_SUBJECT_NAME("ACAD_008", "A subject with this name already exists", HttpStatus.CONFLICT),
+
+    DUPLICATE_SUBJECT_CODE("ACAD_009", "A subject with this code already exists", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

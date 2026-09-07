@@ -11,7 +11,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
 | `student` | `student`, `guardian`, `student_guardian`, `student_enrolment` (per tenant); documents and alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment and CSV import built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
-| `academics` | `academic_session`, `school_class`, `section` (per tenant); subjects, timetable and syllabus still planned | `/api/academics/**` | yes | sessions and classes built |
+| `academics` | `academic_session`, `school_class`, `section`, `subject` (per tenant); timetable and syllabus still planned | `/api/academics/**` | yes | sessions, classes and subjects built |
 | `attendance` | student and staff attendance | `/api/attendance` | yes | planned |
 | `exam` | assessments, marks, report cards | `/api/exams` | yes | planned |
 | `fee` | fee heads, concessions, invoices, receipts | `/api/fees` | yes | planned |
@@ -44,6 +44,11 @@ Modules are added in roadmap order — see
 - **Classes and sections are structural, not per session** ([ADR-0019](adr/0019-classes-and-sections.md)).
   The session appears on what references them — enrolment first, and later the class-teacher
   assignment, which genuinely changes every year.
+- **Subjects are a flat catalogue, not a ladder.** `subject` carries no `sequence` — a subject has
+  no natural order the way a class does — and no relation to `school_class` or `section`: which
+  classes teach which subjects is a subject allocation for the timetable and marks modules to
+  decide, not this one. It is deactivated rather than deleted for the same reason ADR-0019 gives
+  classes and sections that treatment.
 
 ## Reaching across a module boundary
 
