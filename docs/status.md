@@ -20,7 +20,7 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Architecture decisions (ADR-0001…0022) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
-| Permissions, roles, scoped grants | ✅ Enforced · ⚠️ no way to manage them in the product |
+| Permissions, roles, scoped grants | ✅ Enforced and manageable · ⬜ impact preview, ⬜ screen |
 | Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
@@ -45,8 +45,8 @@ glance and are not.
 | Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
 | Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
 | **Subjects** | ❌ Not started | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished. |
-| Roles and permissions | ⚠️ Enforced, not manageable | 14 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen. |
-| User management | ⚠️ Model only | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them. |
+| Roles and permissions | ✅ Backend done · ⬜ screen | 15 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` now creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred as a frontend-shaped feature; `GET /api/access/roles/{id}/holders` is the read a future screen would build it from. **No screen yet.** |
+| User management | ✅ Backend done · ⬜ screen | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` now creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. **No screen yet.** |
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | **Documents** | ❌ Not started | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task. |
@@ -233,6 +233,8 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
+| User account lifecycle: create, deactivate, reactivate, unlock and admin password reset, all at `/api/access/users` | `UserAccountManagementService`, `UserAccountController` |
+| Role management: create a role, replace its permission set, grant or revoke it for a user, with guards against privilege escalation and against locking a school out of its own access | `RoleManagementService`, `AccessGuardrails`, `AccessController` |
 
 ## Known gaps and debt
 
