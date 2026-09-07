@@ -6,6 +6,7 @@ Deployment target: a self-hosted VPS running [Coolify](https://coolify.io/docs/)
 |---|---|
 | [The Render dev environment on the free tier](render-free-tier.md) | deploying to Render, or explaining why a cold start takes four minutes |
 | [The encryption key](encryption-key.md) | generating, setting, or backing up `CHALKBASE_ENCRYPTION_KEY` (ADR-0022) |
+| [Document storage](document-storage.md) | setting the five `CHALKBASE_STORAGE_*` variables for the S3-compatible adapter (ADR-0025) |
 
 ## Runbooks to write before the first school goes live
 

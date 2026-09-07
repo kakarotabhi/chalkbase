@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 
 /**
  * A real {@link StorageService}, backed by the local filesystem, for {@code local} and {@code test}
@@ -46,7 +43,7 @@ final class FilesystemStorageService implements StorageService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new StoredObject(relativeKey, content.length, sha256(content));
+        return new StoredObject(relativeKey, content.length, Checksums.sha256(content));
     }
 
     @Override
@@ -89,15 +86,5 @@ final class FilesystemStorageService implements StorageService {
             throw new IllegalArgumentException("relativeKey escapes its tenant directory: " + relativeKey);
         }
         return target;
-    }
-
-    private static String sha256(byte[] content) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(content));
-        } catch (NoSuchAlgorithmException e) {
-            // Every JDK ships SHA-256; this is not a real branch.
-            throw new IllegalStateException(e);
-        }
     }
 }

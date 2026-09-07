@@ -1,0 +1,282 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+@use '../../../styles/controls' as *;
+
+:host {
+  display: block;
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.section__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.section__actions {
+  display: flex;
+  gap: var(--cb-space-2);
+}
+
+.section__lede,
+.page-status,
+.muted,
+.facts__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.section__lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+.page-status {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── The upload and edit panels ───────────────────────────────────────────────
+
+.editor {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-4);
+  padding: var(--cb-space-4);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  // A long filename in the "Edit — <name>" heading wraps rather than pushing the panel wide.
+  overflow-wrap: anywhere;
+}
+
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+.step__why {
+  margin: var(--cb-space-2) 0 0;
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// A plain `<input type="file">` — see the component's own comment on why it stays plain.
+.file {
+  @include control-surface;
+
+  padding: var(--cb-space-2) var(--cb-space-3);
+  line-height: var(--cb-touch-target-min);
+
+  &::file-selector-button {
+    min-height: 2rem;
+    margin-right: var(--cb-space-3);
+    padding: 0 var(--cb-space-3);
+    border: 1px solid var(--cb-border-strong);
+    border-radius: var(--cb-radius-sm);
+    background: var(--cb-surface);
+    color: var(--cb-text);
+    font: inherit;
+    cursor: pointer;
+  }
+}
+
+.chosen {
+  margin: var(--cb-space-3) 0 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.chosen__name {
+  // A file name can be long and has no spaces to break at.
+  overflow-wrap: anywhere;
+  color: var(--cb-text);
+}
+
+.progress {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.progress__bar {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  margin-bottom: var(--cb-space-2);
+  accent-color: var(--cb-info);
+}
+
+.progress__label {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+.documents {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+  padding: 0;
+  max-width: 60rem;
+  list-style: none;
+}
+
+.document {
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.document__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-1);
+}
+
+.document__type {
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.document__status {
+  display: inline-block;
+  padding: 0 var(--cb-space-2);
+  border-radius: var(--cb-radius-lg);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.document__status--verified {
+  background: var(--cb-success-surface);
+  color: var(--cb-success);
+}
+
+.document__status--rejected {
+  background: var(--cb-danger-surface);
+  color: var(--cb-danger);
+}
+
+.document__status--unverified {
+  background: var(--cb-info-surface);
+  color: var(--cb-info);
+}
+
+.document__filename {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+  // A name chosen by whoever scanned the file — it can be long and has no spaces to break at.
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0 0 var(--cb-space-3);
+
+  @include from-medium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.facts__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-sm);
+  }
+}
+
+.document__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cb-space-2);
+}
+
+/**
+ * A real navigation to `GET /api/documents/{id}/content` (ADR-0025), styled to sit beside
+ * `cb-button` without being one — see the template's own comment for why this is a plain `<a>`.
+ * Matches `.btn.btn--secondary` in shape and size so the row does not read as three different
+ * kinds of control.
+ */
+.btn-like {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-4);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-surface);
+  color: var(--cb-text);
+  font-weight: 600;
+  font-size: var(--cb-font-size-base);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--cb-surface-raised);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+}

@@ -228,5 +228,9 @@
         (changed)="onChildChanged($event)"
       />
     </section>
+
+    <section class="card" aria-label="Documents">
+      <cb-student-documents [studentId]="loaded.id" (changed)="onDocumentsChanged($event)" />
+    </section>
   }
 }

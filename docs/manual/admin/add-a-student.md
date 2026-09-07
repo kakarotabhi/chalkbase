@@ -69,6 +69,39 @@ Below the guardians you will find four more sections on the record:
 All four are edited the same way as the details above: select **Edit**, fill in what you know, and
 save. Nothing on a form is required unless the school has it.
 
+## Documents
+
+Below Compliance is **Documents**: the birth certificate, the transfer certificate, a report card,
+the child's photo, their signature, or anything else the school keeps a scan of.
+
+**Who can do this:** seeing a student's documents needs "View documents"; uploading, correcting or
+deleting one needs "Manage documents". These are separate from every other permission on this
+record, so a school can hand out either without the other — an office clerk who scans certificates
+does not need to be able to edit a student's date of birth to do it, and someone who can already
+manage the rest of the record does not automatically get this too.
+
+1. Select **Add a document**, choose the type from the list, and pick the file. A PDF, a JPEG or a
+   PNG, up to 8 MB.
+2. Issue date and expiry date are both optional — a photo or a birth certificate has neither, and a
+   transfer certificate or a certificate with a validity period usually has both.
+3. Select **Upload**. Large files show progress while they travel; a file over the limit is refused
+   immediately, with nothing uploaded.
+
+Once uploaded, a document can be corrected (its type, its dates) or marked **Verified** or
+**Rejected** once the office has checked it against the original — select **Edit** on that
+document's card. **Delete** removes it outright; unlike the student record itself, there is no
+reason to keep a wrongly attached file, so this is a real, permanent removal, not a status change.
+
+**Downloading is always through this app, never a direct link.** Every download is checked against
+your permission at the moment you ask for it and is written to the audit log as an export, the same
+as any other document leaving the school's system.
+
+**Caste certificates, Aadhaar copies and disability certificates do not belong here yet.** The kind
+of document itself would disclose the same sensitive category a `caste` or `disability` field would,
+and that needs the same protection those fields are still waiting on. Attaching one under **Other**
+is not a safe substitute — ask before you do, and expect this to be revisited once that protection
+exists.
+
 ## Masked fields, and who can see them
 
 A caste, a religion, a category, a disability status, an allergy, a medication or an APAAR id is
@@ -91,13 +124,14 @@ all, and the save is refused.
 
 ## What is not here yet
 
-Documents, photographs, and anything to do with transport or hostel are **not yet available** on
-this record. Transport and hostel will arrive as a need flag at most, once those modules exist —
-this record was never meant to hold a route or a room assignment of its own.
+Anything to do with transport or hostel is **not yet available** on this record — those will arrive
+as a need flag at most, once those modules exist, since this record was never meant to hold a route
+or a room assignment of its own.
 
 ## What is recorded
 
 Every change here goes to the audit log: who added or edited a student, who attached a guardian,
-who changed an enrolment, and when — and, separately, who revealed a masked caste, religion,
-category, medical or APAAR field, and when. The log records which fields changed and never the
-values, and it never contains a child's name or admission number.
+who changed an enrolment, who uploaded, corrected or deleted a document, and when — and, separately,
+who revealed a masked caste, religion, category, medical or APAAR field, and when, and who
+downloaded a document. The log records which fields changed and never the values, and it never
+contains a child's name or admission number.

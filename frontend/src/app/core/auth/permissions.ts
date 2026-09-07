@@ -93,6 +93,11 @@ export const Permissions = {
 
   /** Reading this school's audit log. `AuditPermissions.AUDIT_READ`. */
   AUDIT_READ: 'platform:audit:read',
+
+  /** Seeing a student's documents and downloading their content. `DocumentPermissions.DOCUMENT_READ`. */
+  DOCUMENT_READ: 'document:document:read',
+  /** Uploading, editing, verifying and deleting a student's documents. */
+  DOCUMENT_MANAGE: 'document:document:manage',
 } as const;
 
 /** One of the codes above. Nothing else may be passed to a permission check. */
