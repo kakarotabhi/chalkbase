@@ -3,7 +3,7 @@
 Living status. **Updated in the same pull request as the work it describes** — a status file that is
 updated "later" is worse than none, because people trust it.
 
-Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
+Last updated: 2026-09-07 · Roadmap phase: **2** — Phases 0 and 1 are complete
 ([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md) ·
 [Phase 2 scope](requirements/08-phase-2-scope.md), planned ahead of Phase 1 finishing so it can be handed out
 the way Phase 1's work was)
@@ -61,10 +61,24 @@ glance and are not.
 | **Basic dashboards** | ✅ Done | `GET /api/dashboard` and its screen: the current session, students enrolled and by class, guardians without a student or students without a guardian, and recent audit activity for whoever holds `platform:audit:read` — each tile gated on its own module's read permission, server-side. The landing screen for most users now; see [Done](#done). |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, record counts, and a scheduled seven-year retention purge ([ADR-0026](architecture/adr/0026-audit-retention-purge.md)). |
 
-**The four exit criteria are met.** A school can be configured with a session; students and guardians
-can be created or imported; users sign in with the permissions their role grants; and creates,
-updates, deletes and logins are audited. Phase 1 is *usable* and it is not *finished* — the gap
-between those two is the four unstarted features and the three partials above.
+**Phase 1 is complete.** All eleven roadmap features are built, every backend controller has a
+screen, and it is deployed and verified on Render. The four exit criteria were met before the phase
+finished and still are: a school can be configured with a session; students and guardians can be
+created or imported; users sign in with the permissions their role grants; and creates, updates,
+deletes and logins are audited.
+
+Two things are deliberately *not* built and are not gaps. **Transport and hostel** sections on the
+student record wait for their Phase 4 modules — a need-flag that nothing reads is a field a user
+fills in for no reason. And **documents stores nothing on a deployed environment** until the five
+`CHALKBASE_STORAGE_*` variables are set on it; the code is complete and the deployment answers a
+clean 503 until then ([document storage](operations/document-storage.md)). Both are recorded under
+*Decisions taken and not to be reopened* and in the operations notes rather than left to be
+rediscovered.
+
+The honest caveat on "complete": it means every feature the roadmap named exists end to end, not
+that it has met a real school. The largest untested thing is volume — the seed is a few dozen
+students, so no list screen, no paging and no search has ever been exercised at the ~600 rows a real
+school has.
 
 **Built in Phase 1 but not on its list**, because the roadmap assumed them rather than naming them:
 identity, login and server-side sessions; forced password change, enforced on the server; schema-per-
