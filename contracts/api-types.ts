@@ -842,7 +842,15 @@ export interface components {
             readonly errorCount: number;
             readonly errors: readonly components["schemas"]["ImportError"][];
             /** Format: int32 */
+            readonly guardianLinksCreated: number;
+            /** Format: int32 */
+            readonly guardiansCreated: number;
+            /** Format: int32 */
+            readonly guardiansMatched: number;
+            /** Format: int32 */
             readonly imported: number;
+            /** Format: int32 */
+            readonly studentsLinkedToExistingGuardians: number;
             /** Format: int32 */
             readonly totalRows: number;
             /** Format: int32 */

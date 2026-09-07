@@ -1068,7 +1068,23 @@
             },
             "type": "array"
           },
+          "guardianLinksCreated": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "guardiansCreated": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "guardiansMatched": {
+            "format": "int32",
+            "type": "integer"
+          },
           "imported": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "studentsLinkedToExistingGuardians": {
             "format": "int32",
             "type": "integer"
           },
@@ -1084,7 +1100,11 @@
         "required": [
           "errorCount",
           "errors",
+          "guardianLinksCreated",
+          "guardiansCreated",
+          "guardiansMatched",
           "imported",
+          "studentsLinkedToExistingGuardians",
           "totalRows",
           "validRows"
         ],
