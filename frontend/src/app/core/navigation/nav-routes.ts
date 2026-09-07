@@ -78,9 +78,18 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['students.import', { path: '/students/import', icon: 'students' }],
   // `/students/:id` is deliberately not here and never will be. The registry maps ids the *server*
   // sends to menu destinations, and a student's record is reached from the list, not from a menu.
-  // `settings.access` is deliberately absent. The backend emits it, it has no screen in this
-  // build, and so it stays dropped-and-logged — an entry here would be a menu item that 404s,
-  // which is the one thing this registry exists to prevent.
+  // Roles and access. `IdentityNavigation` has emitted this id since the navigation catalogue
+  // landed; it was dropped-and-logged every visit because there was no screen behind it, and this
+  // entry is what switches the menu item on. Same glyph as `settings` and `settings.profile` —
+  // three settings entries sharing one icon is this file's own existing convention for a section,
+  // and the label is what tells them apart.
+  ['settings.access', { path: '/settings/access', icon: 'settings' }],
+  // The account roster is deliberately **not** here. `IdentityNavigation` (backend) declares only
+  // `settings` and `settings.access` — there is no `settings.users` id for this map to resolve, so
+  // adding one would be inventing a route the server-driven menu can never send and this registry
+  // exists to prevent exactly that (see the header comment). The screen still exists at
+  // `/settings/users` and is reachable from a link on the access screen and by typing the URL; see
+  // `docs/status.md` and the PR that added this comment for the backend id this is waiting on.
 ]);
 
 /**
