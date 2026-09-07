@@ -196,6 +196,43 @@
   font-weight: 600;
 }
 
+// ── The impact preview ──────────────────────────────────────────────────
+
+.impact-preview {
+  margin: 0 0 var(--cb-space-4);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.impact-preview__heading {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--cb-text-muted);
+}
+
+.impact-preview__count,
+.impact-preview__none {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+}
+
+.impact-preview__none {
+  color: var(--cb-text-muted);
+}
+
+.impact-preview__holders {
+  font-weight: 600;
+}
+
+.impact-preview .banner:last-child {
+  margin-bottom: 0;
+}
+
 // ── Roles ────────────────────────────────────────────────────────────────
 
 .role-list {

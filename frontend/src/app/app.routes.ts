@@ -156,10 +156,11 @@ export const routes: Routes = [
         title: 'Roles and access · Chalkbase',
         loadComponent: () => import('./features/access/access-roles').then((m) => m.AccessRoles),
       },
-      // The account roster. Not on the server-driven menu yet — see the comment on
-      // `settings.access` in `nav-routes.ts` — so it is reached from a link on the access screen
-      // or by typing the URL. No guard, matching every other screen in this section: the endpoints
-      // enforce `identity:user:read` / `identity:user:manage` on their own.
+      // The account roster, on the server-driven menu as `settings.users` (`nav-routes.ts`),
+      // gated there on `identity:user:read`. No guard here regardless, matching every other screen
+      // in this section: the endpoints enforce `identity:user:read` / `identity:user:manage` on
+      // their own, and the menu item withheld for anyone without the first is a convenience, not
+      // the control (ADR-0008).
       {
         path: 'settings/users',
         title: 'User accounts · Chalkbase',
