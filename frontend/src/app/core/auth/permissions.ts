@@ -73,6 +73,13 @@ export const Permissions = {
 
   /** Seeing who holds an account at this school. */
   USER_READ: 'identity:user:read',
+  /**
+   * Creating an account, deactivating or reactivating one, clearing a lockout, and issuing an
+   * admin password reset. `IdentityPermissions.USER_MANAGE`, deliberately separate from
+   * `ROLE_MANAGE`: a school may want someone who runs the office roster without also handing them
+   * the ability to change what any role may do.
+   */
+  USER_MANAGE: 'identity:user:manage',
   /** Reading the permission catalogue and this school's roles, and deciding who holds them. */
   ROLE_MANAGE: 'identity:role:manage',
 

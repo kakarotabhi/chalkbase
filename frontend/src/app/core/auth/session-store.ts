@@ -83,6 +83,21 @@ export class SessionStore {
     return this.grantedPermissions().has(permission);
   }
 
+  /**
+   * The same question as {@link has}, for a permission code this app did not itself name.
+   *
+   * `Permissions` in `core/auth/permissions.ts` is a closed list of the codes *this app* knows how
+   * to ask about; the access screens read a permission **catalogue** off the wire
+   * (`GET /api/access/permissions`) to build a role's editor, and that list is the backend's, not
+   * this file's. Checking an arbitrary string against it is exactly what `AccessGuardrails` does
+   * server-side for `AUTH_011` — this is the client-side version, used to grey out a permission
+   * nobody here holds before the request is ever sent, and to say *which* one it was if the guard
+   * is hit anyway.
+   */
+  hasCode(code: string): boolean {
+    return this.grantedPermissions().has(code);
+  }
+
   signedIn(user: LoginResponse, passwordUsed: string): void {
     this.currentUser.set(user);
     this.pendingPassword.set(user.mustChangePassword ? passwordUsed : null);
