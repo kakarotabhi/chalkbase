@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { Subject as SubjectModel } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
@@ -135,18 +136,24 @@ describe('Subjects', () => {
   // ── Search ───────────────────────────────────────────────────────────────────────────────
 
   it('searches by name or code', () => {
-    arrive();
+    vi.useFakeTimers();
+    try {
+      arrive();
 
-    type('subject-search', 'math');
-    fixture.detectChanges();
+      type('subject-search', 'math');
+      vi.advanceTimersByTime(400);
+      fixture.detectChanges();
 
-    const request = httpMock.expectOne(
-      (candidate) => candidate.url === SUBJECTS_URL && candidate.params.get('q') === 'math',
-    );
-    request.flush(envelope(page([subject()])));
-    fixture.detectChanges();
+      const request = httpMock.expectOne(
+        (candidate) => candidate.url === SUBJECTS_URL && candidate.params.get('q') === 'math',
+      );
+      request.flush(envelope(page([subject()])));
+      fixture.detectChanges();
 
-    expect(text()).toContain('Mathematics');
+      expect(text()).toContain('Mathematics');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // ── Adding ───────────────────────────────────────────────────────────────────────────────
