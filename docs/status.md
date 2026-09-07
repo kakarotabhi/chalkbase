@@ -46,11 +46,16 @@ remains the production plan.
 Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
 `auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
 
-**Two things that look like faults and are not.**
+**Three things that look like faults and are not.**
 
-The first request after fifteen minutes of idle takes about ninety seconds — measured at 86s to a
-200. Free instances sleep, and this one runs a per-tenant Flyway pass on wake. Nothing in the
-configuration fixes that; it is the tier.
+The first request after fifteen minutes of idle takes **86 to 121 seconds** to a 200 — three
+measurements: 86 s, 96 s, 121 s. Free instances sleep, and this one runs a per-tenant Flyway pass on
+wake. Nothing in the configuration fixes that; it is the tier.
+
+A backend deploy times out when the service has been asleep for hours, and succeeds when it is warm,
+so **hit the health endpoint until it answers before triggering a deploy.** The evidence, the
+numbers and the version-skew this leaves behind are in
+[the free-tier runbook](operations/render-free-tier.md).
 
 `POST /api/schools` requires an `X-Chalkbase-Setup-Key` header on this deployment and answers 404
 without it, byte-identical to any unmapped path. Onboarding creates a PostgreSQL schema, and leaving
@@ -58,9 +63,14 @@ it open on a public URL is a way for anyone who finds it to fill the database wi
 application refuses to start on `prod` if the key is unset, because a deployment that silently falls
 back to open onboarding is worse than one that will not boot.
 
-**Numbers worth keeping.** Spring context startup on a free instance: 102 s. Tenant migration:
-**4,019 ms for one school**, which is the figure that makes ADR-0011's "move startup migration to a
-deploy step" expiry concrete — fifty schools would be over three minutes of every cold start.
+**Numbers worth keeping.** Spring context startup on a free instance: **~257 s**, from four
+measurements (257.2, 257.9, 256.8, 261.1). The per-tenant Flyway pass: **7,955 ms and 8,081 ms**,
+one figure per school, now that a `qa_sandbox` schema exists alongside `demo_school`. That
+per-school figure is what makes ADR-0011's "move startup migration to a deploy step" expiry
+concrete — at ~8 s each, fifty schools would be close to seven minutes of every cold start, and
+startup already passes the one-minute trigger the ADR names. Where the 257 s goes — the one-CPU
+instance and Spring Modulith's runtime module scan, which the product owner has decided to keep —
+is in [the free-tier runbook](operations/render-free-tier.md).
 
 ## What to do next
 
@@ -279,8 +289,11 @@ Recorded so they are decided rather than discovered.
 - `guardian.phone` is `varchar(20)`. `+91 98765 43210` fits at 16; a longer international number
   with an extension would not.
 - Startup migration measured **9.4 s for two schools** against the Seoul database — ~4.7 s each,
-  dominated by round trips. Fifty schools would be about four minutes of startup. Mumbai (ADR-0015)
-  will cut it sharply; the linear shape does not change, so the ADR-0011 expiry stands.
+  dominated by round trips. That was from a developer machine; from the Render free instance the
+  same pass costs ~8 s per school ([runbook](operations/render-free-tier.md)) — the same shape on a
+  slower client rather than a different finding. Fifty schools would be four to seven minutes of
+  startup depending on where it runs. Mumbai (ADR-0015) will cut it sharply; the linear shape does
+  not change, so the ADR-0011 expiry stands.
 - Startup migration is deliberate and has a recorded expiry — move it to a deploy step once startup
   passes ~1 minute, a second replica appears, or tenant count passes ~50 (ADR-0011).
 - The tenant is a **campus**, not a group: a multi-campus trust gets one schema per campus, with the
