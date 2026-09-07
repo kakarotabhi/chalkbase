@@ -16,6 +16,10 @@
 > **Changing the API?** The contract between the two sides is generated, and the two files in
 > `contracts/` are committed. [`contracts/README.md`](../../contracts/README.md) has the recipe for
 > adding a field, a record or an endpoint — the nullable-response case is the one with a trap in it.
+>
+> **Handing work to more than one agent at a time?** [Parallel work](parallel-work.md) lists what
+> actually collides — the generated contract, a handful of frontend registries, `RoleTemplates`,
+> migration ordering and `status.md` — and which of the open items can run concurrently.
 
 ## Setup
 
@@ -87,15 +91,17 @@ Two independent workflows, so a backend change never waits on a frontend build a
 | [`.github/workflows/backend.yml`](../../.github/workflows/backend.yml) | `backend/**`, its Dockerfile | `./mvnw verify` (tests + module boundaries + format gate), uploads the jar; on `main` also builds the Docker image |
 | [`.github/workflows/frontend.yml`](../../.github/workflows/frontend.yml) | `frontend/**`, its Dockerfile and nginx config | Prettier check, tests, build, uploads the bundle; on `main` also builds the Docker image |
 
-Both run on **every push to any branch** and on pull requests, and can be started by hand from the
-Actions tab.
+Both run on **pushes to `main`** and on **every pull request**, and can be started by hand from the
+Actions tab. A push to a feature branch runs nothing until a pull request exists — listening to both
+triggers ran every suite twice on every PR.
 
 The image jobs build but do not push — Coolify builds from the repository itself. They exist so a
 broken Dockerfile fails in CI instead of during a deploy. If Coolify is later switched to pulling
 prebuilt images, these are where the push to GHCR goes.
 
-Both workflows are path-filtered **on push** so branch pushes stay fast, but run **unfiltered on
-pull requests** — a required status check that never starts would block a docs-only PR forever.
+Both workflows are path-filtered **on push**, but run **unfiltered on pull requests** — a required
+status check that never starts would block a docs-only PR forever. Each job is under 30 seconds, so
+running both on every PR is cheap.
 
 The image jobs run only on `main`, so they are not required checks.
 

@@ -2,6 +2,10 @@
 
 Deployment target: a self-hosted VPS running [Coolify](https://coolify.io/docs/). See `ops/`.
 
+| Page | Read it when |
+|---|---|
+| [The Render dev environment on the free tier](render-free-tier.md) | deploying to Render, or explaining why a cold start takes four minutes |
+
 ## Runbooks to write before the first school goes live
 
 - [ ] Deploy and rollback (Coolify application + database service)
