@@ -57,7 +57,7 @@ glance and are not.
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | Documents | ⚠️ Backend only · no screen | [ADR-0025](architecture/adr/0025-document-storage.md) built the storage port, the `document` module, and attaching a certificate, photo, signature or other document to a student ([FR-013](requirements/02-functional-requirements.md), [FR-032](requirements/02-functional-requirements.md)) — upload, list, download (proxied, never a signed URL), edit and delete, all audited. `local`/`test` get a real filesystem adapter; `prod` answers a clear 503 until the S3-compatible adapter is built and configured — **the dependency decision is taken**: Supabase Storage over its S3-compatible API, with AWS SDK v2 for SigV4 rather than a hand-rolled signer, because signing is security-sensitive code where a subtle error costs more than jar weight, and `url-connection-client` keeps that cost proportionate by avoiding an async HTTP stack for a dozen synchronous operations, so no document actually persists on the deployed environment yet. Renewal reminders are modelled (`expiry_date`) but not built — no scheduler exists to run one. Restricted-category document types (a caste certificate, an Aadhaar copy) are deliberately excluded until the same encryption machinery ADR-0020 §2 is waiting on lands. **No screen yet.** |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
-| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited. **The masking now exists** — the student record's Restricted fields are encrypted at rest, returned as presence flags by an ordinary read, and decrypted only by a separate endpoint that requires `student:student:reveal_restricted` and writes an audit event. So the reason this was deliberately unbuilt is gone, and what remains is the work itself. Decided: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields, never the values. |
+| **Export** | ✅ Done | `GET /api/students/export` and `GET /api/guardians/export` (masked, `student:student:read`/`student:guardian:read`) and `GET /api/students/export/unmasked` (`student:student:export_unmasked`, held by no shipped role template). Masking is derived from `@Classification` at write time, not a hand-written column list ([ADR-0027](architecture/adr/0027-export-masking.md)): a Restricted column is omitted from the file entirely in the masked mode, never blanked or marked. Every export — masked included, because a masked file still carries Confidential names — writes `AuditAction.DATA_EXPORTED` naming the columns disclosed and the row count, in its own transaction. Streamed straight into the response as CSV; nothing builds the file in memory first. |
 | **Basic dashboards** | ✅ Done | `GET /api/dashboard` and its screen: the current session, students enrolled and by class, guardians without a student or students without a guardian, and recent audit activity for whoever holds `platform:audit:read` — each tile gated on its own module's read permission, server-side. The landing screen for most users now; see [Done](#done). |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, record counts, and a scheduled seven-year retention purge ([ADR-0026](architecture/adr/0026-audit-retention-purge.md)). |
 
@@ -186,9 +186,8 @@ storage port item 4 describes.
 ### Also queued, not blocking
 
 - Deploy to Coolify on the Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)).
-- Export, which is deliberately unbuilt: ADR-0014 wants exports masked by classification with the
-  unmasked one audited, and neither exists. An export ignoring that would be the largest unaudited
-  disclosure surface in the product.
+- ~~Export, which is deliberately unbuilt~~ ✅ Closed. See the Export row above and
+  [ADR-0027](architecture/adr/0027-export-masking.md).
 - A larger synthetic seed — the `local` profile seeds one school with a few dozen students
   ([running locally](development/running-locally.md)); list screens and performance want ~600.
 
@@ -321,6 +320,7 @@ no reason, and the sections land with the modules.
 | The users roster on the server-driven menu: `settings.users`, gated on `identity:user:read` | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | The role-edit impact preview: who holds a role, and whether saving signs them out immediately or waits for their next login | `features/access/access-roles.ts` |
 | Session cleanup investigated: `JdbcIndexedSessionRepository` already purges `public.spring_session` itself, on its own scheduler, on by default — no second job needed, made explicit in configuration | [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md) |
+| Student and guardian CSV export, masked by classification with an audited unmasked permission of its own | [ADR-0027](architecture/adr/0027-export-masking.md), `platform/export/`, `StudentExportService` |
 
 ## What is left on the frontend
 

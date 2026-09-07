@@ -133,6 +133,31 @@ append-heavy logs (audit and notification delivery) if they ever need it.
 3. If the change adds a unique or check constraint, add a `ConstraintMapping` in the same commit, or
    violations surface as a generic conflict instead of a useful sentence.
 
+## Exports, and the other endpoints outside the envelope
+
+Two shapes of response are deliberately not `ApiResponse<T>`: a document's bytes
+(`GET /api/documents/{id}/content`) and a CSV export (`GET /api/students/export`,
+`GET /api/students/export/unmasked`, `GET /api/guardians/export`). Both answer with the file
+itself — a browser needs the raw bytes and a `Content-Disposition: attachment` header, not a JSON
+envelope wrapped around them — and both are still exactly as much JSON as everywhere else when they
+fail: a 403 or a 404 from either controller is the ordinary envelope.
+
+An export additionally:
+
+- **Streams.** The controller method returns `ResponseEntity<StreamingResponseBody>` and the file is
+  written straight to the response as it is built, row by row — never assembled as a `String` or a
+  `byte[]` first. See [ADR-0027](../architecture/adr/0027-export-masking.md) §5.
+- **Masks by `@Classification`, not by a column list.** `platform.export.ClassificationCsvExporter`
+  reads each exported row's own `@Classification` and omits every `RESTRICTED` column from the
+  default (masked) file entirely — no empty cell, no marker. `CONFIDENTIAL` and `INTERNAL` columns
+  are never masked (ADR-0027 §§1–2).
+- **Is audited unconditionally.** Every export — masked included — writes
+  `AuditAction.DATA_EXPORTED` naming the columns actually in the file and the row count, never a
+  value (ADR-0027 §3).
+- **Needs a permission of its own to go unmasked.** `student:student:export_unmasked`
+  (`StudentPermissions`) is held by no shipped role template; `PERM_001` is what a caller without it
+  gets from `/export/unmasked`, the same code every other authorization failure uses.
+
 ## Frontend client
 
 `frontend/src/app/core/api` unwraps the envelope, so components receive plain payloads. Until the
