@@ -177,6 +177,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseDocumentSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DocumentSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseEnrolment": {
         "properties": {
           "data": {
@@ -282,6 +307,34 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/AcademicSessionResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListDocumentSummary": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentSummary"
             },
             "type": "array"
           },
@@ -1490,6 +1543,70 @@
             "$ref": "#/components/schemas/StudentsTile"
           }
         },
+        "type": "object"
+      },
+      "DocumentSummary": {
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documentType": {
+            "enum": [
+              "BIRTH_CERTIFICATE",
+              "TRANSFER_CERTIFICATE",
+              "REPORT_CARD",
+              "PHOTO",
+              "SIGNATURE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "expiryDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issueDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "originalFilename": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "verificationStatus": {
+            "enum": [
+              "UNVERIFIED",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "contentType",
+          "createdAt",
+          "documentType",
+          "id",
+          "originalFilename",
+          "sizeBytes",
+          "studentId",
+          "verificationStatus"
+        ],
         "type": "object"
       },
       "Enrolment": {
@@ -2993,6 +3110,42 @@
         ],
         "type": "object"
       },
+      "UpdateDocumentRequest": {
+        "properties": {
+          "documentType": {
+            "enum": [
+              "BIRTH_CERTIFICATE",
+              "TRANSFER_CERTIFICATE",
+              "REPORT_CARD",
+              "PHOTO",
+              "SIGNATURE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "expiryDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "issueDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "verificationStatus": {
+            "enum": [
+              "UNVERIFIED",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentType",
+          "verificationStatus"
+        ],
+        "type": "object"
+      },
       "UpdateEnrolmentRequest": {
         "properties": {
           "active": {
@@ -3268,7 +3421,7 @@
   "paths": {
     "/api/academics/classes": {
       "get": {
-        "operationId": "list_5",
+        "operationId": "list_6",
         "responses": {
           "200": {
             "content": {
@@ -3346,7 +3499,7 @@
     },
     "/api/academics/classes/{id}": {
       "put": {
-        "operationId": "update_6",
+        "operationId": "update_7",
         "parameters": [
           {
             "in": "path",
@@ -3469,7 +3622,7 @@
     },
     "/api/academics/sessions": {
       "get": {
-        "operationId": "list_4",
+        "operationId": "list_5",
         "responses": {
           "200": {
             "content": {
@@ -3517,7 +3670,7 @@
     },
     "/api/academics/sessions/{id}": {
       "put": {
-        "operationId": "update_5",
+        "operationId": "update_6",
         "parameters": [
           {
             "in": "path",
@@ -3589,7 +3742,7 @@
     },
     "/api/academics/subjects": {
       "get": {
-        "operationId": "list_3",
+        "operationId": "list_4",
         "parameters": [
           {
             "in": "query",
@@ -3655,7 +3808,7 @@
     },
     "/api/academics/subjects/{id}": {
       "put": {
-        "operationId": "update_4",
+        "operationId": "update_5",
         "parameters": [
           {
             "in": "path",
@@ -4274,6 +4427,242 @@
         ]
       }
     },
+    "/api/documents": {
+      "get": {
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListDocumentSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      },
+      "post": {
+        "operationId": "upload",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "studentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "documentType",
+            "required": true,
+            "schema": {
+              "enum": [
+                "BIRTH_CERTIFICATE",
+                "TRANSFER_CERTIFICATE",
+                "REPORT_CARD",
+                "PHOTO",
+                "SIGNATURE",
+                "OTHER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "issueDate",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expiryDate",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDocumentSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      }
+    },
+    "/api/documents/{id}": {
+      "delete": {
+        "operationId": "delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      },
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDocumentSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      },
+      "put": {
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDocumentSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      }
+    },
+    "/api/documents/{id}/content": {
+      "get": {
+        "operationId": "content",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "byte",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "document-controller"
+        ]
+      }
+    },
     "/api/guardians": {
       "get": {
         "operationId": "list_2",
@@ -4560,7 +4949,7 @@
     },
     "/api/schools/{id}": {
       "get": {
-        "operationId": "get",
+        "operationId": "get_1",
         "parameters": [
           {
             "in": "path",
