@@ -55,12 +55,22 @@ Two habits, both from mistakes made here rather than from principle.
 ## Work that is not a task yet
 
 Some things in [status.md](../status.md) cannot be assigned, because a decision is missing rather
-than effort:
+than effort. Assigning one of those produces an agent inventing the decision, which is the expensive
+kind of rework.
 
-- **Documents** — there is no ADR for file storage at all, and no storage port in the code.
-  Certificates and compliance records ([FR-013](../requirements/02-functional-requirements.md)) have
-  nowhere to put a file.
-- **Audit retention** — ADR-0014 requires a period per category. The number is a legal question.
-- **`.xlsx` import** — needs Apache POI, which AGENTS rule 8 says to ask about before adding.
+The three that used to be listed here have now been decided, and are recorded because the shape of
+the answer is what makes them assignable — not the fact that somebody said yes:
 
-Assigning these produces an agent inventing the decision, which is the expensive kind of rework.
+- **Documents** — a storage **port** in the [ADR-0013](../architecture/adr/0013-external-provider-ports.md)
+  style, with an S3-compatible adapter and Supabase Storage as the development target. There is
+  still no ADR and no port in the code, so **the first commit of that work writes the ADR**; a brief
+  should say so rather than leaving an agent to infer it.
+- **Audit retention** — seven years, one period for every category rather than a schedule per
+  category. The purge job does not exist yet, so this is now effort rather than a question.
+- **`.xlsx` import** — **refused.** Apache POI is not approved: its size and CVE surface are not
+  worth buying while every Excel can *Save As* CSV. The magic-byte refusal in the import is the
+  shipped behaviour, not a placeholder, and a brief that treats it as a gap is wrong.
+
+So the list of genuinely undecided work is currently empty. What remains blocked is blocked
+*externally* — see **Waiting on a decision** in [status.md](../status.md), where TRAI DLT
+registration and the payment gateway sit. Neither is Phase 1.
