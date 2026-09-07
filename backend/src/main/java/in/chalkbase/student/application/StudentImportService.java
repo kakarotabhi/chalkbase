@@ -9,14 +9,20 @@ import in.chalkbase.platform.error.ChalkbaseException;
 import in.chalkbase.student.api.ImportError;
 import in.chalkbase.student.api.ImportReport;
 import in.chalkbase.student.domain.Gender;
+import in.chalkbase.student.domain.Guardian;
+import in.chalkbase.student.domain.GuardianRelation;
 import in.chalkbase.student.domain.Student;
 import in.chalkbase.student.domain.StudentAudit;
 import in.chalkbase.student.domain.StudentEnrolment;
 import in.chalkbase.student.domain.StudentErrorCode;
+import in.chalkbase.student.domain.StudentGuardianLink;
 import in.chalkbase.student.domain.StudentStatus;
 import in.chalkbase.student.infrastructure.CsvReader;
 import in.chalkbase.student.infrastructure.CsvRow;
+import in.chalkbase.student.infrastructure.GuardianRepository;
+import in.chalkbase.student.infrastructure.PhoneDigits;
 import in.chalkbase.student.infrastructure.StudentEnrolmentRepository;
+import in.chalkbase.student.infrastructure.StudentGuardianRepository;
 import in.chalkbase.student.infrastructure.StudentRepository;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -37,6 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,15 +116,37 @@ public class StudentImportService {
     private static final String SECTION = "section";
     private static final String ROLL_NUMBER = "roll_number";
 
+    // ── Guardian columns (ADR-0021 §4) ──────────────────────────────────────────────────────
+    //
+    // One guardian per row, not two — a father's columns and a mother's would double every one of
+    // them for a relationship most schools will fill in for one parent and leave blank for the
+    // other. A student needing a second guardian on record gets one the way any student does today:
+    // GuardiansApi search-and-link, after the import, from that child's own record. All five columns
+    // here are optional as a group: a row that names none of them simply has no guardian yet.
+    private static final String GUARDIAN_NAME = "guardian_name";
+    private static final String GUARDIAN_PHONE = "guardian_phone";
+    private static final String GUARDIAN_RELATION = "guardian_relation";
+    private static final String GUARDIAN_EMAIL = "guardian_email";
+    private static final String GUARDIAN_PRIMARY = "guardian_primary";
+
     /** Without these the file cannot describe a child at all. */
     private static final List<String> REQUIRED_COLUMNS =
             List.of(ADMISSION_NUMBER, FULL_NAME, DATE_OF_BIRTH, GENDER, CLASS, SECTION);
 
     /**
-     * Recognised but not required. {@code status} defaults to {@code ACTIVE}, and the other two are
+     * Recognised but not required. {@code status} defaults to {@code ACTIVE}, the guardian columns
+     * are a family that is either all absent or names one person (ADR-0021 §4), and the rest are
      * genuinely unknown for a record migrated off a paper register (ADR-0020).
      */
-    private static final List<String> OPTIONAL_COLUMNS = List.of(STATUS, ADMITTED_ON, ROLL_NUMBER);
+    private static final List<String> OPTIONAL_COLUMNS = List.of(
+            STATUS,
+            ADMITTED_ON,
+            ROLL_NUMBER,
+            GUARDIAN_NAME,
+            GUARDIAN_PHONE,
+            GUARDIAN_RELATION,
+            GUARDIAN_EMAIL,
+            GUARDIAN_PRIMARY);
 
     /** Anything else in the file is ignored, so a school's own columns need not be stripped first. */
     private static final Set<String> KNOWN_COLUMNS = Set.copyOf(concat(REQUIRED_COLUMNS, OPTIONAL_COLUMNS));
@@ -132,6 +161,13 @@ public class StudentImportService {
     private static final byte[] OLE2_MAGIC = {(byte) 0xD0, (byte) 0xCF, (byte) 0x11, (byte) 0xE0};
 
     /**
+     * A loose shape check for {@code guardian_email}, matching {@code SaveGuardianRequest}'s
+     * {@code @Email} so an imported guardian is held to the same bar as one typed in by hand rather
+     * than a laxer one because the value arrived from a file.
+     */
+    private static final Pattern LOOKS_LIKE_AN_EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
+    /**
      * Counts only. Never a name, never a date of birth, never a cell — see the class javadoc, and
      * note that {@code StudentImportApiTests} asserts it by capturing the log during an import.
      */
@@ -139,16 +175,22 @@ public class StudentImportService {
 
     private final StudentRepository students;
     private final StudentEnrolmentRepository enrolments;
+    private final GuardianRepository guardians;
+    private final StudentGuardianRepository guardianLinks;
     private final AcademicsLookup academics;
     private final AuditService audit;
 
     public StudentImportService(
             StudentRepository students,
             StudentEnrolmentRepository enrolments,
+            GuardianRepository guardians,
+            StudentGuardianRepository guardianLinks,
             AcademicsLookup academics,
             AuditService audit) {
         this.students = students;
         this.enrolments = enrolments;
+        this.guardians = guardians;
+        this.guardianLinks = guardianLinks;
         this.academics = academics;
         this.audit = audit;
     }
@@ -166,7 +208,9 @@ public class StudentImportService {
                 examined.totalRows(),
                 examined.validRows(),
                 examined.errors().count());
-        return examined.report(0);
+        // Zero for every guardian count too — see importStudents for why these, like `imported`,
+        // report what was actually written rather than what a clean file would go on to do.
+        return examined.report(0, 0, 0, 0, 0);
     }
 
     /**
@@ -184,14 +228,37 @@ public class StudentImportService {
 
         if (!examined.errors().isEmpty()) {
             // Nothing has been written, because nothing writes before this point. ADR-0021 §2: one
-            // bad row imports nobody, so that fixing a typo and re-uploading is always safe.
+            // bad row imports nobody, so that fixing a typo and re-uploading is always safe. That
+            // includes the guardian side: an ambiguous phone match is exactly the kind of problem
+            // this gate exists to hold the whole file for.
             log.info(
                     "Refused a student import: {} row(s), {} problem(s). Nothing was written.",
                     examined.totalRows(),
                     examined.errors().count());
-            return examined.report(0);
+            return examined.report(0, 0, 0, 0, 0);
         }
 
+        // Guardians first, one write per distinct phone in the whole file rather than one per row —
+        // this is the dedupe ADR-0021 §4 promises: four rows naming the same father produce one
+        // guardian here and four links below, whether or not he was already in the directory.
+        Map<String, UUID> resolvedGuardianIds = new HashMap<>();
+        int guardiansCreated = 0;
+        for (Map.Entry<String, GuardianPlan> entry : examined.guardianPlans().entrySet()) {
+            GuardianPlan plan = entry.getValue();
+            UUID guardianId;
+            if (plan.existingId() != null) {
+                guardianId = plan.existingId();
+            } else {
+                Guardian created = guardians.save(new Guardian(plan.fullName(), plan.phone(), plan.email(), null));
+                guardianId = created.getId();
+                guardiansCreated++;
+            }
+            resolvedGuardianIds.put(entry.getKey(), guardianId);
+        }
+        guardians.flush();
+
+        int guardianLinksCreated = 0;
+        int studentsLinkedToExistingGuardians = 0;
         for (ImportRow row : examined.rows()) {
             Student student = students.save(new Student(
                     row.admissionNumber(),
@@ -201,9 +268,27 @@ public class StudentImportService {
                     row.status(),
                     row.admittedOn()));
             enrolments.save(new StudentEnrolment(student, session.id(), row.sectionId(), row.rollNumber()));
+
+            if (row.guardianKey() != null) {
+                UUID guardianId = resolvedGuardianIds.get(row.guardianKey());
+                guardianLinks.save(new StudentGuardianLink(
+                        student,
+                        guardians.getReferenceById(guardianId),
+                        row.guardianRelation(),
+                        row.guardianPrimary()));
+                guardianLinksCreated++;
+                if (examined.guardianPlans().get(row.guardianKey()).existingId() != null) {
+                    // This student's link is the number ADR-0021 §4 is really about: not how many
+                    // people the school ended up with, but how many were spared a duplicate.
+                    studentsLinkedToExistingGuardians++;
+                }
+            }
         }
         students.flush();
         enrolments.flush();
+        guardianLinks.flush();
+
+        int guardiansMatched = examined.guardianPlans().size() - guardiansCreated;
 
         // ONE row for the whole import (ADR-0021 §7). Six hundred ENTITY_CREATED rows would bury
         // every other thing that happened that day in the one log a principal reads to find out
@@ -214,26 +299,63 @@ public class StudentImportService {
         // changedFields. A count is a property of the event, not a value of a field, so ADR-0018 §2
         // is untouched — and encoding it as `imported_600` would have passed the field-name check
         // while being precisely the smuggling that check exists to stop.
+        //
+        // The guardian-link field names ride along on this same event rather than one of their own:
+        // every link created here was created in the same act as the student it belongs to, so it is
+        // one fact about this import, not a second bulk fact needing a second row.
         audit.recordBulkChange(
                 StudentAudit.STUDENTS_IMPORTED,
                 StudentAudit.STUDENT_IMPORT,
                 session.id().toString(),
-                List.of(
-                        "admissionNumber",
-                        "fullName",
-                        "dateOfBirth",
-                        "gender",
-                        "status",
-                        "admittedOn",
-                        "academicSessionId",
-                        "sectionId",
-                        "rollNumber"),
+                guardianLinksCreated > 0
+                        ? List.of(
+                                "admissionNumber",
+                                "fullName",
+                                "dateOfBirth",
+                                "gender",
+                                "status",
+                                "admittedOn",
+                                "academicSessionId",
+                                "sectionId",
+                                "rollNumber",
+                                "guardianId",
+                                "guardianRelation",
+                                "guardianPrimary")
+                        : List.of(
+                                "admissionNumber",
+                                "fullName",
+                                "dateOfBirth",
+                                "gender",
+                                "status",
+                                "admittedOn",
+                                "academicSessionId",
+                                "sectionId",
+                                "rollNumber"),
                 examined.rows().size());
 
+        // A second, separate bulk row — see StudentAudit#GUARDIANS_IMPORTED — and only when it
+        // actually happened: a file whose guardians all matched the directory wrote no new person,
+        // and an audit row for zero would be worse than no row at all.
+        if (guardiansCreated > 0) {
+            audit.recordBulkChange(
+                    StudentAudit.GUARDIANS_IMPORTED,
+                    StudentAudit.GUARDIAN,
+                    session.id().toString(),
+                    List.of("fullName", "phone", "email"),
+                    guardiansCreated);
+        }
+
         log.info(
-                "Imported {} student(s) into one academic session",
-                examined.rows().size());
-        return examined.report(examined.rows().size());
+                "Imported {} student(s) into one academic session, with {} new guardian(s) and {} already on file",
+                examined.rows().size(),
+                guardiansCreated,
+                guardiansMatched);
+        return examined.report(
+                examined.rows().size(),
+                guardiansCreated,
+                guardiansMatched,
+                guardianLinksCreated,
+                studentsLinkedToExistingGuardians);
     }
 
     // ── Reading and checking the file ────────────────────────────────────────────────────────
@@ -295,7 +417,8 @@ public class StudentImportService {
         }
 
         checkAgainstTheRegister(rows, session, errors);
-        return new Examination(totalRows, rows, errors);
+        Map<String, GuardianPlan> guardianPlans = checkGuardiansAgainstDirectory(seen.guardianGroups, errors);
+        return new Examination(totalRows, rows, errors, guardianPlans);
     }
 
     /**
@@ -360,11 +483,37 @@ public class StudentImportService {
             }
         }
 
+        // The guardian this row names, if any (ADR-0021 §4) — registered against every other row's
+        // guardian in this same file before the row is judged, for the same reason the admission
+        // number is: a database round trip would find the same conflicts later and blame whichever
+        // row happened to flush second.
+        GuardianCell guardianCell = guardianCell(row, header, errors);
+        String guardianKey = null;
+        GuardianRelation guardianRelation = null;
+        boolean guardianPrimary = false;
+        if (guardianCell != null && guardianCell.name() != null && guardianCell.phone() != null) {
+            guardianKey = PhoneDigits.canonicalKey(guardianCell.phone());
+            guardianRelation = guardianCell.relation();
+            guardianPrimary = guardianCell.primary();
+            registerGuardian(number, guardianKey, guardianCell, seen, errors);
+        }
+
         if (errors.count() != before) {
             return null;
         }
         return new ImportRow(
-                number, admissionNumber, fullName, dateOfBirth, gender, status, admittedOn, sectionId, rollNumber);
+                number,
+                admissionNumber,
+                fullName,
+                dateOfBirth,
+                gender,
+                status,
+                admittedOn,
+                sectionId,
+                rollNumber,
+                guardianKey,
+                guardianRelation,
+                guardianPrimary);
     }
 
     /**
@@ -405,6 +554,164 @@ public class StudentImportService {
                         "another student already has this roll number in that section for this academic year");
             }
         }
+    }
+
+    // ── Guardians (ADR-0021 §4) ──────────────────────────────────────────────────────────────
+
+    /**
+     * The guardian columns of one row, or null when the row names no guardian at all.
+     *
+     * <p>{@code guardian_name} and {@code guardian_phone} are required <em>together</em>: matching
+     * happens on the phone, so a name with no phone cannot be matched against anything and a phone
+     * with no name cannot be told apart from anyone else's. The other three columns are read only
+     * once these two are present — a stray {@code guardian_relation} on an otherwise empty guardian
+     * is itself the mistake being reported, not a reason to guess the rest of the row.
+     */
+    private GuardianCell guardianCell(CsvRow row, Header header, Errors errors) {
+        String rawName = header.cell(row, GUARDIAN_NAME);
+        String rawPhone = header.cell(row, GUARDIAN_PHONE);
+        String rawRelation = header.cell(row, GUARDIAN_RELATION);
+        String rawEmail = header.cell(row, GUARDIAN_EMAIL);
+        String rawPrimary = header.cell(row, GUARDIAN_PRIMARY);
+        if (rawName.isEmpty()
+                && rawPhone.isEmpty()
+                && rawRelation.isEmpty()
+                && rawEmail.isEmpty()
+                && rawPrimary.isEmpty()) {
+            return null;
+        }
+
+        String name = required(row, header, GUARDIAN_NAME, 200, errors);
+        // guardian.phone is varchar(20) (ADR-0020) — a number with an extension, or written out in
+        // full internationally, can genuinely be longer, and this is where that fails: as a named
+        // row error a school can read and fix, not a 500 from a database refusing the insert.
+        String phone = required(row, header, GUARDIAN_PHONE, 20, errors);
+        GuardianRelation relation =
+                choice(row, header, GUARDIAN_RELATION, GuardianRelation.class, GuardianRelation.GUARDIAN, errors);
+        String email = optional(row, header, GUARDIAN_EMAIL, 320, errors);
+        if (email != null && !LOOKS_LIKE_AN_EMAIL.matcher(email).matches()) {
+            errors.add(row.number(), GUARDIAN_EMAIL, "is not a valid email address");
+            email = null;
+        }
+        boolean primary = booleanCell(row, header, GUARDIAN_PRIMARY, true, errors);
+
+        return new GuardianCell(name, phone, relation, email, primary);
+    }
+
+    /** {@code TRUE} or {@code FALSE}, case forgiven, an empty cell meaning {@code fallback}. */
+    private boolean booleanCell(CsvRow row, Header header, String column, boolean fallback, Errors errors) {
+        String value = header.cell(row, column);
+        if (value.isEmpty()) {
+            return fallback;
+        }
+        if (value.equalsIgnoreCase("true")) {
+            return true;
+        }
+        if (value.equalsIgnoreCase("false")) {
+            return false;
+        }
+        errors.add(row.number(), column, "has to be TRUE or FALSE");
+        return fallback;
+    }
+
+    /**
+     * Groups this row's guardian with every other row naming the same phone number, within this
+     * file, so that four rows naming one father produce one guardian rather than four.
+     *
+     * <p>The first row to use a phone number in the file establishes what that guardian is called. A
+     * later row with the <strong>same</strong> name (case and spacing forgiven, like a class name —
+     * see {@code key}) joins the group silently. A later row with a <strong>different</strong> name
+     * is refused: an import has nobody to ask which of two spellings is right, and guessing either
+     * way risks attaching a child to a stranger, which is worse than making the school fix the file.
+     */
+    private void registerGuardian(int number, String guardianKey, GuardianCell cell, Seen seen, Errors errors) {
+        String nameKey = key(cell.name());
+        GuardianGroup group = seen.guardianGroups.get(guardianKey);
+        if (group == null) {
+            seen.guardianGroups.put(
+                    guardianKey, new GuardianGroup(number, cell.name(), cell.phone(), cell.email(), nameKey));
+            return;
+        }
+        if (!group.nameKey.equals(nameKey)) {
+            errors.add(
+                    number,
+                    GUARDIAN_PHONE,
+                    "this phone number is already used by a guardian with a different name earlier in this"
+                            + " file (row " + group.firstRow + ")");
+            return;
+        }
+        if (group.email == null && cell.email() != null) {
+            // The first row to mention this guardian did not happen to give an email; a later one
+            // did. Both rows are the same person, so the detail is not lost for want of being on the
+            // row that happened to establish the group.
+            group.email = cell.email();
+        }
+        group.rows.add(number);
+    }
+
+    /**
+     * Resolves every phone-distinct guardian this file mentions against the school's existing
+     * directory, once, rather than once per row or once per group.
+     *
+     * <p>Three outcomes per group, and this is the decision ADR-0021 §4 records:
+     *
+     * <ul>
+     *   <li><strong>The phone matches a directory guardian with the same name</strong> (case and
+     *       spacing forgiven): reuse that guardian. This is the common case an import exists to get
+     *       right — a father already in the directory from an older sibling.
+     *   <li><strong>The phone matches nobody in the directory</strong>: a new guardian is planned,
+     *       using the first row's spelling of the name and the first row's typed phone number.
+     *   <li><strong>The phone matches a directory guardian with a different name</strong>: refused,
+     *       for every row in the file that named this number. Two people can genuinely share a phone
+     *       number (ADR-0020 §5), and the manual form's answer to that is to warn and let a human
+     *       decide. An import has no human mid-file to ask, and the two ways of guessing are both
+     *       worse than asking the school to look: matching anyway can attach a child to a stranger's
+     *       guardian, and creating a second guardian on a shared number recreates the very duplicate
+     *       this slice exists to prevent. So the row is refused, pointing at the directory rather
+     *       than at a guess.
+     * </ul>
+     */
+    private Map<String, GuardianPlan> checkGuardiansAgainstDirectory(Map<String, GuardianGroup> groups, Errors errors) {
+        if (groups.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, List<Guardian>> directory = new HashMap<>();
+        for (Guardian guardian : guardians.findAllWithPhone()) {
+            String canonical = PhoneDigits.canonicalKey(guardian.getPhone());
+            if (!canonical.isEmpty()) {
+                directory
+                        .computeIfAbsent(canonical, ignored -> new ArrayList<>())
+                        .add(guardian);
+            }
+        }
+
+        Map<String, GuardianPlan> plans = new LinkedHashMap<>();
+        for (Map.Entry<String, GuardianGroup> entry : groups.entrySet()) {
+            String canonicalKey = entry.getKey();
+            GuardianGroup group = entry.getValue();
+            List<Guardian> candidates = directory.getOrDefault(canonicalKey, List.of());
+            Guardian matched = candidates.stream()
+                    .filter(candidate -> key(candidate.getFullName()).equals(group.nameKey))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matched != null) {
+                plans.put(canonicalKey, GuardianPlan.existing(matched.getId()));
+            } else if (candidates.isEmpty()) {
+                plans.put(canonicalKey, GuardianPlan.toCreate(group.fullName, group.phone, group.email));
+            } else {
+                for (int rowNumber : group.rows) {
+                    errors.add(
+                            rowNumber,
+                            GUARDIAN_PHONE,
+                            "this phone number already belongs to a different guardian at this school —"
+                                    + " check the guardian directory before importing, or correct the name"
+                                    + " here if it is a misspelling of the same person");
+                }
+            }
+        }
+        return plans;
     }
 
     // ── One cell at a time ───────────────────────────────────────────────────────────────────
@@ -593,8 +900,8 @@ public class StudentImportService {
                 throw new ChalkbaseException(
                         StudentErrorCode.IMPORT_COLUMNS_MISSING,
                         "The first row of that file has to name these columns: "
-                                + String.join(", ", concat(REQUIRED_COLUMNS, OPTIONAL_COLUMNS))
-                                + ". The last three are optional; the rest are not. The order does not matter.",
+                                + String.join(", ", REQUIRED_COLUMNS) + ". These may be left empty: "
+                                + String.join(", ", OPTIONAL_COLUMNS) + ". The order does not matter.",
                         details);
             }
             return new Header(Map.copyOf(columns), cells.size());
@@ -758,6 +1065,90 @@ public class StudentImportService {
     private static final class Seen {
         private final Map<String, Integer> admissionNumbers = new HashMap<>();
         private final Map<String, Integer> rollNumbers = new HashMap<>();
+
+        /**
+         * Every distinct phone number this file has named a guardian with, in the order the file
+         * first mentioned each one. {@code LinkedHashMap} rather than {@code HashMap} so that
+         * {@code checkGuardiansAgainstDirectory} and the commit that follows it create guardians in
+         * the file's own order — nothing depends on that order being any particular one, but nothing
+         * should have to wonder either.
+         */
+        private final Map<String, GuardianGroup> guardianGroups = new LinkedHashMap<>();
+    }
+
+    /**
+     * One guardian's worth of cells off a row, before it is known whether that guardian is new or
+     * already in the directory. Not classified like {@code ImportRow} — it never leaves the method
+     * that builds it and is folded into a {@link GuardianGroup} or discarded within the same call.
+     */
+    private record GuardianCell(String name, String phone, GuardianRelation relation, String email, boolean primary) {}
+
+    /**
+     * Every row in <em>this file</em> that named the same phone number, and what they agree the
+     * guardian is called — see {@code registerGuardian}. One of these exists per distinct phone
+     * number the file mentions, whether or not that number turns out to belong to somebody already
+     * in the directory.
+     */
+    private static final class GuardianGroup {
+        private final int firstRow;
+        private final String fullName;
+        private final String phone;
+        private final String nameKey;
+        private final List<Integer> rows = new ArrayList<>();
+        private String email;
+
+        GuardianGroup(int firstRow, String fullName, String phone, String email, String nameKey) {
+            this.firstRow = firstRow;
+            this.fullName = fullName;
+            this.phone = phone;
+            this.email = email;
+            this.nameKey = nameKey;
+            this.rows.add(firstRow);
+        }
+    }
+
+    /**
+     * What {@code checkGuardiansAgainstDirectory} decided to do about one {@link GuardianGroup}:
+     * reuse a guardian that already exists, or create one from the group's own details. Never both —
+     * {@code existingId() == null} is exactly the signal that the other three fields are the ones to
+     * use.
+     */
+    private static final class GuardianPlan {
+        private final UUID existingId;
+        private final String fullName;
+        private final String phone;
+        private final String email;
+
+        private GuardianPlan(UUID existingId, String fullName, String phone, String email) {
+            this.existingId = existingId;
+            this.fullName = fullName;
+            this.phone = phone;
+            this.email = email;
+        }
+
+        static GuardianPlan existing(UUID id) {
+            return new GuardianPlan(id, null, null, null);
+        }
+
+        static GuardianPlan toCreate(String fullName, String phone, String email) {
+            return new GuardianPlan(null, fullName, phone, email);
+        }
+
+        UUID existingId() {
+            return existingId;
+        }
+
+        String fullName() {
+            return fullName;
+        }
+
+        String phone() {
+            return phone;
+        }
+
+        String email() {
+            return email;
+        }
     }
 
     /**
@@ -798,17 +1189,46 @@ public class StudentImportService {
     }
 
     /** What one pass over the file found. Held for the length of the request and no longer. */
-    private record Examination(int totalRows, List<ImportRow> rows, Errors errors) {
+    private record Examination(
+            int totalRows, List<ImportRow> rows, Errors errors, Map<String, GuardianPlan> guardianPlans) {
 
         int validRows() {
             return totalRows - errors.spoiltRows().size();
         }
 
-        ImportReport report(int imported) {
+        /**
+         * @param imported students actually written. Zero from {@code validate}, and zero from a
+         *     commit that found anything wrong.
+         * @param guardiansCreated new guardian person records actually written. Zero unless
+         *     {@code imported} is also non-zero, for the same all-or-nothing reason.
+         * @param guardiansMatched guardians the file's rows were linked to <em>without</em> creating
+         *     them — already in the directory, or already claimed by an earlier row in this file.
+         * @param guardianLinksCreated student-guardian links actually written — every row that named
+         *     a guardian and was actually imported, whether that guardian was created or matched.
+         * @param studentsLinkedToExistingGuardians how many of those links pointed at a guardian
+         *     that already existed before this import ran — the number ADR-0021 §4 is actually
+         *     about: not how many people the school ended up with, but how many rows were spared a
+         *     duplicate.
+         */
+        ImportReport report(
+                int imported,
+                int guardiansCreated,
+                int guardiansMatched,
+                int guardianLinksCreated,
+                int studentsLinkedToExistingGuardians) {
             List<ImportError> all = errors.inRowOrder();
             List<ImportError> reported =
                     all.size() <= MAX_REPORTED_ERRORS ? all : List.copyOf(all.subList(0, MAX_REPORTED_ERRORS));
-            return new ImportReport(totalRows, validRows(), imported, all.size(), reported);
+            return new ImportReport(
+                    totalRows,
+                    validRows(),
+                    imported,
+                    guardiansCreated,
+                    guardiansMatched,
+                    guardianLinksCreated,
+                    studentsLinkedToExistingGuardians,
+                    all.size(),
+                    reported);
         }
     }
 }

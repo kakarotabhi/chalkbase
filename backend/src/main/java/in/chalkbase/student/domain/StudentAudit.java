@@ -24,7 +24,10 @@ package in.chalkbase.student.domain;
  *   <li>{@link #GUARDIAN} rows carry the <em>guardian's</em> id, because a guardian is shared
  *       between siblings (ADR-0020 §5). Correcting a father's phone number is one change to one
  *       person; attributing it to one of his four children would be false, and attributing it to all
- *       four would claim four changes that did not happen.
+ *       four would claim four changes that did not happen. {@link #GUARDIANS_IMPORTED} is the one
+ *       exception on this same entity type, for the reason {@link #STUDENT_IMPORT} is an exception
+ *       to the row above: several new guardians created in one bulk act are one fact about the
+ *       import that created them, not several facts about several people.
  * </ul>
  *
  * <p>There are no verbs of this module's own. {@code AuditAction.ENTITY_CREATED},
@@ -70,6 +73,22 @@ public final class StudentAudit {
      * reads should say so in the row rather than in a field name.
      */
     public static final String STUDENTS_IMPORTED = "STUDENTS_IMPORTED";
+
+    /**
+     * The guardian half of a student import (ADR-0021 §4): a phone number in the file that matched
+     * nobody in this school's directory, so a new {@link #GUARDIAN} row was written for it.
+     *
+     * <p>A separate bulk row from {@link #STUDENTS_IMPORTED}, on entity type {@link #GUARDIAN}
+     * rather than folded into the student one — the two are writes to different tables, and a reader
+     * asking "how many new guardians did this import create" should not have to know that the answer
+     * is hiding inside a student-shaped event. Not written at all when every guardian in the file
+     * matched an existing directory entry, because then nothing was created and there is nothing to
+     * say — a school should never see an audit row for zero.
+     *
+     * <p>{@code entityId} is the academic session's id, for the same reason {@link #STUDENT_IMPORT}
+     * is: this is one fact about the import that created these guardians, not about any one of them.
+     */
+    public static final String GUARDIANS_IMPORTED = "GUARDIANS_IMPORTED";
 
     private StudentAudit() {}
 }
