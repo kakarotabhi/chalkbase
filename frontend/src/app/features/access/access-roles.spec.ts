@@ -52,8 +52,10 @@ describe('AccessRoles', () => {
       (candidate.textContent ?? '').includes(label),
     ) as HTMLButtonElement;
 
+  // An attribute selector, not `#role-perm-${code}`: a permission code is `module:resource:action`,
+  // and a bare `#id` selector reads a colon as the start of a pseudo-class, matching nothing.
   const checkbox = (code: string) =>
-    element().querySelector(`#role-perm-${code}`) as HTMLInputElement;
+    element().querySelector(`[id="role-perm-${code}"]`) as HTMLInputElement;
 
   const type = (id: string, value: string) => {
     const input = element().querySelector(`#${id}`) as HTMLInputElement;
