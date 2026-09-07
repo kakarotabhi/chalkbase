@@ -34,7 +34,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 /**
  * The document module end to end: upload, list, read, download, edit and delete, against a real
@@ -243,7 +243,7 @@ class DocumentApiTests {
             Cookie session, UUID studentId, String documentType, String issueDate, String expiryDate, byte[] content)
             throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "certificate.pdf", "application/pdf", content);
-        MockHttpServletRequestBuilder builder = multipart(DOCUMENTS)
+        MockMultipartHttpServletRequestBuilder builder = multipart(DOCUMENTS)
                 .file(file)
                 .param("studentId", studentId.toString())
                 .param("documentType", documentType)
