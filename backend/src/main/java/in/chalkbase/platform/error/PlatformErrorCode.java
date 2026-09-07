@@ -24,6 +24,15 @@ public enum PlatformErrorCode implements ErrorCode {
     INTERNAL(
             "GEN_001",
             "Something went wrong at our end. Quote the trace id when reporting it.",
+            HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ADR-0022: a Restricted column would not decrypt — the key is wrong or the row is corrupt, and
+    // both need a person. The message is deliberately as generic as GEN_001's: it must never be built
+    // from the underlying cause, which is exactly how GlobalExceptionHandler.handleDecryptionFailure
+    // treats it.
+    DECRYPTION_FAILED(
+            "GEN_002",
+            "Something went wrong reading this record. Quote the trace id when reporting it.",
             HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;

@@ -18,6 +18,7 @@ import in.chalkbase.student.domain.StudentAudit;
 import in.chalkbase.student.domain.StudentErrorCode;
 import in.chalkbase.student.domain.StudentGuardianLink;
 import in.chalkbase.student.infrastructure.GuardianRepository;
+import in.chalkbase.student.infrastructure.PhoneDigits;
 import in.chalkbase.student.infrastructure.StudentGuardianRepository;
 import in.chalkbase.student.infrastructure.StudentRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -29,7 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -57,9 +57,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class GuardianService {
-
-    /** Everything that is not 0-9. Compiled once; {@code matching} runs it on every keystroke's worth. */
-    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     private final GuardianRepository guardians;
     private final StudentGuardianRepository links;
@@ -378,6 +375,10 @@ public class GuardianService {
      * <p>Escaped for the reason {@code StudentQueries} escapes: a clerk typing a per-cent sign should
      * search for one, not receive every guardian in the school. Digits need no escaping, but they go
      * through the same call rather than through a second code path that could later disagree.
+     *
+     * <p>{@code digitsOf} is {@link PhoneDigits#digitsOf}, not a copy of it — the bulk import
+     * (ADR-0021) needs the identical stripping rule to match a CSV row's phone number against this
+     * same {@code phone_digits} column, and the two must never be free to drift apart.
      */
     private static Specification<Guardian> matching(String q) {
         if (q == null || q.isBlank()) {
@@ -385,7 +386,7 @@ public class GuardianService {
         }
         String text = q.trim();
         String pattern = "%" + escapeForLike(text.toLowerCase()) + "%";
-        String digits = digitsOf(text);
+        String digits = PhoneDigits.digitsOf(text);
         return (root, criteria, builder) -> {
             List<Predicate> alternatives = new ArrayList<>();
             alternatives.add(builder.like(builder.lower(root.get("fullName")), pattern, '\\'));
@@ -395,11 +396,6 @@ public class GuardianService {
             }
             return builder.or(alternatives.toArray(new Predicate[0]));
         };
-    }
-
-    /** Everything that is not 0-9, removed — the same rule the generated column applies to {@code phone}. */
-    private static String digitsOf(String text) {
-        return NON_DIGIT.matcher(text).replaceAll("");
     }
 
     private static String escapeForLike(String text) {

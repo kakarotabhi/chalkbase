@@ -30,6 +30,8 @@ public final class RoleTemplates {
     private static final String SESSION_MANAGE = "academics:session:manage";
     private static final String CLASS_READ = "academics:class:read";
     private static final String CLASS_MANAGE = "academics:class:manage";
+    private static final String SUBJECT_READ = "academics:subject:read";
+    private static final String SUBJECT_MANAGE = "academics:subject:manage";
     private static final String STUDENT_READ = "student:student:read";
     private static final String STUDENT_MANAGE = "student:student:manage";
     private static final String GUARDIAN_READ = "student:guardian:read";
@@ -60,6 +62,11 @@ public final class RoleTemplates {
      * about the school, so only the two templates that run it hold {@code manage}. A school that
      * wants its office administrator to add sections adds the permission to that role itself, which
      * is the whole point of roles being data.
+     *
+     * <p>The subject catalogue follows {@code CLASS_READ}/{@code CLASS_MANAGE} exactly, one for one:
+     * the same five templates that need to know which classes exist need to know which subjects the
+     * school teaches, for the same reason, and the same two that may reshape the ladder are the ones
+     * that may reshape the catalogue.
      *
      * <p>The student permissions are the widest read grant in the product, and deliberately: six of
      * the twelve templates hold both reads. Everyone who teaches a child, admits one, or bills one
@@ -100,6 +107,8 @@ public final class RoleTemplates {
                     SESSION_MANAGE,
                     CLASS_READ,
                     CLASS_MANAGE,
+                    SUBJECT_READ,
+                    SUBJECT_MANAGE,
                     STUDENT_READ,
                     STUDENT_MANAGE,
                     GUARDIAN_READ,
@@ -117,6 +126,8 @@ public final class RoleTemplates {
                     SESSION_MANAGE,
                     CLASS_READ,
                     CLASS_MANAGE,
+                    SUBJECT_READ,
+                    SUBJECT_MANAGE,
                     STUDENT_READ,
                     STUDENT_MANAGE,
                     GUARDIAN_READ,
@@ -129,6 +140,7 @@ public final class RoleTemplates {
                     SCHOOL_READ,
                     SESSION_READ,
                     CLASS_READ,
+                    SUBJECT_READ,
                     STUDENT_READ,
                     GUARDIAN_READ),
             // Reads students, because marks are recorded against a child. Deliberately does NOT read
@@ -145,6 +157,7 @@ public final class RoleTemplates {
                     SCHOOL_READ,
                     SESSION_READ,
                     CLASS_READ,
+                    SUBJECT_READ,
                     STUDENT_READ),
             // Reads students and guardians because a fee is charged to a child and chased through a
             // parent's phone number. Holds neither manage: an accountant corrects a ledger, not a
@@ -163,6 +176,7 @@ public final class RoleTemplates {
                     SCHOOL_READ,
                     SESSION_READ,
                     CLASS_READ,
+                    SUBJECT_READ,
                     STUDENT_READ,
                     STUDENT_MANAGE,
                     GUARDIAN_READ,

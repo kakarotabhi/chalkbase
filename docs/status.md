@@ -26,7 +26,8 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
-| Academic sessions, classes and sections | ✅ Done · ⬜ subjects |
+| Academic sessions, classes and sections | ✅ Done |
+| Subjects | ✅ Done |
 | Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
 | Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
 
@@ -44,13 +45,13 @@ glance and are not.
 | School profile | ✅ Done | `GET`/`PUT /api/school/profile`, its screen, and the registry write-back. |
 | Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
 | Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
-| **Subjects** | ❌ Not started | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished. |
-| Roles and permissions | ✅ Backend done · ⬜ screen | 15 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` now creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred as a frontend-shaped feature; `GET /api/access/roles/{id}/holders` is the read a future screen would build it from. **No screen yet.** |
+| Subjects | ✅ Done | The flat catalogue (no ladder, no relation to a class or section), paged, retire and reinstate. |
+| Roles and permissions | ✅ Backend done · ⬜ screen | 17 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` now creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred as a frontend-shaped feature; `GET /api/access/roles/{id}/holders` is the read a future screen would build it from. **No screen yet.** |
 | User management | ✅ Backend done · ⬜ screen | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` now creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. **No screen yet.** |
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
-| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
+| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
 | **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
 | **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
@@ -114,24 +115,32 @@ is in [the free-tier runbook](operations/render-free-tier.md).
 **Only live work is listed here.** Anything finished moves to [Done](#done) — a queue where nine of
 thirteen entries are struck through is a queue nobody can read.
 
-### 1. Encryption at rest — decided, not built
+### 1. Encryption at rest — machinery built, columns still to land
 
 [ADR-0022](architecture/adr/0022-encryption-at-rest.md) settles both open questions: a 256-bit
 `CHALKBASE_ENCRYPTION_KEY` from the environment with a `v1:` key id on every ciphertext so rotation
 is possible, and `@Encrypted` on the entity bound to the DTO's `@Classification` by a build-failing
 test.
 
-**This is the top item because it is the only thing standing between the product and a real
-school.** Without it the student record cannot hold caste, religion, disability or EWS/RTE category
-([ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2), and without those there are no
-UDISE+ returns.
+**The mechanism is now built: `EncryptedStringConverter` (AES-GCM, multi-key reads), the
+`@Encrypted` marker, `EncryptionBindingTests` beside `ClassificationTests`, and
+`EncryptionKeyConfiguration` — `prod` refuses to start without `CHALKBASE_ENCRYPTION_KEY`, `local`
+and `test` fall back to a fixed checked-in key. See
+[the encryption key](operations/encryption-key.md) for generating and backing one up.**
 
-Shape of the work: an `EncryptedStringConverter`, the `@Encrypted` marker, the binding test, then the
-columns ADR-0020 §2 left out.
+**What is still missing is the columns themselves** — ADR-0020 §2 left caste, religion, disability,
+EWS/RTE category, guardian income and Aadhaar/APAAR out of the student record entirely, and
+`ClassificationTests.noRestrictedDataHasBeenIntroducedWithoutEncryption` still fails the build if any
+of them appear before that lane lands. Without those columns there are no UDISE+ returns, so this
+stays the top item.
+
+Shape of the remaining work: the columns ADR-0020 §2 left out, each paired with `@Encrypted` and its
+`@Convert`, on a tenant migration.
 
 ### 2. Subjects
 
-The last piece of master data. Small, and it unblocks marks and the timetable later.
+~~The last piece of master data.~~ ✅ Closed. `subject` (flat, paged, retire and reinstate) is
+built; see [Done](#done).
 
 ### 3. Roles, users, and what a session re-validates
 
@@ -239,6 +248,8 @@ here. What is left is externally blocked rather than undecided.
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 | User account lifecycle: create, deactivate, reactivate, unlock and admin password reset, all at `/api/access/users` | `UserAccountManagementService`, `UserAccountController` |
 | Role management: create a role, replace its permission set, grant or revoke it for a user, with guards against privilege escalation and against locking a school out of its own access | `RoleManagementService`, `AccessGuardrails`, `AccessController` |
+| Encryption-at-rest machinery: AES-GCM `EncryptedStringConverter`, `@Encrypted`, the `EncryptionBindingTests` binding it to `@Classification`, and `EncryptionKeyConfiguration` | [ADR-0022](architecture/adr/0022-encryption-at-rest.md) |
+| Subjects: a flat, paged catalogue, retire and reinstate, the last piece of Phase 1 master data | `academics/` |
 
 ## Known gaps and debt
 
@@ -311,10 +322,12 @@ Recorded so they are decided rather than discovered.
   the magic-byte refusal is the shipped behaviour rather than a placeholder for it. Revisit only if
   a real school office reports "Save as CSV" as a genuine barrier — the change is small and sits
   behind the same endpoint.
-- **Guardians are not imported**, deliberately (ADR-0021 §4): a file of six hundred students each
-  naming a father would create six hundred guardian records, including four for one man with four
-  children here — the duplicate the manual flow was just fixed to prevent. Doing it properly means
-  matching each row against the directory by phone, which is its own slice.
+- **Guardian import is one guardian per row** (ADR-0021 §4, resolved from the earlier gap this
+  bullet used to describe). A student needing a second guardian on record — a mother, once the
+  father is already in from the file — gets one from that child's own record afterwards, the same
+  way any guardian is added by hand. Matching is by phone, reusing the directory search's own
+  digit-stripping rule; a phone number shared under two different names, in the file or against the
+  directory, refuses the row rather than guessing which person was meant.
 - **The upload limit is coupled across two files.** `spring.servlet.multipart.*` is set below nginx's
   `client_max_body_size` so Spring is always the one refusing, in the ADR-0007 envelope; a request
   refused by nginx returns HTML and may reach the browser without CORS headers, so the client sees a
@@ -374,6 +387,10 @@ Recorded so they are decided rather than discovered.
   reactivate that row rather than create a new one. That is the intended behaviour, but it makes
   showing inactive classes findable a correctness concern rather than a nicety — a user who cannot
   see the retired row hits a name clash they cannot explain.
+- **The same trap applies to a retired subject.** `uq_subject_name` and `uq_subject_code` do not
+  account for `active` either, so a school that retires "Hindi" and later adds it back must
+  reinstate that row rather than create a second one — and the subjects screen names the row
+  already holding a clash for exactly this reason, the same fix the classes screen still lacks.
 - **`AGENTS.md` claimed two things that were not true** and now does not: indexes are `idx_`, not
   `ix_`, and the `@Classification` annotation ADR-0014 describes does not exist, so nothing fails
   the build for an unclassified field. Both were found by agents reading the file and trying to

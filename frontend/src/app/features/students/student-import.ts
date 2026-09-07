@@ -42,10 +42,28 @@ export const IMPORT_COLUMNS = [
   'class',
   'section',
   'roll_number',
+  'guardian_name',
+  'guardian_phone',
+  'guardian_relation',
+  'guardian_email',
+  'guardian_primary',
 ] as const;
 
-/** The three the backend fills in for itself when they are absent. */
-const OPTIONAL_COLUMNS: ReadonlySet<string> = new Set(['status', 'admitted_on', 'roll_number']);
+/**
+ * The columns nobody has to fill in: the three the backend defaults for itself, and the five
+ * guardian columns, which are a family that is either all left blank or names one person
+ * (ADR-0021 §4) — a row is free to carry no guardian at all.
+ */
+const OPTIONAL_COLUMNS: ReadonlySet<string> = new Set([
+  'status',
+  'admitted_on',
+  'roll_number',
+  'guardian_name',
+  'guardian_phone',
+  'guardian_relation',
+  'guardian_email',
+  'guardian_primary',
+]);
 
 /** What each column wants, said in one line, for the reference table above the file picker. */
 const COLUMN_NOTES: Readonly<Record<string, string>> = {
@@ -58,6 +76,14 @@ const COLUMN_NOTES: Readonly<Record<string, string>> = {
   class: 'The name of a class you have already set up, for example Class 5.',
   section: 'The name of a section in that class, for example A.',
   roll_number: 'Only if the school has already given one out.',
+  guardian_name:
+    "The guardian's whole name. Leave every guardian column blank for no guardian yet.",
+  guardian_phone:
+    'Their phone number. Required if guardian_name is given — this is what matches a father already ' +
+    'here for another child, instead of adding him twice.',
+  guardian_relation: 'Father, Mother, Guardian, Local guardian or Other. Guardian if left blank.',
+  guardian_email: "The guardian's email, if you have one.",
+  guardian_primary: 'TRUE if the school should ring this person first. TRUE if left blank.',
 };
 
 /** The file offered by "Download the template". Header row only — see `templateCsv`. */
@@ -169,6 +195,33 @@ export class StudentImport {
   /** The year they landed in, remembered at the moment of the write rather than read back off a
    * control the user is free to change afterwards. */
   protected readonly importedInto = signal('');
+
+  /**
+   * "Created 12 guardians, and linked 47 students to existing guardians." — or null when the file
+   * named no guardians at all, so the success banner does not mention a subject the file never
+   * raised.
+   *
+   * Read off {@link imported}, never {@link report}: the guardian counts follow `imported`'s own
+   * rule (ADR-0021 §4) and are 0 until a commit has actually written something, so this sentence
+   * only exists once there is something to say. `studentsLinkedToExistingGuardians` rather than
+   * `guardiansMatched` is deliberate — a school trusting this screen is asking "how many of my
+   * children were spared a duplicate", which is a count of children, not a count of fathers.
+   */
+  protected readonly guardianSummary = computed(() => {
+    const result = this.imported();
+    if (!result || result.guardianLinksCreated === 0) {
+      return null;
+    }
+    const created = result.guardiansCreated;
+    const linkedExisting = result.studentsLinkedToExistingGuardians;
+    if (created > 0 && linkedExisting > 0) {
+      return `${count(created, 'new guardian')}, and ${count(linkedExisting, 'student')} linked to a guardian already here.`;
+    }
+    if (created > 0) {
+      return `${count(created, 'new guardian')} added.`;
+    }
+    return `${count(linkedExisting, 'student')} linked to a guardian already here — no new guardians were needed.`;
+  });
 
   protected readonly grouping = signal<Grouping>('row');
 

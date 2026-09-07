@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -7,14 +7,32 @@ import {
   ApiResponse,
   CreateClassRequest,
   CreateSectionRequest,
+  CreateSubjectRequest,
+  PageResponse,
   ReorderClassesRequest,
   SaveAcademicSessionRequest,
   SchoolClass,
   Section,
+  Subject,
   UpdateClassRequest,
   UpdateSectionRequest,
+  UpdateSubjectRequest,
 } from './models';
 import { unwrap } from './unwrap';
+
+/** Rows per page unless a caller says otherwise. Matches the guardian and student lists. */
+export const SUBJECT_PAGE_SIZE = 25;
+
+/** The largest page the backend will serve; a larger `size` is clamped rather than refused. */
+export const SUBJECT_MAX_PAGE_SIZE = 100;
+
+export interface SubjectSearchQuery {
+  /** Zero-based. */
+  readonly page?: number;
+  readonly size?: number;
+  /** Free text over the subject's name and code. The user's own search box. */
+  readonly q?: string | null;
+}
 
 /**
  * HTTP access to the academics module: the school's academic years, and its ladder of classes and
@@ -35,6 +53,7 @@ export class AcademicsApi {
   private readonly sessionsUrl = `${environment.apiBaseUrl}/academics/sessions`;
   private readonly classesUrl = `${environment.apiBaseUrl}/academics/classes`;
   private readonly sectionsUrl = `${environment.apiBaseUrl}/academics/sections`;
+  private readonly subjectsUrl = `${environment.apiBaseUrl}/academics/subjects`;
 
   /* ── Academic sessions ───────────────────────────────────────────────── */
 
@@ -145,4 +164,45 @@ export class AcademicsApi {
       })
       .pipe(unwrap);
   }
+
+  /* ── Subjects ─────────────────────────────────────────────────────────── */
+
+  /**
+   * One page of the subject catalogue, by name unless the caller sorts otherwise.
+   *
+   * Paged, unlike {@link classes} and {@link sessions}: a subject catalogue can genuinely run into
+   * dozens of rows for a school offering electives at Classes 9-12, where a class ladder tops out
+   * at a few dozen rungs and a school gains one session a year. Inactive subjects are included and
+   * flagged, not filtered out, for the reason `Subject` gives.
+   */
+  subjects(query: SubjectSearchQuery = {}): Observable<PageResponse<Subject>> {
+    let params = new HttpParams()
+      .set('page', Math.max(0, query.page ?? 0))
+      .set('size', clampSubjectPageSize(query.size ?? SUBJECT_PAGE_SIZE));
+
+    const q = query.q?.trim();
+    if (q) {
+      params = params.set('q', q);
+    }
+
+    return this.http
+      .get<ApiResponse<PageResponse<Subject>>>(this.subjectsUrl, { params, withCredentials: true })
+      .pipe(unwrap);
+  }
+
+  createSubject(request: CreateSubjectRequest): Observable<Subject> {
+    return this.http
+      .post<ApiResponse<Subject>>(this.subjectsUrl, request, { withCredentials: true })
+      .pipe(unwrap);
+  }
+
+  updateSubject(id: string, request: UpdateSubjectRequest): Observable<Subject> {
+    return this.http
+      .put<ApiResponse<Subject>>(`${this.subjectsUrl}/${id}`, request, { withCredentials: true })
+      .pipe(unwrap);
+  }
+}
+
+function clampSubjectPageSize(size: number): number {
+  return Math.min(Math.max(1, Math.trunc(size)), SUBJECT_MAX_PAGE_SIZE);
 }
