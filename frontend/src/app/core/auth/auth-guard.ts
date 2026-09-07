@@ -11,9 +11,15 @@ import { SessionBootstrap } from './session-bootstrap';
  * would be guessing — which is exactly how a reload used to bounce a perfectly valid session back
  * to the login screen.
  *
- * The wait is only ever for the first navigation. The call starts at application boot, an answer
- * already held is reused rather than re-asked, and the shell renders its chrome while the menu
- * fills in behind it — so this does not put a request in front of every route change.
+ * The wait is only ever for the first navigation. The call starts at application boot and an
+ * answer already held is reused rather than re-asked, so this does not put a request in front of
+ * every route change.
+ *
+ * What it does put in front of the first one is the entire shell: the router activates nothing
+ * until this guard resolves. That is the right trade — drawing an authenticated shell for someone
+ * who may turn out not to be signed in would be worse than a wait — but it is a wait, and on a
+ * slow connection a long one. `App` renders a boot state outside the router outlet for as long as
+ * it lasts, which is what keeps a blocked guard from being a blank page.
  *
  * Either way this is convenience, never access control: enforcement is the API, where every
  * endpoint is authenticated and a 401 clears the store and returns here via `apiErrorInterceptor`.

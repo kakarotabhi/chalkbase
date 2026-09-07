@@ -1,0 +1,29 @@
+<!--
+  role="status" with aria-live="polite": this appears without anyone having asked for it, so it
+  must not interrupt — but it must be spoken, because a screen reader user has even less to go on
+  than a sighted one when the page is empty. The region is in the DOM from the first frame and
+  empty; the phases below fill it, and each addition is announced. The escalation is a second
+  announcement rather than a rewrite of the first, so nobody is left with one sentence for two
+  minutes.
+-->
+<div class="boot" role="status" aria-live="polite">
+  @if (phase() !== 'quiet') {
+    <div class="boot__panel">
+      <!-- Decorative, and named by the text below it: an indicator a screen reader announces as
+           "progress bar" and nothing else is a spinner with no accessible name. -->
+      <div class="boot__bar" aria-hidden="true"><span class="boot__bar-fill"></span></div>
+
+      <p class="boot__message">Loading Chalkbase…</p>
+
+      @if (phase() === 'slow') {
+        <p class="boot__detail">
+          <strong class="boot__detail-title">This is taking longer than usual</strong>
+          <span>
+            Chalkbase is still waiting for the server to answer, and will open as soon as it does.
+            There is no need to reload the page.
+          </span>
+        </p>
+      }
+    </div>
+  }
+</div>

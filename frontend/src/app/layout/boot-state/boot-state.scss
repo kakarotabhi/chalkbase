@@ -1,0 +1,86 @@
+/**
+ * Deliberately not a skeleton of the shell.
+ *
+ * There is no skeleton system in this codebase, and inventing one here would mean drawing a header
+ * and a navigation rail that may never appear — this is also the wait that ends at the sign-in
+ * screen for someone with no session. A centred line of text is honest about what is known, which
+ * is only that the app is waiting.
+ */
+.boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // dvh, never vh: on a phone the viewport unit measures the window with the browser chrome
+  // hidden, so a centred block sits low behind the address bar.
+  min-height: 100dvh;
+  padding: var(--cb-space-6) var(--cb-space-4);
+}
+
+.boot__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cb-space-3);
+  // Wide enough for the longer message to break where a sentence should, narrow enough to read in
+  // one eye movement.
+  max-width: 44ch;
+  text-align: center;
+}
+
+.boot__bar {
+  position: relative;
+  width: var(--cb-form-column-width);
+  // The widest phone this targets is 360px inside a 16px gutter, so the bar has to give way.
+  max-width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: var(--cb-primary-surface);
+  border-radius: var(--cb-radius-sm);
+}
+
+.boot__bar-fill {
+  position: absolute;
+  inset-block: 0;
+  width: 40%;
+  background: var(--cb-primary);
+  border-radius: var(--cb-radius-sm);
+  animation: boot-bar-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes boot-bar-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+// Movement across the screen is the kind that provokes symptoms, and this one repeats for as long
+// as the wait lasts. The bar stays — it is the only thing on screen that says the app is alive —
+// and stops moving.
+@media (prefers-reduced-motion: reduce) {
+  .boot__bar-fill {
+    width: 100%;
+    animation: none;
+  }
+}
+
+.boot__message {
+  margin: 0;
+  color: var(--cb-text-muted);
+}
+
+.boot__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-1);
+  margin: 0;
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}
+
+.boot__detail-title {
+  color: var(--cb-text);
+  font-weight: 600;
+}

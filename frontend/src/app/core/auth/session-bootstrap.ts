@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { MeApi } from '../api/me-api';
 import { NavigationStore } from '../navigation/navigation-store';
@@ -29,6 +29,14 @@ import { SessionStore } from './session-store';
  * cannot reach either would turn a blip into a dead end. In that case the answer falls back to
  * what this tab already knows, the shell stays on screen, and the menu is simply empty until a
  * later navigation succeeds.
+ *
+ * ## Nothing here caps how long the wait can be
+ *
+ * There is no timeout on this call, deliberately. A timeout would resolve the guard as "not signed
+ * in" and drop the user on the login screen, where signing in goes to the same server over the
+ * same connection and is just as slow — so a slow morning would become a loop between two screens
+ * instead of one honest wait. `bootstrapping` below is the answer instead: the wait stays, and the
+ * app says what it is waiting for.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionBootstrap {
@@ -38,6 +46,25 @@ export class SessionBootstrap {
 
   private inFlight: Observable<boolean> | null = null;
 
+  /** Whether the first `/api/me` has been answered — one way, and only ever set once. */
+  private firstSettled = false;
+
+  private readonly firstInFlight = signal(false);
+
+  /**
+   * True while the app is still waiting for its first answer about who is signed in.
+   *
+   * The root component renders a boot state from this. It has to be *this* signal and not
+   * `inFlight`: a later refetch — after a sign-out, or after a failure emptied the stores — happens
+   * with the shell already on screen and its own state showing, and covering that with a full-page
+   * "Loading Chalkbase" would be a step backwards. Only the first call has nothing behind it.
+   *
+   * It settles on every arm: a session, a 401, or a network failure. That is what `finalize` in
+   * `ensure()` is for — putting it in the success path only is how a boot state ends up permanent
+   * for the users whose connection failed, which is the population it exists for.
+   */
+  readonly bootstrapping = this.firstInFlight.asReadonly();
+
   /**
    * Resolves true when there is a session, false when there is demonstrably none.
    *
@@ -45,10 +72,15 @@ export class SessionBootstrap {
    */
   ensure(): Observable<boolean> {
     if (this.isFresh()) {
+      this.settleFirst();
       return of(true);
     }
     if (this.inFlight) {
       return this.inFlight;
+    }
+
+    if (!this.firstSettled) {
+      this.firstInFlight.set(true);
     }
 
     this.inFlight = this.meApi.get().pipe(
@@ -58,7 +90,12 @@ export class SessionBootstrap {
       }),
       map(() => true),
       catchError((error: unknown) => of(this.afterFailure(error))),
-      finalize(() => (this.inFlight = null)),
+      finalize(() => {
+        this.inFlight = null;
+        // Both arms of `afterFailure` end here, and so does the success path: `catchError` returns
+        // a value rather than rethrowing, so this stream always completes.
+        this.settleFirst();
+      }),
       // The guard subscribes, and so does the app initializer that started this call early. One
       // request, both answers.
       shareReplay({ bufferSize: 1, refCount: false }),
@@ -71,9 +108,11 @@ export class SessionBootstrap {
    * Starts the bootstrap without waiting for it.
    *
    * Called at application start so the request is already on the wire by the time the router asks.
-   * The shell's chrome — header, account menu, the nav element itself — renders from the first
-   * frame and the menu fills in when the answer lands, rather than the whole app holding a blank
-   * page open for the length of one request on a school's broadband.
+   * The router still cannot activate the shell until the answer lands — `authGuard` blocks, and
+   * showing an authenticated shell to someone who may not be signed in would be worse than
+   * waiting — so what fills the wait is `App`, which renders a boot state from `bootstrapping`
+   * outside the router outlet rather than leaving a blank page open for the length of one request
+   * on a school's broadband.
    */
   start(): void {
     this.ensure().subscribe();
@@ -82,6 +121,11 @@ export class SessionBootstrap {
   /** True when the stores already hold a bootstrapped session, so there is nothing to ask. */
   private isFresh(): boolean {
     return this.session.isSignedIn() && this.navigation.loaded();
+  }
+
+  private settleFirst(): void {
+    this.firstSettled = true;
+    this.firstInFlight.set(false);
   }
 
   private afterFailure(error: unknown): boolean {
