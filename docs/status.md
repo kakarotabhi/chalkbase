@@ -17,7 +17,7 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | API response envelope and error handling | ✅ Done |
 | Design tokens and palette | ✅ Done |
 | Screen designs for the first six screens | ✅ Done |
-| Architecture decisions (ADR-0001…0022) | ✅ Done |
+| Architecture decisions (ADR-0001…0026) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
 | Permissions, roles, scoped grants | ✅ Enforced and manageable, with a screen · ⬜ impact preview |
@@ -28,8 +28,11 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
 | Academic sessions, classes and sections | ✅ Done |
 | Subjects | ✅ Done |
-| Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
-| Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
+| Students, guardians and enrolment | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
+| Documents (FR-013, FR-032) | ✅ Storage port, module and endpoints · ⬜ the S3 adapter and a screen |
+| Basic dashboards | ✅ Done |
+| Export | ⬜ In progress — the last Phase 1 feature |
+| Deployment | ✅ Render dev **and** staging, each on its own database · ⬜ Coolify/VPS (production) |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
 [Phase 1 in detail](#phase-1-in-detail) is the per-feature account.
@@ -80,6 +83,18 @@ remains the production plan.
 | API | <https://chalkbase-api.onrender.com> |
 | API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html> |
 | Database | the same Supabase project the local profile uses — so the demo school is shared |
+
+A second, **staging** pair tracks the `staging` branch, so a change can be verified running before
+it reaches `main`. It has a Supabase project of its own — [why that was not optional](operations/render-free-tier.md#why-it-has-its-own-database)
+— and was bootstrapped over HTTP through [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
+rather than by a seeder, which is what proved that path works.
+
+| | |
+|---|---|
+| App | <https://chalkbase-web-staging.onrender.com> |
+| API | <https://chalkbase-api-staging.onrender.com> |
+| Database | a second Supabase project, `ap-southeast-1`, no shared data with dev |
+| Sign in | school code `STAGE-001`, user `admin` |
 
 Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
 `auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
@@ -266,6 +281,24 @@ here. What is left is externally blocked rather than undecided.
 | Document storage: a `StorageService` port, a real filesystem adapter for `local`/`test`, and attaching a certificate, photo, signature or other document to a student — upload, list, proxied download, edit, delete, all audited | [ADR-0025](architecture/adr/0025-document-storage.md), `document/` |
 | The first basic dashboard: `GET /api/dashboard`, gated tile by tile through two new SPIs (`AcademicsDashboardContributor`, `StudentDashboardContributor`) so the shared kernel never imports a feature module, and `student.api.StudentLookup`, the module's first cross-module read interface | `platform/dashboard/`, `student/api/StudentLookup.java` |
 | Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
+
+## What is left on the frontend
+
+Every backend controller has a screen except one, so this list is short and specific. It exists
+because "the endpoint exists" and "a person can do it" are different claims, and this file has never
+separated them.
+
+| Gap | Where |
+|---|---|
+| **Documents has six endpoints and no screen at all.** List, upload, download, edit and delete are all reachable only by an API client. | `document/api/DocumentController.java` · nothing under `features/` |
+| **Export has no screen yet** — it is the feature currently being built, and the action belongs on the students and guardians lists. | `features/students/` |
+| **The users roster has no menu entry.** `IdentityNavigation` declares `settings` and `settings.access` but no `settings.users`, so the screen is reachable only by URL or by the cross-link from the access screen. Deliberately not invented client-side: a nav id the server never emits is a menu entry nobody can wait for, which `nav-routes.ts` already records for `students.import`. Closing it is a one-line backend change. | `identity/infrastructure/IdentityNavigation.java` |
+| **No impact preview when editing a role.** FR-004's acceptance note asks for one; `GET /api/access/roles/{id}/holders` is the read it would be built from. Deferred deliberately as frontend-shaped work. | `features/access/` |
+| **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other. | [the assessment](design-drift-assessment.md) |
+
+Transport and hostel sections on the student record are **not** on this list: they are Phase 4
+modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
+model until those exist.
 
 ## Known gaps and debt
 

@@ -93,46 +93,46 @@ must be told to, because `ng` will not be on the path and the failure looks like
 
 ## What can run in parallel right now
 
-Ground truth as of today, not the roadmap. Phase 1 still has **subjects, documents, export and
-dashboards** unbuilt. Roles and user management are backend read-only — `/api/access` is three
-`@GetMapping`s and nothing else, with no write endpoints and no screen; `nav-routes.ts`
-deliberately does not map `settings.access` for that reason.
+Ground truth as of today, not the roadmap. Every item this section used to list has been built —
+subjects, roles and user management with their screens, encryption at rest, session re-validation,
+the accessor logging rule, guardian import, the student record's remaining sections, dashboards and
+the audit retention purge all merged, along with a deployment bootstrap ([ADR-0024](../architecture/adr/0024-bootstrap-deployment.md))
+that was not on any list until a real deployment proved onboarding did not work.
 
 | Item | Modules | Contends on | Must not touch | Blocked by |
 |---|---|---|---|---|
-| ADR-0008 staleness rule: a `403` refetches `/api/me` | frontend only | nothing generated | `core/auth/session-store.ts` if another agent is in identity | nothing |
-| Static rule for a `CONFIDENTIAL` accessor in a logger argument | backend build only | nothing | no production code | nothing |
-| Session re-validation: disabled and locked accounts | `identity` | `contracts/*` and `models.ts` if it adds an endpoint | `RoleTemplates`, `AccessController` | nothing |
-| Subjects | `academics`, frontend `features/academics` | every row in the shared-files table | `student` | nothing |
-| Roles and user management: write endpoints plus a screen | `identity`, new frontend feature | `contracts/*`, `models.ts`, `permissions.ts`, `RoleTemplates`, `app.routes.ts`, `nav-*` | — | must not overlap session re-validation |
-| Encryption at rest (ADR-0022) | `platform/classification`, `student`, `school` | a tenant migration, `contracts/*` | — | **runs alone** |
-| Export | `platform/classification` plus every module that exports | `contracts/*` | — | ADR-0014 masking, which encryption at rest builds |
-| Documents | new module | the shared-files table | — | no file-storage port exists (ADR-0013) |
-| Dashboards | reads across every module's `api` | every module's `api` package | — | the modules it would summarise |
+| Export | `platform`, `student`'s api records | `contracts/*`, `models.ts`, `permissions.ts`, `RoleTemplates`, a frontend action row | `platform/storage`, `document` | nothing — the ADR-0014 masking it needed is built |
+| Documents: the S3 adapter and the screen | `document`, `platform/storage`, one frontend section | `contracts/*`, `models.ts`, `backend/pom.xml` | `platform/classification` | nothing — Supabase Storage and the SDK are approved |
+| The users screen's missing navigation id | `identity` | nothing generated | — | nothing; a one-line change |
+| The role-edit impact preview | frontend `features/access` | `models.ts` | — | nothing |
+| Design drift: nav tint, page gutter, a shared card and badge | frontend only, ~19 SCSS files | `_tokens.scss` | — | nothing |
+| Coolify on the Mumbai VPS | `ops/` | nothing generated | — | nothing |
 
-Three of these run together cleanly and are the set to hand out first: **the ADR-0008 staleness
-rule, the accessor logging rule, and session re-validation.** The first is frontend-only and adds no
-endpoint, so it never touches `contracts/`. The second adds a build-time check and no production
-code. The third is confined to `identity` and to files the other two do not open. Nothing in that
-trio regenerates the contract, which is what makes them genuinely concurrent rather than merely
-independent.
+**The two running lanes are export and documents, and they were chosen to be disjoint**: export is
+`platform` plus `student`'s api records, documents is `document` plus `platform/storage`. They meet
+only in `contracts/`, `models.ts` and `docs/status.md`, all three of which have a known resolution —
+regenerate, add under your own banner, keep both rows.
 
-**Subjects can run alongside them, as the only full-stack lane.** It is a new table, a new endpoint
-set, a new screen and a new menu entry, so it touches every row of the shared-files table at once.
-One such lane at a time is the limit — a second one doubles the merge cost on `models.ts`,
-`app.routes.ts`, `nav-routes.ts`, `nav-labels.ts`, `permissions.ts` and `RoleTemplates.java`
-simultaneously, and every one of those merges is manual.
+### What the last two waves actually cost
 
-**Roles and user management cannot run beside session re-validation.** Both live in
-`identity/application` and both change how a grant is resolved; the second to merge is rewriting the
-first's work rather than merging with it. Pick one, and it should be session re-validation, because
-an admin screen that disables an account is worth very little while the disabled account's session
-keeps working.
+Written down because the estimate and the reality differed in one direction only.
 
-**Export and dashboards are not blocked by collisions but by their inputs.** Export needs the
-classification masking that encryption at rest builds, and dashboards need modules that do not exist
-to summarise. Documents needs a file-storage decision under ADR-0013, which is a question for the
-product owner and not an implementation task.
+Eleven lanes ran across two waves. **Not one produced a semantic merge conflict.** Every conflict was
+`docs/status.md`, `contracts/`, or a test asserting a shipped role template's exact permission list —
+`AccessControlTests` and `MeApiTests` fail whenever any lane adds a permission, which happened four
+times. That test is doing its job; it is just also the most reliable predictor of which lane merges
+second.
+
+What did cost real time was none of the above:
+
+- **A pull request that conflicts with its base runs no checks at all**, silently. Three lanes waited
+  on CI that GitHub was never going to dispatch.
+- **Migration timestamps.** Two lanes wrote a migration whose timestamp was older than one already
+  applied on a live database. Both would have passed CI, which starts from an empty container, and
+  then refused to start on staging and on the shared dev database. Renaming at merge is not
+  bookkeeping; it is the only thing standing between a green build and a broken environment.
+- **A six-second "failure" is usually not one.** `cancel-in-progress` supersedes a run and reports it
+  as failed. Read the annotation before believing the label.
 
 ## What must run alone
 
