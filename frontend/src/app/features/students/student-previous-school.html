@@ -1,0 +1,143 @@
+<div class="section__head">
+  <h2 class="section__heading">Previous school &amp; transfer certificate</h2>
+  @if (!editing() && canManage()) {
+    <cb-button [id]="'previous-school-edit'" variant="secondary" (click)="startEdit()">
+      Edit
+    </cb-button>
+  }
+</div>
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">{{ message.title }}</strong>
+    <span>{{ message.detail }}</span>
+  </div>
+}
+
+@if (editing()) {
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="editor__fields">
+      <cb-form-field #nameField label="Previous school" controlId="previous-school-name">
+        <cb-text-input
+          formControlName="previousSchoolName"
+          [id]="nameField.controlId()"
+          [describedBy]="nameField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #boardField label="Board" controlId="previous-school-board">
+        <cb-text-input
+          formControlName="previousSchoolBoard"
+          [id]="boardField.controlId()"
+          [describedBy]="boardField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #tcNumberField
+        label="Transfer certificate number"
+        controlId="previous-school-tc-number"
+      >
+        <cb-text-input
+          formControlName="transferCertificateNumber"
+          [id]="tcNumberField.controlId()"
+          [describedBy]="tcNumberField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #tcDateField
+        label="Transfer certificate issued on"
+        controlId="previous-school-tc-date"
+      >
+        <cb-text-input
+          formControlName="transferCertificateIssuedOn"
+          type="date"
+          [id]="tcDateField.controlId()"
+          [describedBy]="tcDateField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #reasonField label="Reason for leaving" controlId="previous-school-reason">
+        <cb-text-input
+          formControlName="reasonForLeaving"
+          [id]="reasonField.controlId()"
+          [describedBy]="reasonField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="busy()" (click)="cancel()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+} @else if (
+  !view().previousSchoolName &&
+  !view().previousSchoolBoard &&
+  !view().transferCertificateNumber &&
+  !view().transferCertificateIssuedOn &&
+  !view().reasonForLeaving
+) {
+  <p class="section__status" role="status">
+    Nothing recorded. A first admission with no previous school has nothing to show here.
+  </p>
+} @else {
+  <dl class="facts">
+    <div class="facts__pair">
+      <dt>Previous school</dt>
+      <dd>
+        @if (view().previousSchoolName) {
+          {{ view().previousSchoolName }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Board</dt>
+      <dd>
+        @if (view().previousSchoolBoard) {
+          {{ view().previousSchoolBoard }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Transfer certificate number</dt>
+      <dd class="facts__number">
+        @if (view().transferCertificateNumber) {
+          {{ view().transferCertificateNumber }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Transfer certificate issued on</dt>
+      <dd>
+        @if (view().transferCertificateIssuedOn) {
+          {{ view().transferCertificateIssuedOn }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Reason for leaving</dt>
+      <dd>
+        @if (view().reasonForLeaving) {
+          {{ view().reasonForLeaving }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+  </dl>
+}

@@ -86,10 +86,13 @@ to propose as the alternative was not built — the accessor rule was cheaper an
 
 **Not built: export masking.** There are no exports yet to mask.
 
-**Also unbuilt: encryption at rest**, which is why no `RESTRICTED` field exists anywhere
-([ADR-0020](0020-student-and-guardian-model.md) §2). A test asserts that no `RESTRICTED` component
-exists, so introducing one before the encryption, the read-auditing and the UI masking exist will
-fail the build rather than quietly ship.
+**Built, as of 2026-09-07: encryption at rest** ([ADR-0022](0022-encryption-at-rest.md)), and the
+first `RESTRICTED` fields with it — the student module's medical and compliance sections
+([ADR-0020](0020-student-and-guardian-model.md) §2, FR-029, FR-034). `EncryptionBindingTests` fails
+the build if a `RESTRICTED` DTO component's entity field is not `@Encrypted` and wired to the
+converter. Every read of one is audited (`StudentAudit#RESTRICTED_DATA_REVEALED`) and masked by
+default: the ordinary response carries only whether a field was recorded, and a second, permissioned
+endpoint answers with the real value.
 
 Classification is declared **once, at the DTO**, because the DTO is already the mandatory boundary
 under `AGENTS.md` rule 4 — every crossing of a module or HTTP boundary passes through one.

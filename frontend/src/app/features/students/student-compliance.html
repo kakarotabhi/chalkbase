@@ -1,0 +1,240 @@
+<div class="section__head">
+  <h2 class="section__heading">Compliance &amp; identifiers</h2>
+  <div class="section__actions">
+    @if (!editing() && !revealed() && hasAnyRestricted() && canReveal()) {
+      <cb-button
+        variant="secondary"
+        [loading]="revealing()"
+        loadingLabel="Revealing…"
+        (click)="reveal()"
+      >
+        Reveal
+      </cb-button>
+    }
+    @if (!editing() && canManage()) {
+      <cb-button
+        [id]="'compliance-edit'"
+        variant="secondary"
+        [loading]="revealing()"
+        (click)="startEdit()"
+      >
+        Edit
+      </cb-button>
+    }
+  </div>
+</div>
+
+<p class="section__lede">
+  PEN/UDISE and the board registration number are shown in full below. Caste and community,
+  religion, EWS/BPL/RTE category and the APAAR id are masked until revealed — every reveal is
+  recorded.
+</p>
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">{{ message.title }}</strong>
+    <span>{{ message.detail }}</span>
+  </div>
+}
+
+@if (editing()) {
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h3 class="editor__heading">Identifiers</h3>
+    <div class="editor__fields">
+      <cb-form-field #penUdiseField label="PEN / UDISE id" controlId="compliance-pen-udise">
+        <cb-text-input
+          formControlName="penUdiseId"
+          [id]="penUdiseField.controlId()"
+          [describedBy]="penUdiseField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #boardRegField
+        label="Board registration number"
+        controlId="compliance-board-registration"
+      >
+        <cb-text-input
+          formControlName="boardRegistrationNumber"
+          [id]="boardRegField.controlId()"
+          [describedBy]="boardRegField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <h3 class="editor__heading">Restricted (masked until you save)</h3>
+    <div class="editor__fields">
+      <cb-form-field #casteField label="Caste and community" controlId="compliance-caste-category">
+        <cb-text-input
+          formControlName="casteCategory"
+          [id]="casteField.controlId()"
+          [describedBy]="casteField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #religionField label="Religion" controlId="compliance-religion">
+        <cb-text-input
+          formControlName="religion"
+          [id]="religionField.controlId()"
+          [describedBy]="religionField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #specialCategoryField
+        label="EWS / BPL / RTE category"
+        controlId="compliance-special-category"
+      >
+        <cb-text-input
+          formControlName="specialCategory"
+          [id]="specialCategoryField.controlId()"
+          [describedBy]="specialCategoryField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <h3 class="editor__heading">APAAR</h3>
+    <p class="editor__hint">
+      APAAR is consent-based. An id cannot be saved without ticking consent and naming who gave it.
+    </p>
+    <div class="editor__fields">
+      <cb-form-field
+        #apaarIdField
+        label="APAAR id"
+        controlId="compliance-apaar-id"
+        [error]="apaarConsentError()"
+      >
+        <cb-text-input
+          formControlName="apaarId"
+          [id]="apaarIdField.controlId()"
+          [describedBy]="apaarIdField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #apaarConsentByField
+        label="Consent given by"
+        controlId="compliance-apaar-consent-by"
+        hint="The name on the signed consent form."
+      >
+        <cb-text-input
+          formControlName="apaarConsentGivenBy"
+          [id]="apaarConsentByField.controlId()"
+          [describedBy]="apaarConsentByField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <div class="editor__consent">
+        <cb-checkbox
+          formControlName="apaarConsentGiven"
+          label="Consent given"
+          [id]="'compliance-apaar-consent-given'"
+        />
+      </div>
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="busy()" (click)="cancel()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+} @else {
+  <dl class="facts">
+    <div class="facts__pair">
+      <dt>PEN / UDISE id</dt>
+      <dd class="facts__number">
+        @if (summary().penUdiseId) {
+          {{ summary().penUdiseId }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Board registration number</dt>
+      <dd class="facts__number">
+        @if (summary().boardRegistrationNumber) {
+          {{ summary().boardRegistrationNumber }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <dl class="facts facts--restricted">
+    <div class="facts__pair">
+      <dt>Caste and community</dt>
+      <dd>
+        @if (!summary().hasCasteCategory) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'casteCategory'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Religion</dt>
+      <dd>
+        @if (!summary().hasReligion) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'religion'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>EWS / BPL / RTE category</dt>
+      <dd>
+        @if (!summary().hasSpecialCategory) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'specialCategory'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>APAAR id</dt>
+      <dd>
+        @if (!summary().hasApaarId) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'apaarId'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <h3 class="section__subheading">APAAR consent</h3>
+  <dl class="facts">
+    <div class="facts__pair">
+      <dt>Consent given</dt>
+      <dd>{{ summary().apaarConsentGiven ? 'Yes' : 'No' }}</dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Given by</dt>
+      <dd>
+        @if (summary().apaarConsentGivenBy) {
+          {{ summary().apaarConsentGivenBy }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+  </dl>
+}

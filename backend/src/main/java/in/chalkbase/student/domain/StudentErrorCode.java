@@ -159,6 +159,20 @@ public enum StudentErrorCode implements ErrorCode {
             "STU_018",
             "This school has no classes and sections set up yet, so there is nothing to import"
                     + " students into. Set up the class ladder under Academics first.",
+            HttpStatus.UNPROCESSABLE_ENTITY),
+
+    // ── Restricted sections (ADR-0014, ADR-0022) ─────────────────────────────────────────────
+
+    /**
+     * {@code SaveComplianceRequest#apaarId} was set without {@code apaarConsentGiven}.
+     *
+     * <p>APAAR is consent-based (ADR-0014's consent section). An id stored with nowhere recording
+     * that consent was given is not lawfully collected, whatever the value is — so the write is
+     * refused rather than accepted and quietly missing its consent record.
+     */
+    APAAR_REQUIRES_CONSENT(
+            "STU_019",
+            "An APAAR id cannot be saved without recording that consent was given",
             HttpStatus.UNPROCESSABLE_ENTITY);
 
     private final String code;

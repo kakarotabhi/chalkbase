@@ -20,9 +20,13 @@ import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { formatDay } from '../../shared/formatting/day';
+import { StudentCompliance } from './student-compliance';
+import { StudentContact } from './student-contact';
 import { StudentEnrolments } from './student-enrolments';
 import { StudentForm } from './student-form';
 import { StudentGuardians } from './student-guardians';
+import { StudentMedical } from './student-medical';
+import { StudentPreviousSchool } from './student-previous-school';
 import {
   ACCESS_DENIED,
   GENDER_LABELS,
@@ -65,7 +69,17 @@ import {
  */
 @Component({
   selector: 'cb-student-detail',
-  imports: [RouterLink, Button, StudentForm, StudentGuardians, StudentEnrolments],
+  imports: [
+    RouterLink,
+    Button,
+    StudentForm,
+    StudentGuardians,
+    StudentEnrolments,
+    StudentContact,
+    StudentPreviousSchool,
+    StudentMedical,
+    StudentCompliance,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-detail.html',
   styleUrl: './student-detail.scss',

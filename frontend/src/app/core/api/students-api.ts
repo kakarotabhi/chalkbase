@@ -4,11 +4,21 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiResponse,
+  ComplianceDetail,
+  ComplianceSummary,
+  ContactDetail,
   CreateEnrolmentRequest,
   Enrolment,
   ImportReport,
   LinkGuardianRequest,
+  MedicalDetail,
+  MedicalSummary,
   PageResponse,
+  PreviousSchoolDetail,
+  SaveComplianceRequest,
+  SaveContactRequest,
+  SaveMedicalRequest,
+  SavePreviousSchoolRequest,
   SaveStudentRequest,
   StudentDetail,
   StudentStatus,
@@ -72,6 +82,14 @@ export interface StudentSearchQuery {
  *
  * `detachGuardian` is the one delete here and it removes a **link**, not a person: the guardian
  * record survives because their other children still point at it (ADR-0020 §5).
+ *
+ * ## Two reads are audited, and this class does not hide that
+ *
+ * `revealMedical` and `revealCompliance` are the only methods here that return a Restricted
+ * field's real value (ADR-0014, ADR-0022) — everything else, including `get`, answers with the
+ * masked form. Calling either is recorded on the server as a read of Restricted data. Do not call
+ * one just to have the value in hand "in case"; call it when the screen is actually about to show
+ * it to someone who asked to see it.
  *
  * ## Several writes deliberately discard their response
  *
@@ -237,6 +255,70 @@ export class StudentsApi {
         withCredentials: true,
       })
       .pipe(discardBody);
+  }
+
+  /* ── Contact, previous school, medical, compliance (FR-028, FR-029, FR-033, FR-034) ────── */
+
+  saveContact(studentId: string, request: SaveContactRequest): Observable<ContactDetail> {
+    return this.http
+      .put<ApiResponse<ContactDetail>>(`${this.baseUrl}/${studentId}/contact`, request, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  savePreviousSchool(
+    studentId: string,
+    request: SavePreviousSchoolRequest,
+  ): Observable<PreviousSchoolDetail> {
+    return this.http
+      .put<ApiResponse<PreviousSchoolDetail>>(
+        `${this.baseUrl}/${studentId}/previous-school`,
+        request,
+        { withCredentials: true },
+      )
+      .pipe(unwrap);
+  }
+
+  saveMedical(studentId: string, request: SaveMedicalRequest): Observable<MedicalSummary> {
+    return this.http
+      .put<ApiResponse<MedicalSummary>>(`${this.baseUrl}/${studentId}/medical`, request, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  /**
+   * The real values of the six Restricted health fields. **Audited on every call** (ADR-0014) —
+   * see the class comment. Call this only when a screen is about to reveal the values to someone
+   * who holds "Reveal restricted student data" and asked to see them.
+   */
+  revealMedical(studentId: string): Observable<MedicalDetail> {
+    return this.http
+      .get<ApiResponse<MedicalDetail>>(`${this.baseUrl}/${studentId}/medical/restricted`, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  saveCompliance(studentId: string, request: SaveComplianceRequest): Observable<ComplianceSummary> {
+    return this.http
+      .put<ApiResponse<ComplianceSummary>>(`${this.baseUrl}/${studentId}/compliance`, request, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  /**
+   * The real values of the four Restricted compliance fields. **Audited on every call**
+   * (ADR-0014) — see the class comment and {@link revealMedical}.
+   */
+  revealCompliance(studentId: string): Observable<ComplianceDetail> {
+    return this.http
+      .get<ApiResponse<ComplianceDetail>>(`${this.baseUrl}/${studentId}/compliance/restricted`, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
   }
 }
 

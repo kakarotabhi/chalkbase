@@ -54,16 +54,50 @@ required to be able to produce those years later. Deleting the student would lea
 pointing at nothing. Changing the status takes them out of the lists people work from while keeping
 the record whole.
 
+## Contact, previous school and compliance
+
+Below the guardians you will find four more sections on the record:
+
+- **Contact** — the child's own address, phone and email, if different from a guardian's.
+- **Previous school** — where they came from and their transfer certificate, if they have one. A
+  fresh admission with no previous school simply has nothing here.
+- **Medical** — blood group, CWSN/disability status, allergies, chronic conditions, medication, and
+  an emergency contact.
+- **Compliance & identifiers** — PEN/UDISE id, board registration number, caste and community,
+  religion, EWS/BPL/RTE category, and an APAAR id.
+
+All four are edited the same way as the details above: select **Edit**, fill in what you know, and
+save. Nothing on a form is required unless the school has it.
+
+## Masked fields, and who can see them
+
+A caste, a religion, a category, a disability status, an allergy, a medication or an APAAR id is
+shown as **"Recorded, masked"**, not the value, even to someone who can edit the record. Seeing the
+real value needs a separate permission — **"Reveal restricted student data"** — and select
+**Reveal**. Every reveal is written to the audit log: this is the most sensitive data the school
+holds, and looking at it is treated as a deliberate act, not something that happens as a side effect
+of opening a student's page.
+
+**Who can do this:** by default, only the principal. A school that wants another role to hold it —
+an office administrator who prepares the UDISE+ return, say — adds "Reveal restricted student data"
+to that role.
+
+## APAAR needs consent recorded
+
+An APAAR id cannot be saved unless **Consent given** is ticked and the name of who gave consent is
+recorded — the person who signed the consent form, which is not always the same guardian as the
+primary contact. This is not a formality: without it, the record has no basis for holding the id at
+all, and the save is refused.
+
 ## What is not here yet
 
-Documents, photographs, medical details, and category information such as caste, religion or
-RTE/EWS status are **not yet available**. The category fields in particular are held back on
-purpose: they are the most sensitive data the school holds, and the protections they require —
-encryption, masking, and a record of every person who looks at them — are still being built. They
-will arrive together with those protections, not before.
+Documents, photographs, and anything to do with transport or hostel are **not yet available** on
+this record. Transport and hostel will arrive as a need flag at most, once those modules exist —
+this record was never meant to hold a route or a room assignment of its own.
 
 ## What is recorded
 
 Every change here goes to the audit log: who added or edited a student, who attached a guardian,
-who changed an enrolment, and when. The log records which fields changed and never the values, and
-it never contains a child's name or admission number.
+who changed an enrolment, and when — and, separately, who revealed a masked caste, religion,
+category, medical or APAAR field, and when. The log records which fields changed and never the
+values, and it never contains a child's name or admission number.

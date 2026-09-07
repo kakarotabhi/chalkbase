@@ -1,0 +1,128 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/banner' as *;
+
+:host {
+  display: block;
+}
+
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.section__heading {
+  margin: 0;
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.section__subheading {
+  margin: var(--cb-space-4) 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.section__actions {
+  display: flex;
+  gap: var(--cb-space-2);
+}
+
+.section__lede,
+.muted,
+.facts__pair dt {
+  color: var(--cb-text-muted);
+}
+
+.section__lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+}
+
+// The word that says a value exists but was not fetched — never a fake string of dots standing
+// in for real characters, which would read as a value the browser could copy or select.
+.masked {
+  color: var(--cb-text-muted);
+  font-style: italic;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.editor {
+  margin-bottom: var(--cb-space-2);
+}
+
+.editor__heading {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.editor__fields {
+  display: grid;
+  gap: var(--cb-space-4);
+  margin-bottom: var(--cb-space-6);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+.facts {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include from-expanded {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.facts--restricted {
+  margin-bottom: var(--cb-space-2);
+}
+
+.facts__pair {
+  min-width: 0;
+
+  dt {
+    font-size: var(--cb-font-size-sm);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--cb-font-size-base);
+  }
+}

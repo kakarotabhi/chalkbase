@@ -409,6 +409,11 @@ export type Enrolment = Schemas['Enrolment'];
  * Structurally a superset of `StudentSummary` rather than an extension of it, because the backend
  * declares the two records independently. Assigning a `StudentDetail` where a `StudentSummary` is
  * wanted still works.
+ *
+ * - `contact`, `previousSchool` — absent when nothing has been entered for that section. Not a
+ *   fault; an ordinary first admission has no previous school.
+ * - `medical`, `compliance` — always present, and always **masked**: see `MedicalSummary` and
+ *   `ComplianceSummary`. Fetching this record is never the audited read ADR-0014 asks for.
  */
 export type StudentDetail = Schemas['StudentDetail'];
 
@@ -491,6 +496,77 @@ export type LinkGuardianRequest = Schemas['LinkGuardianRequest'];
 
 /** Correcting a link: what this person is to this child, and whether they are the main contact. */
 export type UpdateStudentGuardianRequest = Schemas['UpdateStudentGuardianRequest'];
+
+/* ── Contact, medical, previous school and compliance (FR-028, FR-029, FR-033, FR-034) ────── */
+//
+// Four more sections of `StudentDetail`. `medical` and `compliance` are the masked shapes
+// (`MedicalSummary`, `ComplianceSummary`) — every Restricted field on them is a `hasX: boolean`,
+// never the value. `MedicalDetail` and `ComplianceDetail` are what `GET …/medical/restricted` and
+// `GET …/compliance/restricted` answer with instead: the real values, and nothing else fetches
+// them. Calling either is an audited read (ADR-0014) — see `StudentsApi.revealMedical` and
+// `StudentsApi.revealCompliance`.
+
+/** A student's own address, phone and email. Confidential, not masked — same tier as a guardian's. */
+export type ContactDetail = Schemas['ContactDetail'];
+
+/** Correcting a student's contact details. Every field optional. */
+export type SaveContactRequest = Schemas['SaveContactRequest'];
+
+/**
+ * Where a student came from, and their transfer certificate.
+ *
+ * Confidential, not masked. Absent on `StudentDetail` for a student with no previous school on
+ * file — an ordinary first admission, not a gap.
+ */
+export type PreviousSchoolDetail = Schemas['PreviousSchoolDetail'];
+
+/** Correcting a student's previous school and transfer certificate. Every field optional. */
+export type SavePreviousSchoolRequest = Schemas['SavePreviousSchoolRequest'];
+
+/**
+ * A student's health record, **masked**.
+ *
+ * `hasBloodGroup`, `hasCwsnStatus`, `hasDisabilityDetails`, `hasAllergies`,
+ * `hasChronicConditions`, `hasMedication` — whether each Restricted field has been recorded, never
+ * the value. The emergency contact fields are Confidential, not Restricted, and are sent here in
+ * full: a name and a phone number, not a health fact.
+ */
+export type MedicalSummary = Schemas['MedicalSummary'];
+
+/**
+ * A student's health record, **unmasked**: the real values of the six Restricted fields. Only
+ * `GET /api/students/{id}/medical/restricted` returns this.
+ */
+export type MedicalDetail = Schemas['MedicalDetail'];
+
+/** Entering or correcting a student's health record. Every field optional. */
+export type SaveMedicalRequest = Schemas['SaveMedicalRequest'];
+
+/**
+ * A student's UDISE+/board identifiers and statutory categories, **masked**.
+ *
+ * `penUdiseId` and `boardRegistrationNumber` are Confidential identifiers, sent in full, like an
+ * admission number. `hasCasteCategory`, `hasReligion`, `hasSpecialCategory`, `hasApaarId` say only
+ * whether each Restricted field has been recorded. `apaarConsentGiven`, `apaarConsentGivenBy` and
+ * `apaarConsentGivenAt` are the consent record ADR-0014 asks APAAR to carry — sent in full, because
+ * a recorded decision is metadata, not the APAAR id itself.
+ */
+export type ComplianceSummary = Schemas['ComplianceSummary'];
+
+/**
+ * A student's caste and community, religion, EWS/BPL/RTE category and APAAR id, **unmasked**. Only
+ * `GET /api/students/{id}/compliance/restricted` returns this.
+ */
+export type ComplianceDetail = Schemas['ComplianceDetail'];
+
+/**
+ * Entering or correcting a student's UDISE+/board identifiers and statutory categories.
+ *
+ * `apaarId` cannot be saved with `apaarConsentGiven` false — the backend refuses it
+ * (`STU_019`, `APAAR_REQUIRES_CONSENT`). `apaarConsentGivenAt` is not here: the server sets it from
+ * the moment consent first becomes true.
+ */
+export type SaveComplianceRequest = Schemas['SaveComplianceRequest'];
 
 /* ── Bulk import (ADR-0021) ────────────────────────────────────────────── */
 

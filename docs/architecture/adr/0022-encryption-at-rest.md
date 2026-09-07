@@ -1,6 +1,6 @@
 # ADR-0022: Encryption at rest for Restricted fields
 
-- Status: Accepted (decisions taken; not yet implemented)
+- Status: Accepted and implemented. The student module's medical and compliance sections (FR-034, FR-029) are the first fields to use it.
 - Date: 2026-09-06
 - Deciders: Raja
 - Related: [ADR-0014](0014-data-classification.md) (classification), [ADR-0020](0020-student-and-guardian-model.md) (why the columns are missing), [ADR-0015](0015-deployment-baseline.md) (deployment), [ADR-0011](0011-schema-per-tenant.md) (tenancy)

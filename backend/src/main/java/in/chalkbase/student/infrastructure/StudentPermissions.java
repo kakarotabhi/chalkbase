@@ -9,9 +9,11 @@ import org.springframework.context.annotation.Configuration;
 /**
  * What this module lets someone do (ADR-0005).
  *
- * <p>Two resources and two actions each, following {@code AcademicsPermissions}. The split that
- * earns its place is read from manage: a subject teacher has to know which children are in the class
- * they are teaching and must not be able to change an admission number.
+ * <p>Two resources, and two actions each, following {@code AcademicsPermissions} — plus one third
+ * action on {@code student}, {@link #STUDENT_REVEAL_RESTRICTED}, that ADR-0014 asks for and neither
+ * read nor manage can stand in for. The split between read and manage earns its place too: a subject
+ * teacher has to know which children are in the class they are teaching and must not be able to
+ * change an admission number.
  *
  * <p><strong>Students and guardians are separate resources, and that separation is the one worth
  * arguing.</strong> They cover the same families, so a single {@code student:*} pair would be
@@ -36,6 +38,21 @@ public class StudentPermissions {
     /** Admitting a child, correcting their record, and placing them in a class. */
     public static final String STUDENT_MANAGE = "student:student:manage";
 
+    /**
+     * Seeing the real value of a Restricted field on a student's record — a caste category, a
+     * religion, an EWS/BPL/RTE category, a CWSN/disability status, an allergy, a chronic condition, a
+     * medication, a blood group, or an APAAR id (ADR-0014).
+     *
+     * <p>Deliberately separate from {@link #STUDENT_READ}: ADR-0014 requires a Restricted value to be
+     * "masked by default in the UI, revealed by an explicit permission and a recorded action", and a
+     * permission that let every reader of the class list decrypt a child's disability status on
+     * request would not be that. Holding {@code student:student:manage} does not imply this either —
+     * an office can enter a UDISE+ category from a form without ever needing to see what was recorded
+     * before, and only asking to <em>see</em> it triggers the read audit
+     * ({@code StudentAudit#RESTRICTED_DATA_REVEALED}).
+     */
+    public static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
+
     /** Seeing the guardian directory and the guardians on a child's record. */
     public static final String GUARDIAN_READ = "student:guardian:read";
 
@@ -52,6 +69,12 @@ public class StudentPermissions {
                         "student",
                         "Manage students",
                         "Admit students, correct their records, and enrol them in a class and section."),
+                new PermissionDefinition(
+                        STUDENT_REVEAL_RESTRICTED,
+                        "student",
+                        "Reveal restricted student data",
+                        "See the real value of a caste, religion, category, disability, health or APAAR field"
+                                + " that is otherwise masked. Every use is recorded in the audit log."),
                 new PermissionDefinition(
                         GUARDIAN_READ,
                         "student",

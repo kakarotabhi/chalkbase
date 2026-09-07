@@ -34,6 +34,7 @@ public final class RoleTemplates {
     private static final String SUBJECT_MANAGE = "academics:subject:manage";
     private static final String STUDENT_READ = "student:student:read";
     private static final String STUDENT_MANAGE = "student:student:manage";
+    private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
     private static final String GUARDIAN_READ = "student:guardian:read";
     private static final String GUARDIAN_MANAGE = "student:guardian:manage";
     private static final String USER_READ = "identity:user:read";
@@ -95,6 +96,14 @@ public final class RoleTemplates {
      * administrator who creates and disables accounts but never touches a role) removes one from a
      * copy of this template. Shipping them together by default is simply what a head of school
      * already did before either had a screen.
+     *
+     * <p>{@code student:student:reveal_restricted} is on {@code PRINCIPAL} only, the same as
+     * {@code platform:audit:read} on {@code AUDITOR}: seeing a child's real caste, religion,
+     * disability status or APAAR id is oversight of the most sensitive data this product holds, not
+     * a convenience for whoever happens to be looking at the record (ADR-0014). Neither
+     * {@code STUDENT_MANAGE} nor {@code VICE_PRINCIPAL}'s otherwise-wide grant carries it. A school
+     * that wants its office administrator to hold it too adds it to that role, same as any other
+     * permission here.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -111,6 +120,7 @@ public final class RoleTemplates {
                     SUBJECT_MANAGE,
                     STUDENT_READ,
                     STUDENT_MANAGE,
+                    STUDENT_REVEAL_RESTRICTED,
                     GUARDIAN_READ,
                     GUARDIAN_MANAGE,
                     USER_READ,

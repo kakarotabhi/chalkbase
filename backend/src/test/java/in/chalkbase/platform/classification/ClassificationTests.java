@@ -228,32 +228,15 @@ class ClassificationTests {
         assertThat(Tier.PUBLIC.isRedacted()).isFalse();
     }
 
-    /** Nothing is Restricted yet. When the first one lands, encryption at rest lands with it. */
-    @Test
-    void noRestrictedDataHasBeenIntroducedWithoutEncryption() {
-        List<String> restricted = new ArrayList<>();
-        for (Class<?> dto : CLASSIFIED_DTOS) {
-            for (RecordComponent component : dto.getRecordComponents()) {
-                if (Classified.tierOf(component) == Tier.RESTRICTED) {
-                    restricted.add(dto.getSimpleName() + "." + component.getName());
-                }
-            }
-        }
-
-        assertThat(restricted)
-                .withFailMessage(
-                        """
-                        %s is classified RESTRICTED, and ADR-0014 requires more of that tier than
-                        this slice builds:
-
-                        %s
-
-                        Restricted data must also be encrypted at rest, audited on every read, and
-                        masked in the UI behind an explicit permission. None of that exists yet.
-                        Do not ship the field until it does — then delete this test.""",
-                        restricted.size() == 1 ? "A component" : restricted.size() + " components", bullets(restricted))
-                .isEmpty();
-    }
+    // ── 5. Restricted data is only introduced with encryption ───────────────────────────────
+    //
+    // noRestrictedDataHasBeenIntroducedWithoutEncryption used to live here and fail the build if
+    // any RESTRICTED component existed anywhere, because encryption at rest, read-auditing and UI
+    // masking did not exist yet (ADR-0020 §2). ADR-0022 built all three, and the student module's
+    // medical and compliance sections (StudentMedical, StudentCompliance) are the first fields to
+    // carry the tier: they are @Encrypted, every reveal is audited by StudentRecordService, and
+    // the frontend masks by default. EncryptionBindingTests is what now keeps a RESTRICTED field's
+    // @Encrypted pairing honest — the job this test did by blocking the tier outright.
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────────────
 

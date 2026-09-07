@@ -86,6 +86,25 @@ const record = (over: Partial<StudentRecord> = {}): StudentRecord => ({
       enrolledOn: '2026-04-05',
     },
   ],
+  // `medical` and `compliance` are always present on the contract — masked, never absent, even
+  // when nothing has been recorded (see `MedicalSummary`/`ComplianceSummary`). `contact` and
+  // `previousSchool` are genuinely optional and are left out here, matching a record where
+  // nobody has entered either section yet.
+  medical: {
+    hasBloodGroup: false,
+    hasCwsnStatus: false,
+    hasDisabilityDetails: false,
+    hasAllergies: false,
+    hasChronicConditions: false,
+    hasMedication: false,
+  },
+  compliance: {
+    hasCasteCategory: false,
+    hasReligion: false,
+    hasSpecialCategory: false,
+    hasApaarId: false,
+    apaarConsentGiven: false,
+  },
   ...over,
 });
 
