@@ -59,6 +59,24 @@ public class Role {
         // for JPA
     }
 
+    /**
+     * A school-created role — {@code templateCode} is null, because nothing shipped this; it was
+     * typed into a form. {@code RoleTemplateInstaller} is the only other place a {@link Role} row is
+     * created, and it goes straight to SQL rather than through this constructor because it runs
+     * before the entity manager exists.
+     */
+    public Role(String code, String name, String description, Set<String> permissions) {
+        this.code = code;
+        this.name = name;
+        this.description = description;
+        this.permissions = new LinkedHashSet<>(permissions);
+    }
+
+    /** Wholesale replacement, not a delta — the caller has already computed what should remain. */
+    public void replacePermissions(Set<String> permissions) {
+        this.permissions = new LinkedHashSet<>(permissions);
+    }
+
     public UUID getId() {
         return id;
     }

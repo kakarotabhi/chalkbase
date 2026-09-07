@@ -40,7 +40,52 @@ public enum IdentityErrorCode implements ErrorCode {
     PASSWORD_CHANGE_REQUIRED(
             "AUTH_008",
             "Set a new password before continuing. Your school issued this one as a temporary password.",
-            HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN),
+
+    /** {@code uq_user_identifier_value}: this school already has an account signing in with that username. */
+    USERNAME_TAKEN("AUTH_009", "That username is already in use at this school", HttpStatus.CONFLICT),
+
+    /**
+     * Would leave the school with nobody able to create a role, edit one, or grant or revoke access
+     * — deactivating the only account that holds {@code identity:role:manage}, or revoking the only
+     * grant or the only role edit that gives somebody that permission.
+     *
+     * <p>The guard is on the <em>outcome</em>, never on which account happens to be acted on: an
+     * admin may deactivate their own account, or have their own {@code identity:role:manage} grant
+     * revoked, as long as at least one other active account can still manage access afterwards. See
+     * {@code AccessGuardrails}.
+     */
+    LAST_ACCESS_MANAGER(
+            "AUTH_010",
+            "This would leave nobody at the school able to manage access. Grant the same role to"
+                    + " someone else first.",
+            HttpStatus.CONFLICT),
+
+    /**
+     * A holder of {@code identity:role:manage} tried to grant, or add to a role, a permission they do
+     * not themselves currently hold — the privilege-escalation path ADR-0005 leaves open by not
+     * scoping {@code identity:role:manage} to particular permissions. See {@code AccessGuardrails}.
+     *
+     * <p>Never returned for <em>removing</em> a permission from a role or revoking a grant: taking
+     * access away can never escalate anything, so it is never guarded.
+     */
+    CANNOT_GRANT_PERMISSION_YOU_DO_NOT_HOLD(
+            "AUTH_011", "You cannot grant a permission you do not hold yourself.", HttpStatus.FORBIDDEN),
+
+    /**
+     * {@code uq_role_code}. Should not be reachable through the API: {@code RoleManagementService}
+     * derives a role's code from its name and resolves a collision itself before saving. Claimed
+     * defensively for the race between two admins creating similarly named roles at the same
+     * instant.
+     */
+    ROLE_NAME_TAKEN("AUTH_012", "A role with a name this close to that one already exists", HttpStatus.CONFLICT),
+
+    /**
+     * {@code uq_user_role_grant}. Should not be reachable through the API: the grant service checks
+     * for an existing identical grant before saving. Claimed defensively for two clicks of "grant"
+     * landing at once.
+     */
+    GRANT_ALREADY_EXISTS("AUTH_013", "That role is already granted to this user at this scope", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

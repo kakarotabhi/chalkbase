@@ -95,15 +95,18 @@ different school's session. See `SessionInvalidationService`'s own Javadoc for t
 It is called from:
 
 - Admin password reset and account deactivation (item 2 of this milestone).
-- Revoking a grant, or editing a role's permissions to remove one, when doing so is computed to
-  change who can hold `identity:role:manage` — never unconditionally on every role edit, because
-  most role edits are additive and there is nothing to dislodge (item 3 of this milestone).
+- Revoking a grant: the target's sessions end immediately (item 3).
+- Replacing a role's permission set, whenever the replacement *removes* one or more permissions:
+  every account currently holding that role has its sessions ended (item 3). Adding a permission is
+  not guarded this way — it only ever widens access, and ADR-0005 already accepts "takes effect on
+  next login" for anything additive. Only the removal case is urgent enough to act on immediately.
 
-A future role or permission edit that is not one of the above still waits for the next login, exactly
-as ADR-0005 already describes. This ADR does not attempt "every permission change takes effect
-instantly everywhere" — that is the per-request permission query ADR-0005 rejected, arrived at by a
-different route. It attempts the narrower, achievable thing: the specific writes this milestone adds
-that a school would reasonably expect to take effect at once, do.
+Creating a role and granting one add access and never end a session, for the same reason: nothing
+about them needs to be urgent, and ADR-0005's "next login" already covers it. This ADR does not
+attempt "every permission change takes effect instantly everywhere" — that is the per-request
+permission query ADR-0005 rejected, arrived at by a different route. It attempts the narrower,
+achievable thing: every write in this milestone that *takes access away* ends the affected session or
+sessions immediately, and every write that only grants access can wait for the next login.
 
 ## Options considered
 

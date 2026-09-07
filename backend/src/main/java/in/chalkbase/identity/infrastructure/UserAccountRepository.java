@@ -1,6 +1,7 @@
 package in.chalkbase.identity.infrastructure;
 
 import in.chalkbase.identity.application.AccountStanding;
+import in.chalkbase.identity.domain.AccountStatus;
 import in.chalkbase.identity.domain.UserAccount;
 import java.util.List;
 import java.util.Optional;
@@ -31,8 +32,8 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, UUID> 
             + " from UserAccount a where a.id = :accountId")
     Optional<AccountStanding> findStanding(UUID accountId);
 
-    /** The subset of {@code accountIds} that may currently be used. For the last-access-manager guard. */
-    @Query(
-            "select a.id from UserAccount a where a.id in :accountIds and a.status = in.chalkbase.identity.domain.AccountStatus.ACTIVE")
-    List<UUID> findActiveIds(@Param("accountIds") Iterable<UUID> accountIds);
+    /** The subset of {@code accountIds} currently {@link AccountStatus#ACTIVE}. For the last-access-manager guard. */
+    @Query("select a.id from UserAccount a where a.id in :accountIds and a.status = :status")
+    List<UUID> findIdsByIdInAndStatus(
+            @Param("accountIds") Iterable<UUID> accountIds, @Param("status") AccountStatus status);
 }

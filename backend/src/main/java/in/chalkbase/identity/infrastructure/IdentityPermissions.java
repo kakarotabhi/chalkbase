@@ -21,9 +21,19 @@ public class IdentityPermissions {
     public static final String USER_READ = "identity:user:read";
 
     /**
-     * Reading the permission catalogue and this school's roles — and, once the management screens
-     * land, editing them. Held only by roles that genuinely administer access, because it is the
-     * permission with which every other permission can eventually be granted.
+     * Creating an account, deactivating or reactivating one, clearing a lockout, and issuing an
+     * admin password reset. Deliberately separate from {@link #ROLE_MANAGE}: a school may want
+     * someone who runs the office roster — creating accounts as staff join, deactivating them as
+     * staff leave — without also handing them the ability to change what any role may do.
+     */
+    public static final String USER_MANAGE = "identity:user:manage";
+
+    /**
+     * Reading the permission catalogue and this school's roles, creating a role, editing which
+     * permissions it holds, and granting or revoking it for a user. Held only by roles that
+     * genuinely administer access, because it is the permission with which every other permission
+     * can eventually be granted — see {@code AccessGuardrails} for what stops a holder granting one
+     * they do not themselves hold.
      */
     public static final String ROLE_MANAGE = "identity:role:manage";
 
@@ -32,6 +42,11 @@ public class IdentityPermissions {
         return () -> List.of(
                 new PermissionDefinition(
                         USER_READ, "identity", "View users", "See the people who hold an account at this school."),
+                new PermissionDefinition(
+                        USER_MANAGE,
+                        "identity",
+                        "Manage user accounts",
+                        "Create accounts, deactivate or reactivate them, clear a lockout, and reset a password."),
                 new PermissionDefinition(
                         ROLE_MANAGE,
                         "identity",

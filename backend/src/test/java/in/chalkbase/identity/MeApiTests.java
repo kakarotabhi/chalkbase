@@ -70,6 +70,7 @@ class MeApiTests {
     private static final String SCHOOL_READ = "school:school:read";
     private static final String SCHOOL_UPDATE = "school:school:update";
     private static final String USER_READ = "identity:user:read";
+    private static final String USER_MANAGE = "identity:user:manage";
     private static final String ROLE_MANAGE = "identity:role:manage";
     private static final String SESSION_READ = "academics:session:read";
     private static final String SESSION_MANAGE = "academics:session:manage";
@@ -182,6 +183,7 @@ class MeApiTests {
                                 GUARDIAN_READ,
                                 GUARDIAN_MANAGE,
                                 USER_READ,
+                                USER_MANAGE,
                                 ROLE_MANAGE)))
                 // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
                 // on the deployment — which no school user may read; leaving it in the menu meant
