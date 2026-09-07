@@ -340,6 +340,86 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/attendance/correction-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["pending"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/correction-requests/{id}/decision": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["decide"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/marks/{markId}/correction-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["correctionHistory"];
+        readonly put?: never;
+        readonly post: operations["requestCorrection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/sections/{sectionId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["view"];
+        readonly put?: never;
+        readonly post: operations["mark"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/students/{studentId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["studentHistory"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/audit": {
         readonly parameters: {
             readonly query?: never;
@@ -953,6 +1033,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseCorrectionRequestResponse: {
+            readonly data?: components["schemas"]["CorrectionRequestResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseDashboardResponse: {
             readonly data?: components["schemas"]["DashboardResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1003,6 +1091,14 @@ export interface components {
         };
         readonly ApiResponseListAcademicSessionResponse: {
             readonly data?: readonly components["schemas"]["AcademicSessionResponse"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListCorrectionRequestResponse: {
+            readonly data?: readonly components["schemas"]["CorrectionRequestResponse"][];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1073,6 +1169,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseListStudentAttendanceRecord: {
+            readonly data?: readonly components["schemas"]["StudentAttendanceRecord"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseListUserSummary: {
             readonly data?: readonly components["schemas"]["UserSummary"][];
             readonly error?: components["schemas"]["ApiError"];
@@ -1123,6 +1227,14 @@ export interface components {
         };
         readonly ApiResponsePageResponseAuditEventResponse: {
             readonly data?: components["schemas"]["PageResponseAuditEventResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponsePageResponseCorrectionRequestResponse: {
+            readonly data?: components["schemas"]["PageResponseCorrectionRequestResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1201,6 +1313,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseSectionAttendanceView: {
+            readonly data?: components["schemas"]["SectionAttendanceView"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseSectionResponse: {
             readonly data?: components["schemas"]["SectionResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1256,6 +1376,26 @@ export interface components {
             /** Format: date-time */
             readonly timestamp: string;
             readonly traceId?: string;
+        };
+        readonly AttendanceEntryRequest: {
+            readonly remarks?: string;
+            /** @enum {string} */
+            readonly status: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
+            /** Format: uuid */
+            readonly studentId: string;
+        };
+        readonly AttendanceStudentMark: {
+            readonly admissionNumber: string;
+            readonly editable: boolean;
+            readonly fullName: string;
+            /** Format: uuid */
+            readonly markId?: string;
+            readonly remarks?: string;
+            readonly rollNumber?: string;
+            /** @enum {string} */
+            readonly status?: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
+            /** Format: uuid */
+            readonly studentId: string;
         };
         readonly AuditEventResponse: {
             readonly action: string;
@@ -1325,6 +1465,29 @@ export interface components {
             readonly email?: string;
             readonly phone?: string;
         };
+        readonly CorrectionRequestResponse: {
+            /** Format: date */
+            readonly attendanceDate: string;
+            /** Format: uuid */
+            readonly attendanceMarkId: string;
+            /** Format: date-time */
+            readonly decidedAt?: string;
+            /** @enum {string} */
+            readonly decision: "PENDING" | "APPROVED" | "REJECTED";
+            readonly decisionNote?: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** @enum {string} */
+            readonly previousStatus: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
+            readonly reason: string;
+            /** Format: date-time */
+            readonly requestedAt: string;
+            /** @enum {string} */
+            readonly requestedStatus: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
+            /** Format: uuid */
+            readonly studentId: string;
+            readonly studentName: string;
+        };
         readonly CreateEnrolmentRequest: {
             /** Format: uuid */
             readonly academicSessionId: string;
@@ -1371,6 +1534,11 @@ export interface components {
             readonly recentAudit?: components["schemas"]["RecentAuditTile"];
             readonly session?: components["schemas"]["SessionTile"];
             readonly students?: components["schemas"]["StudentsTile"];
+        };
+        readonly DecideCorrectionRequest: {
+            /** @enum {string} */
+            readonly decision: "PENDING" | "APPROVED" | "REJECTED";
+            readonly note?: string;
         };
         readonly DocumentSummary: {
             readonly contentType: string;
@@ -1508,6 +1676,11 @@ export interface components {
             /** Format: uuid */
             readonly userId: string;
         };
+        readonly MarkAttendanceRequest: {
+            /** Format: date */
+            readonly attendanceDate: string;
+            readonly entries: readonly components["schemas"]["AttendanceEntryRequest"][];
+        };
         readonly MedicalDetail: {
             readonly allergies?: string;
             readonly bloodGroup?: string;
@@ -1573,6 +1746,17 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        readonly PageResponseCorrectionRequestResponse: {
+            readonly content: readonly components["schemas"]["CorrectionRequestResponse"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
         readonly PageResponseGuardianSummary: {
             readonly content: readonly components["schemas"]["GuardianSummary"][];
             /** Format: int32 */
@@ -1629,6 +1813,11 @@ export interface components {
         };
         readonly ReorderSchoolClassesRequest: {
             readonly classIds: readonly string[];
+        };
+        readonly RequestCorrectionRequest: {
+            readonly reason: string;
+            /** @enum {string} */
+            readonly requestedStatus: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
         };
         readonly RoleResponse: {
             readonly code: string;
@@ -1753,6 +1942,18 @@ export interface components {
             readonly code: string;
             readonly name: string;
         };
+        readonly SectionAttendanceView: {
+            /** Format: uuid */
+            readonly academicSessionId: string;
+            /** Format: date */
+            readonly attendanceDate: string;
+            readonly className: string;
+            readonly entries: readonly components["schemas"]["AttendanceStudentMark"][];
+            readonly locked: boolean;
+            /** Format: uuid */
+            readonly sectionId: string;
+            readonly sectionName: string;
+        };
         readonly SectionResponse: {
             readonly active: boolean;
             /** Format: uuid */
@@ -1766,6 +1967,16 @@ export interface components {
             readonly set: boolean;
             /** Format: date */
             readonly startsOn?: string;
+        };
+        readonly StudentAttendanceRecord: {
+            /** Format: date */
+            readonly attendanceDate: string;
+            readonly editable: boolean;
+            /** Format: uuid */
+            readonly markId: string;
+            readonly remarks?: string;
+            /** @enum {string} */
+            readonly status: "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "EXCUSED_LEAVE" | "HOLIDAY";
         };
         readonly StudentDetail: {
             readonly admissionNumber: string;
@@ -2530,6 +2741,177 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
+                };
+            };
+        };
+    };
+    readonly pending: {
+        readonly parameters: {
+            readonly query: {
+                readonly pageable: components["schemas"]["Pageable"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseCorrectionRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly decide: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["DecideCorrectionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCorrectionRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly correctionHistory: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly markId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListCorrectionRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly requestCorrection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly markId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["RequestCorrectionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCorrectionRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly view: {
+        readonly parameters: {
+            readonly query?: {
+                readonly date?: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly sectionId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseSectionAttendanceView"];
+                };
+            };
+        };
+    };
+    readonly mark: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly sectionId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["MarkAttendanceRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseSectionAttendanceView"];
+                };
+            };
+        };
+    };
+    readonly studentHistory: {
+        readonly parameters: {
+            readonly query: {
+                readonly from: string;
+                readonly to: string;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly studentId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListStudentAttendanceRecord"];
                 };
             };
         };
