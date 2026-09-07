@@ -37,21 +37,35 @@ Schools that want a different order can have `sort_name` later, as an additive c
 to `full_name`. That is a smaller mistake to correct than a schema that has been forcing clerks to
 guess for two years.
 
-### 2. Restricted fields are not modelled yet, because encryption at rest does not exist
+### 2. Restricted fields, amended 2026-09-07 now that encryption at rest exists
 
-Caste and community, religion, disability and CWSN status, EWS/BPL/RTE category, guardian income,
-APAAR and Aadhaar references are all **Restricted** under
-[ADR-0014](0014-data-classification.md): encrypted at rest, never logged at any level, every read
-audited, masked by default in the UI.
+This section originally said these columns were not modelled because no field-level encryption, UI
+masking or read-auditing path existed, and that adding them first would mean storing a child's caste
+in plaintext in a table nobody had decided how to protect. [ADR-0022](0022-encryption-at-rest.md)
+built that machinery, and `student_medical` and `student_compliance` (their own tables, additive to
+`student`) now carry the fields this section used to defer:
 
-**None of that machinery exists.** There is no field-level encryption, no masking, and no
-read-auditing path. Adding the columns now would mean either building all of it in this slice or —
-far more likely — storing a child's caste in plaintext in a table that nobody has yet decided how to
-protect, and discovering the omission after a school has entered four hundred of them.
+- `student_compliance.caste_category`, `.religion`, `.special_category` (EWS/BPL/RTE) and `.apaar_id`
+  — caste and community, religion, category and APAAR, encrypted at rest, masked by default in the
+  UI, and read-audited on every reveal (`StudentAudit#RESTRICTED_DATA_REVEALED`). `apaar_id` cannot
+  be saved without a recorded consent (`apaar_consent_given`, who, and when) — APAAR is
+  consent-based, and a field only lawful with consent needs somewhere to record that it was given.
+- `student_medical.blood_group`, `.cwsn_status`, `.disability_details`, `.allergies`,
+  `.chronic_conditions` and `.medication` — disability/CWSN and health data, the same three
+  guarantees. Blood group is included even though schools print it without a second thought: it is
+  still a health fact about a child, and ADR-0014 says to pick the more protective tier when it is
+  arguable.
 
-So they are deliberately absent, and this is a **blocker recorded rather than a scope preference**:
-UDISE+ returns need them, so the encryption work is required before the first real school onboards,
-not merely desirable. The student table is designed to take them additively when it lands.
+Two fields this section originally named are still deliberately absent, and for a narrower reason
+than "the machinery does not exist": **guardian income** belongs on `guardian`, not `student`, and
+nothing in this slice's requirements calls for it; an **Aadhaar reference** is not asked for by
+FR-029, which names PEN/UDISE, APAAR and the board registration number and nothing else. Adding
+either now would be scope creep this change was otherwise careful to avoid — they remain additive,
+the same as everything else this ADR left out.
+
+`student_medical`'s emergency contact and `student_compliance`'s PEN/UDISE id and board registration
+number are Confidential, not Restricted — a name and a phone number in one case, identifiers like the
+admission number in the other — and are not masked.
 
 ### 3. Admission number is unique within the school, and that is a decision not a limitation
 
@@ -104,13 +118,17 @@ Not in this slice, and not something a `DELETE` endpoint would have been an answ
 
 ## Consequences
 
-- The `student` module owns `student`, `guardian`, `student_guardian` and `student_enrolment`. It
-  depends on `academics` for the session, class and section it points at — the first real
-  cross-module dependency between two feature modules, and it goes through the named interface.
-- Every field on these tables is **Confidential** or lower under ADR-0014: names, dates of birth,
-  addresses and phone numbers. None may be logged, and none may appear in an error message. The
-  audit log records field names only, which it already does.
-- **Encryption at rest is now on the critical path**, and it was not before. Nothing here can carry a
-  caste category or an APAAR id until it exists.
-- Documents, photographs, medical profiles, sibling links, houses, clubs, promotion records and
-  transfer certificates are all deliberately out. Each is additive.
+- The `student` module owns `student`, `guardian`, `student_guardian`, `student_enrolment`,
+  `student_contact`, `student_transfer`, `student_medical` and `student_compliance` (the last four
+  added 2026-09-07, additively). It depends on `academics` for the session, class and section it
+  points at — the first real cross-module dependency between two feature modules, and it goes
+  through the named interface.
+- Every field on `student`, `guardian`, `student_contact` and `student_transfer` is **Confidential**
+  or lower under ADR-0014: names, dates of birth, addresses and phone numbers. None may be logged,
+  and none may appear in an error message. The audit log records field names only, which it already
+  does. `student_medical` and `student_compliance` mix Confidential fields with **Restricted** ones —
+  see §2, amended 2026-09-07 now that [ADR-0022](0022-encryption-at-rest.md) exists.
+- Documents, photographs, sibling links, houses, clubs and promotion records are all deliberately
+  out. Each is additive. Medical profiles and transfer certificates, named here as future work when
+  this ADR was first written, are no longer out — see §2 for medical (FR-034) and `student_transfer`
+  for previous school and transfer certificate details (FR-033).

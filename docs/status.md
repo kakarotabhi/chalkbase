@@ -48,7 +48,7 @@ glance and are not.
 | Subjects | ✅ Done | The flat catalogue (no ladder, no relation to a class or section), paged, retire and reinstate. |
 | Roles and permissions | ✅ Backend done · ⬜ screen | 17 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. `/api/access` now creates a role, replaces its permission set, and grants or revokes it for a user ([ADR-0023](architecture/adr/0023-session-revalidation.md) covers the guards this needed: `AccessGuardrails` stops a holder of `identity:role:manage` granting a permission they do not themselves hold, and stops any of these writes leaving the school with nobody who can manage access). **No impact preview** — FR-004's acceptance note asks for one and it is deliberately deferred as a frontend-shaped feature; `GET /api/access/roles/{id}/holders` is the read a future screen would build it from. **No screen yet.** |
 | User management | ✅ Backend done · ⬜ screen | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` now creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. **No screen yet.** |
-| Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
+| Student profile | ⚠️ Core, contact, medical and compliance done | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. Added: contact (`student_contact`), previous school and transfer certificate (`student_transfer`, FR-033), medical (`student_medical`, FR-034 — CWSN/disability, allergies, chronic conditions, medication and blood group Restricted, encrypted, masked and read-audited; emergency contact Confidential) and compliance identifiers (`student_compliance`, FR-029 — PEN/UDISE and board registration number Confidential; caste, religion, EWS/BPL/RTE category and a consent-gated APAAR id Restricted). [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2, amended, and [ADR-0022](architecture/adr/0022-encryption-at-rest.md) cover the design. **Still absent:** transport, hostel and document sections — the first two are Phase 4 modules and are a need-flag only on this record, not built yet; document is another lane's work. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
@@ -121,27 +121,23 @@ is in [the free-tier runbook](operations/render-free-tier.md).
 **Only live work is listed here.** Anything finished moves to [Done](#done) — a queue where nine of
 thirteen entries are struck through is a queue nobody can read.
 
-### 1. Encryption at rest — machinery built, columns still to land
+### 1. Encryption at rest — machinery and columns both built
 
-[ADR-0022](architecture/adr/0022-encryption-at-rest.md) settles both open questions: a 256-bit
-`CHALKBASE_ENCRYPTION_KEY` from the environment with a `v1:` key id on every ciphertext so rotation
-is possible, and `@Encrypted` on the entity bound to the DTO's `@Classification` by a build-failing
-test.
-
-**The mechanism is now built: `EncryptedStringConverter` (AES-GCM, multi-key reads), the
+~~Encryption at rest — machinery built, columns still to land~~ ✅ Closed. [ADR-0022](architecture/adr/0022-encryption-at-rest.md)'s
+mechanism was already built: `EncryptedStringConverter` (AES-GCM, multi-key reads), the
 `@Encrypted` marker, `EncryptionBindingTests` beside `ClassificationTests`, and
 `EncryptionKeyConfiguration` — `prod` refuses to start without `CHALKBASE_ENCRYPTION_KEY`, `local`
 and `test` fall back to a fixed checked-in key. See
-[the encryption key](operations/encryption-key.md) for generating and backing one up.**
+[the encryption key](operations/encryption-key.md) for generating and backing one up.
 
-**What is still missing is the columns themselves** — ADR-0020 §2 left caste, religion, disability,
-EWS/RTE category, guardian income and Aadhaar/APAAR out of the student record entirely, and
-`ClassificationTests.noRestrictedDataHasBeenIntroducedWithoutEncryption` still fails the build if any
-of them appear before that lane lands. Without those columns there are no UDISE+ returns, so this
-stays the top item.
-
-Shape of the remaining work: the columns ADR-0020 §2 left out, each paired with `@Encrypted` and its
-`@Convert`, on a tenant migration.
+**The columns have now landed too.** `student_medical` and `student_compliance` carry caste,
+religion, EWS/BPL/RTE category, CWSN/disability, allergies, chronic conditions, medication and blood
+group — encrypted, masked by default, and read-audited on every reveal
+(`StudentAudit#RESTRICTED_DATA_REVEALED`). `ClassificationTests.noRestrictedDataHasBeenIntroducedWithoutEncryption`
+is deleted, per its own comment, now that the first Restricted field is real.
+[ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 is amended in place. Guardian
+income and an Aadhaar reference are still out — see that section for why. **UDISE+ returns now have
+somewhere to write these fields to; the return itself is not built.**
 
 ### 2. Subjects
 
@@ -163,9 +159,12 @@ against the existing directory by phone, or it recreates the duplicate problem
 
 ### 5. The student record's missing sections
 
-[FR-028](requirements/02-functional-requirements.md) asks for contact, medical, transport, hostel,
-document and compliance sections and none exist; [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2's
-Restricted columns land with item 1. This is the largest remaining Phase 1 slice by volume.
+~~The student record's missing sections~~ ✅ Closed for contact, medical, previous school/transfer
+certificate and compliance — see the Student profile row above.
+[FR-028](requirements/02-functional-requirements.md) still asks for transport, hostel and document
+sections. Transport and hostel are Phase 4 modules; on this record they are a need flag at most, not
+a model of their own — do not build one here. Document is a separate lane's work, waiting on the
+storage port item 4 describes.
 
 ### Also queued, not blocking
 
