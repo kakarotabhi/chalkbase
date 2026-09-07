@@ -49,9 +49,9 @@ glance and are not.
 | User management | ⚠️ Model only | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them. |
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
-| **Documents** | ❌ Not started | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task. |
+| **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
-| **Export** | ❌ Not started | Deliberate. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. |
+| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
 | **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
 
@@ -133,33 +133,24 @@ columns ADR-0020 §2 left out.
 
 The last piece of master data. Small, and it unblocks marks and the timetable later.
 
-### 3. ~~ADR-0008's staleness rule~~ ✅ Closed
+### 3. Roles, users, and what a session re-validates
 
-A `403` should make the client refetch `/api/me` and re-render navigation before showing the error,
-so a permission revoked mid-session stops leaving a menu entry that lies. The interceptor does this
-for `401` only. Cross-cutting but small.
+`/api/access` is three `@GetMapping`s. Nothing in the product can create a user, deactivate one,
+reset a password, or edit a role — and a session outlives its account being disabled, so an admin
+screen that disables an account would be worth very little on its own. The three are one piece of
+work because they all live in `identity/application` and all three change how a grant is resolved.
 
-Done — see [Known gaps and debt](#known-gaps-and-debt) and the [Done](#done) table below.
-
-### 4. A Confidential value can still reach a log through an accessor
-
-`@Classification` stops `log.info("saving {}", dto)`. Nothing stops
-`log.info("saving {}", dto.fullName())`. The cheap fix is a static rule flagging a `CONFIDENTIAL`
-accessor inside a logger argument — worth more than export masking, and cheaper now than after
-another thousand call sites.
-
-**Done.** `LoggingClassificationTests` (beside `ClassificationTests`) fails the build when
-production code calls a `CONFIDENTIAL`/`RESTRICTED` DTO accessor on the same source line as an
-SLF4J `Logger` call, `String.format`, or a `Throwable` constructor. It found no existing violations.
-See the Done table and that test's own Javadoc for what it does and does not catch — line-number
-correlation, not real data-flow, so a value handed to a logger through an intervening local variable
-still slips through.
-
-### 5. Guardian import, documents, dashboards
+### 4. Guardian import, documents, dashboards
 
 What is left of Phase 1 after the above. Guardian import specifically needs matching each row
 against the existing directory by phone, or it recreates the duplicate problem
 [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §5 exists to prevent.
+
+### 5. The student record's missing sections
+
+[FR-028](requirements/02-functional-requirements.md) asks for contact, medical, transport, hostel,
+document and compliance sections and none exist; [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2's
+Restricted columns land with item 1. This is the largest remaining Phase 1 slice by volume.
 
 ### Also queued, not blocking
 
@@ -189,12 +180,18 @@ against the existing directory by phone, or it recreates the duplicate problem
   deciding as one thing: what a session re-validates, how often, and what it costs. Related: there
   is **no admin password-reset endpoint** yet, and when one lands it must invalidate the target's
   sessions or a reset will not dislodge anyone holding the old cookie.
-- **Audit retention is unset.** ADR-0014 requires a period per category; the table grows unbounded
-  until a purge exists. The number is a legal question, not an engineering one.
+- **Audit retention is decided at seven years and not yet enforced.** ADR-0014 requires a period per
+  category; the product owner has set one period for every category — seven years, the Indian
+  financial-record convention — rather than a schedule per category, on the grounds that a uniform
+  number errs long and errs long is the safe direction for an audit log. A per-category schedule
+  stays possible later without a schema change. **What does not exist is the purge**, so the table
+  still grows unbounded; this is now an implementation task rather than a question.
 
 ## Waiting on a decision
 
-Phase 0 cleared this table. What is left is externally blocked rather than undecided.
+Phase 0 cleared this table, and a later round cleared file storage, audit retention, `.xlsx` and
+who may run an unmasked export — all four are recorded where the work they block is described, not
+here. What is left is externally blocked rather than undecided.
 
 | Question | Why it matters | Urgency |
 |---|---|---|
@@ -305,8 +302,10 @@ Recorded so they are decided rather than discovered.
 - **The import reads CSV, not `.xlsx`.** The requirement says "import from Excel"; every Excel can
   *Save As* CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
   surface, which AGENTS rule 8 says to ask about. A `.xlsx` upload is detected by its magic bytes and
-  refused with instructions rather than a parse error. **Open question for the product owner**: if
-  "Save as CSV" is a genuine barrier for school offices, POI is the answer and it is a small change
+  refused with instructions rather than a parse error. **Asked and answered: POI is not approved.**
+  The dependency's size and CVE surface are not worth buying while every Excel can *Save As* CSV, so
+  the magic-byte refusal is the shipped behaviour rather than a placeholder for it. Revisit only if
+  a real school office reports "Save as CSV" as a genuine barrier — the change is small and sits
   behind the same endpoint.
 - **Guardians are not imported**, deliberately (ADR-0021 §4): a file of six hundred students each
   naming a father would create six hundred guardian records, including four for one man with four
