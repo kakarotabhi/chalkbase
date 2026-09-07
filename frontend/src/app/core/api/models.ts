@@ -730,3 +730,56 @@ export type GrantRoleRequest = Schemas['GrantRoleRequest'];
  * inline on `GrantRoleRequest.scopeType` — so it is derived from there rather than duplicated.
  */
 export type ScopeType = Schemas['GrantRoleRequest']['scopeType'];
+/* ── Dashboard (GET /api/dashboard) ───────────────────────────────────────── */
+
+/**
+ * The landing screen's tiles, cut down server-side to what the caller may see (ADR-0008 applied to
+ * data, not only to menus).
+ *
+ * **Every field is independently optional, and that is the authorization model, not an accident of
+ * the shape.** Each tile is gated on the read permission the module that owns its data already
+ * defined, and the backend decides which of them the caller holds before building this object. A
+ * tile the caller may not see is never sent — never `null`, simply absent, the same convention
+ * every other optional field in this file follows. Render only the tiles that are present; there is
+ * nothing to explain about why one is missing, the same way a menu item never explains why it was
+ * filtered.
+ */
+export type Dashboard = Schemas['DashboardResponse'];
+
+/**
+ * The current academic session, and whether the school has set one at all.
+ *
+ * `set` is `false`, with every other field absent, when no session has been marked current yet
+ * (ADR-0019) — not omitted as a whole tile, because "no session" is itself the thing a principal
+ * needs to be told, unlike a tile gated purely by permission.
+ */
+export type DashboardSession = Schemas['SessionTile'];
+
+/**
+ * Students enrolled this session, and how they are spread across the school's classes.
+ *
+ * Absent from {@link Dashboard} entirely when no session is current: "enrolled" means nothing
+ * without a year to enrol into, and a zero would read as an empty roll rather than as a school that
+ * has not opened its year.
+ */
+export type DashboardStudents = Schemas['StudentsTile'];
+
+/** One row of `DashboardStudents.byClass`, ordered by the school's own ladder, not alphabetically. */
+export type DashboardClassCount = Schemas['ClassEnrolmentCount'];
+
+/**
+ * Two data-quality gaps a school can act on directly: a child with nobody to call, and a person in
+ * the guardian directory attached to nobody.
+ *
+ * The two fields are gated by two different permissions and may arrive independently — a caller
+ * holding only one sees that field populated and the other absent, never a zero standing in for
+ * "not permitted to know".
+ */
+export type DashboardLinkageGaps = Schemas['LinkageGapsTile'];
+
+/**
+ * The five most recent audit events, for whoever holds `platform:audit:read`. Reuses
+ * {@link AuditEvent} rather than a dashboard-shaped copy of it — same rules, same redaction, same
+ * "field names never values" (ADR-0018).
+ */
+export type DashboardRecentAudit = Schemas['RecentAuditTile'];

@@ -152,6 +152,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseDashboardResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DashboardResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseDocumentSummary": {
         "properties": {
           "data": {
@@ -1225,6 +1250,32 @@
         ],
         "type": "object"
       },
+      "ClassEnrolmentCount": {
+        "properties": {
+          "classId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "sequence": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "classId",
+          "className",
+          "count",
+          "sequence"
+        ],
+        "type": "object"
+      },
       "ComplianceDetail": {
         "properties": {
           "apaarId": {
@@ -1475,6 +1526,23 @@
           "sectionName",
           "sessionName"
         ],
+        "type": "object"
+      },
+      "DashboardResponse": {
+        "properties": {
+          "linkageGaps": {
+            "$ref": "#/components/schemas/LinkageGapsTile"
+          },
+          "recentAudit": {
+            "$ref": "#/components/schemas/RecentAuditTile"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionTile"
+          },
+          "students": {
+            "$ref": "#/components/schemas/StudentsTile"
+          }
+        },
         "type": "object"
       },
       "DocumentSummary": {
@@ -1830,6 +1898,19 @@
           "primary",
           "relation"
         ],
+        "type": "object"
+      },
+      "LinkageGapsTile": {
+        "properties": {
+          "guardiansWithoutAStudent": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "studentsWithoutAGuardian": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "LoginRequest": {
@@ -2263,6 +2344,20 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "RecentAuditTile": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEventResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
         "type": "object"
       },
       "ReorderSchoolClassesRequest": {
@@ -2766,6 +2861,28 @@
         ],
         "type": "object"
       },
+      "SessionTile": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "set": {
+            "type": "boolean"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "set"
+        ],
+        "type": "object"
+      },
       "StudentDetail": {
         "properties": {
           "admissionNumber": {
@@ -2931,6 +3048,25 @@
           "gender",
           "id",
           "status"
+        ],
+        "type": "object"
+      },
+      "StudentsTile": {
+        "properties": {
+          "byClass": {
+            "items": {
+              "$ref": "#/components/schemas/ClassEnrolmentCount"
+            },
+            "type": "array"
+          },
+          "enrolled": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "byClass",
+          "enrolled"
         ],
         "type": "object"
       },
@@ -4268,6 +4404,26 @@
         },
         "tags": [
           "auth-controller"
+        ]
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "operationId": "dashboard",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDashboardResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "dashboard-controller"
         ]
       }
     },

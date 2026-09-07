@@ -43,6 +43,20 @@ public record AuditActor(
         return new AuditActor(null, null, null, tenantSchema);
     }
 
+    /**
+     * Code inside the deployment itself, acting with no account and no HTTP request behind it —
+     * the scheduled retention purge is the first caller. Distinct from {@link #unauthenticated}:
+     * that is a failed sign-in where identity is genuinely unknown and a stranger might be
+     * responsible; this is a named, trusted job, and the row should read as such rather than as
+     * unattributed.
+     *
+     * @param label what the job is, e.g. {@code "Audit retention purge"} — not a value belonging to
+     *     any field, so it is not a breach of ADR-0018 §2
+     */
+    public static AuditActor system(String label, String tenantSchema) {
+        return new AuditActor(null, label, null, tenantSchema);
+    }
+
     /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
     @Override
     public String toString() {

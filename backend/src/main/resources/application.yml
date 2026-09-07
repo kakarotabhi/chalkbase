@@ -119,6 +119,26 @@ chalkbase:
     # reference data; each school's own data lives in the schema named in public.school.
     platform-schema: public
 
+  audit:
+    retention:
+      # ADR-0018 left this unset, calling it a legal question. ADR-0026 answers it: seven years,
+      # one period for every classification tier rather than a schedule per tier — ADR-0014 asks
+      # for a period per category, and the product owner chose a single uniform number instead
+      # because it errs long, and long is the safe direction for an audit log. The Indian
+      # financial-record convention, and a per-category schedule stays possible later without a
+      # schema change. Visible here, not a literal in AuditRetentionPurgeJob, so changing it is a
+      # deploy configuration and not a code change.
+      years: 7
+      # Rows deleted per transaction by AuditRetentionPurgeJob. See its class javadoc for why 500.
+      batch-size: 500
+      # 02:30 UTC, daily. Chosen to fall outside the school day in every timezone this product
+      # ships to; change it if a deployment's traffic pattern ever says otherwise.
+      cron: "0 30 2 * * *"
+      # The tripwire: an operator can set this to false, without a redeploy, to hold a run back.
+      # There is deliberately no API for this — retention is a scheduled platform job, never an
+      # endpoint (ADR-0018 §6) — so the environment is the only lever.
+      enabled: true
+
 management:
   endpoints:
     web:

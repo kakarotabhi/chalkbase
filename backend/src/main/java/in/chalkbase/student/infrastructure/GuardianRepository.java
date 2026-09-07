@@ -32,4 +32,15 @@ public interface GuardianRepository extends JpaRepository<Guardian, UUID>, JpaSp
      */
     @Query("select g from Guardian g where g.phoneDigits is not null and g.phoneDigits <> ''")
     List<Guardian> findAllWithPhone();
+
+    /**
+     * How many guardians are linked to no student at all — for {@code StudentLookupService}, in
+     * support of the first basic dashboard.
+     *
+     * <p>{@code not exists} rather than an outer join and a null check, for the same reason
+     * {@code StudentEnrolmentRepository.countActiveWithoutGuardian} makes the same choice.
+     */
+    @Query(
+            "select count(g) from Guardian g where not exists (select 1 from StudentGuardianLink l where l.guardian = g)")
+    long countWithoutAnyStudent();
 }

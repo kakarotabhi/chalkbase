@@ -1,0 +1,108 @@
+<h1 class="page-title">Dashboard</h1>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading…</p>
+} @else if (failureCode()) {
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load the dashboard</strong>
+      <span>Check your connection and try again. Nothing has been changed.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else if (!hasAnyTile()) {
+  <!--
+    Not an error: a signed-in account with none of the four permissions this screen depends on
+    (academics:session:read, student:student:read, student:guardian:read, platform:audit:read)
+    gets a 200 with every field absent, exactly as GET /api/me does for a bare session.
+  -->
+  <p class="page-status" role="status">
+    Nothing here yet for your role. Ask whoever manages roles at your school if you expected to see
+    something.
+  </p>
+} @else {
+  <div class="tiles">
+    @if (session(); as session) {
+      <section class="tile" aria-labelledby="tile-session-heading">
+        <h2 class="tile__title" id="tile-session-heading">Academic session</h2>
+        @if (session.set) {
+          <p class="tile__value">{{ session.name }}</p>
+          <p class="tile__meta">Started {{ sessionStartsOn() }}</p>
+        } @else {
+          <p class="tile__value tile__value--muted">No session set yet</p>
+        }
+      </section>
+    }
+
+    @if (students(); as students) {
+      <section class="tile" aria-labelledby="tile-students-heading">
+        <h2 class="tile__title" id="tile-students-heading">Students enrolled</h2>
+        <p class="tile__value">{{ students.enrolled }}</p>
+        @if (students.byClass.length) {
+          <ul class="tile__list">
+            @for (row of students.byClass; track row.classId) {
+              <li>
+                <span>{{ row.className }}</span>
+                <span class="tile__count">{{ row.count }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    @if (linkageGaps(); as gaps) {
+      <section class="tile" aria-labelledby="tile-gaps-heading">
+        <h2 class="tile__title" id="tile-gaps-heading">Guardians and students</h2>
+        @if (gaps.studentsWithoutAGuardian !== undefined) {
+          <p class="tile__row">
+            <span class="tile__count">{{ gaps.studentsWithoutAGuardian }}</span>
+            <span>student(s) with no guardian on record</span>
+          </p>
+        }
+        @if (gaps.guardiansWithoutAStudent !== undefined) {
+          <p class="tile__row">
+            <span class="tile__count">{{ gaps.guardiansWithoutAStudent }}</span>
+            <span>guardian(s) linked to no student</span>
+          </p>
+        }
+      </section>
+    }
+
+    @if (recentAudit(); as recentAudit) {
+      <section class="tile tile--wide" aria-labelledby="tile-audit-heading">
+        <h2 class="tile__title" id="tile-audit-heading">Recent activity</h2>
+        @if (recentActivity().length) {
+          <ul class="tile__list tile__list--activity">
+            @for (row of recentActivity(); track row.id) {
+              <li>
+                <span class="tile__meta">{{ row.when }}</span>
+                <span>{{ row.action }}</span>
+                <span class="tile__meta">{{ row.actorName }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="tile__value tile__value--muted">Nothing recorded yet</p>
+        }
+      </section>
+    }
+  </div>
+}

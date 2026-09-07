@@ -404,6 +404,22 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/dashboard": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["dashboard"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/documents": {
         readonly parameters: {
             readonly query?: never;
@@ -857,6 +873,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseDashboardResponse: {
+            readonly data?: components["schemas"]["DashboardResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseDocumentSummary: {
             readonly data?: components["schemas"]["DocumentSummary"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1181,6 +1205,15 @@ export interface components {
             readonly currentPassword: string;
             readonly newPassword: string;
         };
+        readonly ClassEnrolmentCount: {
+            /** Format: uuid */
+            readonly classId: string;
+            readonly className: string;
+            /** Format: int64 */
+            readonly count: number;
+            /** Format: int32 */
+            readonly sequence: number;
+        };
         readonly ComplianceDetail: {
             readonly apaarId?: string;
             readonly casteCategory?: string;
@@ -1244,6 +1277,12 @@ export interface components {
             readonly rollNumber?: string;
             readonly sectionName: string;
             readonly sessionName: string;
+        };
+        readonly DashboardResponse: {
+            readonly linkageGaps?: components["schemas"]["LinkageGapsTile"];
+            readonly recentAudit?: components["schemas"]["RecentAuditTile"];
+            readonly session?: components["schemas"]["SessionTile"];
+            readonly students?: components["schemas"]["StudentsTile"];
         };
         readonly DocumentSummary: {
             readonly contentType: string;
@@ -1352,6 +1391,12 @@ export interface components {
             readonly totalRows: number;
             /** Format: int32 */
             readonly validRows: number;
+        };
+        readonly LinkageGapsTile: {
+            /** Format: int64 */
+            readonly guardiansWithoutAStudent?: number;
+            /** Format: int64 */
+            readonly studentsWithoutAGuardian?: number;
         };
         readonly LinkGuardianRequest: {
             /** Format: uuid */
@@ -1487,6 +1532,9 @@ export interface components {
             readonly transferCertificateIssuedOn?: string;
             readonly transferCertificateNumber?: string;
         };
+        readonly RecentAuditTile: {
+            readonly events: readonly components["schemas"]["AuditEventResponse"][];
+        };
         readonly ReorderSchoolClassesRequest: {
             readonly classIds: readonly string[];
         };
@@ -1619,6 +1667,14 @@ export interface components {
             readonly id: string;
             readonly name: string;
         };
+        readonly SessionTile: {
+            readonly name?: string;
+            /** Format: uuid */
+            readonly sessionId?: string;
+            readonly set: boolean;
+            /** Format: date */
+            readonly startsOn?: string;
+        };
         readonly StudentDetail: {
             readonly admissionNumber: string;
             /** Format: date */
@@ -1652,6 +1708,11 @@ export interface components {
             readonly primary: boolean;
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
+        };
+        readonly StudentsTile: {
+            readonly byClass: readonly components["schemas"]["ClassEnrolmentCount"][];
+            /** Format: int64 */
+            readonly enrolled: number;
         };
         readonly StudentSummary: {
             readonly admissionNumber: string;
@@ -2471,6 +2532,26 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    readonly dashboard: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseDashboardResponse"];
                 };
             };
         };

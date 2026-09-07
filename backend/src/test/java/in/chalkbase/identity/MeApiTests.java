@@ -142,6 +142,11 @@ class MeApiTests {
      * A parent holds no permission at all, and must still be able to bootstrap. An endpoint that
      * required one would produce an account that can sign in and then not be shown anything, not
      * even the reason.
+     *
+     * <p>The menu is not empty any more: the dashboard carries no {@code requiredPermission} of
+     * its own (ADR-0008), so it is the one item every signed-in account sees, including this one.
+     * What it shows this account is nothing — none of its four tiles depend on a permission PARENT
+     * holds — but the item itself, and the landing screen it leads to, exist regardless.
      */
     @Test
     void everySignedInUserCanBootstrapEvenHoldingNoPermissions() throws Exception {
@@ -152,7 +157,7 @@ class MeApiTests {
 
         assertThat(me.path("user").path("displayName").asText()).isEqualTo("Suresh Pillai");
         assertThat(me.path("permissions")).isEmpty();
-        assertThat(me.path("navigation")).isEmpty();
+        assertThat(idsIn(me)).containsExactly("dashboard");
         assertThat(me.path("permissionsVersion").asText()).isNotBlank();
     }
 
@@ -194,33 +199,41 @@ class MeApiTests {
                 // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
                 // on the deployment — which no school user may read; leaving it in the menu meant
                 // every user was shown a link to a list of every other school.
-                .andExpect(jsonPath("$.data.navigation[0].id").value("students"))
-                .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.students"))
+                //
+                // `dashboard` is first, at order 10, ahead of every other root item and gated on no
+                // permission at all — it is the one item every signed-in account sees, and, through
+                // the frontend's landing guard, everyone's landing screen.
+                .andExpect(jsonPath("$.data.navigation[0].id").value("dashboard"))
+                .andExpect(jsonPath("$.data.navigation[0].labelKey").value("nav.dashboard"))
+                .andExpect(jsonPath("$.data.navigation[1].id").value("students"))
+                .andExpect(jsonPath("$.data.navigation[1].labelKey").value("nav.students"))
                 // The students container at 25, between the register (20) and academics (30):
                 // the class ladder is set up once and revisited rarely, the student list is opened
                 // every day. Both of its children are declared inline by the module that owns them.
-                .andExpect(jsonPath("$.data.navigation[0].children[0].id").value("students.all"))
-                .andExpect(jsonPath("$.data.navigation[0].children[1].id").value("students.guardians"))
+                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("students.all"))
+                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("students.guardians"))
                 // The academics container. It has no screen of its own; all three of its children
                 // are declared inline by the module that owns them, which is what makes it a
                 // container rather than a leaf.
-                .andExpect(jsonPath("$.data.navigation[1].id").value("academics"))
-                .andExpect(jsonPath("$.data.navigation[1].children[0].id").value("academics.sessions"))
-                .andExpect(jsonPath("$.data.navigation[1].children[1].id").value("academics.classes"))
-                .andExpect(jsonPath("$.data.navigation[1].children[2].id").value("academics.subjects"))
-                .andExpect(jsonPath("$.data.navigation[2].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("settings.access"))
+                .andExpect(jsonPath("$.data.navigation[2].id").value("academics"))
+                .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
+                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
+                .andExpect(jsonPath("$.data.navigation[2].children[2].id").value("academics.subjects"))
+                .andExpect(jsonPath("$.data.navigation[3].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("settings.access"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees both children.
-                .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
-                .andExpect(jsonPath("$.data.navigation[0].children[0].children").isEmpty())
+                .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
+                .andExpect(jsonPath("$.data.navigation[1].children[0].children").isEmpty())
                 // The gate is not on the wire. Every item that survived filtering is one whose
                 // permission the caller holds, so sending it would only invite a second copy of the
                 // authorization model on the client (ADR-0008).
                 .andExpect(jsonPath("$.data.navigation[0].requiredPermission").doesNotExist())
-                .andExpect(jsonPath("$.data.navigation[2].children[0].requiredPermission")
+                .andExpect(jsonPath("$.data.navigation[1].requiredPermission").doesNotExist())
+                .andExpect(jsonPath("$.data.navigation[3].children[0].requiredPermission")
                         .doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
     }
@@ -286,9 +299,10 @@ class MeApiTests {
      * The one leaf the auditor may open is still there, which is what makes the dropped section a
      * decision rather than an empty menu.
      *
-     * <p>The auditor's menu is now a single item, and that is the honest answer: an auditor reads
-     * the audit log and nothing else. It used to be two, the other being the platform register,
-     * which no school user may read.
+     * <p>The auditor's menu is {@code dashboard, audit} — the dashboard first, because it carries
+     * no permission of its own and is gated per tile instead (the auditor's copy shows only recent
+     * activity), and the audit log because that is the one screen the auditor may open by name. It
+     * used to end at a single item, the audit log; the dashboard is what changed that, everywhere.
      */
     @Test
     void dropsASectionWhoseOnlyChildTheUserMayNotOpen() throws Exception {
@@ -297,7 +311,7 @@ class MeApiTests {
 
         JsonNode auditor = bootstrap("auditor");
 
-        assertThat(idsIn(auditor)).containsExactly("audit");
+        assertThat(idsIn(auditor)).containsExactly("dashboard", "audit");
         assertEveryItemIsOneTheCallerMayUse(auditor);
     }
 
