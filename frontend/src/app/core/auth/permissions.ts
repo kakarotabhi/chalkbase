@@ -59,6 +59,13 @@ export const Permissions = {
    * `StudentController.enrol` for why an enrolment is not a permission of its own.
    */
   STUDENT_MANAGE: 'student:student:manage',
+  /**
+   * Seeing the real value of a Restricted field on a student's record — caste, religion, category,
+   * CWSN/disability, health details, or an APAAR id (ADR-0014). Separate from `STUDENT_READ` and
+   * `STUDENT_MANAGE` on purpose: masking is only real if seeing the masked value takes a permission
+   * neither of those implies. `StudentPermissions.STUDENT_REVEAL_RESTRICTED`.
+   */
+  STUDENT_REVEAL_RESTRICTED: 'student:student:reveal_restricted',
   /** Seeing the guardian directory and the guardians on a child's record. */
   GUARDIAN_READ: 'student:guardian:read',
   /** Adding and correcting guardians, and attaching or detaching them from a child. */

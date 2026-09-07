@@ -1,0 +1,251 @@
+<div class="section__head">
+  <h2 class="section__heading">Medical</h2>
+  <div class="section__actions">
+    @if (!editing() && !revealed() && hasAnyRestricted() && canReveal()) {
+      <cb-button
+        variant="secondary"
+        [loading]="revealing()"
+        loadingLabel="Revealing…"
+        (click)="reveal()"
+      >
+        Reveal
+      </cb-button>
+    }
+    @if (!editing() && canManage()) {
+      <cb-button
+        [id]="'medical-edit'"
+        variant="secondary"
+        [loading]="revealing()"
+        (click)="startEdit()"
+      >
+        Edit
+      </cb-button>
+    }
+  </div>
+</div>
+
+<p class="section__lede">
+  CWSN/disability status, allergies, chronic conditions, medication and blood group are masked until
+  revealed — every reveal is recorded. The emergency contact is shown in full below.
+</p>
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">{{ message.title }}</strong>
+    <span>{{ message.detail }}</span>
+  </div>
+}
+
+@if (editing()) {
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <h3 class="editor__heading">Restricted (masked until you save)</h3>
+    <div class="editor__fields">
+      <cb-form-field #bloodGroupField label="Blood group" controlId="medical-blood-group">
+        <cb-text-input
+          formControlName="bloodGroup"
+          [id]="bloodGroupField.controlId()"
+          [describedBy]="bloodGroupField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #cwsnField label="CWSN / disability status" controlId="medical-cwsn-status">
+        <cb-text-input
+          formControlName="cwsnStatus"
+          [id]="cwsnField.controlId()"
+          [describedBy]="cwsnField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #disabilityField
+        label="Disability details"
+        controlId="medical-disability-details"
+      >
+        <cb-text-input
+          formControlName="disabilityDetails"
+          [id]="disabilityField.controlId()"
+          [describedBy]="disabilityField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #allergiesField label="Allergies" controlId="medical-allergies">
+        <cb-text-input
+          formControlName="allergies"
+          [id]="allergiesField.controlId()"
+          [describedBy]="allergiesField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field
+        #chronicField
+        label="Chronic conditions"
+        controlId="medical-chronic-conditions"
+      >
+        <cb-text-input
+          formControlName="chronicConditions"
+          [id]="chronicField.controlId()"
+          [describedBy]="chronicField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #medicationField label="Medication" controlId="medical-medication">
+        <cb-text-input
+          formControlName="medication"
+          [id]="medicationField.controlId()"
+          [describedBy]="medicationField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <h3 class="editor__heading">Emergency contact</h3>
+    <div class="editor__fields">
+      <cb-form-field #contactNameField label="Name" controlId="medical-emergency-name">
+        <cb-text-input
+          formControlName="emergencyContactName"
+          [id]="contactNameField.controlId()"
+          [describedBy]="contactNameField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #contactPhoneField label="Phone" controlId="medical-emergency-phone">
+        <cb-text-input
+          formControlName="emergencyContactPhone"
+          type="tel"
+          [id]="contactPhoneField.controlId()"
+          [describedBy]="contactPhoneField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #contactRelationField label="Relation" controlId="medical-emergency-relation">
+        <cb-text-input
+          formControlName="emergencyContactRelation"
+          [id]="contactRelationField.controlId()"
+          [describedBy]="contactRelationField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="busy()" (click)="cancel()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+} @else {
+  <dl class="facts facts--restricted">
+    <div class="facts__pair">
+      <dt>Blood group</dt>
+      <dd>
+        @if (!summary().hasBloodGroup) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'bloodGroup'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>CWSN / disability status</dt>
+      <dd>
+        @if (!summary().hasCwsnStatus) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'cwsnStatus'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Disability details</dt>
+      <dd>
+        @if (!summary().hasDisabilityDetails) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'disabilityDetails'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Allergies</dt>
+      <dd>
+        @if (!summary().hasAllergies) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'allergies'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Chronic conditions</dt>
+      <dd>
+        @if (!summary().hasChronicConditions) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'chronicConditions'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Medication</dt>
+      <dd>
+        @if (!summary().hasMedication) {
+          <span class="muted">Not recorded</span>
+        } @else if (valueFor(true, 'medication'); as value) {
+          {{ value }}
+        } @else {
+          <span class="masked">Recorded, masked</span>
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <h3 class="section__subheading">Emergency contact</h3>
+  <dl class="facts">
+    <div class="facts__pair">
+      <dt>Name</dt>
+      <dd>
+        @if (summary().emergencyContactName) {
+          {{ summary().emergencyContactName }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Phone</dt>
+      <dd>
+        @if (summary().emergencyContactPhone) {
+          {{ summary().emergencyContactPhone }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Relation</dt>
+      <dd>
+        @if (summary().emergencyContactRelation) {
+          {{ summary().emergencyContactRelation }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+  </dl>
+}

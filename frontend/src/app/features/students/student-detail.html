@@ -196,5 +196,37 @@
         (changed)="onChildChanged($event)"
       />
     </section>
+
+    <section class="card" aria-label="Contact">
+      <cb-student-contact
+        [studentId]="loaded.id"
+        [contact]="loaded.contact ?? null"
+        (changed)="onChildChanged($event)"
+      />
+    </section>
+
+    <section class="card" aria-label="Previous school and transfer certificate">
+      <cb-student-previous-school
+        [studentId]="loaded.id"
+        [record]="loaded.previousSchool ?? null"
+        (changed)="onChildChanged($event)"
+      />
+    </section>
+
+    <section class="card" aria-label="Medical">
+      <cb-student-medical
+        [studentId]="loaded.id"
+        [medical]="loaded.medical"
+        (changed)="onChildChanged($event)"
+      />
+    </section>
+
+    <section class="card" aria-label="Compliance and identifiers">
+      <cb-student-compliance
+        [studentId]="loaded.id"
+        [compliance]="loaded.compliance"
+        (changed)="onChildChanged($event)"
+      />
+    </section>
   }
 }

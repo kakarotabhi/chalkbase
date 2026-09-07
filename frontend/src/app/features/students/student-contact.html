@@ -1,0 +1,89 @@
+<div class="section__head">
+  <h2 class="section__heading">Contact</h2>
+  @if (!editing() && canManage()) {
+    <cb-button [id]="'contact-edit'" variant="secondary" (click)="startEdit()">Edit</cb-button>
+  }
+</div>
+
+@if (failure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">{{ message.title }}</strong>
+    <span>{{ message.detail }}</span>
+  </div>
+}
+
+@if (editing()) {
+  <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="editor__fields">
+      <cb-form-field #addressField label="Address" controlId="contact-address">
+        <cb-text-input
+          formControlName="address"
+          autocomplete="street-address"
+          [id]="addressField.controlId()"
+          [describedBy]="addressField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #phoneField label="Phone" controlId="contact-phone">
+        <cb-text-input
+          formControlName="phone"
+          type="tel"
+          autocomplete="tel"
+          [id]="phoneField.controlId()"
+          [describedBy]="phoneField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #emailField label="Email" controlId="contact-email">
+        <cb-text-input
+          formControlName="email"
+          type="email"
+          autocomplete="email"
+          [id]="emailField.controlId()"
+          [describedBy]="emailField.describedById()"
+          [readOnly]="busy()"
+        />
+      </cb-form-field>
+    </div>
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="busy()" (click)="cancel()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+} @else {
+  <dl class="facts">
+    <div class="facts__pair">
+      <dt>Address</dt>
+      <dd>
+        @if (view().address) {
+          {{ view().address }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Phone</dt>
+      <dd>
+        @if (view().phone) {
+          {{ view().phone }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+    <div class="facts__pair">
+      <dt>Email</dt>
+      <dd>
+        @if (view().email) {
+          {{ view().email }}
+        } @else {
+          <span class="muted">Not recorded</span>
+        }
+      </dd>
+    </div>
+  </dl>
+}
