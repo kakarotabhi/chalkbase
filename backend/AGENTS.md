@@ -1,7 +1,7 @@
 # Backend — agent instructions
 
-Spring Boot 4.1 · Java 21 · Spring Modulith 2.1 · JPA/Hibernate · Flyway · H2 today, PostgreSQL next
-(ADR-0004). Read with the root `AGENTS.md`.
+Spring Boot 4.1 · Java 21 · Spring Modulith 2.1 · JPA/Hibernate · Flyway · PostgreSQL 17.
+Read with the root `AGENTS.md`.
 
 ## Layout
 
@@ -29,9 +29,16 @@ in.chalkbase
 
 ## Rules
 
-- **Migrations**: `src/main/resources/db/migration/V<yyyy_MM_dd_HHmm>__<module>_<what>.sql`.
-  Timestamp versions, module prefix. Never edit a merged migration. Keep SQL portable across H2 and
-  PostgreSQL until ADR-0004 is executed; PostgreSQL-only syntax needs a vendor-specific location.
+- **Migrations**: `src/main/resources/db/migration/<shared|tenant>/V<yyyy_MM_dd_HHmm>__<module>_<what>.sql`.
+  The subfolder is not optional — Flyway scans those two locations and nothing else, so a file left
+  directly under `db/migration/` is silently never run. See the two-folder rule below for which one.
+  Timestamp versions, module prefix. Never edit a merged migration. Write PostgreSQL: ADR-0004 was
+  executed on 2026-09-05, H2 is gone, and portability is no longer a constraint.
+- **Timestamp a migration when you merge it, not when you start it.** `outOfOrder` is off, so a file
+  whose version is older than one a database has already applied is refused — and that passes CI,
+  which starts from an empty container, then fails on the shared dev database and on Render. Rename
+  before merging if the branch has been open a while; it is not merged, so immutability does not
+  apply yet. See [parallel work](../docs/development/parallel-work.md).
 - **`ddl-auto` stays `validate`.** If Hibernate complains about a missing table, the migration is
   missing — do not relax the setting.
 - **Tenancy is structural** (ADR-0011). One PostgreSQL schema per school; **no `school_id` column

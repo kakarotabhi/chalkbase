@@ -26,7 +26,7 @@ Keep this file short. Detail belongs in `docs/`, and is read on demand.
 ```bash
 tools/setup-dev.sh                       # one-time setup, enables the shared git hooks
 cd backend  && ./mvnw verify             # tests + module boundary check + format gate
-cd backend  && ./mvnw spring-boot:run    # :8080  (H2 console at /h2-console, docs at /swagger-ui.html)
+cd backend  && ./mvnw spring-boot:run    # :8080  (API docs at /swagger-ui.html; needs a database — see docs/development/running-locally.md)
 cd frontend && npm start                 # :4200, proxies /api to :8080
 cd frontend && npm test -- --watch=false
 ```
