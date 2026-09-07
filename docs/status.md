@@ -4,7 +4,9 @@ Living status. **Updated in the same pull request as the work it describes** —
 updated "later" is worse than none, because people trust it.
 
 Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
-([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md))
+([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md) ·
+[Phase 2 scope](requirements/08-phase-2-scope.md), planned ahead of Phase 1 finishing so it can be handed out
+the way Phase 1's work was)
 
 ## At a glance
 
