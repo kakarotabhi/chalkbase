@@ -113,10 +113,17 @@ class ReferenceDataApiTests {
      * Proves the method-level {@code isAuthenticated()} is doing real work, not the URL-level
      * {@code permitAll()} on {@code /api/schools/**} that {@code SchoolController}'s Javadoc warns
      * about: an anonymous caller must still be refused.
+     *
+     * <p>{@code 403}, not {@code 401}: under a URL the filter chain already lets through,
+     * {@code @PreAuthorize}'s {@code AccessDeniedException} reaches {@code GlobalExceptionHandler}
+     * inside the servlet rather than {@code SecurityConfig}'s filter-level entry point, which is
+     * the only place that special-cases an anonymous caller into a {@code 401}. {@code /api/me}
+     * gets the {@code 401} because its URL itself requires authentication; this endpoint's prefix
+     * does not, so the refusal is a generic access-denied response instead.
      */
     @Test
     void boardsRefuseAnAnonymousCallerDespiteTheOpenUrlPrefix() throws Exception {
-        mockMvc.perform(get("/api/schools/boards")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/schools/boards")).andExpect(status().isForbidden());
     }
 
     // ── fixtures ─────────────────────────────────────────────────────────────────────────────

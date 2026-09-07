@@ -72,8 +72,11 @@ public class SchoolController {
      * one of the three platform-operator endpoints above, and sits under {@code /api/schools/**}'s
      * URL-level {@code permitAll()} only because that is this controller's existing prefix — the
      * method annotation is what actually decides who may call it, and it still refuses an anonymous
-     * caller. No shipped screen calls it without a session; the day one does (a public onboarding
-     * form, say) this is the annotation to relax, deliberately, not by omission.
+     * caller, as {@code 403} rather than the {@code 401} an authentication-required URL would give:
+     * under a {@code permitAll()} prefix the denial is an ordinary {@code AccessDeniedException}
+     * reaching {@code GlobalExceptionHandler}, not one the filter chain's anonymous-aware entry
+     * point ever sees. No shipped screen calls this without a session; the day one does (a public
+     * onboarding form, say) this is the annotation to relax, deliberately, not by omission.
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/boards")
