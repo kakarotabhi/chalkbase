@@ -20,15 +20,52 @@ Last updated: 2026-09-07 · Roadmap phase: **1** — Phase 0 is complete
 | Architecture decisions (ADR-0001…0022) | ✅ Done |
 | **Phase 0 discovery — all 13 deliverables** | ✅ Done |
 | Identity: login, sessions, forced password change | ✅ Done |
-| Permissions, roles, scoped grants | ✅ Done |
+| Permissions, roles, scoped grants | ✅ Enforced · ⚠️ no way to manage them in the product |
 | Server-driven navigation (`GET /api/me`) | ✅ Done |
 | Schema-per-tenant: registry, migration orchestrator | ✅ Done |
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done |
 | School profile — `GET`/`PUT /api/school/profile` and its screen | ✅ Done |
 | Shared UI components | ✅ Button, field, inputs, checkbox, select, bottom sheet |
-| Academic sessions, classes and sections | ✅ Done |
-| Students, guardians and enrolment | ✅ Done |
+| Academic sessions, classes and sections | ✅ Done · ⬜ subjects |
+| Students, guardians and enrolment | ✅ Core record · ⚠️ no medical, transport, hostel or document sections |
 | Deployment | ✅ Render (dev environment) · ⬜ Coolify/VPS (production) |
+
+A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
+[Phase 1 in detail](#phase-1-in-detail) is the per-feature account.
+
+## Phase 1 in detail
+
+[The roadmap](requirements/06-roadmap-and-mvp.md) lists eleven features for Phase 1. The table above
+is deliberately coarse; this one is the honest state of each, because three of them read as done at a
+glance and are not.
+
+| Roadmap feature | State | What exists · what does not |
+|---|---|---|
+| School profile | ✅ Done | `GET`/`PUT /api/school/profile`, its screen, and the registry write-back. |
+| Academic session | ✅ Done | Create, edit, and make-current, with its screen. |
+| Classes and sections | ✅ Done | The structural ladder (ADR-0019), reorder, retire and reinstate. |
+| **Subjects** | ❌ Not started | No entity, no table, no endpoint. Named in the same roadmap line as classes and sections, which is why that line looks finished. |
+| Roles and permissions | ⚠️ Enforced, not manageable | 14 permissions across 5 module registries, `@PreAuthorize` on every write endpoint, scoped grants, and shipped role templates. **No way to create or edit a role in the product** — `/api/access` is three `@GetMapping`s and nothing else, and there is no screen. |
+| User management | ⚠️ Model only | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. **Nothing can write them**: no create, no deactivate, no admin password reset, no screen. Accounts exist because the seeder makes them. |
+| Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
+| Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
+| **Documents** | ❌ Not started | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task. |
+| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
+| **Export** | ❌ Not started | Deliberate. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. |
+| **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
+| Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
+
+**The four exit criteria are met.** A school can be configured with a session; students and guardians
+can be created or imported; users sign in with the permissions their role grants; and creates,
+updates, deletes and logins are audited. Phase 1 is *usable* and it is not *finished* — the gap
+between those two is the four unstarted features and the three partials above.
+
+**Built in Phase 1 but not on its list**, because the roadmap assumed them rather than naming them:
+identity, login and server-side sessions; forced password change, enforced on the server; schema-per-
+tenant with a migration orchestrator ([ADR-0011](architecture/adr/0011-schema-per-tenant.md)); server-driven
+navigation ([ADR-0008](architecture/adr/0008-server-driven-navigation.md)); the generated API contract
+([contracts/README.md](../contracts/README.md) — it has no ADR, which is worth noticing given how much
+depends on it); and the Render dev deployment.
 
 ## Deployed
 
