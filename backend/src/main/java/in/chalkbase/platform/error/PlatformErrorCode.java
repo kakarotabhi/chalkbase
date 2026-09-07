@@ -33,7 +33,13 @@ public enum PlatformErrorCode implements ErrorCode {
     DECRYPTION_FAILED(
             "GEN_002",
             "Something went wrong reading this record. Quote the trace id when reporting it.",
-            HttpStatus.INTERNAL_SERVER_ERROR);
+            HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // ADR-0025: this deployment has no working document storage adapter — `prod` until the
+    // S3-compatible one is approved and configured. 503 rather than 500: nothing is broken, the
+    // capability is simply not turned on here yet, and a retry after configuration will succeed.
+    STORAGE_UNAVAILABLE(
+            "GEN_003", "Document storage is not available on this deployment yet", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final String code;
     private final String defaultMessage;

@@ -54,35 +54,38 @@ spring:
         # this silently shifts every existing client by one page.
         one-indexed-parameters: false
 
-  # The only upload this product accepts is the student import (ADR-0021). These two numbers are the
-  # guard that runs before any of our code does: the multipart resolver refuses an oversized request
-  # while parsing it, and GlobalExceptionHandler maps that to VAL_003 inside the usual envelope.
+  # Two uploads share these numbers now: the student import (ADR-0021) and a document attached to a
+  # student (ADR-0025) — a scanned certificate or a photo, which needs far more than a CSV of names
+  # and dates of birth ever did. They are the guard that runs before any of our code does: the
+  # multipart resolver refuses an oversized request while parsing it, and GlobalExceptionHandler maps
+  # that to VAL_003 inside the usual envelope.
   #
-  # They are deliberately SMALL, and the reason is not memory. `ops/docker/nginx.conf` proxies /api/
-  # to this service and sets no `client_max_body_size`, so nginx's own default of 1 MB is the real
-  # ceiling — and a request that trips nginx comes back as nginx's HTML error page rather than an
-  # ADR-0007 envelope, which a client cannot read and which a browser may report as a network
-  # failure rather than a 413. Keeping the whole request under 1 MB means *this* service is always
-  # the one that refuses, in the one shape every client already parses. Raising these needs
-  # `client_max_body_size` raised in that nginx config first, in the same change.
+  # `ops/docker/nginx.conf` proxies /api/ to this service and its `client_max_body_size` is set to
+  # match — a request that trips nginx instead comes back as nginx's HTML error page rather than an
+  # ADR-0007 envelope, which a client cannot read and which a browser may report as a network failure
+  # rather than a 413. Keeping the whole request under nginx's ceiling means *this* service is always
+  # the one that refuses, in the one shape every client already parses. Raising either number needs
+  # the other raised too, in the same change.
   #
-  # 512 KB is around three times the largest file the row cap allows: 2,000 students across the nine
-  # columns the import reads is roughly 170 KB. A school whose export carries thirty columns of its
-  # own may exceed it — the answer for them is to delete the columns the import ignores anyway, and
-  # the row cap in StudentImportService remains the limit that is actually about students.
+  # 8 MB comfortably holds a scanned certificate or a school photo; the CSV import's own ceiling —
+  # 2,000 students across the nine columns it reads, roughly 170 KB — is unaffected in practice by
+  # this number being larger than it strictly needs, since StudentImportService's own MAX_ROWS check
+  # is what actually bounds that upload.
   servlet:
     multipart:
-      max-file-size: 512KB
-      max-request-size: 768KB
-      # The upload never touches the disk, which is what ADR-0021 §6 promises and what this line is
-      # the whole of. Spring's default threshold is 0B, meaning EVERY multipart upload is spooled to
-      # a temp file — and this particular upload is several hundred children's names, dates of birth
-      # and admission numbers. Written unencrypted to the container's temp directory, and left
-      # behind entirely if the process dies mid-request.
+      max-file-size: 8MB
+      max-request-size: 9MB
+      # The upload never touches the disk, which is what ADR-0021 §6 promises for the student import
+      # and what ADR-0025 extends to a document for the same reason: both are, at different times,
+      # several hundred children's data or one child's certificate, and neither belongs in the
+      # container's temp directory even briefly, unencrypted, left behind entirely if the process
+      # dies mid-request. Spring's own default threshold is 0B, meaning EVERY multipart upload is
+      # spooled to a temp file without this.
       #
-      # Set above max-file-size so the file is always held in memory instead: at most 512 KB per
-      # concurrent upload, which is nothing next to a file of children on a shared filesystem.
-      file-size-threshold: 1MB
+      # Set above max-request-size so nothing is ever spooled: at most 9 MB held in memory per
+      # concurrent upload, which is a deliberate trade of some heap headroom for keeping this
+      # guarantee application-wide rather than narrowing it to the one upload it used to describe.
+      file-size-threshold: 10MB
 
   threads:
     virtual:
