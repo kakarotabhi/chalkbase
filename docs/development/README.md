@@ -17,6 +17,9 @@
 > `contracts/` are committed. [`contracts/README.md`](../../contracts/README.md) has the recipe for
 > adding a field, a record or an endpoint — the nullable-response case is the one with a trap in it.
 >
+> **Handing out a task at all?** [Assigning work](assigning-work.md) is the route — pick it, check
+> it can run now, find the module, and the five things a brief must say.
+>
 > **Handing work to more than one agent at a time?** [Parallel work](parallel-work.md) lists what
 > actually collides — the generated contract, a handful of frontend registries, `RoleTemplates`,
 > migration ordering and `status.md` — and which of the open items can run concurrently.

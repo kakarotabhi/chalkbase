@@ -3,6 +3,10 @@
 **Start here for state:** [status.md](status.md) — what is done, what is next, what is waiting on a
 decision. Updated in the same pull request as the work.
 
+**Handing a task to someone:** [assigning-work.md](development/assigning-work.md) — which four files
+to read in which order, and the five things a brief has to say that the repository will not say for
+itself.
+
 **Handing out more than one work item at a time:**
 [development/parallel-work.md](development/parallel-work.md) — which files two agents will collide
 on, and which of the open items can actually run side by side.
