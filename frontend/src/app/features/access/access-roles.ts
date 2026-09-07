@@ -17,7 +17,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { IdentityAccessApi } from '../../core/api/identity-access-api';
 import {
@@ -214,21 +213,50 @@ export class AccessRoles {
     this.loadScreen();
   }
 
+  /**
+   * Two independent reads, not one `forkJoin`. Both endpoints are gated on the same permission, so
+   * they fail or succeed together in practice — but `forkJoin` cancels its other source the
+   * instant either one errors, which makes the two indistinguishable to a caller that only wanted
+   * one loading flag, and is exactly the kind of subscription a test has no clean way to finish
+   * once one side has errored. Two subscriptions, each setting the same `failureCode`, gets the
+   * one loading flag this screen actually wants without that trade.
+   */
   private loadScreen(): void {
     this.loading.set(true);
     this.failureCode.set(null);
 
-    forkJoin({
-      permissions: this.api.permissions(),
-      roles: this.api.roles(),
-    })
+    let permissionsLoaded = false;
+    let rolesLoaded = false;
+    const finishIfReady = () => {
+      if (permissionsLoaded && rolesLoaded) {
+        this.loading.set(false);
+        this.rebuildPermissionControls();
+      }
+    };
+
+    this.api
+      .permissions()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ permissions, roles }) => {
+        next: (permissions) => {
           this.permissions.set(permissions);
-          this.roles.set(roles);
+          permissionsLoaded = true;
+          finishIfReady();
+        },
+        error: (error: unknown) => {
           this.loading.set(false);
-          this.rebuildPermissionControls();
+          this.failureCode.set(apiErrorCode(error));
+        },
+      });
+
+    this.api
+      .roles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (roles) => {
+          this.roles.set(roles);
+          rolesLoaded = true;
+          finishIfReady();
         },
         error: (error: unknown) => {
           this.loading.set(false);
