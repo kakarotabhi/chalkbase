@@ -90,6 +90,17 @@ class AccessControlTests {
     private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
 
     /**
+     * ADR-0030's grants: {@code attendance:} sorts between {@code academics:} and
+     * {@code document:} ({@code attendance} loses to {@code academics} at the third character, and
+     * beats {@code document} at the first) — the same widening this file's other comments describe,
+     * said once more.
+     */
+    private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
+
+    private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
+    private static final String ATTENDANCE_READ = "attendance:mark:read";
+
+    /**
      * ADR-0025's grants: {@code document:} sorts between {@code academics:} and {@code identity:},
      * so these land there in every exact assertion below — the same widening this file's other
      * comments describe, said once more.
@@ -168,6 +179,9 @@ class AccessControlTests {
                             SESSION_READ,
                             SUBJECT_MANAGE,
                             SUBJECT_READ,
+                            ATTENDANCE_CORRECTION_APPROVE,
+                            ATTENDANCE_MANAGE,
+                            ATTENDANCE_READ,
                             DOCUMENT_MANAGE,
                             DOCUMENT_READ,
                             ROLE_MANAGE,
@@ -213,6 +227,9 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_MANAGE,
+                        ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         USER_MANAGE,
@@ -232,6 +249,9 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_MANAGE,
+                        ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         ROLE_MANAGE,
@@ -267,6 +287,9 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_MANAGE,
+                        ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         USER_MANAGE,
@@ -295,9 +318,9 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
         // school:school:read comes from all three; the three academics reads, the two student
-        // reads and document:document:read only from the class teacher grant; identity:user:read
-        // and platform:audit:read only from the auditor grant. identity:role:manage comes from
-        // none of them, and no union of allows can produce it.
+        // reads, document:document:read and the two attendance grants only from the class teacher
+        // grant; identity:user:read and platform:audit:read only from the auditor grant.
+        // identity:role:manage comes from none of them, and no union of allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
@@ -310,7 +333,9 @@ class AccessControlTests {
                                 STUDENT_READ,
                                 GUARDIAN_READ,
                                 USER_READ,
-                                AUDIT_READ)));
+                                AUDIT_READ,
+                                ATTENDANCE_READ,
+                                ATTENDANCE_MANAGE)));
     }
 
     @Test
@@ -375,6 +400,9 @@ class AccessControlTests {
                                 CLASS_READ,
                                 CLASS_MANAGE,
                                 SUBJECT_READ,
+                                ATTENDANCE_READ,
+                                ATTENDANCE_MANAGE,
+                                ATTENDANCE_CORRECTION_APPROVE,
                                 DOCUMENT_MANAGE,
                                 DOCUMENT_READ,
                                 SUBJECT_MANAGE,

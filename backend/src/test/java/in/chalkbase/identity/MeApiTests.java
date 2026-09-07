@@ -86,6 +86,9 @@ class MeApiTests {
     private static final String DOCUMENT_READ = "document:document:read";
     private static final String DOCUMENT_MANAGE = "document:document:manage";
     private static final String AUDIT_READ = "platform:audit:read";
+    private static final String ATTENDANCE_READ = "attendance:mark:read";
+    private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
+    private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
 
     /**
      * Anything that would make a navigation node say <em>where</em> to go rather than <em>what</em>
@@ -196,7 +199,10 @@ class MeApiTests {
                                 USER_MANAGE,
                                 ROLE_MANAGE,
                                 DOCUMENT_READ,
-                                DOCUMENT_MANAGE)))
+                                DOCUMENT_MANAGE,
+                                ATTENDANCE_READ,
+                                ATTENDANCE_MANAGE,
+                                ATTENDANCE_CORRECTION_APPROVE)))
                 // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
                 // on the deployment — which no school user may read; leaving it in the menu meant
                 // every user was shown a link to a list of every other school.
