@@ -3,7 +3,6 @@ package in.chalkbase.identity.api;
 import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,7 +24,11 @@ import java.util.List;
 public record CreateRoleRequest(
         @Classification(Tier.INTERNAL) @NotBlank @Size(max = 120) String name,
 
-        @Schema(nullable = true) @Classification(Tier.INTERNAL) @Size(max = 400) String description,
+        // No @Schema(nullable = true): OpenApiConfig only strips that marker from response-only
+        // schemas. A request's optionality is already correctly expressed by the absence of
+        // @NotBlank here, and adding the annotation anyway leaks OpenAPI 3.1's "type": ["string",
+        // "null"] into the exported contract, which OpenApiContractTests forbids outright.
+        @Classification(Tier.INTERNAL) @Size(max = 400) String description,
 
         @Classification(Tier.INTERNAL) @NotNull List<@NotBlank String> permissions) {
 

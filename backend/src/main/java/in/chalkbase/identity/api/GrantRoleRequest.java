@@ -4,7 +4,6 @@ import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
 import in.chalkbase.platform.security.ScopeType;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -24,19 +23,19 @@ import java.util.UUID;
  * already hold all of them itself ({@code AccessGuardrails#requireHeldByActor}) — the same guard
  * {@link CreateRoleRequest} and {@link UpdateRolePermissionsRequest} apply, extended to the grant
  * that actually hands the permissions to someone.
+ *
+ * <p>None of the three optional fields below carry {@code @Schema(nullable = true)}: springdoc's
+ * {@code OpenApiConfig#requiredUnlessNullable} only strips that marker from response-only schemas,
+ * and this is a request. Absence of {@code @NotNull} already says "may be omitted" correctly here;
+ * adding the annotation anyway would leak OpenAPI 3.1's {@code "type": ["string", "null"]} into the
+ * exported contract, which {@code OpenApiContractTests} forbids outright.
  */
 public record GrantRoleRequest(
         @Classification(Tier.INTERNAL) @NotNull UUID roleId,
         @Classification(Tier.INTERNAL) @NotNull ScopeType scopeType,
-
-        @Schema(nullable = true) @Classification(Tier.INTERNAL)
-        UUID scopeId,
-
-        @Schema(nullable = true) @Classification(Tier.INTERNAL)
-        LocalDate validFrom,
-
-        @Schema(nullable = true) @Classification(Tier.INTERNAL)
-        LocalDate validTo) {
+        @Classification(Tier.INTERNAL) UUID scopeId,
+        @Classification(Tier.INTERNAL) LocalDate validFrom,
+        @Classification(Tier.INTERNAL) LocalDate validTo) {
 
     /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
     @Override
