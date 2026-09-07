@@ -282,6 +282,7 @@ here. What is left is externally blocked rather than undecided.
 | The first basic dashboard: `GET /api/dashboard`, gated tile by tile through two new SPIs (`AcademicsDashboardContributor`, `StudentDashboardContributor`) so the shared kernel never imports a feature module, and `student.api.StudentLookup`, the module's first cross-module read interface | `platform/dashboard/`, `student/api/StudentLookup.java` |
 | Audit retention purge: seven years, per tenant, batched, and audited without being recursive | [ADR-0026](architecture/adr/0026-audit-retention-purge.md), `AuditRetentionPurgeJob` |
 | The users roster on the server-driven menu: `settings.users`, gated on `identity:user:read` | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
+| Session cleanup investigated: `JdbcIndexedSessionRepository` already purges `public.spring_session` itself, on its own scheduler, on by default — no second job needed, made explicit in configuration | [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md) |
 
 ## What is left on the frontend
 
@@ -434,7 +435,13 @@ Recorded so they are decided rather than discovered.
   original error, it only decides whether the user also lands on `/login`. A refetch that comes back
   with the same `permissionsVersion` still shows the same error — see the comment at the call site
   for why that case is not reworded.
-- Expired sessions are never purged.
+- ~~Expired sessions are never purged.~~ ✅ Closed — the claim itself was wrong.
+  `JdbcIndexedSessionRepository` has purged `public.spring_session` on its own dedicated
+  scheduler since the session store shipped, on by default, independent of this codebase's
+  `@EnableScheduling`/`TaskScheduler` (ADR-0026) and needing no `TenantRegistry` fan-out —
+  the table is shared across every school, not per tenant. See
+  [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md), which makes the
+  existing schedule explicit in configuration rather than adding a second job.
 - **The forced password change is enforced at two points, not everywhere.** The login screen sends
   someone holding a temporary password to `/change-password`, and `landingGuard` sends them there
   again on a reload of `/`. Typing a deep link still gets past both. Closing it properly is a guard
