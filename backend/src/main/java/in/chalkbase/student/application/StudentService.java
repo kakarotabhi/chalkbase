@@ -69,18 +69,21 @@ public class StudentService {
     private final StudentGuardianRepository links;
     private final AcademicsLookup academics;
     private final AuditService audit;
+    private final StudentRecordService records;
 
     public StudentService(
             StudentRepository students,
             StudentEnrolmentRepository enrolments,
             StudentGuardianRepository links,
             AcademicsLookup academics,
-            AuditService audit) {
+            AuditService audit,
+            StudentRecordService records) {
         this.students = students;
         this.enrolments = enrolments;
         this.links = links;
         this.academics = academics;
         this.audit = audit;
+        this.records = records;
     }
 
     // ── Students ─────────────────────────────────────────────────────────────────────────────
@@ -326,7 +329,15 @@ public class StudentService {
                         sections.get(enrolment.getSectionId())))
                 .orElse(null);
 
-        return StudentDetail.of(student, current, guardians, placements);
+        return StudentDetail.of(
+                student,
+                current,
+                guardians,
+                placements,
+                records.contact(student.getId()),
+                records.previousSchool(student.getId()),
+                records.medicalSummary(student.getId()),
+                records.complianceSummary(student.getId()));
     }
 
     /**

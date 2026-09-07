@@ -74,6 +74,51 @@ public final class StudentAudit {
      */
     public static final String STUDENTS_IMPORTED = "STUDENTS_IMPORTED";
 
+    /** A student's contact section (FR-028) entered or corrected. {@code entityId} is the student's id. */
+    public static final String STUDENT_CONTACT = "STUDENT_CONTACT";
+
+    /**
+     * A student's previous school or transfer certificate (FR-033) entered or corrected.
+     * {@code entityId} is the student's id.
+     */
+    public static final String STUDENT_TRANSFER = "STUDENT_TRANSFER";
+
+    /**
+     * A student's health record (FR-034) entered, corrected, or revealed. {@code entityId} is the
+     * student's id.
+     *
+     * <p>The same entity type carries both kinds of row, on purpose: {@code AuditAction.ENTITY_UPDATED}
+     * for a write and {@link #RESTRICTED_DATA_REVEALED} for a read of the six Restricted fields, so a
+     * reader asking "what has happened to this child's medical record" sees edits and reveals
+     * together rather than having to know to look in two places.
+     */
+    public static final String STUDENT_MEDICAL = "STUDENT_MEDICAL";
+
+    /**
+     * A student's UDISE+/board identifiers and statutory categories (FR-029) entered, corrected, or
+     * revealed. {@code entityId} is the student's id. See {@link #STUDENT_MEDICAL} for why writes and
+     * reveals share one entity type.
+     */
+    public static final String STUDENT_COMPLIANCE = "STUDENT_COMPLIANCE";
+
+    /**
+     * A caller was shown the real value of a Restricted field — ADR-0014's "every read is audited",
+     * made concrete. Recorded by {@code AuditService#recordSecurityEvent}, in its own transaction and
+     * regardless of what happens afterwards, the same as {@code AuditAction#DATA_EXPORTED}: this is
+     * the moment encrypted-at-rest data left the boundary that protects it, not a fact about whether
+     * the surrounding request went on to succeed.
+     *
+     * <p><strong>What counts as "a read" here is deliberate and narrow.</strong> Opening a student's
+     * record does not produce this row — {@code MedicalSummary}/{@code ComplianceSummary} carry only
+     * presence flags, so nothing Restricted left the server. Only a call to
+     * {@code GET …/medical/restricted} or {@code GET …/compliance/restricted} does, because that is
+     * the one moment an actual caste, religion, disability status or APAAR id is decrypted and sent
+     * over the wire. Auditing the record view instead would write a row on every page load a class
+     * teacher makes; auditing nothing would leave ADR-0014's "every read is audited" unmet. This is
+     * the line between "looked at the record" and "looked at the Restricted value".
+     */
+    public static final String RESTRICTED_DATA_REVEALED = "RESTRICTED_DATA_REVEALED";
+
     /**
      * The guardian half of a student import (ADR-0021 §4): a phone number in the file that matched
      * nobody in this school's directory, so a new {@link #GUARDIAN} row was written for it.
