@@ -1,0 +1,102 @@
+name: Contracts
+
+# Regenerates contracts/ in Actions and commits the result to the pull request branch.
+#
+# Why this exists. `contracts/openapi.json` is written by OpenApiContractTests during
+# `./mvnw verify`, and both other workflows fail on a `contracts/` diff — so before this file, the
+# only way to change an endpoint was to run the full backend build locally. On the machine this
+# project is developed on that is not available: concurrent builds are OOM-killed, and the
+# instruction to every agent is "targeted tests locally, push and read the Actions run"
+# (docs/development/assigning-work.md). A gate whose only remedy cannot be run is a gate that stops
+# the work rather than protecting it.
+#
+# The gate itself is untouched. Backend and Frontend still fail on a `contracts/` diff, and they
+# still fail on a push to `main`. This job only removes the reason a person had to be the one to
+# regenerate: it does the regeneration where the build already runs, and commits it back.
+#
+# What it does NOT do is re-run the required checks. A push made with GITHUB_TOKEN deliberately
+# does not trigger further workflow runs — that is GitHub's loop protection, not something to work
+# around with a personal access token. So after this job commits, the head commit of the pull
+# request has no checks against it, and the branch owner's next push is what makes them run:
+#
+#     git pull --rebase && git commit --allow-empty -m 'ci: rerun checks' && git push
+#
+# That is one command, and it is the whole cost of not having a second credential in the repository.
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'contracts/**'
+      - 'frontend/package-lock.json'
+      - '.github/workflows/contracts.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    name: Regenerate the contract
+    runs-on: ubuntu-latest
+    # A pull request from a fork gets a read-only token, so the push below would fail with a 403
+    # that reads as a broken workflow rather than as the security boundary it is. Fork contributors
+    # regenerate locally; this repository's own branches do not have to.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The pull request ref, not the merge commit: this job commits, and a merge commit has
+          # nowhere to commit to.
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Not `verify`: the Backend workflow is already running the whole gate on this same commit,
+      # and running it twice doubles the wait for no second opinion. OpenApiContractTests is the
+      # one test that writes the file, and it brings up the full context and Testcontainers itself.
+      - name: Export the OpenAPI document
+        working-directory: backend
+        run: ./mvnw -B test -Dtest=OpenApiContractTests -DfailIfNoTests=false
+
+      - name: Generate the TypeScript types
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run contracts:types
+
+      - name: Commit if the contract moved
+        run: |
+          if git diff --quiet -- contracts/; then
+            echo 'The contract is unchanged; nothing to commit.'
+            exit 0
+          fi
+
+          echo 'The contract changed. Committing it to the pull request branch:'
+          git diff --stat -- contracts/
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add contracts/
+          git commit -m 'chore(contracts): regenerate from the backend on this branch'
+          git push
+
+          echo
+          echo '::notice::contracts/ was regenerated and committed. The required checks will not'
+          echo '::notice::re-run on a commit pushed by Actions — run this on the branch:'
+          echo '::notice::  git pull --rebase && git commit --allow-empty -m "ci: rerun checks" && git push'

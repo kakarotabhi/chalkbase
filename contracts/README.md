@@ -40,6 +40,22 @@ cd frontend && npm run contracts:types  # rewrites contracts/api-types.ts
 Run both. The second reads what the first wrote, so a spec change that is not followed by a type
 regeneration fails the frontend job rather than the backend one.
 
+### Or let Actions do it
+
+The first of those commands is the full backend build, which
+[assigning work](../docs/development/assigning-work.md) says not to run on the development machine —
+so on a pull request, [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) runs
+both and commits the result to the branch. Nothing about the gate changes: Backend and Frontend
+still fail on a `contracts/` diff, and still fail on a push to `main`.
+
+One thing to know, because it looks like a stuck pull request. A commit pushed by Actions does not
+trigger further workflow runs, so once the contract has been committed for you the head commit has
+no checks against it. Your next push is what runs them:
+
+```bash
+git pull --rebase && git commit --allow-empty -m 'ci: rerun checks' && git push
+```
+
 ## What to do when you change the API
 
 Every recipe ends the same way — **run both commands and commit both files** — so that is stated

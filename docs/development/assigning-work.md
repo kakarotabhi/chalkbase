@@ -29,7 +29,10 @@ Everything above is already written down. These five are not, and each one has c
    Naming the file that will conflict turns a surprise into a three-line resolve.
 3. **Do not run the full test suite locally.** This machine OOM-kills concurrent builds, and a
    ten-file `ng test` run produced 47 spurious 5000 ms timeouts in files that pass individually.
-   Targeted tests locally; push and read the Actions run. CI is the signal.
+   Targeted tests locally; push and read the Actions run. CI is the signal. The one thing that used
+   to force a local build anyway — regenerating `contracts/` — now happens in Actions and commits
+   itself to the branch ([contracts/README.md](../../contracts/README.md)), so a brief no longer has
+   to choose between the contract gate and this rule.
 4. **A fresh worktree has no `node_modules`.** A frontend task starts with `npm ci`, and the failure
    without it looks like a broken checkout rather than a missing install.
 5. **Timestamp a migration when you merge it, not when you start it.** `outOfOrder` is off, so an

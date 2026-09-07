@@ -28,7 +28,7 @@ Found by inspection and by counting how often each file appears in the last fort
 
 | File | What conflicts | How to sequence |
 |---|---|---|
-| `contracts/openapi.json`, `contracts/api-types.ts` | Both are generated wholesale and sorted, so any two endpoint changes rewrite overlapping regions. CI fails on a `contracts/` diff, in both workflows. | **Never hand-merge.** Take either side, then `cd backend && ./mvnw verify` and `cd frontend && npm run contracts:types`. Because that first command cannot run twice at once on this machine (below), regeneration is the serialised step — the second agent to merge regenerates. |
+| `contracts/openapi.json`, `contracts/api-types.ts` | Both are generated wholesale and sorted, so any two endpoint changes rewrite overlapping regions. CI fails on a `contracts/` diff, in both workflows. | **Never hand-merge.** Take either side, push, and let [`contracts.yml`](../../.github/workflows/contracts.yml) regenerate both files on the branch. That is what removed the serialisation this row used to describe: regeneration needed `./mvnw verify`, which cannot run twice at once on this machine (below), so the second agent to merge had to wait for the first. It now runs in Actions, per branch, concurrently. |
 | `frontend/src/app/core/api/models.ts` | The hand-written aliases onto `contracts/api-types.ts`, 515 lines, grouped by feature banner. Changed in 12 of the last 40 commits — the most contended source file in the repo. | Add your block under your own banner comment, not at the end of the file. Two agents that both append before the last line conflict on the same three lines. |
 | `frontend/src/app/app.routes.ts` | New feature routes all append inside the same `children: [...]`. **Order is load-bearing** — `students/guardians` and `students/import` must stay ahead of `students/:id`, and Angular matches in declaration order. | A textual merge here can silently reorder routes. Whoever merges second re-reads the array rather than trusting the merge. |
 | `frontend/src/app/core/navigation/nav-routes.ts` | One `Map` literal, id → path and icon. | Additive; insert in your module's group. |
@@ -82,9 +82,11 @@ Both learned the hard way, both change how work is assigned.
 
 **The full test suite does not run here, so CI is the signal.** Concurrent builds get OOM-killed,
 and a ten-file `ng test` run produced 47 spurious 5000 ms timeouts in files that pass individually.
-Push the branch and read the Actions run. The knock-on is the contracts row above: `./mvnw verify`
-is what regenerates `contracts/openapi.json`, so on this machine contract regeneration is a
-one-agent-at-a-time operation, whoever else is running.
+Push the branch and read the Actions run. That used to have a knock-on, because `./mvnw verify` is
+what regenerates `contracts/openapi.json` — so contract regeneration was a one-agent-at-a-time
+operation, whoever else was running. [`contracts.yml`](../../.github/workflows/contracts.yml) now
+does it per branch in Actions, which is what makes several endpoint-changing lanes concurrent
+rather than merely independent.
 
 **A fresh worktree has no `node_modules`.** A frontend agent runs `npm ci` before anything else, and
 must be told to, because `ng` will not be on the path and the failure looks like a broken checkout.
