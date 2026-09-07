@@ -46,17 +46,76 @@ classes and sections and reports an unmatched name as a row error naming what it
 This is a deliberate acceptance of ambiguity at the edge: the school must have set up its ladder
 first, and the error message has to be good enough to explain why "Class V" did not match "Class 5".
 
-### 4. Guardians are NOT imported, in this version
+### 4. Guardians are imported, matched by phone — amended 2026-09-07
 
-A file of six hundred students each carrying a father's name and phone would create six hundred
-guardian records — including four for one man with four children here, which is precisely the
-duplicate that [ADR-0020](0020-student-and-guardian-model.md) §5 exists to prevent and that the
-manual flow was just fixed to avoid.
+This section originally said guardians are not imported: a file of six hundred students each
+carrying a father's name and phone would create six hundred guardian records — including four for
+one man with four children here, which is precisely the duplicate that
+[ADR-0020](0020-student-and-guardian-model.md) §5 exists to prevent and that the manual flow was
+just fixed to avoid. That gap is now closed, and this is the design that closes it.
 
-Doing it correctly means matching each row's guardian against the existing directory by phone, and
-deciding what to do when two rows in the same file give the same number with different spellings of
-a name. That is its own design and its own slice. Importing them badly would undo the model in one
-upload.
+**One guardian per row.** Five optional columns — `guardian_name`, `guardian_phone`,
+`guardian_relation`, `guardian_email`, `guardian_primary` — either all blank (no guardian on this
+row yet) or naming one person. `guardian_name` and `guardian_phone` are required together: matching
+happens on the phone, so a name with no phone cannot be matched against anything and a phone with
+no name cannot be told apart from anyone else's. A student needing a second guardian on record
+(a mother, once the father is already in from the file) gets one the way any student does today —
+`GuardiansApi` search-and-link, from that child's own record, after the import.
+
+**Matching is on `guardian.phone_digits`, not `guardian.phone`**, reusing the exact digit-stripping
+rule the guardian directory search already applies (`PhoneDigits.digitsOf`, née the private helper
+`GuardianService` used to keep to itself) — see the bug that column exists to fix, described where
+it is defined. For an automated, unsupervised match, equality is truncated to the last ten digits
+of each number rather than left as the directory search's unanchored substring test: two numbers
+that agree on their last ten digits are the same Indian mobile number with or without a `+91`, and
+the substring relationship the human-facing search uses is the wrong one to reuse verbatim here — a
+person confirms a search result before it does anything; an import has nobody to confirm anything,
+so a match needs to be an equality, not a "contains".
+
+**Within one file, not only against the directory.** Every row's guardian phone is grouped, in file
+order, against every other row's in the same upload — before the directory is asked anything. Four
+rows naming the same father with the same number, and agreeing on the name (case and spacing
+forgiven, the same leniency the class-and-section names in §3 get), produce one guardian and four
+links, whether or not that guardian already existed. The first row to use a number establishes what
+its guardian is called; a later row on that same number joins silently if the name agrees.
+
+**A phone match under a different name is refused, not guessed at — in either direction: within
+the file, or against the directory.** [ADR-0020](0020-student-and-guardian-model.md) §5 records
+that there is deliberately no server-side uniqueness on a guardian's phone, because two people
+genuinely share one, and that the manual create form's answer is to warn and let a human decide
+whether the match is real. An import has no human mid-file to ask that question, and both ways of
+guessing on its behalf are worse than making the school look:
+
+- Matching anyway risks attaching a child to a stranger's guardian on the strength of a shared
+  landline or a data-entry slip — the wrong kind of wrong, because it is silent and it is about a
+  child.
+- Creating a second guardian on a shared number recreates the exact duplicate this slice exists to
+  prevent, every time a family's number legitimately repeats.
+
+So every row that shares a phone number with a different name — whether the other name is earlier
+in this same file or already in the directory — is refused as a row error naming what happened,
+never the name itself (ADR-0014). The whole file is then not imported, per §2: the office corrects
+the spelling if it was one, or resolves the two people through the ordinary guardian directory
+(search, and either link the existing one or create a second), and re-uploads. This is the same
+shape §3 already uses for an unmatched class name — ambiguity at the edge is a row error with a
+clear reason, not a guess.
+
+**The report says what happened, not what a clean file would go on to do.** `guardiansCreated`,
+`guardiansMatched`, `guardianLinksCreated` and `studentsLinkedToExistingGuardians` all follow
+`imported`'s own rule: zero from `validate`, and zero from a commit that found anything wrong,
+because in both cases nothing was written. "Created 12 guardians, linked 47 students to existing
+guardians" is the sentence this exists to make possible.
+
+**`guardian.phone` is `varchar(20)`.** A CSV value that does not fit is a row error on
+`guardian_phone` naming the problem, exactly like an overlong `full_name` or `admission_number` —
+never a 500 from a database refusing the insert.
+
+**One new audit verb, `GUARDIANS_IMPORTED`**, alongside `STUDENTS_IMPORTED` rather than folded into
+it: writing a `guardian` row and writing a `student` row are different facts, and a reader asking
+"how many new guardians did this import create" should not have to know the answer is hiding inside
+a student-shaped event. Written only when at least one guardian was actually created — a file whose
+guardians all matched the directory gets no such row, because an audit row for zero would be worse
+than none at all.
 
 ### 5. CSV, and a note about Excel
 

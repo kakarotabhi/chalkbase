@@ -16,6 +16,10 @@ When there are three, you fix the one in front of you, the other two keep the ol
 nothing tells you they disagree. You find out when the school rings about an absence and nobody
 answers.
 
+Importing a spreadsheet of students does this same matching for you, by phone number — see
+[Import students from a spreadsheet](import-students.md). A file naming a father's phone for four
+children creates one guardian here, not four, and links it to all four children.
+
 ## Before you add anyone, search
 
 Search by **phone number**. It is the thing that reliably tells two people apart when families share

@@ -51,7 +51,7 @@ glance and are not.
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
 | **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
-| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
+| Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are imported too, one per row, matched against the directory by phone; a phone shared under two names refuses the row rather than guessing. `.xlsx` is refused with instructions rather than parsed. |
 | **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
 | **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
@@ -320,10 +320,12 @@ Recorded so they are decided rather than discovered.
   the magic-byte refusal is the shipped behaviour rather than a placeholder for it. Revisit only if
   a real school office reports "Save as CSV" as a genuine barrier — the change is small and sits
   behind the same endpoint.
-- **Guardians are not imported**, deliberately (ADR-0021 §4): a file of six hundred students each
-  naming a father would create six hundred guardian records, including four for one man with four
-  children here — the duplicate the manual flow was just fixed to prevent. Doing it properly means
-  matching each row against the directory by phone, which is its own slice.
+- **Guardian import is one guardian per row** (ADR-0021 §4, resolved from the earlier gap this
+  bullet used to describe). A student needing a second guardian on record — a mother, once the
+  father is already in from the file — gets one from that child's own record afterwards, the same
+  way any guardian is added by hand. Matching is by phone, reusing the directory search's own
+  digit-stripping rule; a phone number shared under two different names, in the file or against the
+  directory, refuses the row rather than guessing which person was meant.
 - **The upload limit is coupled across two files.** `spring.servlet.multipart.*` is set below nginx's
   `client_max_body_size` so Spring is always the one refusing, in the ADR-0007 envelope; a request
   refused by nginx returns HTML and may reach the browser without CORS headers, so the client sees a
