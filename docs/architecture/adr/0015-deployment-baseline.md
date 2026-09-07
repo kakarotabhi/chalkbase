@@ -6,6 +6,22 @@
 - Related: [ADR-0011](0011-schema-per-tenant.md), [ADR-0004](0004-h2-now-postgresql-next.md),
   [ADR-0014](0014-data-classification.md)
 
+## Amendment, 2026-09-07: not before Phase 4
+
+The decision below is unchanged — a self-hosted VPS in Mumbai is still where this runs in
+production, for the latency and DPDP reasons argued here. What has been decided since is **when**:
+not until Phase 4.
+
+Until then the Render dev environment ([the free-tier runbook](../../operations/render-free-tier.md))
+is the only deployment, with a staging pair beside it, and the database stays on Supabase in Seoul.
+Nothing in Phases 1 to 3 is gated on the move; `ops/docker/` and `ops/coolify/` already exist for
+when it happens; and standing the box up now would be a second production path to keep working with
+no user on either. The database migration goes with the box rather than ahead of it, which also
+means it happens before there is real school data rather than after — the property this ADR wanted.
+
+This is settled and is not an open question. See **Decisions taken and not to be reopened** in
+[status.md](../../status.md).
+
 ## Context
 
 Development has been running against a Supabase PostgreSQL project in `ap-northeast-2` (Seoul),
