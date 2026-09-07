@@ -336,6 +336,7 @@ no reason, and the sections land with the modules.
 | Session cleanup investigated: `JdbcIndexedSessionRepository` already purges `public.spring_session` itself, on its own scheduler, on by default — no second job needed, made explicit in configuration | [ADR-0028](architecture/adr/0028-session-cleanup-is-already-handled.md) |
 | Student and guardian CSV export, masked by classification with an audited unmasked permission of its own | [ADR-0027](architecture/adr/0027-export-masking.md), `platform/export/`, `StudentExportService` |
 | Global reference data: states move to `public.state`, seeded from code, cached in memory, read through `GET /api/reference/states`; boards stay the `school` enum but drop their frontend-side label copy at `GET /api/schools/boards`; the audit action filter examined and deliberately left as is, with the index it would need first named | [ADR-0029](architecture/adr/0029-reference-data.md), `platform/reference/` |
+| **Phase 2, first feature:** daily attendance end to end — mark a section, view it, correction request and admin approval, locking at end of day plus 24 hours. One table shaped for the period-wise grain too, with no write path for it yet. The marking screen is card-based at every width, not only below the wide breakpoint: its primary user is a teacher on a phone. | [ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md), `attendance/`, `features/attendance/` |
 
 ## What is left on the frontend
 
@@ -588,6 +589,29 @@ Recorded so they are decided rather than discovered.
   and where each value comes from in the Supabase dashboard. A document uploaded on `local` or
   `test` works end to end today; nothing uploaded on the deployed environment persists until
   that one operational step happens.
+- **Attendance (Phase 2) has no academic calendar to check a date against.**
+  [FR-015](requirements/02-functional-requirements.md) asks for one and it is not built —
+  confirmed while building `attendance`, which is the first feature Phase 0 decision 8 makes
+  actually depend on it (working days, week start and holidays should come from the calendar,
+  not per-teacher habit). Rather than invent a calendar module for this lane, attendance marks
+  any date up to today, including a Sunday or a school holiday — `HOLIDAY` is a status precisely
+  so a school can record one by hand — and does not know which days a school actually runs.
+  This is a recorded gap, not a silent one: see [ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md#what-this-build-does-not-do).
+  The eligibility and short-attendance reports FR-049 asks for need a working-days denominator
+  this build cannot supply until the calendar exists.
+- **Attendance FR-047 (leave applications), FR-048 (absence alerts) and FR-050 (biometric/RFID
+  import) are deliberately not built.** Leave applications need a parent-facing portal that does
+  not exist; alerts need the communication module and channel ports
+  ([ADR-0013](architecture/adr/0013-external-provider-ports.md)), which Phase 0 decision 8 itself
+  says must fire on a schedule against locked data rather than per mark — the lock
+  [ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md) defines is what that job will
+  read once built; biometric import is P2 and has no device integration to import from yet.
+- **Attendance has no section-scoped permission narrowing.** `attendance:mark:manage` reaches
+  every section in the school, not only a class teacher's own — `platform.security.AccessScope`
+  has a `SECTION` scope type, but nothing in the codebase resolves it into a query filter yet,
+  the same gap `RoleTemplates` already notes for `student:guardian:read` on `CLASS_TEACHER`.
+  Honest about what the authorization model can currently express, not a regression this lane
+  introduced.
 
 ## Keeping this honest
 

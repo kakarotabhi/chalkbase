@@ -98,6 +98,14 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `GEN_001` | 500 | Unexpected server failure. Quote the trace id. |
 | `GEN_002` | 500 | A stored value could not be decrypted (ADR-0022) — the key is wrong or the row is corrupt. Quote the trace id. |
 | `SCHOOL_001` | 409 | A school with this code already exists. |
+| `ATT_001` | 422 | A student named in a mark is not actively enrolled in that section and session. |
+| `ATT_002` | 400 | Attendance marked for a date after today. |
+| `ATT_003` | 409 | This attendance date is locked (end of day plus 24 hours); file a correction request instead. |
+| `ATT_004` | 400 | A correction request was filed for a mark still inside its own edit window — edit it directly instead. |
+| `ATT_005` | 409 | A correction request for this mark is already awaiting a decision. |
+| `ATT_006` | 409 | This correction request has already been decided. |
+| `ATT_007` | 409 | This student already has a mark for that date (a concurrent-write race; the API's own upsert should not reach this). |
+| `ATT_008` | 409 | This school has not set a current academic session yet. |
 
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
 them turns the login form into a way to discover which parents are registered.

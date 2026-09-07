@@ -5,8 +5,8 @@ accountant never need the same page.
 
 | Role | Pages |
 |---|---|
-| [Admin / principal](admin/) | dashboard, school setup, sessions, classes, staff, reports |
-| [Teacher](teacher/) | attendance, marks, timetable, homework, parent messages |
+| [Admin / principal](admin/) | dashboard, school setup, sessions, classes, staff, reports, [approve attendance corrections](admin/approve-attendance-corrections.md) |
+| [Teacher](teacher/) | [mark attendance](teacher/mark-attendance.md), marks, timetable, homework, parent messages |
 | [Parent](parent/) | fees, attendance, report cards, notices |
 | [Student](student/) | timetable, assignments, results |
 | [Accountant](accountant/) | fee collection, receipts, concessions, day book |
