@@ -1,5 +1,6 @@
 package in.chalkbase.platform.tenancy;
 
+import in.chalkbase.platform.reference.ReferenceDataSeeder;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
