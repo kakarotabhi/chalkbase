@@ -50,6 +50,13 @@ public class UserAccount {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    /** Denormalized alongside the audit log's own record of the same event; never the source of truth. */
+    @Column(name = "password_reset_at")
+    private Instant passwordResetAt;
+
+    @Column(name = "password_reset_by")
+    private UUID passwordResetBy;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -96,6 +103,44 @@ public class UserAccount {
         this.mustChangePassword = false;
     }
 
+    /** Admin-triggered deactivation. Idempotent: disabling an already-disabled account changes nothing. */
+    public boolean disable() {
+        if (status == AccountStatus.DISABLED) {
+            return false;
+        }
+        this.status = AccountStatus.DISABLED;
+        return true;
+    }
+
+    /** Idempotent: reactivating an already-active account changes nothing. */
+    public boolean reactivate() {
+        if (status == AccountStatus.ACTIVE) {
+            return false;
+        }
+        this.status = AccountStatus.ACTIVE;
+        return true;
+    }
+
+    /**
+     * Clears a lockout early and resets the counter that would otherwise re-trigger it on the next
+     * wrong guess. Idempotent: unlocking an account that was not locked changes nothing.
+     */
+    public boolean clearLockout() {
+        if (lockedUntil == null && failedAttempts == 0) {
+            return false;
+        }
+        this.lockedUntil = null;
+        this.failedAttempts = 0;
+        return true;
+    }
+
+    /** Issues a new school-set password: sets {@code mustChangePassword} and records who and when. */
+    public void recordAdminPasswordReset(Instant now, UUID resetByAccountId) {
+        this.mustChangePassword = true;
+        this.passwordResetAt = now;
+        this.passwordResetBy = resetByAccountId;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -122,6 +167,14 @@ public class UserAccount {
 
     public Instant getLastLoginAt() {
         return lastLoginAt;
+    }
+
+    public Instant getPasswordResetAt() {
+        return passwordResetAt;
+    }
+
+    public UUID getPasswordResetBy() {
+        return passwordResetBy;
     }
 
     public Instant getCreatedAt() {

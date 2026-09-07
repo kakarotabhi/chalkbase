@@ -27,6 +27,15 @@ public final class AuditAction {
     public static final String PERMISSION_DENIED = "PERMISSION_DENIED";
 
     /**
+     * An administrator issued a temporary password for someone else's account. Distinct from
+     * {@link #PASSWORD_CHANGED} — that is self-service, this is one account acting on another's, and
+     * the two need to read differently in the log even though both end with a new password hash. A
+     * security event, not a change record: the point of this row is that the action was
+     * <em>attempted</em>, by whom and against whom, never the secret itself (AGENTS.md rule 11).
+     */
+    public static final String PASSWORD_RESET_BY_ADMIN = "PASSWORD_RESET_BY_ADMIN";
+
+    /**
      * A session ended by the server rather than by the person holding it (ADR-0023).
      *
      * <p>Recorded exactly once per session, by {@code SessionStandingFilter}, the first time a
