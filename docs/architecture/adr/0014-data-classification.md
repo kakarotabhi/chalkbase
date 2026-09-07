@@ -75,11 +75,16 @@ is annotated, every record delegates its `toString`, and a populated instance's 
 no `CONFIDENTIAL` or `RESTRICTED` value. It fails closed — an unannotated component renders
 `<UNCLASSIFIED>`, never the value.
 
-**Not built, and the gap is narrower than it sounds.** This stops `log.info("saving {}", dto)`. It
-does nothing about `log.info("saving {}", dto.fullName())`, which is exactly as unsafe as it was
-before. Closing that needs either the log-redacting serialiser above, or — cheaper and probably
-first — a static rule that flags a call to a `CONFIDENTIAL` accessor appearing inside a logger
-argument. Export masking has no exports to mask yet.
+**Also built, since this ADR was first written:** the accessor rule this section originally called
+"not built". `LoggingClassificationTests` fails the build when production code calls a
+`CONFIDENTIAL`/`RESTRICTED` DTO accessor on the same source line as an SLF4J `Logger` call,
+`String.format`, or a `Throwable` constructor — the three sinks `AGENTS.md` names for "never logged,
+never in an error message". It is a line-number correlation, not real data-flow analysis, so a value
+handed to a logger through an intervening local variable still slips through; see that test's own
+Javadoc for exactly what it does and does not catch. The log-redacting serialiser this section used
+to propose as the alternative was not built — the accessor rule was cheaper and is what shipped.
+
+**Not built: export masking.** There are no exports yet to mask.
 
 **Also unbuilt: encryption at rest**, which is why no `RESTRICTED` field exists anywhere
 ([ADR-0020](0020-student-and-guardian-model.md) §2). A test asserts that no `RESTRICTED` component

@@ -49,9 +49,9 @@ glance and are not.
 | User management | ✅ Backend done · ⬜ screen | `user_account` carries `status`, `failedAttempts` and `lockedUntil`, and login honours all three. `/api/access/users` now creates an account, deactivates or reactivates one, clears a lockout, and issues an admin password reset — the last one ends the target's sessions immediately rather than waiting for them to notice (`SessionInvalidationService`, ADR-0023). Guarded against locking a school out of its own access: deactivating the last account that can manage access is refused. **No screen yet.** |
 | Student profile | ⚠️ Core only | `student` holds admission number, name, date of birth, gender, status and admitted-on, plus enrolment. [FR-028](requirements/02-functional-requirements.md) also asks for contact, medical, transport, hostel, document and compliance sections; none exist. The Restricted columns are a separate matter — [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2 leaves them out until encryption at rest does. |
 | Guardian profile | ✅ Done | Directory, attach and detach, relation, main contact, and digit-normalised phone search. |
-| **Documents** | ❌ Not started | Blocked on a decision nobody has taken: **there is no ADR for file storage at all.** ADR-0013 covers payments and messaging ports only, and no storage port exists in the code. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) need somewhere to put a file before any of this is an implementation task. |
+| **Documents** | ❌ Not started · unblocked | The decision that blocked it has been taken: a storage **port** in the ADR-0013 style, with an S3-compatible adapter and Supabase Storage as the development target. There is still no ADR and no port in the code, so the first commit of that work writes the ADR. Certificates and compliance documents ([FR-013](requirements/02-functional-requirements.md)) and the student photo ([FR-032](requirements/02-functional-requirements.md)) both wait on it. |
 | Import | ✅ Done | CSV, validate-first, all-or-nothing ([ADR-0021](architecture/adr/0021-bulk-import.md)). Guardians are deliberately not imported. `.xlsx` is refused with instructions rather than parsed. |
-| **Export** | ❌ Not started | Deliberate. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. |
+| **Export** | ❌ Not started | Deliberate, and now scoped. [ADR-0014](architecture/adr/0014-data-classification.md) wants exports masked by classification with the unmasked one audited, and neither exists; an export ignoring that would be the largest unaudited disclosure surface in the product. Decided since: the masked export is the default, an unmasked one needs a **permission of its own** that no shipped role holds, and every unmasked export writes an audit event naming the fields. The masking itself is what item 1 builds. |
 | **Basic dashboards** | ❌ Not started | No route. Blocked less by effort than by having only three modules to summarise. |
 | Audit log | ✅ Done | Table, service, `GET /api/audit`, its screen, and record counts. Retention is unset — see below. |
 
@@ -133,24 +133,24 @@ columns ADR-0020 §2 left out.
 
 The last piece of master data. Small, and it unblocks marks and the timetable later.
 
-### 3. ADR-0008's staleness rule
+### 3. Roles, users, and what a session re-validates
 
-A `403` should make the client refetch `/api/me` and re-render navigation before showing the error,
-so a permission revoked mid-session stops leaving a menu entry that lies. The interceptor does this
-for `401` only. Cross-cutting but small.
+`/api/access` is three `@GetMapping`s. Nothing in the product can create a user, deactivate one,
+reset a password, or edit a role — and a session outlives its account being disabled, so an admin
+screen that disables an account would be worth very little on its own. The three are one piece of
+work because they all live in `identity/application` and all three change how a grant is resolved.
 
-### 4. A Confidential value can still reach a log through an accessor
-
-`@Classification` stops `log.info("saving {}", dto)`. Nothing stops
-`log.info("saving {}", dto.fullName())`. The cheap fix is a static rule flagging a `CONFIDENTIAL`
-accessor inside a logger argument — worth more than export masking, and cheaper now than after
-another thousand call sites.
-
-### 5. Guardian import, documents, dashboards
+### 4. Guardian import, documents, dashboards
 
 What is left of Phase 1 after the above. Guardian import specifically needs matching each row
 against the existing directory by phone, or it recreates the duplicate problem
 [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §5 exists to prevent.
+
+### 5. The student record's missing sections
+
+[FR-028](requirements/02-functional-requirements.md) asks for contact, medical, transport, hostel,
+document and compliance sections and none exist; [ADR-0020](architecture/adr/0020-student-and-guardian-model.md) §2's
+Restricted columns land with item 1. This is the largest remaining Phase 1 slice by volume.
 
 ### Also queued, not blocking
 
@@ -163,11 +163,6 @@ against the existing directory by phone, or it recreates the duplicate problem
 
 ## Blocking the first real school
 
-- **A Confidential value can still reach a log through an accessor.** `@Classification` and the
-  redacting `toString` stop `log.info("saving {}", dto)`; nothing stops
-  `log.info("saving {}", dto.fullName())`. The cheap next step is a static rule flagging a
-  `CONFIDENTIAL` accessor inside a logger argument — worth more than export masking, and worth doing
-  before the codebase has many more call sites.
 - **Encryption at rest does not exist, and the student record now needs it.** The decisions are
   taken ([ADR-0022](architecture/adr/0022-encryption-at-rest.md)); the code is not written. Caste and community,
   religion, disability/CWSN, EWS/BPL/RTE category, guardian income, APAAR and Aadhaar are Restricted
@@ -186,12 +181,18 @@ against the existing directory by phone, or it recreates the duplicate problem
   deliberately not re-read per request. Still **no admin password-reset endpoint** — that is the
   next item below — and `SessionInvalidationService` (also new in ADR-0023) is what it will call to
   dislodge anyone holding the old cookie.
-- **Audit retention is unset.** ADR-0014 requires a period per category; the table grows unbounded
-  until a purge exists. The number is a legal question, not an engineering one.
+- **Audit retention is decided at seven years and not yet enforced.** ADR-0014 requires a period per
+  category; the product owner has set one period for every category — seven years, the Indian
+  financial-record convention — rather than a schedule per category, on the grounds that a uniform
+  number errs long and errs long is the safe direction for an audit log. A per-category schedule
+  stays possible later without a schema change. **What does not exist is the purge**, so the table
+  still grows unbounded; this is now an implementation task rather than a question.
 
 ## Waiting on a decision
 
-Phase 0 cleared this table. What is left is externally blocked rather than undecided.
+Phase 0 cleared this table, and a later round cleared file storage, audit retention, `.xlsx` and
+who may run an unmasked export — all four are recorded where the work they block is described, not
+here. What is left is externally blocked rather than undecided.
 
 | Question | Why it matters | Urgency |
 |---|---|---|
@@ -232,6 +233,9 @@ Phase 0 cleared this table. What is left is externally blocked rather than undec
 | Students filter bar rebuilt to the design: value-printing pills, tinted when set, actions on the title row | `cb-select` `pill` variant, `features/students/` |
 | A boot state while `/api/me` is unanswered: the root component says the app is loading, and says so differently after 10s, instead of holding a blank page | `app.ts`, `layout/boot-state/` |
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml) |
+| ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts` |
+| A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line | `LoggingClassificationTests` |
+| A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school` | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md) |
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand | [ADR-0023](architecture/adr/0023-session-revalidation.md) |
 | User account lifecycle: create, deactivate, reactivate, unlock and admin password reset, all at `/api/access/users` | `UserAccountManagementService`, `UserAccountController` |
 | Role management: create a role, replace its permission set, grant or revoke it for a user, with guards against privilege escalation and against locking a school out of its own access | `RoleManagementService`, `AccessGuardrails`, `AccessController` |
@@ -302,8 +306,10 @@ Recorded so they are decided rather than discovered.
 - **The import reads CSV, not `.xlsx`.** The requirement says "import from Excel"; every Excel can
   *Save As* CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
   surface, which AGENTS rule 8 says to ask about. A `.xlsx` upload is detected by its magic bytes and
-  refused with instructions rather than a parse error. **Open question for the product owner**: if
-  "Save as CSV" is a genuine barrier for school offices, POI is the answer and it is a small change
+  refused with instructions rather than a parse error. **Asked and answered: POI is not approved.**
+  The dependency's size and CVE surface are not worth buying while every Excel can *Save As* CSV, so
+  the magic-byte refusal is the shipped behaviour rather than a placeholder for it. Revisit only if
+  a real school office reports "Save as CSV" as a genuine barrier — the change is small and sits
   behind the same endpoint.
 - **Guardians are not imported**, deliberately (ADR-0021 §4): a file of six hundred students each
   naming a father would create six hundred guardian records, including four for one man with four
@@ -349,9 +355,14 @@ Recorded so they are decided rather than discovered.
   screen. That is ADR-0008's designed behaviour, not a defect — but the guard against a genuine typo
   is a CI check comparing the backend's ids to the frontend's registry, which needs both artefacts
   and so belongs in neither agent's half. Both sides carry a matching `TODO(contract)`.
-- **ADR-0008's staleness rule is not implemented.** A `403` should make the client refetch
-  `/api/me` before showing the error. `permissionsVersion` is stored and ready; the work is doing it
-  without a refetch loop.
+- ~~ADR-0008's staleness rule is not implemented~~ ✅ Closed. Any `403` other than one on `/api/me`
+  itself now makes `apiErrorInterceptor` call `SessionBootstrap.refreshAfterForbidden()` before the
+  error reaches the screen: it refetches `/api/me`, re-renders navigation from the answer, and only
+  then rethrows. Concurrent `403`s share the one in-flight refetch; a failure of the refetch itself
+  (including a `401` that turns out to mean the session is actually gone) never replaces the
+  original error, it only decides whether the user also lands on `/login`. A refetch that comes back
+  with the same `permissionsVersion` still shows the same error — see the comment at the call site
+  for why that case is not reworded.
 - Expired sessions are never purged.
 - **The forced password change is enforced at two points, not everywhere.** The login screen sends
   someone holding a temporary password to `/change-password`, and `landingGuard` sends them there

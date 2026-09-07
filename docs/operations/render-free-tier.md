@@ -119,3 +119,68 @@ schools would be close to seven minutes of every cold start, which is what makes
 [ADR-0011](../architecture/adr/0011-schema-per-tenant.md)'s recorded expiry — *move migration out of
 startup into a deploy step* — a concrete date rather than a good intention. Startup already exceeds
 the one-minute trigger the ADR names.
+
+## The staging pair
+
+A second API and web service, tracking the `staging` branch, added so a feature can be verified
+*running* before it reaches `main`. Same free tier, same region, same `prod` profile — and
+therefore the same wake and deploy behaviour as everything above. `ops/render/warm-and-deploy.sh
+staging` is the routine, scripted.
+
+| | |
+|---|---|
+| App | <https://chalkbase-web-staging.onrender.com> |
+| API | <https://chalkbase-api-staging.onrender.com> |
+| Database | a **second** Supabase project, `chalkbase-staging`, in `ap-southeast-1` |
+
+### Why it has its own database
+
+This is the part that is not optional, and it is the reason staging took a decision rather than a
+checkbox.
+
+The dev services above and every developer's `local` profile share one Supabase project.
+`TenantMigrations` fans out at startup against every school's schema with Flyway's defaults —
+`validateOnMigrate=true`, `outOfOrder=false`. A branch deployed against that database applies its
+unmerged migration to the real `demo_school` and records its checksum; the moment the branch edits
+that migration again, which is normal while the work is in progress, **every other backend refuses
+to start on a checksum mismatch**, including yours, and the fix is manual.
+
+[parallel-work.md](../development/parallel-work.md) records that as the larger of the two migration
+hazards. Deploying branches would turn it from a hazard into a routine. So staging points at its
+own project, and the dev environment is left alone.
+
+It is in Singapore rather than Seoul, beside the Render services, because the per-tenant Flyway
+pass at startup is latency-dominated — ~8 s per school against Seoul from a free instance. Staging
+is deployed far more often than dev, so the round trip is worth shortening. It does mean staging is
+*faster* than dev by construction: do not read performance numbers off it.
+
+### Setting it up
+
+The Blueprint in [render.yaml](../../render.yaml) defines all four services, so Render creates the
+staging pair on the next Blueprint sync. Four values are `sync: false` and have to be entered on
+`chalkbase-api-staging` once:
+
+| Variable | Where it comes from |
+|---|---|
+| `SPRING_DATASOURCE_URL` | Supabase → the `chalkbase-staging` project → **Connect** → **Session pooler**, rewritten as `jdbc:postgresql://…`. **Not** port 6543 in transaction mode — ADR-0011 hands each connection a `search_path` per school, and a pooler that hands out a different backend per statement breaks tenancy. |
+| `SPRING_DATASOURCE_USERNAME` | the user from that same connection string |
+| `SPRING_DATASOURCE_PASSWORD` | the database password set when the project was created |
+| `CHALKBASE_SETUP_KEY` | `openssl rand -base64 32`. Without it the service refuses to start, deliberately: `POST /api/schools` creates a PostgreSQL schema and is `permitAll`, and a staging URL is no less public than any other. |
+| `CHALKBASE_ENCRYPTION_KEY` | `openssl rand -base64 32`, and a **different** key from the dev environment's (ADR-0022). A staging key is handled more loosely than a real one; sharing one makes that looseness the real key's problem. |
+
+The database starts empty and does not need seeding by hand. The shared migrations create
+`public.school` and the session store at first boot; a school is then created through
+`POST /api/schools` with the `X-Chalkbase-Setup-Key` header, and the per-tenant migrations run for
+it. Use a school code that cannot be confused with the dev one.
+
+### Using it
+
+```bash
+git checkout staging && git merge --no-ff <feature-branch> && git push
+ops/render/warm-and-deploy.sh staging
+```
+
+Then verify in a browser, and only then open the merge to `main`. Two things carry over from the
+dev environment unchanged: **warm before you deploy**, and **check both services afterwards** — a
+timed-out backend deploy beside a successful frontend one is a silent version skew, not a visible
+failure.
