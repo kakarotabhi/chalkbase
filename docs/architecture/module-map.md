@@ -13,7 +13,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `document` | `document` (per tenant) — a student's certificates, photo, signature and other documents; bytes held behind `platform`'s `StorageService`, not in this table (ADR-0025) | `/api/documents/**` | yes | port, module and student attachment built; renewal reminders and Restricted-category document types deliberately not built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
 | `academics` | `academic_session`, `school_class`, `section`, `subject` (per tenant); timetable and syllabus still planned | `/api/academics/**` | yes | sessions, classes and subjects built |
-| `attendance` | student and staff attendance | `/api/attendance` | yes | planned |
+| `attendance` | `attendance_mark`, `attendance_correction_request` (per tenant) — student attendance, daily and period-wise in one table from day one; staff attendance still needs a `staff` module | `/api/attendance` | yes | daily grain built: mark, view, lock, correction request and approval (ADR-0030); period-wise has its table shape and no write path |
 | `exam` | assessments, marks, report cards | `/api/exams` | yes | planned |
 | `fee` | fee heads, concessions, invoices, receipts | `/api/fees` | yes | planned |
 | `payroll` | salary structures, payslips | `/api/payroll` | yes | planned |
@@ -66,6 +66,7 @@ importing the other. Each is a `@Bean` inside the module, collected by the platf
 | `NavigationProvider` | where this module's screens sit in the menu | e.g. `SchoolNavigation` |
 | `ConstraintMappingProvider` | how this module's database constraints read to a user | e.g. `SchoolConstraintMappings` |
 | `AuditActorResolver` | who is acting, for the audit log's actor snapshot | `IdentityAuditActorResolver` |
+| `CurrentUserResolver` | who is acting, as a plain `UUID` a module may store on a row it owns | `IdentityCurrentUserResolver` |
 | `AcademicsDashboardContributor` | the current-session tile on `/api/dashboard` | `AcademicsDashboardTileService` |
 | `StudentDashboardContributor` | the enrolment-by-class and linkage-gap tiles on `/api/dashboard` | `StudentDashboardTileService` |
 
@@ -103,3 +104,20 @@ Navigation adds one rule worth knowing: a module contributes a screen to **anoth
 section by declaring it at the top level under its dotted id — `school` declares `settings.profile`
 and the catalogue places it beneath the `settings` container that `identity` owns. Without that,
 `IdentityNavigation` would be the one file every module edits to add a menu entry.
+
+`attendance` reaches both existing feature interfaces at once — the first module to need to.
+`academics.api.AcademicsLookup` resolves the section being marked and the school's current
+session; `student.api.StudentLookup` gained two methods for it, `rosterOfSection` (a section's
+live roster, in class-register order — names and admission numbers, the same tier as everything
+else that interface returns) and `namesOf` (a student's name from a bare id, for a correction
+queue that already holds one and has no roster to resolve it against). Neither hands back a
+`Student` row or anything `student:student:read` does not already guard.
+
+`attendance` also introduces a fifth SPI, `platform.security.CurrentUserResolver`, mirroring
+`AuditActorResolver` exactly. The audit log's resolver answers "who, for the log" — a name and a
+role snapshot, enough to describe an event and never enough to be a foreign key.
+`attendance_mark.marked_by` and `attendance_correction_request.requested_by`/`decided_by` are
+domain data, not audit rows, and ADR-0018 §3 already rules out storing a value in the audit log —
+so "who did this" has to live on the record itself, and `platform.security.CurrentUser` is what
+gets a module a plain `UUID` for that without importing `identity`, the same way
+`user_account.password_reset_by` already does one module over.
