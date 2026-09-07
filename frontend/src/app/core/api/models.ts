@@ -523,11 +523,24 @@ export type ImportError = Schemas['ImportError'];
  * which writes nothing.
  *
  * `imported` is 0 or `validRows` and never anything between, because the commit is all-or-nothing
- * (ADR-0021 §2): one bad row and the whole file is rejected.
+ * (ADR-0021 §2): one bad row and the whole file is rejected. The four guardian counts follow the
+ * same rule (ADR-0021 §4): they say what was actually written, never what a clean file would go on
+ * to do, so they are 0 from `validate` and 0 from a commit that found anything wrong.
  *
  * - `totalRows` — data rows found in the file, not counting the header.
  * - `validRows` — how many of them would import cleanly.
  * - `imported` — how many were actually written. Always 0 from `validate`.
+ * - `guardiansCreated` — new guardian person records actually written: a phone number that matched
+ *   nobody already in this school's directory and nobody else in the file either.
+ * - `guardiansMatched` — distinct guardians the import's students were linked to **without**
+ *   creating a new person.
+ * - `guardianLinksCreated` — student-guardian links actually written, in total. Can exceed
+ *   `guardiansCreated + guardiansMatched`: four rows naming one father produce one guardian and
+ *   four links, so this counts rows with a guardian, not guardians.
+ * - `studentsLinkedToExistingGuardians` — how many of those links pointed at a guardian that
+ *   already existed before this import ran. "Created 12 guardians, linked 47 students to existing
+ *   guardians" is the sentence this pair exists to make possible — the difference between trusting
+ *   this screen and checking six hundred rows by hand.
  * - `errorCount` — how many problems were found in total. `errors` carries at most 200 of them, so
  *   a pathological file cannot make the response — or this page — unusable. Compare the two to
  *   know whether the list is complete, and say so if it is not: a screen that silently shows 200

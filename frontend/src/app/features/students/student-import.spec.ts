@@ -43,6 +43,10 @@ const report = (over: Partial<ImportReport> = {}): ImportReport => {
     totalRows: 3,
     validRows: 3,
     imported: 0,
+    guardiansCreated: 0,
+    guardiansMatched: 0,
+    guardianLinksCreated: 0,
+    studentsLinkedToExistingGuardians: 0,
     errorCount: errors.length,
     errors,
     ...over,
@@ -375,6 +379,54 @@ describe('StudentImport', () => {
     expect(text()).toContain('2026–27');
     const link = element().querySelector('a[href="/students"]');
     expect(link).not.toBeNull();
+  });
+
+  /** ADR-0021 §4: the guardian side of the result, only said when the file actually named one. */
+  it('says how many guardians were created and how many students matched an existing one', () => {
+    arrive();
+    choose('roll.csv');
+    check().flush(envelope(report({ totalRows: 4, validRows: 4 })));
+    fixture.detectChanges();
+
+    button('Import these students')!.click();
+    fixture.detectChanges();
+    httpMock.expectOne({ url: IMPORT, method: 'POST' }).flush(
+      envelope(
+        report({
+          totalRows: 4,
+          validRows: 4,
+          imported: 4,
+          guardiansCreated: 1,
+          guardiansMatched: 0,
+          guardianLinksCreated: 4,
+          studentsLinkedToExistingGuardians: 0,
+        }),
+      ),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('1 new guardian');
+  });
+
+  /**
+   * A file that named no guardian at all gets no guardian sentence in the result — there is
+   * nothing this import actually did on that front to report.
+   */
+  it('says nothing about what the import did with guardians when the file named none', () => {
+    arrive();
+    choose('class-5.csv');
+    check().flush(envelope(report({ totalRows: 613, validRows: 613 })));
+    fixture.detectChanges();
+
+    button('Import these students')!.click();
+    fixture.detectChanges();
+    httpMock
+      .expectOne({ url: IMPORT, method: 'POST' })
+      .flush(envelope(report({ totalRows: 613, validRows: 613, imported: 613 })));
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('new guardian');
+    expect(text()).not.toContain('linked to a guardian already here');
   });
 
   /** All-or-nothing means the register is untouched, and the screen has to be able to say so. */
