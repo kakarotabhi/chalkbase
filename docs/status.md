@@ -34,7 +34,7 @@ the way Phase 1's work was)
 | Documents (FR-013, FR-032)                                            | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render                                                          |
 | Basic dashboards                                                      | ✅ Done                                                                                                                                                     |
 | Export                                                                | ✅ Done                                                                                                                                                     |
-| Deployment                                                            | ✅ Render dev **and** staging, each on its own database · ⬜ Coolify/VPS (production)                                                                       |
+| Deployment                                                            | ✅ Render dev · ⬜ Coolify/VPS (production, Phase 4)                                                                       |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
 [Phase 1 in detail](#phase-1-in-detail) is the per-feature account.
@@ -103,17 +103,9 @@ remains the production plan.
 | API explorer | <https://chalkbase-api.onrender.com/swagger-ui.html>                            |
 | Database     | the same Supabase project the local profile uses — so the demo school is shared |
 
-A second, **staging** pair tracks the `staging` branch, so a change can be verified running before
-it reaches `main`. It has a Supabase project of its own — [why that was not optional](operations/render-free-tier.md#why-it-has-its-own-database)
-— and was bootstrapped over HTTP through [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
-rather than by a seeder, which is what proved that path works.
-
-|          |                                                                      |
-| -------- | -------------------------------------------------------------------- |
-| App      | <https://chalkbase-web-staging.onrender.com>                         |
-| API      | <https://chalkbase-api-staging.onrender.com>                         |
-| Database | a second Supabase project, `ap-southeast-1`, no shared data with dev |
-| Sign in  | school code `STAGE-001`, user `admin`                                |
+The staging pair that briefly sat beside this has been retired — see
+[the free-tier runbook](operations/render-free-tier.md#there-is-no-staging-environment) for what
+it bought and what it cost. Verify on dev, after merge.
 
 Sign in with school code `DEMO-001` and password `Chalkbase@2026` as `principal`, `classteacher`,
 `auditor` (the only one who can open the audit log) or `newteacher` (forced password change).
@@ -330,7 +322,7 @@ no reason, and the sections land with the modules.
 | `contracts/` regenerated in Actions and committed to the branch, so an endpoint change no longer needs the full backend build on a machine that cannot run it                                                                                                                                                                                                                | [`.github/workflows/contracts.yml`](../.github/workflows/contracts.yml)                                                                             |
 | ADR-0008's staleness rule: any `403` refetches `/api/me` and re-renders navigation, sharing one in-flight refetch, before the error is shown                                                                                                                                                                                                                                 | `core/interceptors/api-error-interceptor.ts`, `core/auth/session-bootstrap.ts`                                                                      |
 | A build-failing test flags a `CONFIDENTIAL`/`RESTRICTED` DTO accessor passed to a logger, `String.format` or an exception message on the same line                                                                                                                                                                                                                           | `LoggingClassificationTests`                                                                                                                        |
-| A staging API and web pair on the `staging` branch, with a second Supabase project of its own, so a branch can be verified running without an unmerged migration reaching `demo_school`                                                                                                                                                                                      | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md)                                                                  |
+| ~~A staging API and web pair on the `staging` branch, with a second Supabase project of its own~~ — built, used to prove ADR-0024's bootstrap against a genuinely empty database, then retired                                                                                                                                                                                      | [render.yaml](../render.yaml), [free-tier runbook](operations/render-free-tier.md)                                                                  |
 | Session re-validation: account status and lockout re-read on every API call, at no extra cost; sessions can be ended on demand                                                                                                                                                                                                                                               | [ADR-0023](architecture/adr/0023-session-revalidation.md)                                                                                           |
 | User account lifecycle: create, deactivate, reactivate, unlock and admin password reset, all at `/api/access/users`                                                                                                                                                                                                                                                          | `UserAccountManagementService`, `UserAccountController`                                                                                             |
 | Role management: create a role, replace its permission set, grant or revoke it for a user, with guards against privilege escalation and against locking a school out of its own access                                                                                                                                                                                       | `RoleManagementService`, `AccessGuardrails`, `AccessController`                                                                                     |

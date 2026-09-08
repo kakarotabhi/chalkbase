@@ -15,7 +15,8 @@
 #
 # Usage:
 #   ops/render/warm-and-deploy.sh                 # the dev environment, from main
-#   ops/render/warm-and-deploy.sh staging         # the staging pair, from the staging branch
+#
+# There was a `staging` target here. The staging pair has been retired — see the free-tier runbook.
 #
 # Requires the Render CLI, logged in: https://render.com/docs/cli
 
@@ -23,9 +24,8 @@ set -euo pipefail
 
 ENVIRONMENT="${1:-dev}"
 case "$ENVIRONMENT" in
-  dev)     API_NAME=chalkbase-api;         WEB_NAME=chalkbase-web ;;
-  staging) API_NAME=chalkbase-api-staging; WEB_NAME=chalkbase-web-staging ;;
-  *) echo "Usage: $0 [dev|staging]" >&2; exit 2 ;;
+  dev) API_NAME=chalkbase-api; WEB_NAME=chalkbase-web ;;
+  *) echo "Usage: $0 [dev]   (the staging pair was retired)" >&2; exit 2 ;;
 esac
 
 command -v render >/dev/null || { echo 'The Render CLI is not on PATH.' >&2; exit 2; }

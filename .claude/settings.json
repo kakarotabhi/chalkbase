@@ -1,5 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx ng:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -14,15 +25,7 @@
       }
     ]
   },
-  "permissions": {
-    "allow": [
-      "Bash(./mvnw:*)",
-      "Bash(npm run:*)",
-      "Bash(npm test:*)",
-      "Bash(npx ng:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)"
-    ]
+  "enabledPlugins": {
+    "render@claude-plugins-official": true
   }
 }

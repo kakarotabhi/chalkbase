@@ -1,0 +1,141 @@
+- generic [ref=e62]:
+  - banner [ref=e63]:
+    - generic [ref=e64]: Chalkbase Demo Public School
+    - button "Nandini Apte" [ref=e71] [cursor=pointer]:
+      - generic [aria-hidden] [ref=e72]: NA
+  - navigation "Primary" [ref=e76]:
+    - link "Dashboard" [ref=e77] [cursor=pointer]:
+      - /url: /dashboard
+    - link "Students" [ref=e85] [cursor=pointer]:
+      - /url: /students
+    - link "Academics" [ref=e93] [cursor=pointer]:
+      - /url: /academics
+    - link "Attendance" [ref=e99] [cursor=pointer]:
+      - /url: /attendance
+    - link "Settings" [active] [ref=e105] [cursor=pointer]:
+      - /url: /settings
+  - main [ref=e111]:
+    - generic [ref=e164]:
+      - paragraph [ref=e165]: Settings › School profile
+      - heading "School profile" [level=1] [ref=e166]
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - heading "Identity" [level=2] [ref=e170]
+          - paragraph [ref=e171]: How the school is named on receipts, report cards and statutory returns.
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - generic [ref=e174]:
+                - text: School name *
+                - generic [ref=e175]: (required)
+              - textbox "School name (required)" [ref=e177]: Chalkbase Demo Public School
+            - generic [ref=e178]:
+              - generic [ref=e179]: School code
+              - textbox "School code" [disabled] [ref=e181]: DEMO-001
+              - paragraph [ref=e182]: Fixed when the school was onboarded. Ask Chalkbase support if it is wrong.
+            - generic [ref=e183]:
+              - generic [ref=e184]:
+                - generic [ref=e185]:
+                  - text: Board *
+                  - generic [ref=e186]: (required)
+                - combobox "Board (required)" [disabled] [ref=e188]:
+                  - option "Choose a board" [disabled]
+                - paragraph [ref=e189]: Could not load the list of boards.
+              - button "Try loading boards again" [ref=e191] [cursor=pointer]
+            - generic [ref=e194]:
+              - generic [ref=e195]: Affiliation number
+              - textbox "Affiliation number" [ref=e197]: "1130456"
+              - paragraph [ref=e198]: As printed on the affiliation certificate.
+        - generic [ref=e199]:
+          - heading "Location" [level=2] [ref=e200]
+          - paragraph [ref=e201]: Used on certificates and in UDISE+ returns.
+          - generic [ref=e202]:
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - text: Address line 1 *
+                - generic [ref=e205]: (required)
+              - textbox "Address line 1 (required)" [ref=e207]: Plot 22, Ramdaspeth
+            - generic [ref=e208]:
+              - generic [ref=e209]: Address line 2
+              - textbox "Address line 2" [ref=e211]:
+                - /placeholder: Optional
+                - text: Near the water tower
+            - generic [ref=e212]:
+              - generic [ref=e213]:
+                - text: City *
+                - generic [ref=e214]: (required)
+              - textbox "City (required)" [ref=e216]: Nagpur
+            - generic [ref=e218]:
+              - generic [ref=e219]:
+                - text: State *
+                - generic [ref=e220]: (required)
+              - combobox "State (required)" [ref=e222] [cursor=pointer]:
+                - option "Choose a state" [disabled]
+                - option "Andaman and Nicobar Islands"
+                - option "Andhra Pradesh"
+                - option "Arunachal Pradesh"
+                - option "Assam"
+                - option "Bihar"
+                - option "Chandigarh"
+                - option "Chhattisgarh"
+                - option "Dadra and Nagar Haveli and Daman and Diu"
+                - option "Delhi"
+                - option "Goa"
+                - option "Gujarat"
+                - option "Haryana"
+                - option "Himachal Pradesh"
+                - option "Jammu and Kashmir"
+                - option "Jharkhand"
+                - option "Karnataka"
+                - option "Kerala"
+                - option "Ladakh"
+                - option "Lakshadweep"
+                - option "Madhya Pradesh"
+                - option "Maharashtra" [selected]
+                - option "Manipur"
+                - option "Meghalaya"
+                - option "Mizoram"
+                - option "Nagaland"
+                - option "Odisha"
+                - option "Puducherry"
+                - option "Punjab"
+                - option "Rajasthan"
+                - option "Sikkim"
+                - option "Tamil Nadu"
+                - option "Telangana"
+                - option "Tripura"
+                - option "Uttar Pradesh"
+                - option "Uttarakhand"
+                - option "West Bengal"
+            - generic [ref=e223]:
+              - generic [ref=e224]:
+                - text: PIN code *
+                - generic [ref=e225]: (required)
+              - textbox "PIN code (required)" [ref=e227]: "440010"
+        - generic [ref=e228]:
+          - heading "Contact" [level=2] [ref=e229]
+          - paragraph [ref=e230]: Where parents and the board reach the school.
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - generic [ref=e233]:
+                - text: Principal *
+                - generic [ref=e234]: (required)
+              - textbox "Principal (required)" [ref=e236]: Nandini Apte
+            - generic [ref=e237]:
+              - generic [ref=e238]:
+                - text: Phone *
+                - generic [ref=e239]: (required)
+              - textbox "Phone (required)" [ref=e241]: +91 712 255 0100
+            - generic [ref=e242]:
+              - generic [ref=e243]:
+                - text: Email *
+                - generic [ref=e244]: (required)
+              - textbox "Email (required)" [ref=e246]: office@chalkbase-demo.example.in
+            - generic [ref=e247]:
+              - generic [ref=e248]: Website
+              - textbox "Website" [ref=e250]:
+                - /placeholder: Optional
+                - text: https://chalkbase-demo.example.in
+              - paragraph [ref=e251]: Include the https:// at the front.
+        - generic [ref=e253]:
+          - button "Cancel" [disabled] [ref=e255]
+          - button "Save changes" [disabled] [ref=e259]
