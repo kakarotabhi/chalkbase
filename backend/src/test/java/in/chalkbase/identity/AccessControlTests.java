@@ -272,9 +272,20 @@ class AccessControlTests {
         assertThat(nameOf(SEAVIEW_SCHEMA, "PRINCIPAL")).isEqualTo("Principal");
     }
 
-    /** Re-provisioning is what runs at every startup. It must never undo a school's edits. */
+    /**
+     * Re-provisioning is what runs at every startup, and it reconciles now (ADR-0031): a role
+     * nobody has edited through role management gets back a permission its template has and the
+     * row lacks — the exact shape a school onboarded before that permission existed was stuck in
+     * before this fix. This test used to assert the opposite, using this same raw SQL deletion to
+     * stand in for "the school edited this role"; that was the bug, restated as a test. A row
+     * missing a permission because it predates that permission is not the same thing as a school
+     * deliberately removing one, and only {@code RoleManagementService} — never a raw SQL edit —
+     * can produce the second case. {@code RoleManagementTests
+     * #editingARolesPermissionsProtectsItFromTemplateReconciliationForever} is that other case,
+     * through the real endpoint, in the file that already has the sign-in machinery for it.
+     */
     @Test
-    void reProvisioningDoesNotOverwriteARoleTheSchoolHasEdited() {
+    void reProvisioningGrantsAPermissionMissingFromARoleNobodyHasEdited() {
         removePermission(HILLVIEW_SCHEMA, "PRINCIPAL", ROLE_MANAGE);
 
         provisioning.provision(HILLVIEW_SCHEMA);
@@ -292,6 +303,7 @@ class AccessControlTests {
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
+                        ROLE_MANAGE,
                         USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
@@ -301,6 +313,7 @@ class AccessControlTests {
                         STUDENT_MANAGE,
                         STUDENT_READ,
                         STUDENT_REVEAL_RESTRICTED);
+        // Reconciled in place — not a second row for the same template.
         assertThat(jdbc.sql("select count(*) from " + HILLVIEW_SCHEMA + ".role")
                         .query(Integer.class)
                         .single())

@@ -180,7 +180,13 @@ the instant this migration ships and role management is used again.
   `RoleTemplateInstallerTests`, which provisions a schema, forces one of its roles into the exact
   "stale" shape the old installer left behind, and asserts the missing permission is granted on the
   next `initialize` call — and, separately, that a role marked `customised` is never touched and that
-  running `initialize` twice grants nothing the second time.
+  running `initialize` twice grants nothing the second time. `AccessControlTests
+#reProvisioningGrantsAPermissionMissingFromARoleNobodyHasEdited` proves the same thing one layer up,
+  through `SchoolProvisioning`, replacing a test that had asserted the pre-fix behaviour — a raw SQL
+  deletion standing in for "the school edited this role" — as correct. `RoleManagementTests
+#editingARolesPermissionsProtectsItFromTemplateReconciliationForever` proves the other half through
+  the real `PUT /api/access/roles/{id}/permissions` endpoint: once role management has touched a
+  role, re-provisioning leaves the permission the school removed gone.
 - `role.customised` is set only by `Role.replacePermissions`, so `RoleManagementService.createRole`
   and `RoleManagementService.updateRolePermissions` are the only write paths that can produce a
   `true` row (a freshly created, school-invented role also starts `true`, for the same reason —

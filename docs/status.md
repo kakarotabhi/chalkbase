@@ -626,7 +626,10 @@ Recorded so they are decided rather than discovered.
   login (ADR-0023). **Still not built:** the "new permissions available" review prompt ADR-0005 §2
   originally imagined — an edited role gets no notice that a template it was copied from has grown;
   its admin adds the permission by hand, same as any permission that role does not automatically
-  receive.
+  receive. Proven at three levels: `RoleTemplateInstallerTests` against the installer directly,
+  `AccessControlTests` through `SchoolProvisioning` (replacing a test that had asserted the pre-fix
+  behaviour as correct), and `RoleManagementTests` through the real permissions endpoint, confirming
+  a role edited through the product — not a raw SQL edit — is the one that stays protected.
 
 ## Keeping this honest
 

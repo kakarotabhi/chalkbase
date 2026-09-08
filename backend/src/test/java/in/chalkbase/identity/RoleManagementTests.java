@@ -156,6 +156,37 @@ class RoleManagementTests {
                         .value(org.hamcrest.Matchers.containsInAnyOrder("school:school:read", "identity:user:read")));
     }
 
+    /**
+     * The other half of ADR-0031, through the real endpoint rather than a raw SQL edit standing in
+     * for one: the moment role management replaces a role's permission set, {@code role.customised}
+     * is true, permanently, and {@code RoleTemplateInstaller} must never again add back a permission
+     * the template carries and this row does not — the school removed it on purpose. Provisioning
+     * (what runs at every startup) is called directly here rather than restarting the app, the same
+     * way {@code AccessControlTests} already exercises {@code RoleTemplateInstaller}'s reconciliation.
+     */
+    @Test
+    void editingARolesPermissionsProtectsItFromTemplateReconciliationForever() throws Exception {
+        UUID librarian = roleId("LIBRARIAN");
+
+        mockMvc.perform(put("/api/access/roles/" + librarian + "/permissions")
+                        .cookie(signIn("principal"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"permissions": []}
+                                """))
+                .andExpect(status().isOk());
+
+        provisioning.provision(SCHEMA);
+
+        assertThat(jdbc.sql("select permission_code from " + SCHEMA + ".role_permission where role_id = ?")
+                        .param(librarian)
+                        .query(String.class)
+                        .list())
+                .as("LIBRARIAN ships with school:school:read, which the school just removed on purpose")
+                .isEmpty();
+    }
+
     @Test
     void removingAPermissionNeverNeedsTheActorToHoldIt() throws Exception {
         UUID accessManagerOnly = createAccount("officeadmin", "Office Admin", null);
