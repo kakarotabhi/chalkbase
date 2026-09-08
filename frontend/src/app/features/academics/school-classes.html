@@ -136,7 +136,7 @@
                 <h2 class="rung__name">{{ row.name }}</h2>
                 @if (!row.active) {
                   <!-- The word, not only the dimming: photocopies and colour-blind readers. -->
-                  <span class="flag">Not running</span>
+                  <cb-badge tone="warning">Not running</cb-badge>
                 }
                 <p class="rung__meta">
                   @if (row.sections.length === 0) {
@@ -248,7 +248,7 @@
                     } @else {
                       <span class="section__name">{{ section.name }}</span>
                       @if (!section.active) {
-                        <span class="flag">Not running</span>
+                        <cb-badge tone="warning">Not running</cb-badge>
                       }
                       @if (canManageClasses()) {
                         <span class="section__actions">

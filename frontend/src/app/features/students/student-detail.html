@@ -98,7 +98,7 @@
 } @else if (view(); as record) {
   <div class="record__head">
     <h1 class="page-title">{{ record.fullName }}</h1>
-    <span [class]="record.statusClass">{{ record.statusLabel }}</span>
+    <cb-badge [tone]="record.statusTone">{{ record.statusLabel }}</cb-badge>
   </div>
 
   <!--
@@ -108,7 +108,7 @@
   -->
   <p class="announcement" role="status">{{ announcement() }}</p>
 
-  <section class="card" aria-labelledby="record-details-heading">
+  <cb-card class="card" role="region" aria-labelledby="record-details-heading">
     <div class="section__head">
       <h2 class="section__heading" id="record-details-heading">Details</h2>
       @if (!editing() && canManageStudents()) {
@@ -178,59 +178,59 @@
         </div>
       </dl>
     }
-  </section>
+  </cb-card>
 
   @if (student(); as loaded) {
-    <section class="card" aria-label="Guardians">
+    <cb-card class="card" role="region" aria-label="Guardians">
       <cb-student-guardians
         [studentId]="loaded.id"
         [guardians]="loaded.guardians ?? []"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Enrolments">
+    <cb-card class="card" role="region" aria-label="Enrolments">
       <cb-student-enrolments
         [studentId]="loaded.id"
         [enrolments]="loaded.enrolments ?? []"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Contact">
+    <cb-card class="card" role="region" aria-label="Contact">
       <cb-student-contact
         [studentId]="loaded.id"
         [contact]="loaded.contact ?? null"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Previous school and transfer certificate">
+    <cb-card class="card" role="region" aria-label="Previous school and transfer certificate">
       <cb-student-previous-school
         [studentId]="loaded.id"
         [record]="loaded.previousSchool ?? null"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Medical">
+    <cb-card class="card" role="region" aria-label="Medical">
       <cb-student-medical
         [studentId]="loaded.id"
         [medical]="loaded.medical"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Compliance and identifiers">
+    <cb-card class="card" role="region" aria-label="Compliance and identifiers">
       <cb-student-compliance
         [studentId]="loaded.id"
         [compliance]="loaded.compliance"
         (changed)="onChildChanged($event)"
       />
-    </section>
+    </cb-card>
 
-    <section class="card" aria-label="Documents">
+    <cb-card class="card" role="region" aria-label="Documents">
       <cb-student-documents [studentId]="loaded.id" (changed)="onDocumentsChanged($event)" />
-    </section>
+    </cb-card>
   }
 }

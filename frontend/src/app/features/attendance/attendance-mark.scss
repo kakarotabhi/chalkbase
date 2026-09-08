@@ -106,14 +106,12 @@
   }
 }
 
+// Surface, border, radius and padding come from cb-card (padding="sm"); only the internal layout
+// stays here.
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--cb-space-2);
-  padding: var(--cb-space-3);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-  background: var(--cb-surface-raised);
 }
 
 .card__head {
@@ -212,40 +210,7 @@
   color: var(--cb-text-muted);
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--cb-space-1) var(--cb-space-2);
-  border-radius: var(--cb-radius-sm);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-
-  &--present {
-    background: var(--cb-success-surface);
-    color: var(--cb-success);
-  }
-
-  &--absent {
-    background: var(--cb-danger-surface);
-    color: var(--cb-danger);
-  }
-
-  &--late,
-  &--half_day {
-    background: var(--cb-warning-surface);
-    color: var(--cb-warning);
-  }
-
-  &--excused_leave {
-    background: var(--cb-info-surface);
-    color: var(--cb-info);
-  }
-
-  &--holiday {
-    background: var(--cb-surface);
-    color: var(--cb-text-muted);
-  }
-}
+// The mark pill is cb-badge now, toned by statusTone() in attendance-shared.ts.
 
 // ── The correction sheet ────────────────────────────────────────────────────
 

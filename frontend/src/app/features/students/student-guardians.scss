@@ -75,20 +75,7 @@ cb-guardian-attach {
   list-style: none;
 }
 
-.guardian {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
-
-/// The main contact, marked three ways so no one of them has to carry it: a tinted surface, a rule
-/// down the leading edge that survives a black-and-white printout, and the badge that says the word.
-.guardian--primary {
-  background: var(--cb-primary-surface);
-  border-color: var(--cb-primary);
-  border-inline-start: 4px solid var(--cb-primary);
-}
+// The card surface and the "main contact" tint/edge-rule come from cb-card's [accent] input.
 
 .guardian__who {
   display: flex;
@@ -104,18 +91,6 @@ cb-guardian-attach {
 
 .guardian__relation {
   font-size: var(--cb-font-size-sm);
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-primary);
-  color: var(--cb-primary-contrast);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .guardian__contact {

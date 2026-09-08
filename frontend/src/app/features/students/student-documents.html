@@ -264,73 +264,75 @@
   } @else {
     <ul class="documents">
       @for (row of view(); track row.id) {
-        <li class="document">
-          <div class="document__who">
-            <span class="document__type">{{ row.documentTypeLabel }}</span>
-            <span
-              class="document__status document__status--{{ row.verificationStatus.toLowerCase() }}"
-            >
-              {{ row.verificationStatusLabel }}
-            </span>
-          </div>
-
-          <p class="document__filename">{{ row.originalFilename }}</p>
-
-          <dl class="facts">
-            <div class="facts__pair">
-              <dt>Issue date</dt>
-              <dd>
-                @if (row.issueDate) {
-                  {{ row.issueDate }}
-                } @else {
-                  <span class="muted">Not recorded</span>
-                }
-              </dd>
+        <li>
+          <cb-card>
+            <div class="document__who">
+              <span class="document__type">{{ row.documentTypeLabel }}</span>
+              <cb-badge [tone]="row.verificationStatusTone">
+                {{ row.verificationStatusLabel }}
+              </cb-badge>
             </div>
-            <div class="facts__pair">
-              <dt>Expiry date</dt>
-              <dd>
-                @if (row.expiryDate) {
-                  {{ row.expiryDate }}
-                } @else {
-                  <span class="muted">Not recorded</span>
-                }
-              </dd>
-            </div>
-            <div class="facts__pair">
-              <dt>Uploaded</dt>
-              <dd>{{ row.uploadedOn }} · {{ row.sizeLabel }}</dd>
-            </div>
-          </dl>
 
-          <div class="document__actions">
-            <!--
+            <p class="document__filename">{{ row.originalFilename }}</p>
+
+            <dl class="facts">
+              <div class="facts__pair">
+                <dt>Issue date</dt>
+                <dd>
+                  @if (row.issueDate) {
+                    {{ row.issueDate }}
+                  } @else {
+                    <span class="muted">Not recorded</span>
+                  }
+                </dd>
+              </div>
+              <div class="facts__pair">
+                <dt>Expiry date</dt>
+                <dd>
+                  @if (row.expiryDate) {
+                    {{ row.expiryDate }}
+                  } @else {
+                    <span class="muted">Not recorded</span>
+                  }
+                </dd>
+              </div>
+              <div class="facts__pair">
+                <dt>Uploaded</dt>
+                <dd>{{ row.uploadedOn }} · {{ row.sizeLabel }}</dd>
+              </div>
+            </dl>
+
+            <div class="document__actions">
+              <!--
               A plain anchor, not `cb-button`: this is a real navigation to
               `GET /api/documents/{id}/content` (ADR-0025), not an action this component performs.
               `target="_blank"` keeps a failure — a 403, a 503 — from replacing this record with a
               bare JSON page; a success is a download the browser handles itself, via the server's
               own `Content-Disposition: attachment`, and never opens anything to look at.
             -->
-            <a class="btn-like" [href]="row.contentUrl" target="_blank" rel="noopener">Download</a>
+              <a class="btn-like" [href]="row.contentUrl" target="_blank" rel="noopener"
+                >Download</a
+              >
 
-            @if (canManage()) {
-              <cb-button
-                variant="secondary"
-                [id]="row.editButtonId"
-                [disabled]="!!editingId() || adding()"
-                (click)="startEdit(row)"
-              >
-                Edit
-              </cb-button>
-              <cb-button
-                variant="danger"
-                [disabled]="!!editingId() || adding()"
-                (click)="askToRemove(row)"
-              >
-                Delete
-              </cb-button>
-            }
-          </div>
+              @if (canManage()) {
+                <cb-button
+                  variant="secondary"
+                  [id]="row.editButtonId"
+                  [disabled]="!!editingId() || adding()"
+                  (click)="startEdit(row)"
+                >
+                  Edit
+                </cb-button>
+                <cb-button
+                  variant="danger"
+                  [disabled]="!!editingId() || adding()"
+                  (click)="askToRemove(row)"
+                >
+                  Delete
+                </cb-button>
+              }
+            </div>
+          </cb-card>
         </li>
       }
     </ul>

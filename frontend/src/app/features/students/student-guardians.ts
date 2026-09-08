@@ -18,7 +18,9 @@ import { GuardianRelation, StudentGuardian } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -77,7 +79,17 @@ interface GuardianRow {
  */
 @Component({
   selector: 'cb-student-guardians',
-  imports: [ReactiveFormsModule, Button, Checkbox, Dialog, FormField, Select, GuardianAttach],
+  imports: [
+    ReactiveFormsModule,
+    Badge,
+    Button,
+    Card,
+    Checkbox,
+    Dialog,
+    FormField,
+    Select,
+    GuardianAttach,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-guardians.html',
   styleUrl: './student-guardians.scss',

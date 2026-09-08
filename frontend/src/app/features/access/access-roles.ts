@@ -28,7 +28,9 @@ import {
 } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { SessionStore, permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -130,7 +132,9 @@ interface PermissionRow {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    Badge,
     Button,
+    Card,
     Checkbox,
     Dialog,
     FormField,

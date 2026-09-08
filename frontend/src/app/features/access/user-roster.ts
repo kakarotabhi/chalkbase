@@ -18,6 +18,7 @@ import { IdentityAccessApi } from '../../core/api/identity-access-api';
 import { UserSummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { SessionStore, permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
@@ -100,7 +101,16 @@ interface AccountRow {
  */
 @Component({
   selector: 'cb-user-roster',
-  imports: [A11yModule, ReactiveFormsModule, RouterLink, Button, Dialog, FormField, TextInput],
+  imports: [
+    A11yModule,
+    ReactiveFormsModule,
+    RouterLink,
+    Badge,
+    Button,
+    Dialog,
+    FormField,
+    TextInput,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-roster.html',
   styleUrl: './user-roster.scss',

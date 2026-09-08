@@ -233,29 +233,7 @@ tbody {
   font-size: var(--cb-font-size-sm);
 }
 
-.outcome {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.outcome--success {
-  background: var(--cb-success-surface);
-  color: var(--cb-success);
-}
-
-.outcome--failure {
-  background: var(--cb-warning-surface);
-  color: var(--cb-warning);
-}
-
-.outcome--denied {
-  background: var(--cb-danger-surface);
-  color: var(--cb-danger);
-}
+// The outcome pill is cb-badge now, toned from OUTCOME_TONES above.
 
 /// Field NAMES (ADR-0014). Never a value, and nothing here pairs one with anything.
 .fields {

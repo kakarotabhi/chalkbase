@@ -160,7 +160,10 @@
   }
 
   &.is-active {
-    background: var(--cb-bg);
+    // --cb-primary-surface, not --cb-bg: the sidebar itself sits on --cb-surface, so a --cb-bg fill
+    // read as a barely-there white notch instead of the design's green-tinted selection — the
+    // active item looked the same as no item being selected at all.
+    background: var(--cb-primary-surface);
     color: var(--cb-text);
     font-weight: 600;
   }
@@ -179,6 +182,32 @@
 .nav-item--more {
   @include from-medium {
     display: none;
+  }
+}
+
+// A container's own screens — "Classes and sections", "Subjects" under "Academics" — rendered
+// beside their parent rather than reachable only through the More sheet. Without this, a parent
+// link alone reaches the first child (its path redirects there) and nothing else: the rail and the
+// sidebar had "room for every item", which stopped being true the day an item gained children.
+//
+// Hidden below medium: the bottom bar has no room for a second level and the sheet already shows
+// the full tree there. From medium up, indentation is what marks the relationship in the sidebar;
+// the rail has no label to indent, so a child there is told apart from its parent only by its
+// screen-reader name and its place in tab order — the same limit the rail's icon-only parents
+// already accept, now visible on one more row per section with children.
+.nav-item--child {
+  @include compact-only {
+    display: none;
+  }
+
+  @include from-expanded {
+    padding-inline-start: calc(var(--cb-space-3) + var(--cb-space-6));
+    font-weight: 400;
+    color: var(--cb-text-muted);
+
+    &.is-active {
+      color: var(--cb-text);
+    }
   }
 }
 
@@ -209,6 +238,13 @@
 .shell__content {
   grid-area: content;
   padding: var(--cb-space-6) var(--cb-space-4);
+
+  // The mockups draw 32px either side from desktop up; this was still the phone-width 16px at
+  // every size, which put every screen's content flush against the sidebar rather than given room
+  // to breathe.
+  @include from-expanded {
+    padding-inline: var(--cb-space-8);
+  }
 
   // Nothing may hide behind the fixed bottom navigation.
   @include compact-only {

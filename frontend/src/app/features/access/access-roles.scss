@@ -198,12 +198,9 @@
 
 // ── The impact preview ──────────────────────────────────────────────────
 
+// Surface, border and radius come from cb-card now.
 .impact-preview {
   margin: 0 0 var(--cb-space-4);
-  padding: var(--cb-space-3) var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
 }
 
 .impact-preview__heading {
@@ -247,12 +244,7 @@
   }
 }
 
-.role-card {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
+// Surface, border and radius come from cb-card; the badge is cb-badge tone="primary".
 
 .role-card__head {
   display: flex;
@@ -264,15 +256,6 @@
 
 .role-card__name {
   font-size: var(--cb-font-size-base);
-  font-weight: 600;
-}
-
-.role-card__badge {
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-primary-surface);
-  color: var(--cb-primary);
-  font-size: var(--cb-font-size-sm);
   font-weight: 600;
 }
 
@@ -343,15 +326,12 @@
   list-style: none;
 }
 
+// Surface, border and radius come from cb-card (padding="sm"); only the row's own layout stays.
 .grant-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--cb-space-3);
-  padding: var(--cb-space-3) var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
   font-size: var(--cb-font-size-sm);
 }
 

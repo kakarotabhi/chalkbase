@@ -1,0 +1,50 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cb-space-1);
+  // The approved design is 3px 9px, a value this token set has no name for. --cb-space-1/2 (4/8px)
+  // is the nearest pair already in the scale — a one-pixel difference nobody will measure, against
+  // a token invented for one component.
+  padding: var(--cb-space-1) var(--cb-space-2);
+  border-radius: var(--cb-radius-full);
+  font-size: var(--cb-font-size-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+:host(.cb-badge--success) {
+  background: var(--cb-success-surface);
+  color: var(--cb-success);
+}
+
+:host(.cb-badge--warning) {
+  background: var(--cb-warning-surface);
+  color: var(--cb-warning);
+}
+
+:host(.cb-badge--danger) {
+  background: var(--cb-danger-surface);
+  color: var(--cb-danger);
+}
+
+:host(.cb-badge--info) {
+  background: var(--cb-info-surface);
+  color: var(--cb-info);
+}
+
+// "Quiet badges" is literally what `--cb-primary-surface` is documented for in `_tokens.scss` —
+// a tinted pill for a state that is neither good nor bad, only current: the session running now,
+// the guardian marked as the main contact.
+:host(.cb-badge--primary) {
+  background: var(--cb-primary-surface);
+  color: var(--cb-primary);
+}
+
+// Not a status — a state that has simply ended (a past session, a graduated or transferred
+// student). Bordered rather than tinted so it reads as closed, not as a fault.
+:host(.cb-badge--neutral) {
+  background: var(--cb-surface);
+  color: var(--cb-text-muted);
+  border: 1px solid var(--cb-border);
+}

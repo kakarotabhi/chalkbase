@@ -170,12 +170,8 @@
   list-style: none;
 }
 
-.document {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
+// Surface, border and radius come from cb-card; the status pill is cb-badge, toned from
+// VERIFICATION_STATUS_TONES in students-shared.ts.
 
 .document__who {
   display: flex;
@@ -188,30 +184,6 @@
 .document__type {
   font-size: var(--cb-font-size-base);
   font-weight: 600;
-}
-
-.document__status {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.document__status--verified {
-  background: var(--cb-success-surface);
-  color: var(--cb-success);
-}
-
-.document__status--rejected {
-  background: var(--cb-danger-surface);
-  color: var(--cb-danger);
-}
-
-.document__status--unverified {
-  background: var(--cb-info-surface);
-  color: var(--cb-info);
 }
 
 .document__filename {

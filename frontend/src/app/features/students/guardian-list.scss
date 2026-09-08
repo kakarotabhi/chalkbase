@@ -153,12 +153,7 @@
   list-style: none;
 }
 
-.guardian {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
+// The surface, border and radius come from cb-card now.
 
 .guardian__who {
   display: flex;

@@ -21,6 +21,7 @@ import { StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { ACCESS_DENIED } from './students-shared';
@@ -155,7 +156,7 @@ interface ColumnNote {
  */
 @Component({
   selector: 'cb-student-import',
-  imports: [NgTemplateOutlet, ReactiveFormsModule, RouterLink, Button, FormField, Select],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, RouterLink, Button, Card, FormField, Select],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-import.html',
   styleUrl: './student-import.scss',

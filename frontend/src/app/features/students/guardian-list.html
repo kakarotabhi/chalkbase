@@ -252,112 +252,114 @@
     -->
     <ul class="guardians">
       @for (row of view(); track row.id) {
-        <li class="guardian">
-          <div class="guardian__who">
-            <span class="guardian__name">{{ row.fullName }}</span>
-            <!--
+        <li>
+          <cb-card>
+            <div class="guardian__who">
+              <span class="guardian__name">{{ row.fullName }}</span>
+              <!--
               The number that says this record reaches beyond one child — and, where there is
               something behind it, the way to find out which children those are. A count is what
               tells a clerk two records exist; the names are what tell them apart.
             -->
-            @if (row.hasChildren) {
-              <button
-                type="button"
-                class="linklike guardian__count"
-                [id]="row.childrenButtonId"
-                [attr.aria-expanded]="row.expanded"
-                [attr.aria-controls]="row.childrenPanelId"
-                (click)="toggleChildren(row)"
-              >
-                {{ row.linkedTo }}
-              </button>
-            } @else {
-              <span class="guardian__count">{{ row.linkedTo }}</span>
-            }
-          </div>
+              @if (row.hasChildren) {
+                <button
+                  type="button"
+                  class="linklike guardian__count"
+                  [id]="row.childrenButtonId"
+                  [attr.aria-expanded]="row.expanded"
+                  [attr.aria-controls]="row.childrenPanelId"
+                  (click)="toggleChildren(row)"
+                >
+                  {{ row.linkedTo }}
+                </button>
+              } @else {
+                <span class="guardian__count">{{ row.linkedTo }}</span>
+              }
+            </div>
 
-          @if (row.expanded) {
-            <div class="children" [id]="row.childrenPanelId">
-              @if (childrenLoadingId() === row.id) {
-                <p class="children__status" role="status">Loading students…</p>
-              } @else if (childrenForbidden()) {
-                <!--
+            @if (row.expanded) {
+              <div class="children" [id]="row.childrenPanelId">
+                @if (childrenLoadingId() === row.id) {
+                  <p class="children__status" role="status">Loading students…</p>
+                } @else if (childrenForbidden()) {
+                  <!--
                   The permission that guards this is `student:student:read`, not the guardian read,
                   because these are children's names. The count above is still true and still shown.
                 -->
-                <p class="children__status" role="status">
-                  Seeing which students needs the "View students" permission. Ask your principal.
-                </p>
-              } @else if (childrenFailed()) {
-                <p class="children__status" role="status">
-                  Could not load these students.
-                  <button type="button" class="linklike" (click)="retryChildren()">
-                    Try again
-                  </button>
-                </p>
-              } @else if (expandedChildren(); as children) {
-                <ul class="children__list">
-                  @for (child of children; track child.studentId) {
-                    <li class="child">
-                      <span class="child__name">{{ child.fullName }}</span>
-                      <span class="child__number">{{ child.admissionNumber }}</span>
-                      @if (child.placement) {
-                        <span class="child__placement">{{ child.placement }}</span>
-                      } @else {
-                        <span class="muted">Not in a class this year</span>
-                      }
-                    </li>
+                  <p class="children__status" role="status">
+                    Seeing which students needs the "View students" permission. Ask your principal.
+                  </p>
+                } @else if (childrenFailed()) {
+                  <p class="children__status" role="status">
+                    Could not load these students.
+                    <button type="button" class="linklike" (click)="retryChildren()">
+                      Try again
+                    </button>
+                  </p>
+                } @else if (expandedChildren(); as children) {
+                  <ul class="children__list">
+                    @for (child of children; track child.studentId) {
+                      <li class="child">
+                        <span class="child__name">{{ child.fullName }}</span>
+                        <span class="child__number">{{ child.admissionNumber }}</span>
+                        @if (child.placement) {
+                          <span class="child__placement">{{ child.placement }}</span>
+                        } @else {
+                          <span class="muted">Not in a class this year</span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+
+            <dl class="guardian__contact">
+              <div class="guardian__pair">
+                <dt>Phone</dt>
+                <dd class="guardian__number">
+                  @if (row.phone) {
+                    {{ row.phone }}
+                  } @else {
+                    <span class="muted">Not recorded</span>
                   }
-                </ul>
-              }
-            </div>
-          }
+                </dd>
+              </div>
+              <div class="guardian__pair">
+                <dt>Email</dt>
+                <dd class="guardian__wrap">
+                  @if (row.email) {
+                    {{ row.email }}
+                  } @else {
+                    <span class="muted">Not recorded</span>
+                  }
+                </dd>
+              </div>
+              <div class="guardian__pair">
+                <dt>Occupation</dt>
+                <dd>
+                  @if (row.occupation) {
+                    {{ row.occupation }}
+                  } @else {
+                    <span class="muted">Not recorded</span>
+                  }
+                </dd>
+              </div>
+            </dl>
 
-          <dl class="guardian__contact">
-            <div class="guardian__pair">
-              <dt>Phone</dt>
-              <dd class="guardian__number">
-                @if (row.phone) {
-                  {{ row.phone }}
-                } @else {
-                  <span class="muted">Not recorded</span>
-                }
-              </dd>
-            </div>
-            <div class="guardian__pair">
-              <dt>Email</dt>
-              <dd class="guardian__wrap">
-                @if (row.email) {
-                  {{ row.email }}
-                } @else {
-                  <span class="muted">Not recorded</span>
-                }
-              </dd>
-            </div>
-            <div class="guardian__pair">
-              <dt>Occupation</dt>
-              <dd>
-                @if (row.occupation) {
-                  {{ row.occupation }}
-                } @else {
-                  <span class="muted">Not recorded</span>
-                }
-              </dd>
-            </div>
-          </dl>
-
-          @if (canManageGuardians()) {
-            <div class="guardian__actions">
-              <cb-button
-                variant="secondary"
-                [id]="row.editButtonId"
-                [disabled]="!!editing()"
-                (click)="startEdit(row)"
-              >
-                Edit
-              </cb-button>
-            </div>
-          }
+            @if (canManageGuardians()) {
+              <div class="guardian__actions">
+                <cb-button
+                  variant="secondary"
+                  [id]="row.editButtonId"
+                  [disabled]="!!editing()"
+                  (click)="startEdit(row)"
+                >
+                  Edit
+                </cb-button>
+              </div>
+            }
+          </cb-card>
         </li>
       }
     </ul>

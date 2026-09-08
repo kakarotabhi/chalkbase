@@ -115,67 +115,72 @@
 
   <ul class="roster">
     @for (row of rows(); track row.studentId) {
-      <li class="card">
-        <div class="card__head">
-          @if (row.rollNumber) {
-            <span class="card__roll">{{ row.rollNumber }}</span>
-          }
-          <span class="card__name">{{ row.fullName }}</span>
-          <span class="card__admission">{{ row.admissionNumber }}</span>
-        </div>
+      <li>
+        <cb-card padding="sm">
+          <div class="card">
+            <div class="card__head">
+              @if (row.rollNumber) {
+                <span class="card__roll">{{ row.rollNumber }}</span>
+              }
+              <span class="card__name">{{ row.fullName }}</span>
+              <span class="card__admission">{{ row.admissionNumber }}</span>
+            </div>
 
-        @if (locked()) {
-          <div class="card__locked">
-            <span
-              class="status-pill"
-              [class]="'status-pill--' + (row.savedStatus ?? '').toLowerCase()"
-            >
-              {{ row.savedStatus ? statusLabel(row.savedStatus) : 'Not marked' }}
-            </span>
-            @if (canManage() && row.markId) {
-              @if (row.correctionRequested) {
-                <span class="card__note">Correction requested — awaiting approval.</span>
-              } @else {
-                <button type="button" class="link-button" (click)="openCorrection(row)">
-                  Request a correction
-                </button>
+            @if (locked()) {
+              <div class="card__locked">
+                <cb-badge [tone]="statusTone(row.savedStatus)">
+                  {{ row.savedStatus ? statusLabel(row.savedStatus) : 'Not marked' }}
+                </cb-badge>
+                @if (canManage() && row.markId) {
+                  @if (row.correctionRequested) {
+                    <span class="card__note">Correction requested — awaiting approval.</span>
+                  } @else {
+                    <button type="button" class="link-button" (click)="openCorrection(row)">
+                      Request a correction
+                    </button>
+                  }
+                }
+              </div>
+            } @else {
+              <div
+                class="status-group"
+                role="group"
+                [attr.aria-label]="'Status for ' + row.fullName"
+              >
+                @for (option of statusOptions; track option.value) {
+                  <button
+                    type="button"
+                    class="status-btn"
+                    [class.status-btn--selected]="row.draftStatus === option.value"
+                    [disabled]="!canManage()"
+                    [attr.aria-pressed]="row.draftStatus === option.value"
+                    (click)="setStatus(row.studentId, option.value)"
+                  >
+                    <span aria-hidden="true">{{ option.shortLabel }}</span>
+                    <span class="visually-hidden">{{ option.fullLabel }}</span>
+                  </button>
+                }
+              </div>
+
+              @if (canManage()) {
+                @if (row.showRemarks) {
+                  <input
+                    class="remarks-input"
+                    type="text"
+                    placeholder="Add a note (optional)"
+                    maxlength="500"
+                    [value]="row.draftRemarks"
+                    (input)="setRemarks(row.studentId, $any($event.target).value)"
+                  />
+                } @else {
+                  <button type="button" class="link-button" (click)="toggleRemarks(row.studentId)">
+                    Add a note
+                  </button>
+                }
               }
             }
           </div>
-        } @else {
-          <div class="status-group" role="group" [attr.aria-label]="'Status for ' + row.fullName">
-            @for (option of statusOptions; track option.value) {
-              <button
-                type="button"
-                class="status-btn"
-                [class.status-btn--selected]="row.draftStatus === option.value"
-                [disabled]="!canManage()"
-                [attr.aria-pressed]="row.draftStatus === option.value"
-                (click)="setStatus(row.studentId, option.value)"
-              >
-                <span aria-hidden="true">{{ option.shortLabel }}</span>
-                <span class="visually-hidden">{{ option.fullLabel }}</span>
-              </button>
-            }
-          </div>
-
-          @if (canManage()) {
-            @if (row.showRemarks) {
-              <input
-                class="remarks-input"
-                type="text"
-                placeholder="Add a note (optional)"
-                maxlength="500"
-                [value]="row.draftRemarks"
-                (input)="setRemarks(row.studentId, $any($event.target).value)"
-              />
-            } @else {
-              <button type="button" class="link-button" (click)="toggleRemarks(row.studentId)">
-                Add a note
-              </button>
-            }
-          }
-        }
+        </cb-card>
       </li>
     }
   </ul>

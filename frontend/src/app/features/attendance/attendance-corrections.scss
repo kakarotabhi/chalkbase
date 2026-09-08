@@ -66,14 +66,12 @@
   }
 }
 
+// Surface, border, radius and padding come from cb-card (padding="sm"); only the internal layout
+// stays here.
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--cb-space-2);
-  padding: var(--cb-space-3);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-  background: var(--cb-surface-raised);
 }
 
 .card__head {

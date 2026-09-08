@@ -25,7 +25,9 @@ import {
 import { STUDENT_PAGE_SIZE, StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge, BadgeTone } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -35,6 +37,7 @@ import {
   GENDER_LABELS,
   STATUS_LABELS,
   STATUS_OPTIONS,
+  STATUS_TONES,
   classAndSection,
   downloadBlob,
   labelFor,
@@ -64,7 +67,7 @@ interface StudentRow {
   readonly gender: string;
   readonly status: StudentStatus;
   readonly statusLabel: string;
-  readonly statusClass: string;
+  readonly statusTone: BadgeTone;
   /** `Class 5 · A`, or null for a student who has been admitted but not yet enrolled. */
   readonly placement: string | null;
   readonly session: string | null;
@@ -105,7 +108,17 @@ interface StudentRow {
  */
 @Component({
   selector: 'cb-student-list',
-  imports: [ReactiveFormsModule, RouterLink, Button, Dialog, Select, TextInput, StudentForm],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    Badge,
+    Button,
+    Card,
+    Dialog,
+    Select,
+    TextInput,
+    StudentForm,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-list.html',
   styleUrl: './student-list.scss',
@@ -259,7 +272,7 @@ export class StudentList {
       gender: labelFor(GENDER_LABELS, student.gender),
       status: student.status,
       statusLabel: labelFor(STATUS_LABELS, student.status),
-      statusClass: `status status--${student.status.toLowerCase()}`,
+      statusTone: STATUS_TONES[student.status],
       placement: student.currentEnrolment
         ? classAndSection(student.currentEnrolment.className, student.currentEnrolment.sectionName)
         : null,

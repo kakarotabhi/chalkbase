@@ -91,11 +91,15 @@
   list-style: none;
 }
 
+// Not cb-card: its dashed, un-tinted "not running" state (below) is a one-off this codebase's
+// other cards have no equivalent of, so it is not part of the shared component's API. The depth
+// the design specifies is still owed, though — added directly.
 .rung {
   padding: var(--cb-space-3) var(--cb-space-4);
   background: var(--cb-surface-raised);
   border: 1px solid var(--cb-border);
   border-radius: var(--cb-radius-md);
+  box-shadow: var(--cb-shadow-1);
 }
 
 /**
@@ -161,18 +165,8 @@
   font-size: var(--cb-font-size-sm);
 }
 
-/// "Not running", on a class or a section. A word, so it survives a photocopy and a colour-blind
-/// reader — the dimming beside it is the redundant signal, not the only one.
-.flag {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-warning-surface);
-  color: var(--cb-warning);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
+// "Not running", on a class or a section, is cb-badge tone="warning" now — the word, not only the
+// dimming, so it survives a photocopy and a colour-blind reader either way.
 
 .rung__editor,
 .sections__editor {

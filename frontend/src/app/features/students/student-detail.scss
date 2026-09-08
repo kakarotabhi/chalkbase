@@ -82,32 +82,7 @@
   margin-bottom: var(--cb-space-2);
 }
 
-.status {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status--active {
-  background: var(--cb-success-surface);
-  color: var(--cb-success);
-}
-
-// The three ways a student leaves. Not danger — none of them is a fault.
-.status--transferred,
-.status--graduated,
-.status--withdrawn {
-  background: var(--cb-info-surface);
-  color: var(--cb-info);
-}
-
-.status--inactive {
-  background: var(--cb-warning-surface);
-  color: var(--cb-warning);
-}
+// The status pill is cb-badge now, toned from STATUS_TONES in students-shared.ts.
 
 /**
  * The live region. Always in the DOM, so a change to it is announced rather than being a region
@@ -123,14 +98,12 @@
   }
 }
 
-// ── The three cards ────────────────────────────────────────────────────────
+// ── The cards ──────────────────────────────────────────────────────────────
 
+// Surface, border, radius and shadow come from cb-card; this is only the spacing and width around
+// it, which is this screen's own rather than the shared component's concern.
 .card {
   margin-bottom: var(--cb-space-4);
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
 
   @include from-expanded {
     max-width: 60rem;

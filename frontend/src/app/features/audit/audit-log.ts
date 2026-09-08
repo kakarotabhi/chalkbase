@@ -12,6 +12,7 @@ import { apiErrorCode } from '../../core/api/api-error';
 import { AUDIT_PAGE_SIZE, AuditApi } from '../../core/api/audit-api';
 import { AuditEvent, AuditOutcome } from '../../core/api/models';
 import { SessionStore } from '../../core/auth/session-store';
+import { Badge, BadgeTone } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
@@ -37,6 +38,12 @@ const OUTCOME_LABELS: Readonly<Record<AuditOutcome, string>> = {
   SUCCESS: 'Succeeded',
   FAILURE: 'Failed',
   DENIED: 'Denied',
+};
+
+const OUTCOME_TONES: Readonly<Record<AuditOutcome, BadgeTone>> = {
+  SUCCESS: 'success',
+  FAILURE: 'warning',
+  DENIED: 'danger',
 };
 
 /**
@@ -91,8 +98,7 @@ interface AuditRow {
   readonly action: string;
   readonly outcome: AuditOutcome;
   readonly outcomeLabel: string;
-  /** The full class list, decided here so the template does not call a method per row per pass. */
-  readonly outcomeClass: string;
+  readonly outcomeTone: BadgeTone;
   readonly record: string | null;
   readonly changedFields: readonly string[];
   readonly ipAddress: string;
@@ -130,7 +136,7 @@ interface ActorFilter {
  */
 @Component({
   selector: 'cb-audit-log',
-  imports: [ReactiveFormsModule, FormField, Select, TextInput, Button],
+  imports: [ReactiveFormsModule, Badge, FormField, Select, TextInput, Button],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './audit-log.html',
   styleUrl: './audit-log.scss',
@@ -206,7 +212,7 @@ export class AuditLog {
       action: actionLabel(event.action),
       outcome: event.outcome,
       outcomeLabel: OUTCOME_LABELS[event.outcome] ?? event.outcome,
-      outcomeClass: `outcome outcome--${event.outcome.toLowerCase()}`,
+      outcomeTone: OUTCOME_TONES[event.outcome] ?? 'neutral',
       record: describeRecord(event),
       changedFields: event.changedFields.map(fieldLabel).filter((name) => name !== ''),
       ipAddress: event.ipAddress?.trim() || 'Not recorded',

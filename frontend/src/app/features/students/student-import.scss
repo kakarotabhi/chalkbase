@@ -93,13 +93,11 @@ a.linklike {
   counter-reset: step;
 }
 
+// Surface, border, radius and padding come from cb-card; only position and spacing are this
+// screen's own.
 .step {
   position: relative;
   margin-bottom: var(--cb-space-4);
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
 }
 
 .step__title {
@@ -339,11 +337,10 @@ a.linklike {
   color: var(--cb-text-muted);
 }
 
+// Surface, border and radius come from cb-card (tone="surface" padding="none"); the heading and
+// each problem carry their own padding, same shape as `school-profile`'s card-of-sections.
 .group {
   margin-bottom: var(--cb-space-3);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-  background: var(--cb-surface);
 }
 
 .group__heading {

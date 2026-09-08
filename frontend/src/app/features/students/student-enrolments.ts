@@ -20,7 +20,9 @@ import { AcademicSession, Enrolment, SchoolClass } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
@@ -72,7 +74,7 @@ interface EnrolmentRow {
  */
 @Component({
   selector: 'cb-student-enrolments',
-  imports: [ReactiveFormsModule, Button, Checkbox, FormField, Select, TextInput],
+  imports: [ReactiveFormsModule, Badge, Button, Card, Checkbox, FormField, Select, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-enrolments.html',
   styleUrl: './student-enrolments.scss',

@@ -5,6 +5,7 @@ import {
   StudentStatus,
   VerificationStatus,
 } from '../../core/api/models';
+import { BadgeTone } from '../../shared/components/badge/badge';
 import { SelectOption } from '../../shared/components/select/select';
 
 /**
@@ -59,6 +60,20 @@ export const STATUS_LABELS: Readonly<Record<StudentStatus, string>> = {
 export const STATUS_OPTIONS: readonly SelectOption[] = (
   Object.keys(STATUS_LABELS) as StudentStatus[]
 ).map((status) => ({ value: status, label: STATUS_LABELS[status] }));
+
+/**
+ * How a status reads as a badge — shared so `student-list` and `student-detail` stop each
+ * building their own `status status--${…}` class string, verbatim copies of one another. Active is
+ * good news; the three ways a student leaves are not a fault and are not coloured like one;
+ * inactive stays the vaguer, unresolved warning it already is above.
+ */
+export const STATUS_TONES: Readonly<Record<StudentStatus, BadgeTone>> = {
+  ACTIVE: 'success',
+  INACTIVE: 'warning',
+  TRANSFERRED: 'info',
+  GRADUATED: 'info',
+  WITHDRAWN: 'info',
+};
 
 export const GENDER_LABELS: Readonly<Record<Gender, string>> = {
   MALE: 'Male',
@@ -154,6 +169,13 @@ export const VERIFICATION_STATUS_LABELS: Readonly<Record<VerificationStatus, str
 export const VERIFICATION_STATUS_OPTIONS: readonly SelectOption[] = (
   Object.keys(VERIFICATION_STATUS_LABELS) as VerificationStatus[]
 ).map((status) => ({ value: status, label: VERIFICATION_STATUS_LABELS[status] }));
+
+/** How a verification status reads as a badge. Not checked yet is informational, not a warning. */
+export const VERIFICATION_STATUS_TONES: Readonly<Record<VerificationStatus, BadgeTone>> = {
+  UNVERIFIED: 'info',
+  VERIFIED: 'success',
+  REJECTED: 'danger',
+};
 
 /**
  * Hands the browser a file the server just answered with — an export, not a file this app built

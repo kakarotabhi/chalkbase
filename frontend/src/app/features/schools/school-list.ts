@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { SchoolApi } from '../../core/api/school-api';
 import { School } from '../../core/api/models';
+import { Card } from '../../shared/components/card/card';
 
 /**
  * Schools listing. Deliberately unstyled beyond layout — presentation components get designed by
@@ -10,7 +11,7 @@ import { School } from '../../core/api/models';
  */
 @Component({
   selector: 'cb-school-list',
-  imports: [],
+  imports: [Card],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './school-list.html',
   styleUrl: './school-list.scss',

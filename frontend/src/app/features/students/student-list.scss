@@ -140,13 +140,10 @@
   font-size: var(--cb-font-size-sm);
 }
 
+// Surface, border and radius come from cb-card (tone="surface"); width and spacing stay here.
 .panel {
   max-width: 46rem;
   margin-bottom: var(--cb-space-4);
-  padding: var(--cb-space-4);
-  background: var(--cb-surface);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
 }
 
 // ── The list ───────────────────────────────────────────────────────────────
@@ -258,33 +255,7 @@ tbody {
   font-size: var(--cb-font-size-sm);
 }
 
-.status {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status--active {
-  background: var(--cb-success-surface);
-  color: var(--cb-success);
-}
-
-// The three ways a student leaves. Not danger — none of them is a fault, and colouring "Graduated"
-// red would say something about a child that the school does not mean.
-.status--transferred,
-.status--graduated,
-.status--withdrawn {
-  background: var(--cb-info-surface);
-  color: var(--cb-info);
-}
-
-.status--inactive {
-  background: var(--cb-warning-surface);
-  color: var(--cb-warning);
-}
+// The status pill is cb-badge now, toned from STATUS_TONES in students-shared.ts.
 
 // ── Paging ─────────────────────────────────────────────────────────────────
 

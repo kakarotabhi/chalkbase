@@ -5,12 +5,7 @@
   display: block;
 }
 
-.attach {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
+// The surface, border and radius come from cb-card (tone="surface") now.
 
 .attach__heading {
   margin: 0 0 var(--cb-space-2);
