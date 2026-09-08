@@ -29,9 +29,13 @@ export interface NavRoute {
  * designs (students, fees, attendance, exams, communication, transport, reports, settings) join
  * this map as each one lands.
  *
- * TODO(contract): once the backend publishes its navigation catalogue, add the test ADR-0008 asks
- * for — every id the backend can emit is resolvable here, so a drop is a deployment mistake caught
- * in CI rather than a menu item that quietly vanishes in production.
+ * The check ADR-0008 asks for — "every id the backend can emit is resolvable here" — is
+ * `.github/workflows/navigation-contract.yml`, comparing `contracts/navigation-ids.json` (written
+ * by the backend's `NavigationContractExportTests`) against this map. It is a CI script rather
+ * than a spec here, because a mismatch is not automatically a defect: an id this map does not know
+ * yet may simply not have shipped a screen, which `NavigationStore`'s drop-and-log exists to allow.
+ * The check tells that apart from a typo with an allowlist entry per deliberate gap, each one
+ * carrying a required reason — see `tools/navigation-contract/check.mjs`.
  */
 export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, NavRoute>([
   // `schools` is deliberately absent. The backend stopped emitting it: the school REGISTER is a

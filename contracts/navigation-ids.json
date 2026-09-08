@@ -1,0 +1,19 @@
+[
+  "academics",
+  "academics.classes",
+  "academics.sessions",
+  "academics.subjects",
+  "attendance",
+  "attendance.corrections",
+  "attendance.mark",
+  "audit",
+  "dashboard",
+  "settings",
+  "settings.access",
+  "settings.profile",
+  "settings.users",
+  "students",
+  "students.all",
+  "students.documents",
+  "students.guardians"
+]
