@@ -122,23 +122,8 @@
   list-style: none;
 }
 
-.session {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
-
-/**
- * The current one, marked three ways so no single one of them has to carry it: a tinted surface,
- * a rule down its leading edge that survives a black-and-white printout, and the badge that says
- * the word.
- */
-.session--current {
-  background: var(--cb-primary-surface);
-  border-color: var(--cb-primary);
-  border-inline-start: 4px solid var(--cb-primary);
-}
+// The card surface and the "current" tint/edge-rule both come from cb-card now (background,
+// border, radius, and the accent treatment behind [accent]="row.current").
 
 .session__head {
   display: flex;
@@ -151,19 +136,6 @@
   margin: 0;
   font-size: var(--cb-font-size-base);
   font-weight: 600;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--cb-space-1);
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-primary);
-  color: var(--cb-primary-contrast);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .session__range {

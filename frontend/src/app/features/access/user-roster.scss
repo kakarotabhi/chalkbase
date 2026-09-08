@@ -193,35 +193,10 @@ tbody {
   font-weight: 600;
 }
 
+// Both pills are cb-badge now. Only the "You" badge's inline position next to the name is its own.
 .you-badge {
-  display: inline-block;
   margin-left: var(--cb-space-2);
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-info-surface);
-  color: var(--cb-info);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
   vertical-align: middle;
-}
-
-.status {
-  display: inline-block;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status--active {
-  background: var(--cb-success-surface);
-  color: var(--cb-success);
-}
-
-.status--inactive {
-  background: var(--cb-warning-surface);
-  color: var(--cb-warning);
 }
 
 .row__actions {

@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  padding: var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+  box-shadow: var(--cb-shadow-1);
+}
+
+:host(.cb-card--surface) {
+  background: var(--cb-surface);
+  box-shadow: none;
+}
+
+:host(.cb-card--pad-none) {
+  padding: 0;
+}
+
+:host(.cb-card--pad-sm) {
+  padding: var(--cb-space-3);
+}
+
+:host(.cb-card--pad-lg) {
+  padding: var(--cb-space-6);
+}
+
+// The current session, the active enrolment, the primary guardian: a tinted surface and a rule
+// down the leading edge, so the one item that is current in a list of otherwise-equal cards does
+// not rely on colour alone (the rule survives a black-and-white printout) or on a badge alone (a
+// glance at the row already answers it).
+:host(.cb-card--accent) {
+  background: var(--cb-primary-surface);
+  border-color: var(--cb-primary);
+  border-inline-start: 4px solid var(--cb-primary);
+}

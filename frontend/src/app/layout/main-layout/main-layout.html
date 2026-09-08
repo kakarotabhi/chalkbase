@@ -37,6 +37,21 @@
         <cb-icon class="nav-item__icon" [name]="entry.link.icon" />
         <span class="nav-item__label">{{ entry.link.label }}</span>
       </a>
+
+      <!--
+        A section's own screens, shown here rather than only inside the More sheet. The rail and
+        the sidebar have room for every top-level item (that is the whole reason the sheet hides
+        itself from medium up), but "room for every item" stopped being true the day a container
+        got children: a parent link alone cannot reach "Classes and sections" or "Subjects", only
+        "Academics". Hidden at compact width, where the bottom bar has no room for a hierarchy and
+        the More sheet already renders the full tree.
+      -->
+      @for (child of entry.link.children; track child.id) {
+        <a class="nav-item nav-item--child" [routerLink]="child.path" routerLinkActive="is-active">
+          <cb-icon class="nav-item__icon" [name]="child.icon" />
+          <span class="nav-item__label">{{ child.label }}</span>
+        </a>
+      }
     }
 
     <!--

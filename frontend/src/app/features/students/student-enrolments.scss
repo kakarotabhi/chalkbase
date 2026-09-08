@@ -138,19 +138,9 @@
   list-style: none;
 }
 
-.enrolment {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-}
-
-/// Where the student sits now. Tint, edge rule and badge, so no single signal carries it.
-.enrolment--active {
-  background: var(--cb-primary-surface);
-  border-color: var(--cb-primary);
-  border-inline-start: 4px solid var(--cb-primary);
-}
+// The card surface and the "current place" tint/edge-rule come from cb-card's [accent] input.
+// The badge itself is cb-badge, tone="primary" for the active row and tone="neutral" for an
+// ended one — an ended year is not a failure and is not coloured like one.
 
 .enrolment__head {
   display: flex;
@@ -162,25 +152,6 @@
 .enrolment__session {
   font-size: var(--cb-font-size-base);
   font-weight: 600;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--cb-space-2);
-  border-radius: var(--cb-radius-lg);
-  background: var(--cb-primary);
-  color: var(--cb-primary-contrast);
-  font-size: var(--cb-font-size-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-// An ended year is not a failure and is not coloured like one.
-.badge--past {
-  background: var(--cb-surface);
-  color: var(--cb-text-muted);
-  border: 1px solid var(--cb-border);
 }
 
 .enrolment__placement {

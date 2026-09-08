@@ -41,18 +41,12 @@
   }
 }
 
-.tile {
-  padding: var(--cb-space-4);
-  background: var(--cb-surface-raised);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
-
-  // The activity tile is a list of rows, not a single number — it earns the width the other
-  // three tiles would waste on it.
-  &--wide {
-    @include from-medium {
-      grid-column: 1 / -1;
-    }
+// Surface, border and radius come from cb-card (below), which each tile now is. The activity
+// tile is a list of rows, not a single number — it earns the width the other three tiles would
+// waste on it.
+.tile--wide {
+  @include from-medium {
+    grid-column: 1 / -1;
   }
 }
 

@@ -17,14 +17,12 @@
   gap: var(--cb-space-2);
 }
 
+// The surface, border and radius come from cb-card (tone="surface"), which wraps this. Only the
+// layout of the two lines inside it is this screen's own.
 .school-list__item {
   display: flex;
   flex-direction: column;
   gap: var(--cb-space-1);
-  padding: var(--cb-space-3) var(--cb-space-4);
-  background: var(--cb-surface);
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius-md);
 }
 
 .school-list__name {

@@ -14,8 +14,10 @@ import { AttendanceApi } from '../../core/api/attendance-api';
 import { AttendanceStatus, SectionAttendanceView } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { BottomSheet } from '../../shared/components/bottom-sheet/bottom-sheet';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -24,6 +26,7 @@ import {
   STATUS_OPTIONS,
   classAndSection,
   statusLabel,
+  statusTone,
   todayIsoDate,
 } from './attendance-shared';
 
@@ -64,7 +67,7 @@ interface RosterRow {
  */
 @Component({
   selector: 'cb-attendance-mark',
-  imports: [ReactiveFormsModule, Button, FormField, Select, TextInput, BottomSheet],
+  imports: [ReactiveFormsModule, Badge, Button, Card, FormField, Select, TextInput, BottomSheet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './attendance-mark.html',
   styleUrl: './attendance-mark.scss',
@@ -86,6 +89,7 @@ export class AttendanceMark {
 
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly statusLabel = statusLabel;
+  protected readonly statusTone = statusTone;
   /** For the correction sheet's `cb-select`, a stable reference so it does not "change" every cycle. */
   protected readonly correctionStatusOptions: readonly SelectOption[] = STATUS_OPTIONS.map(
     (option) => ({

@@ -23,7 +23,9 @@ import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { AcademicSession } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -73,7 +75,16 @@ interface SessionRow {
  */
 @Component({
   selector: 'cb-academic-sessions',
-  imports: [ReactiveFormsModule, NgTemplateOutlet, Button, Dialog, FormField, TextInput],
+  imports: [
+    ReactiveFormsModule,
+    NgTemplateOutlet,
+    Badge,
+    Button,
+    Card,
+    Dialog,
+    FormField,
+    TextInput,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './academic-sessions.html',
   styleUrl: './academic-sessions.scss',

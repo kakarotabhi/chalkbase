@@ -80,114 +80,116 @@
 
   <ul class="guardians">
     @for (row of rows(); track row.linkId) {
-      <li class="guardian" [class.guardian--primary]="row.primary">
-        @if (editingLinkId() === row.linkId) {
-          <form class="link-form" [formGroup]="form" (ngSubmit)="saveEdit(row)" novalidate>
-            <h3 class="link-form__heading">{{ row.fullName }}</h3>
+      <li>
+        <cb-card [accent]="row.primary">
+          @if (editingLinkId() === row.linkId) {
+            <form class="link-form" [formGroup]="form" (ngSubmit)="saveEdit(row)" novalidate>
+              <h3 class="link-form__heading">{{ row.fullName }}</h3>
 
-            <div class="link-form__fields">
-              <cb-form-field
-                #relationField
-                label="Relation to this student"
-                controlId="guardian-link-relation"
-                [required]="true"
-                [error]="relationError()"
-              >
-                <cb-select
-                  formControlName="relation"
-                  placeholder="Choose one"
-                  [id]="relationField.controlId()"
-                  [options]="relationOptions"
-                  [describedBy]="relationField.describedById()"
-                  [invalid]="relationField.hasError()"
-                  [readOnly]="busy()"
+              <div class="link-form__fields">
+                <cb-form-field
+                  #relationField
+                  label="Relation to this student"
+                  controlId="guardian-link-relation"
+                  [required]="true"
+                  [error]="relationError()"
+                >
+                  <cb-select
+                    formControlName="relation"
+                    placeholder="Choose one"
+                    [id]="relationField.controlId()"
+                    [options]="relationOptions"
+                    [describedBy]="relationField.describedById()"
+                    [invalid]="relationField.hasError()"
+                    [readOnly]="busy()"
+                  />
+                </cb-form-field>
+
+                <cb-checkbox
+                  formControlName="primary"
+                  label="Main contact for this student"
+                  [id]="'guardian-link-primary'"
                 />
-              </cb-form-field>
+              </div>
 
-              <cb-checkbox
-                formControlName="primary"
-                label="Main contact for this student"
-                [id]="'guardian-link-primary'"
-              />
+              <div class="link-form__actions">
+                <cb-button variant="secondary" [disabled]="busy()" (click)="cancelEdit()">
+                  Cancel
+                </cb-button>
+                <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
+              </div>
+            </form>
+          } @else {
+            <div class="guardian__who">
+              <span class="guardian__name">{{ row.fullName }}</span>
+              <span class="guardian__relation">{{ row.relationLabel }}</span>
+              @if (row.primary) {
+                <!-- The word, not only the tint: photocopies and colour-blind readers. -->
+                <cb-badge tone="primary">Main contact</cb-badge>
+              }
             </div>
 
-            <div class="link-form__actions">
-              <cb-button variant="secondary" [disabled]="busy()" (click)="cancelEdit()">
-                Cancel
-              </cb-button>
-              <cb-button type="submit" [loading]="busy()" loadingLabel="Saving…">Save</cb-button>
-            </div>
-          </form>
-        } @else {
-          <div class="guardian__who">
-            <span class="guardian__name">{{ row.fullName }}</span>
-            <span class="guardian__relation">{{ row.relationLabel }}</span>
-            @if (row.primary) {
-              <!-- The word, not only the tint: photocopies and colour-blind readers. -->
-              <span class="badge">Main contact</span>
-            }
-          </div>
+            <dl class="guardian__contact">
+              @if (row.phone) {
+                <div class="guardian__pair">
+                  <dt>Phone</dt>
+                  <dd class="guardian__number">{{ row.phone }}</dd>
+                </div>
+              }
+              @if (row.email) {
+                <div class="guardian__pair">
+                  <dt>Email</dt>
+                  <dd class="guardian__wrap">{{ row.email }}</dd>
+                </div>
+              }
+              @if (row.occupation) {
+                <div class="guardian__pair">
+                  <dt>Occupation</dt>
+                  <dd>{{ row.occupation }}</dd>
+                </div>
+              }
+            </dl>
 
-          <dl class="guardian__contact">
-            @if (row.phone) {
-              <div class="guardian__pair">
-                <dt>Phone</dt>
-                <dd class="guardian__number">{{ row.phone }}</dd>
-              </div>
-            }
-            @if (row.email) {
-              <div class="guardian__pair">
-                <dt>Email</dt>
-                <dd class="guardian__wrap">{{ row.email }}</dd>
-              </div>
-            }
-            @if (row.occupation) {
-              <div class="guardian__pair">
-                <dt>Occupation</dt>
-                <dd>{{ row.occupation }}</dd>
-              </div>
-            }
-          </dl>
-
-          <!--
+            <!--
             All three write the link, and all three are gated on `student:guardian:manage`. The row
             itself stays: someone with the guardian read may see who a child's parents are.
           -->
-          @if (canManageGuardians()) {
-            <div class="guardian__actions">
-              <cb-button
-                variant="secondary"
-                [id]="row.editButtonId"
-                [disabled]="busy() || attaching()"
-                (click)="startEdit(row)"
-              >
-                Change relation
-              </cb-button>
-              @if (!row.primary) {
+            @if (canManageGuardians()) {
+              <div class="guardian__actions">
                 <cb-button
                   variant="secondary"
-                  [id]="row.primaryButtonId"
+                  [id]="row.editButtonId"
                   [disabled]="busy() || attaching()"
-                  (click)="makePrimary(row)"
+                  (click)="startEdit(row)"
                 >
-                  Make main contact
+                  Change relation
                 </cb-button>
-              }
-              <!--
+                @if (!row.primary) {
+                  <cb-button
+                    variant="secondary"
+                    [id]="row.primaryButtonId"
+                    [disabled]="busy() || attaching()"
+                    (click)="makePrimary(row)"
+                  >
+                    Make main contact
+                  </cb-button>
+                }
+                <!--
                 "Remove from this student", never "Delete". It ends the link and leaves the person
                 in place for their other children (ADR-0020 §5). The wording is the whole point.
               -->
-              <cb-button
-                variant="ghost"
-                [id]="row.removeButtonId"
-                [disabled]="busy() || attaching()"
-                (click)="askToRemove(row)"
-              >
-                Remove from this student
-              </cb-button>
-            </div>
+                <cb-button
+                  variant="ghost"
+                  [id]="row.removeButtonId"
+                  [disabled]="busy() || attaching()"
+                  (click)="askToRemove(row)"
+                >
+                  Remove from this student
+                </cb-button>
+              </div>
+            }
           }
-        }
+        </cb-card>
       </li>
     }
   </ul>

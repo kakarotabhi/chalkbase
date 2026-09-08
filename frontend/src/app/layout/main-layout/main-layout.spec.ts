@@ -144,6 +144,27 @@ describe('MainLayout', () => {
     expect(moreButton()).not.toBeNull();
   });
 
+  it("renders a container's own screens beside it, not only inside the More sheet", () => {
+    // Before this, a parent link alone could reach the first child (its route redirects there)
+    // and nothing else — "Fees" but never "Collect fees" — unless the compact bar had overflowed
+    // into the More sheet, which the rail and the sidebar never show.
+    showMenu([
+      navItem({ id: 'dashboard', order: 10 }),
+      navItem({
+        id: 'fees',
+        order: 20,
+        children: [navItem({ id: 'fees.collect', order: 10 })],
+      }),
+    ]);
+
+    const childLinks = Array.from(element().querySelectorAll('.nav-item--child'));
+    expect(childLinks.map((link) => link.textContent?.trim())).toEqual(['Collect fees']);
+    expect(childLinks.map((link) => link.getAttribute('href'))).toEqual(['/fees/collect']);
+    // Still a nav-item, so it takes the same active-state and focus styling as everything else —
+    // `nav-item--child` only adds to that, in `main-layout.scss`, it never replaces it.
+    expect(childLinks[0].classList.contains('nav-item')).toBe(true);
+  });
+
   it('renders navigation once, whatever the width', () => {
     showMenu(menuOf(6));
 

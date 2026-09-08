@@ -1,4 +1,5 @@
 import { AttendanceStatus } from '../../core/api/models';
+import { BadgeTone } from '../../shared/components/badge/badge';
 
 /** The code the backend answers when a permission this screen needs is missing. */
 export const ACCESS_DENIED = 'PERM_001';
@@ -30,6 +31,21 @@ const LABEL_BY_STATUS: Readonly<Record<AttendanceStatus, string>> = Object.fromE
 
 export function statusLabel(status: AttendanceStatus): string {
   return LABEL_BY_STATUS[status] ?? status;
+}
+
+/** How a mark reads as a badge. Late and half day share a tone — both are a partial present. */
+const TONE_BY_STATUS: Readonly<Record<AttendanceStatus, BadgeTone>> = {
+  PRESENT: 'success',
+  ABSENT: 'danger',
+  LATE: 'warning',
+  HALF_DAY: 'warning',
+  EXCUSED_LEAVE: 'info',
+  HOLIDAY: 'neutral',
+};
+
+/** `null` — nothing marked yet — reads as neutral, the same as a holiday: present, but unstated. */
+export function statusTone(status: AttendanceStatus | null): BadgeTone {
+  return status ? TONE_BY_STATUS[status] : 'neutral';
 }
 
 /** `2026-09-07` in the viewer's own calendar day, never shifted by a UTC offset. */

@@ -17,6 +17,7 @@ import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { SchoolClass, Section } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -108,7 +109,7 @@ interface ClassRow {
  */
 @Component({
   selector: 'cb-school-classes',
-  imports: [ReactiveFormsModule, NgTemplateOutlet, Button, FormField, TextInput],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, Badge, Button, FormField, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './school-classes.html',
   styleUrl: './school-classes.scss',

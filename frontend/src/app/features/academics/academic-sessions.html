@@ -169,58 +169,60 @@
   } @else {
     <ol class="sessions">
       @for (row of view(); track row.id) {
-        <li class="session" [class.session--current]="row.current">
-          @if (editingId() === row.id) {
-            <ng-container [ngTemplateOutlet]="editor" />
-          } @else {
-            <div class="session__head">
-              <h2 class="session__name">{{ row.name }}</h2>
-              @if (row.current) {
-                <!-- The word, not only the colour: photocopies and colour-blind readers. -->
-                <span class="badge">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M20 6.5 9.4 17.5 4 12.3" />
-                  </svg>
-                  Current session
-                </span>
-              }
-            </div>
-
-            <p class="session__range">{{ row.range }}</p>
-
-            @if (canManageSessions()) {
-              <div class="session__actions">
-                <cb-button
-                  variant="secondary"
-                  [id]="row.editButtonId"
-                  [disabled]="!!editing()"
-                  (click)="startEdit(row)"
-                >
-                  Edit
-                </cb-button>
-                @if (!row.current) {
-                  <cb-button
-                    variant="secondary"
-                    [id]="row.makeCurrentButtonId"
-                    [disabled]="!!editing()"
-                    (click)="askToMakeCurrent(row)"
-                  >
-                    Make current
-                  </cb-button>
+        <li>
+          <cb-card [accent]="row.current">
+            @if (editingId() === row.id) {
+              <ng-container [ngTemplateOutlet]="editor" />
+            } @else {
+              <div class="session__head">
+                <h2 class="session__name">{{ row.name }}</h2>
+                @if (row.current) {
+                  <!-- The word, not only the colour: photocopies and colour-blind readers. -->
+                  <cb-badge tone="primary">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M20 6.5 9.4 17.5 4 12.3" />
+                    </svg>
+                    Current session
+                  </cb-badge>
                 }
               </div>
+
+              <p class="session__range">{{ row.range }}</p>
+
+              @if (canManageSessions()) {
+                <div class="session__actions">
+                  <cb-button
+                    variant="secondary"
+                    [id]="row.editButtonId"
+                    [disabled]="!!editing()"
+                    (click)="startEdit(row)"
+                  >
+                    Edit
+                  </cb-button>
+                  @if (!row.current) {
+                    <cb-button
+                      variant="secondary"
+                      [id]="row.makeCurrentButtonId"
+                      [disabled]="!!editing()"
+                      (click)="askToMakeCurrent(row)"
+                    >
+                      Make current
+                    </cb-button>
+                  }
+                </div>
+              }
             }
-          }
+          </cb-card>
         </li>
       }
     </ol>

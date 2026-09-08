@@ -17,6 +17,7 @@ import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { HasUnsavedChanges } from '../../core/forms/unsaved-changes-guard';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -170,7 +171,7 @@ const MALFORMED: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'cb-school-profile',
-  imports: [ReactiveFormsModule, FormField, TextInput, Select, Button],
+  imports: [ReactiveFormsModule, FormField, TextInput, Select, Button, Card],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './school-profile.html',
   styleUrl: './school-profile.scss',

@@ -30,22 +30,33 @@ school-profile form are near-pixel-faithful**; the students list is the one scre
 differently; the dashboard was never built at all. The nav is short because six of its nine modules
 do not exist, and the nav is server-driven, so its length is a direct readout of what has shipped.
 
-What is actually wrong is narrower than "largely drifted" but not nothing, and it is concentrated in
-three places: **the empty, loading and error states** — four designed cards with an icon, a
-headline and an action, built as a single line of grey text on a blank page; **the page gutter** —
-32px designed, 16px built, which makes every screen sit oddly close to the sidebar; and **the active
-nav item**, which is white in the app where the design has it green-tinted, so the sidebar reads as
-having nothing selected. Those three, plus the missing dashboard, are almost certainly what produced
-the impression. One thing outside the brief matters more than any of them: **the shell overflows
-horizontally on any phone narrower than about 375px**, including the 360px width the whole
-responsive design targets. That is a live bug, not drift, and it is a one-line fix.
+What is actually wrong is narrower than "largely drifted" but not nothing, and it was concentrated
+in three places: **the empty, loading and error states** — four designed cards with an icon, a
+headline and an action, built as a single line of grey text on a blank page, still open; **the page
+gutter** — 32px designed, 16px built, which made every screen sit oddly close to the sidebar, now
+fixed; and **the active nav item**, which was white in the app where the design has it green-tinted,
+so the sidebar read as having nothing selected — also fixed. Those three, plus the missing
+dashboard, are almost certainly what produced the impression. One thing outside the brief mattered
+more than any of them: **the shell overflowed horizontally on any phone narrower than about 375px**,
+including the 360px width the whole responsive design targets. That was a live bug, not drift, and
+it was a one-line fix, applied before this pass (row 1 below).
 
 Worth being blunt about one systemic thing: the shared component library stops at form controls.
 `button`, `text-input`, `select`, `checkbox`, `form-field`, `dialog`, `bottom-sheet` all exist and
-are faithful. **Badge, card, empty state and page header do not** — so a card surface is hand-rolled
-in 13 SCSS files and a status badge in 6, each copy slightly different from the design and from each
-other. That is the mechanism by which the remaining drift got in, and it is the thing to fix if you
-want it to stop.
+are faithful. **Badge and card did not, and now do** — `shared/components/badge/` and
+`shared/components/card/`, adopted at essentially every site that had hand-rolled one, in place of a
+card in 13-plus SCSS files and a status badge in 6-plus, each copy slightly different from the
+design and from each other (see row 6 and row 9 below for the fuller count and what was
+deliberately left alone). **Empty state and page header still do not exist** — that is the mechanism
+by which the drift in §3.5 got in, and it remains the thing to fix if you want that to stop.
+
+**Also found while driving the app for this pass, outside this document's original brief, and more
+consequential than anything above it:** the primary navigation rendered top-level items only. A
+container's own screens — `academics.classes`, `settings.users`, and every other id with children —
+were reachable only by typing the URL, because the rail and the sidebar showed just the parent and
+the full tree existed only inside the compact-width More sheet. Fixed in `main-layout.html`/`.scss`:
+a container's children now render beside it in the rail and the sidebar too, hidden only where the
+bottom bar genuinely has no room for a second level. See `docs/status.md`'s Done table.
 
 ---
 
@@ -247,14 +258,18 @@ served locally, the built values by `getComputedStyle` on the deployed app at a 
 | **Table row height** | **53px** | **67px** | ❌ **26% looser, not tighter** |
 | Table cell padding | 11px 12px | 12px 16px | minor |
 | Table container | 1px border, `radius-md`, **`--cb-shadow-1`** | 1px border, `radius-md`, **no shadow** | ❌ |
-| **Status badge** | **`999px` pill, 12px, `3px 9px`** | **`12px` radius, 13px, `0 8px`** | ❌ |
+| **Status badge** | **`999px` pill, 12px, `3px 9px`** | **`12px` radius, 13px, `0 8px`** | ✅ fixed — `cb-badge` is `999px`/12px/4px 8px (nearest existing tokens, not a new 3px/9px one) |
 | Focus ring | `0 0 0 3px rgba(31,95,79,.35)` | same token, `--cb-focus-ring` | ✅ |
 | Input outline | `--cb-border-strong`, 44px min | identical (`_controls.scss`) | ✅ |
 | Button | 44px min, `radius-sm`, 600, 15px | identical (`button.scss`) | ✅ |
 
 ### 3.2 The active nav item is white instead of green
 
-`frontend/src/app/layout/main-layout/main-layout.scss:157`:
+**Fixed, this pass.** `main-layout.scss` now reads `background: var(--cb-primary-surface);` with a
+comment explaining why `--cb-bg` was wrong. The measurement below is left as the record of what was
+broken and why.
+
+`frontend/src/app/layout/main-layout/main-layout.scss:157` (before this pass):
 
 ```scss
 &.is-active {
@@ -285,8 +300,12 @@ with the data instead of labelling it.
 
 ### 3.4 The page gutter is half the designed width
 
-`main-layout.scss` `.shell__content` uses `padding: var(--cb-space-6) var(--cb-space-4)` — 24px
-vertical, **16px horizontal**. The mockups all use `padding: 28px 32px`. At desktop this puts every
+**Fixed, this pass.** `.shell__content` now widens to `var(--cb-space-8)` (32px) horizontal padding
+at `from-expanded`, keeping the phone-width 16px below that. The measurement below is left as the
+record of what was broken and why.
+
+`main-layout.scss` `.shell__content` used `padding: var(--cb-space-6) var(--cb-space-4)` — 24px
+vertical, **16px horizontal**, at every width. The mockups all use `padding: 28px 32px`. At desktop this puts every
 screen's content 16px from the sidebar edge, which is why the app reads as cramped against the chrome
 even though the chrome itself is correct. One token change (`--cb-space-4` → `--cb-space-8` at
 `from-expanded`) fixes it everywhere.
@@ -318,26 +337,33 @@ as a designed card, one as a sentence floating in 400px of white space.
 
 The copy itself is good. It is the container that is missing.
 
-### 3.6 No shared Badge, Card, EmptyState or PageHeader — so composites drift by construction
+### 3.6 No shared Badge or Card — fixed; EmptyState and PageHeader still don't exist
 
-The primitives are faithful because they are components. The composites are not components, so they
-are copies:
+The primitives are faithful because they are components. The composites were not components, so
+they were copies:
 
-- **Card surface** (`background` + `1px --cb-border` + `radius-md`) is hand-written in **13** SCSS
-  files. Exactly **one** of them (`school-profile.scss:50`) carries the designed
-  `--cb-shadow-1`. Every other card in the app is flat where the design has depth.
-- **Badge** is hand-written **6** times — `.status` in `student-list.scss:247` and
-  `student-detail.scss:85` (verbatim copies, modifiers and all), `.badge` in `academic-sessions`,
-  `student-enrolments` and `student-guardians`, `.chip` in `audit-log`. All six use
-  `--cb-radius-lg` (12px). **All six are wrong the same way** — the design specifies a full `999px`
-  pill at 12px. A consistent mistake, because it was copied.
-- **Content width** has four different values across four screens: 46rem, 52rem, 54rem, 60rem —
-  and the students table has **none**, so it stretches to 1053px at a 1360px viewport while the
-  school-profile card beside it in the nav stops at 864px. Screens visibly fail to line up with
-  each other.
+- ~~**Card surface**~~ **Fixed.** `shared/components/card/` exists (`tone`, `padding`, `accent`)
+  and is adopted at the roughly 18 sites that hand-wrote `background` + `1px --cb-border` +
+  `radius-md`, not the 13 first counted here — this pass found `dashboard`'s four tiles and several
+  screens built after this document among the rest. Every adopted site now carries the designed
+  `--cb-shadow-1`, which previously only `school-profile.scss:50` had. Left as hand-rolled, and
+  recorded rather than silently skipped: a handful of forms styled as a card, and the responsive
+  card-below/table-above rows on four list screens (row 9 of the fix table has the full list and
+  the reasons).
+- ~~**Badge**~~ **Fixed.** `shared/components/badge/` exists (`tone`, six values) and replaces ten
+  call sites, not the six first counted here — `user-roster` and `student-documents` had copies
+  this document missed, and `attendance` (built afterwards) had grown an eleventh. All ten used
+  `--cb-radius-lg` (12px); all ten are now the designed `999px` pill at 12px. `audit-log`'s `.chip`
+  is deliberately not one of them — it carries its own remove control and is a filter chip, not a
+  status badge.
+- **Content width** still has four different values across four screens: 46rem, 52rem, 54rem,
+  60rem — and the students table still has **none**, so it stretches to 1053px at a 1360px viewport
+  while the school-profile card beside it in the nav stops at 864px. Screens still visibly fail to
+  line up with each other. Not touched this pass — it is row 8 of the fix table, a token plus four
+  screens, not a card-or-badge question.
 
-None of this is visible in any single screenshot. It is visible when you click between screens, and
-it is the reason drift will keep accumulating.
+The width mismatch is still invisible in any single screenshot; it is visible when you click between
+screens.
 
 ### 3.7 Two smaller things
 
@@ -409,14 +435,14 @@ the next one that will overflow, the first time a wide table lands on it.
 | # | Fix | Where | Size | Why |
 |---|---|---|---|---|
 | 1 | `minmax(0, 1fr)` grid tracks on `.shell` | `main-layout.scss` | **three lines — done, in this branch** | Stops the whole app scrolling sideways on every phone ≤375px. Highest value per character in this document. |
-| 2 | Active nav `--cb-bg` → `--cb-primary-surface` | `main-layout.scss:157` | **one line** | The sidebar currently looks like nothing is selected. Token already exists for this purpose. |
-| 3 | Content gutter 16px → 32px at `from-expanded` | `main-layout.scss` `.shell__content` | **one line** | Fixes the cramped feeling on every screen at once. |
+| 2 | Active nav `--cb-bg` → `--cb-primary-surface` | `main-layout.scss:157` | **one line — done** | The sidebar currently looks like nothing is selected. Token already exists for this purpose. |
+| 3 | Content gutter 16px → 32px at `from-expanded` | `main-layout.scss` `.shell__content` | **one line — done** | Fixes the cramped feeling on every screen at once. |
 | 4 | Add the missing space to the student-detail breadcrumb | `student-detail.html:2-4` | **one line** | "Students› Record" is visible on a shipped screen. |
 | 5 | `th { font-weight: 600; font-size: 12px; letter-spacing: .02em }` | `student-list.scss:389` | **a few lines** | Header row stops competing with the data. |
-| 6 | Extract a shared **Badge** component; migrate the 6 copies; pill radius `999px`, 12px | new `shared/components/badge/` | **an afternoon** | Fixes six wrong badges at once and stops a seventh. |
+| 6 | Extract a shared **Badge** component; migrate the 6 copies; pill radius `999px`, 12px | new `shared/components/badge/` | **done** | Fixes six wrong badges at once and stops a seventh — the fuller audit while building it found ten call sites, not six: `user-roster` and `student-documents` had their own copies this document missed, and `attendance` (built after this document) had grown an eleventh. All migrated to `cb-badge`; the pill radius is a new `--cb-radius-full: 999px` token, and the 12px size is a new `--cb-font-size-xs` token — both shape/type, not colour, so neither needs a `contrast-audit.mjs` run. Left alone: `audit-log`'s `.chip`, which carries its own remove button and is a filter control, not a status badge. |
 | 7 | Extract a shared **EmptyState** component (icon tile, headline, body, action) and use it for the three text-only states on Students | new `shared/components/empty-state/` + `student-list.html` | **an afternoon** | The single biggest visual gap. Copy already exists — only the container is missing. |
 | 8 | One content-width token, applied in `.shell__content`; drop the four per-screen `max-width`s | `_tokens.scss` + 4 feature SCSS | **an afternoon** | Screens start lining up with each other. |
-| 9 | `--cb-shadow-1` on the card surface — best done as a shared **Card** mixin or component and applied to the 13 sites | `styles/` + 13 files | **a day** | Do it *with* #8, not separately; the value is the consolidation, not the shadow. |
+| 9 | `--cb-shadow-1` on the card surface — best done as a shared **Card** mixin or component and applied to the 13 sites | `styles/` + 13 files | **done** | A component (`shared/components/card/`), not a mixin, matching how every other shared surface here is built: `tone` (`raised` with the shadow, or the flatter, unshadowed `surface` filter-bar box also duplicated at these sites), `padding`, and an `accent` input for the tinted, left-ruled "this one is current" treatment `academic-sessions`, `student-enrolments` and `student-guardians` each wrote out by hand. Adopted at essentially every site the fuller audit found (18-plus, not 13 — this count undercounted `dashboard`'s four tiles and several since-built screens). Not adopted, and said so rather than left silent: a handful of forms styled as a card (wrapping would mean nesting the component inside the `<form>`, not swapping its tag) and the responsive card-below/table-above rows on `student-list`, `subjects`, `user-roster` and `audit-log` — that pattern is data-table territory, which ADR-0009 already names as a future component in its own right, not a plain surface. `school-classes`' dashed "not running" card kept its own hand-rolled surface too, for a similar reason: its muted, un-tinted state has no equivalent anywhere else and isn't worth a new Card input for one caller — it did get the missing shadow, directly. |
 | 10 | Guardian (main contact) column on the students list | `StudentSummary` DTO + contract + `student-list` | **a day, backend included** | Real, useful data the design called for and the system already holds. Not frontend-only — see §2.1. |
 | 11 | Loading skeletons shaped like rows | `student-list` (+ EmptyState work) | **a day** | Do it only after #7; on its own it is polish. |
 | 12 | Move the primary action to the title row | `student-list.html` | **a day incl. the 360 layout** | Improves the phone experience meaningfully; needs care not to break the compact stack. |

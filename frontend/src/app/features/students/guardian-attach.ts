@@ -19,6 +19,7 @@ import { GUARDIAN_PAGE_SIZE, GuardiansApi } from '../../core/api/guardians-api';
 import { GuardianRelation, GuardianSummary } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select } from '../../shared/components/select/select';
@@ -87,6 +88,7 @@ interface ResultRow {
   imports: [
     ReactiveFormsModule,
     Button,
+    Card,
     Checkbox,
     FormField,
     Select,

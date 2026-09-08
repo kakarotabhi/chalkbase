@@ -19,6 +19,7 @@ import { GuardianStudent, GuardianSummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { GuardianDuplicateWarning } from './guardian-duplicate-warning';
@@ -85,7 +86,7 @@ interface ChildRow {
  */
 @Component({
   selector: 'cb-guardian-list',
-  imports: [ReactiveFormsModule, Button, FormField, TextInput, GuardianDuplicateWarning],
+  imports: [ReactiveFormsModule, Button, Card, FormField, TextInput, GuardianDuplicateWarning],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './guardian-list.html',
   styleUrl: './guardian-list.scss',

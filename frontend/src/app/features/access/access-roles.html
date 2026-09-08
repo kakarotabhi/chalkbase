@@ -174,7 +174,7 @@
         </fieldset>
 
         @if (permissionImpact(); as impact) {
-          <section class="impact-preview" aria-labelledby="impact-heading">
+          <cb-card class="impact-preview" role="region" aria-labelledby="impact-heading">
             <h3 class="impact-preview__heading" id="impact-heading">Who this affects</h3>
 
             @if (editingHoldersLoading()) {
@@ -269,7 +269,7 @@
                 <p class="impact-preview__none">No permission changes yet.</p>
               }
             }
-          </section>
+          </cb-card>
         }
 
         <div class="editor__actions">
@@ -290,60 +290,64 @@
     } @else {
       <ul class="role-list">
         @for (row of roleRows(); track row.id) {
-          <li class="role-card">
-            <div class="role-card__head">
-              <span class="role-card__name">{{ row.name }}</span>
-              @if (row.templateCode) {
-                <span class="role-card__badge">Started from {{ row.templateCode }}</span>
-              }
-            </div>
-            @if (row.description) {
-              <p class="role-card__description">{{ row.description }}</p>
-            }
-            <p class="role-card__count">
-              {{ row.permissionCount }}
-              {{ row.permissionCount === 1 ? 'permission' : 'permissions' }}
-            </p>
-            <div class="role-card__actions">
-              <button
-                type="button"
-                class="link"
-                [id]="row.editButtonId"
-                [disabled]="roleEditing() !== null"
-                (click)="startEditRole(row)"
-              >
-                Edit permissions<span class="hidden-label"> for {{ row.name }}</span>
-              </button>
-              <button
-                type="button"
-                class="link"
-                [id]="row.holdersButtonId"
-                (click)="toggleHolders(row)"
-              >
-                {{ openHoldersFor() === row.id ? 'Hide who holds this' : 'Who holds this' }}
-              </button>
-            </div>
-
-            @if (openHoldersFor() === row.id) {
-              <div class="holders">
-                @if (holdersLoading()) {
-                  <p class="page-status" role="status">Loading…</p>
-                } @else if (holdersFailed()) {
-                  <p class="page-status page-status--error">Could not load who holds this role.</p>
-                } @else if (holders().length === 0) {
-                  <p class="page-status">Nobody holds this role yet.</p>
-                } @else {
-                  <ul class="holders__list">
-                    @for (holder of holders(); track holder.id) {
-                      <li>
-                        {{ holder.displayName }}
-                        <span class="holders__status">— {{ statusLabel(holder.status) }}</span>
-                      </li>
-                    }
-                  </ul>
+          <li>
+            <cb-card>
+              <div class="role-card__head">
+                <span class="role-card__name">{{ row.name }}</span>
+                @if (row.templateCode) {
+                  <cb-badge tone="primary">Started from {{ row.templateCode }}</cb-badge>
                 }
               </div>
-            }
+              @if (row.description) {
+                <p class="role-card__description">{{ row.description }}</p>
+              }
+              <p class="role-card__count">
+                {{ row.permissionCount }}
+                {{ row.permissionCount === 1 ? 'permission' : 'permissions' }}
+              </p>
+              <div class="role-card__actions">
+                <button
+                  type="button"
+                  class="link"
+                  [id]="row.editButtonId"
+                  [disabled]="roleEditing() !== null"
+                  (click)="startEditRole(row)"
+                >
+                  Edit permissions<span class="hidden-label"> for {{ row.name }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="link"
+                  [id]="row.holdersButtonId"
+                  (click)="toggleHolders(row)"
+                >
+                  {{ openHoldersFor() === row.id ? 'Hide who holds this' : 'Who holds this' }}
+                </button>
+              </div>
+
+              @if (openHoldersFor() === row.id) {
+                <div class="holders">
+                  @if (holdersLoading()) {
+                    <p class="page-status" role="status">Loading…</p>
+                  } @else if (holdersFailed()) {
+                    <p class="page-status page-status--error">
+                      Could not load who holds this role.
+                    </p>
+                  } @else if (holders().length === 0) {
+                    <p class="page-status">Nobody holds this role yet.</p>
+                  } @else {
+                    <ul class="holders__list">
+                      @for (holder of holders(); track holder.id) {
+                        <li>
+                          {{ holder.displayName }}
+                          <span class="holders__status">— {{ statusLabel(holder.status) }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </cb-card>
           </li>
         }
       </ul>
@@ -436,17 +440,21 @@
         } @else {
           <ul class="grant-list">
             @for (grant of grants(); track grant.id) {
-              <li class="grant-row">
-                <span class="grant-row__role">{{ grant.roleName }}</span>
-                <span class="grant-row__scope">{{ grant.scopeType }}</span>
-                @if (grant.validFrom || grant.validTo) {
-                  <span class="grant-row__dates">
-                    {{ grant.validFrom || 'now' }} – {{ grant.validTo || 'no end date' }}
-                  </span>
-                }
-                <button type="button" class="link" (click)="askToRevoke(grant)">
-                  Revoke<span class="hidden-label"> {{ grant.roleName }}</span>
-                </button>
+              <li>
+                <cb-card padding="sm">
+                  <div class="grant-row">
+                    <span class="grant-row__role">{{ grant.roleName }}</span>
+                    <span class="grant-row__scope">{{ grant.scopeType }}</span>
+                    @if (grant.validFrom || grant.validTo) {
+                      <span class="grant-row__dates">
+                        {{ grant.validFrom || 'now' }} – {{ grant.validTo || 'no end date' }}
+                      </span>
+                    }
+                    <button type="button" class="link" (click)="askToRevoke(grant)">
+                      Revoke<span class="hidden-label"> {{ grant.roleName }}</span>
+                    </button>
+                  </div>
+                </cb-card>
               </li>
             }
           </ul>

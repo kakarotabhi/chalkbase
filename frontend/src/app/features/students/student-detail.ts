@@ -18,7 +18,9 @@ import { SaveStudentRequest, StudentDetail as StudentRecord } from '../../core/a
 import { StudentsApi } from '../../core/api/students-api';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { formatDay } from '../../shared/formatting/day';
 import { StudentCompliance } from './student-compliance';
 import { StudentContact } from './student-contact';
@@ -33,6 +35,7 @@ import {
   GENDER_LABELS,
   NOT_FOUND,
   STATUS_LABELS,
+  STATUS_TONES,
   classAndSection,
   labelFor,
 } from './students-shared';
@@ -72,7 +75,9 @@ import {
   selector: 'cb-student-detail',
   imports: [
     RouterLink,
+    Badge,
     Button,
+    Card,
     StudentForm,
     StudentGuardians,
     StudentEnrolments,
@@ -131,7 +136,7 @@ export class StudentDetail {
       admissionNumber: student.admissionNumber,
       status: student.status,
       statusLabel: labelFor(STATUS_LABELS, student.status),
-      statusClass: `status status--${student.status.toLowerCase()}`,
+      statusTone: STATUS_TONES[student.status],
       gender: labelFor(GENDER_LABELS, student.gender),
       dateOfBirth: formatDay(student.dateOfBirth),
       admittedOn: student.admittedOn ? formatDay(student.admittedOn) : null,

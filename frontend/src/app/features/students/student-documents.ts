@@ -20,7 +20,9 @@ import { DocumentsApi } from '../../core/api/documents-api';
 import { DocumentSummary, DocumentType, VerificationStatus } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge, BadgeTone } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select } from '../../shared/components/select/select';
@@ -31,6 +33,7 @@ import {
   DOCUMENT_TYPE_OPTIONS,
   VERIFICATION_STATUS_LABELS,
   VERIFICATION_STATUS_OPTIONS,
+  VERIFICATION_STATUS_TONES,
   labelFor,
 } from './students-shared';
 
@@ -53,6 +56,7 @@ interface DocumentRow {
   readonly documentTypeLabel: string;
   readonly verificationStatus: VerificationStatus;
   readonly verificationStatusLabel: string;
+  readonly verificationStatusTone: BadgeTone;
   readonly originalFilename: string;
   readonly issueDate: string | null;
   readonly expiryDate: string | null;
@@ -100,7 +104,7 @@ interface DocumentRow {
  */
 @Component({
   selector: 'cb-student-documents',
-  imports: [ReactiveFormsModule, Button, Dialog, FormField, Select, TextInput],
+  imports: [ReactiveFormsModule, Badge, Button, Card, Dialog, FormField, Select, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './student-documents.html',
   styleUrl: './student-documents.scss',
@@ -182,6 +186,7 @@ export class StudentDocuments {
       documentTypeLabel: labelFor(DOCUMENT_TYPE_LABELS, document.documentType),
       verificationStatus: document.verificationStatus,
       verificationStatusLabel: labelFor(VERIFICATION_STATUS_LABELS, document.verificationStatus),
+      verificationStatusTone: VERIFICATION_STATUS_TONES[document.verificationStatus],
       originalFilename: document.originalFilename,
       issueDate: document.issueDate ?? null,
       expiryDate: document.expiryDate ?? null,

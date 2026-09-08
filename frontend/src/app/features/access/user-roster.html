@@ -230,16 +230,16 @@
                 <span class="name">
                   {{ row.displayName }}
                   @if (row.isSelf) {
-                    <span class="you-badge">You</span>
+                    <cb-badge tone="info" class="you-badge">You</cb-badge>
                   }
                 </span>
               </td>
 
               <td class="cell cell--status">
                 <span class="cell__label">Status</span>
-                <span [class]="row.active ? 'status status--active' : 'status status--inactive'">
+                <cb-badge [tone]="row.active ? 'success' : 'warning'">
                   {{ row.statusLabel }}
-                </span>
+                </cb-badge>
               </td>
 
               <td class="cell cell--actions">

@@ -213,48 +213,50 @@
 } @else {
   <ol class="enrolments">
     @for (row of rows(); track row.id) {
-      <li class="enrolment" [class.enrolment--active]="row.active">
-        <div class="enrolment__head">
-          <span class="enrolment__session">{{ row.sessionName }}</span>
-          @if (row.active) {
-            <!-- The word, not only the tint. -->
-            <span class="badge">Current place</span>
-          } @else {
-            <span class="badge badge--past">Ended</span>
+      <li>
+        <cb-card [accent]="row.active">
+          <div class="enrolment__head">
+            <span class="enrolment__session">{{ row.sessionName }}</span>
+            @if (row.active) {
+              <!-- The word, not only the tint. -->
+              <cb-badge tone="primary">Current place</cb-badge>
+            } @else {
+              <cb-badge tone="neutral">Ended</cb-badge>
+            }
+          </div>
+
+          <p class="enrolment__placement">{{ row.placement }}</p>
+
+          <dl class="enrolment__facts">
+            <div class="enrolment__pair">
+              <dt>Roll number</dt>
+              <dd class="enrolment__number">
+                @if (row.rollNumber) {
+                  {{ row.rollNumber }}
+                } @else {
+                  <span class="muted">Not given yet</span>
+                }
+              </dd>
+            </div>
+            <div class="enrolment__pair">
+              <dt>Enrolled on</dt>
+              <dd>{{ row.enrolledOn }}</dd>
+            </div>
+          </dl>
+
+          @if (canManageStudents()) {
+            <div class="enrolment__actions">
+              <cb-button
+                variant="secondary"
+                [id]="row.editButtonId"
+                [disabled]="busy() || !!editing() || structureLoading() || !!structureFailureCode()"
+                (click)="startEdit(row)"
+              >
+                Edit
+              </cb-button>
+            </div>
           }
-        </div>
-
-        <p class="enrolment__placement">{{ row.placement }}</p>
-
-        <dl class="enrolment__facts">
-          <div class="enrolment__pair">
-            <dt>Roll number</dt>
-            <dd class="enrolment__number">
-              @if (row.rollNumber) {
-                {{ row.rollNumber }}
-              } @else {
-                <span class="muted">Not given yet</span>
-              }
-            </dd>
-          </div>
-          <div class="enrolment__pair">
-            <dt>Enrolled on</dt>
-            <dd>{{ row.enrolledOn }}</dd>
-          </div>
-        </dl>
-
-        @if (canManageStudents()) {
-          <div class="enrolment__actions">
-            <cb-button
-              variant="secondary"
-              [id]="row.editButtonId"
-              [disabled]="busy() || !!editing() || structureLoading() || !!structureFailureCode()"
-              (click)="startEdit(row)"
-            >
-              Edit
-            </cb-button>
-          </div>
-        }
+        </cb-card>
       </li>
     }
   </ol>

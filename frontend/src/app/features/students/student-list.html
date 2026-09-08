@@ -180,7 +180,7 @@
   }
 
   @if (adding()) {
-    <div class="panel">
+    <cb-card tone="surface" class="panel">
       <cb-student-form
         heading="Add a student"
         submitLabel="Add student"
@@ -190,7 +190,7 @@
         (saved)="save($event)"
         (cancelled)="cancelAdd()"
       />
-    </div>
+    </cb-card>
   }
 
   @if (loading()) {
@@ -304,7 +304,7 @@
 
               <td class="cell cell--status">
                 <!-- The word, not only the colour: photocopies and colour-blind readers. -->
-                <span [class]="row.statusClass">{{ row.statusLabel }}</span>
+                <cb-badge [tone]="row.statusTone">{{ row.statusLabel }}</cb-badge>
               </td>
             </tr>
           }

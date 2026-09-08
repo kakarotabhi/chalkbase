@@ -11,6 +11,7 @@ import { apiErrorCode } from '../../core/api/api-error';
 import { DashboardApi } from '../../core/api/dashboard-api';
 import { Dashboard as DashboardData } from '../../core/api/models';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { actionLabel } from '../audit/audit-actions';
 
 /** "9 Sep 2026, 07:15" — a glance, not the full audit-log detail. */
@@ -55,7 +56,7 @@ interface RecentActivityRow {
  */
 @Component({
   selector: 'cb-dashboard',
-  imports: [Button],
+  imports: [Button, Card],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

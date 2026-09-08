@@ -11,6 +11,7 @@ import { AttendanceApi, CORRECTION_QUEUE_PAGE_SIZE } from '../../core/api/attend
 import { apiErrorCode } from '../../core/api/api-error';
 import { CorrectionRequestResponse } from '../../core/api/models';
 import { Button } from '../../shared/components/button/button';
+import { Card } from '../../shared/components/card/card';
 import { ACCESS_DENIED, statusLabel } from './attendance-shared';
 
 /** One row, with the note the admin is typing for it kept alongside it rather than in a form array. */
@@ -30,7 +31,7 @@ interface QueueRow {
  */
 @Component({
   selector: 'cb-attendance-corrections',
-  imports: [Button],
+  imports: [Button, Card],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './attendance-corrections.html',
   styleUrl: './attendance-corrections.scss',

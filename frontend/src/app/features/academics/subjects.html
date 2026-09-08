@@ -217,9 +217,9 @@
               <td class="cell cell--status">
                 <span class="cell__label">Status</span>
                 <!-- The word, not only the colour: photocopies and colour-blind readers. -->
-                <span [class]="row.active ? 'status status--active' : 'status status--retired'">
+                <cb-badge [tone]="row.active ? 'success' : 'warning'">
                   {{ row.active ? 'Teaching' : 'Retired' }}
-                </span>
+                </cb-badge>
               </td>
 
               <td class="cell cell--actions">

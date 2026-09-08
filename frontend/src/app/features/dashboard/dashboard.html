@@ -40,7 +40,7 @@
 } @else {
   <div class="tiles">
     @if (session(); as session) {
-      <section class="tile" aria-labelledby="tile-session-heading">
+      <cb-card class="tile" role="region" aria-labelledby="tile-session-heading">
         <h2 class="tile__title" id="tile-session-heading">Academic session</h2>
         @if (session.set) {
           <p class="tile__value">{{ session.name }}</p>
@@ -48,11 +48,11 @@
         } @else {
           <p class="tile__value tile__value--muted">No session set yet</p>
         }
-      </section>
+      </cb-card>
     }
 
     @if (students(); as students) {
-      <section class="tile" aria-labelledby="tile-students-heading">
+      <cb-card class="tile" role="region" aria-labelledby="tile-students-heading">
         <h2 class="tile__title" id="tile-students-heading">Students enrolled</h2>
         <p class="tile__value">{{ students.enrolled }}</p>
         @if (students.byClass.length) {
@@ -65,11 +65,11 @@
             }
           </ul>
         }
-      </section>
+      </cb-card>
     }
 
     @if (linkageGaps(); as gaps) {
-      <section class="tile" aria-labelledby="tile-gaps-heading">
+      <cb-card class="tile" role="region" aria-labelledby="tile-gaps-heading">
         <h2 class="tile__title" id="tile-gaps-heading">Guardians and students</h2>
         @if (gaps.studentsWithoutAGuardian !== undefined) {
           <p class="tile__row">
@@ -83,11 +83,11 @@
             <span>guardian(s) linked to no student</span>
           </p>
         }
-      </section>
+      </cb-card>
     }
 
     @if (recentAudit(); as recentAudit) {
-      <section class="tile tile--wide" aria-labelledby="tile-audit-heading">
+      <cb-card class="tile tile--wide" role="region" aria-labelledby="tile-audit-heading">
         <h2 class="tile__title" id="tile-audit-heading">Recent activity</h2>
         @if (recentActivity().length) {
           <ul class="tile__list tile__list--activity">
@@ -102,7 +102,7 @@
         } @else {
           <p class="tile__value tile__value--muted">Nothing recorded yet</p>
         }
-      </section>
+      </cb-card>
     }
   </div>
 }

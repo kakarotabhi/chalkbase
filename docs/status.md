@@ -351,6 +351,7 @@ no reason, and the sections land with the modules.
 | A school carries an IANA time zone, defaulted to `Asia/Kolkata`: authoritative on the profile, copied to the registry and the session, validated against `java.time.ZoneId`; the audit log renders every timestamp in it instead of the reader's device zone | [ADR-0032](architecture/adr/0032-school-timezone.md), `school/`, `features/audit/audit-log.ts` |
 | Fixed on `prod`: `GET /api/schools/boards` was hidden behind `SetupKeyFilter` along with the rest of `/api/schools/**`, so the school-profile form's Board picker 404'd for every real user on every deployed environment; the filter now names it an explicit exemption, pinned by a `prod`-profile test | [ADR-0029 amendment](architecture/adr/0029-reference-data.md), `SetupKeyFilter`, `SetupKeyFilterTests` |
 
+| The design drift assessment's three cheap, real fixes: the active nav item tinted `--cb-primary-surface` instead of reading as unselected, the page gutter restored to 32px from `from-expanded` up, and shared `cb-card`/`cb-badge` components adopted in place of the hand-rolled surfaces in 18 feature stylesheets (a handful of forms styled as a surface, and the responsive card-to-table rows on four list screens, deliberately left for a follow-up — see the assessment). Also found and fixed while driving the app: the primary nav rendered top-level items only, so a section's own screens (`academics.classes`, `settings.users`, …) were reachable only by typing a URL — the rail and sidebar now render a container's children beside it, not only inside the compact-width More sheet. | `layout/main-layout/`, `shared/components/card/`, `shared/components/badge/`, [the assessment](design-drift-assessment.md) |
 ## What is left on the frontend
 
 Every backend controller has a screen except one, so this list is short and specific. It exists
@@ -362,7 +363,7 @@ separated them.
 | ~~Export has no screen yet.~~ ✅ Closed. The students and guardians lists carry an export action, and a dialog that makes the masked/unmasked choice and its audit consequence explicit.                                                                                                                                             | `features/students/`                                                               |
 | ~~The users roster has no menu entry.~~ ✅ Closed. `IdentityNavigation` now emits `settings.users`, gated on `identity:user:read` rather than `identity:user:manage` — `AUDITOR` and `VICE_PRINCIPAL` hold the first without the second, and can legitimately see the roster without acting on it — and `nav-routes.ts` resolves it. | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | ~~No impact preview when editing a role.~~ ✅ Closed. The edit form now shows who holds the role and, from ADR-0023, whether saving signs them out immediately (removing a permission) or waits for their next login (adding one) — built from `GET /api/access/roles/{id}/holders`, no new endpoint.                                | `features/access/access-roles.ts`                                                  |
-| **The design drift the assessment recorded is still open** — the active nav item is white where the design has a tint, the page gutter is half what was drawn, and card and badge surfaces are hand-rolled in 13 and 6 SCSS files respectively, all wrong the same way because they were copied from each other.                     | [the assessment](design-drift-assessment.md)                                       |
+| ~~The design drift the assessment recorded is still open.~~ ✅ Closed for the three cheap items: the active nav item tints, the gutter is 32px from `from-expanded`, and `cb-card`/`cb-badge` replace the hand-rolled surfaces on the great majority of the 18 affected screens (a handful of card-shaped forms, and four screens' responsive card-to-table rows, are noted in the assessment as left for later rather than adopted silently). | [the assessment](design-drift-assessment.md) |
 
 Transport and hostel sections on the student record are **not** on this list: they are Phase 4
 modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
@@ -409,17 +410,22 @@ Recorded so they are decided rather than discovered.
 - The generated OpenAPI client is not wired up; `frontend/src/app/core/api/models.ts` is hand-written
   and mirrors the backend by hand (ADR-0007).
 - `contrast-audit.mjs` is run by hand. Make it a CI step once the palette settles.
-- **The built UI and the mockups differ, and most of the difference is not drift.**
-  [The assessment](design-drift-assessment.md) compares `docs/artifacts/*.dc.html` against the
-  deployed screens, with screenshot pairs. The design _system_ has not moved — the mockups were
-  drawn from `_tokens.scss` and the tokens still match one-for-one — so the gap is mostly modules
-  that do not exist yet (Dashboard, Attendance, Fees, Exams, Transport, Reports), which the
-  server-driven menu reports honestly. What is real and cheap: the active nav item is white where
-  the design has a tint, so the sidebar reads as having nothing selected; the page gutter is half
-  what was drawn; and the shared component library stops at form controls, so a card surface is
-  hand-rolled in 13 SCSS files and a badge in 6 — all six wrong the same way, because they were
-  copied from each other. The report also lists five things **not** worth fixing and six mockups
-  that are now obsolete: on those, the design should move rather than the code.
+- ~~The built UI and the mockups differ, and most of the difference is not drift.~~ The three
+  cheap, real items [the assessment](design-drift-assessment.md) named are closed: the active nav
+  item is `--cb-primary-surface` rather than `--cb-bg`, so the sidebar reads as having something
+  selected again; the page content gutter is 32px from `from-expanded` up, matching the mockups,
+  rather than 16px at every width; and `shared/components/card/` and `shared/components/badge/`
+  exist and are adopted across the great majority of the screens that used to hand-roll each —
+  including fixing `--cb-shadow-1`, which only one of the thirteen original cards carried, and the
+  pill radius, which none of the six original badges got right. Left alone, and said so in the
+  assessment rather than silently: a handful of forms styled as a card, where adopting the
+  component means nesting it inside the `<form>` rather than swapping the tag, and the responsive
+  card-below/table-above rows on `student-list`, `subjects`, `user-roster` and `audit-log`, which
+  are a data-table component's job (ADR-0009 names one as a future, larger undertaking) rather than
+  a plain surface's. The five things the assessment called not worth fixing and the six obsolete
+  mockups are unchanged — the design should move on those, not the code. Also found while driving
+  the app, outside the assessment's own list: the primary nav rendered top-level items only, so a
+  container's own screens were reachable only by URL — see the Done row above.
 - `nav-routes.ts` registers `students.import`, but no backend `NavigationProvider` emits that id, so
   the menu will never show it — the import screen is reachable only from the student-list link.
   Harmless (registering ahead of the backend is what that file is for), but it is not a menu entry

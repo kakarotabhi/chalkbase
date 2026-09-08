@@ -30,44 +30,48 @@
 } @else {
   <ul class="queue">
     @for (row of rows(); track row.request.id) {
-      <li class="card">
-        <div class="card__head">
-          <span class="card__name">{{ row.request.studentName }}</span>
-          <span class="card__date">{{ row.request.attendanceDate }}</span>
-        </div>
-        <p class="card__change">
-          Currently <strong>{{ statusLabel(row.request.previousStatus) }}</strong> — requested
-          <strong>{{ statusLabel(row.request.requestedStatus) }}</strong>
-        </p>
-        <p class="card__reason">"{{ row.request.reason }}"</p>
+      <li>
+        <cb-card padding="sm">
+          <div class="card">
+            <div class="card__head">
+              <span class="card__name">{{ row.request.studentName }}</span>
+              <span class="card__date">{{ row.request.attendanceDate }}</span>
+            </div>
+            <p class="card__change">
+              Currently <strong>{{ statusLabel(row.request.previousStatus) }}</strong> — requested
+              <strong>{{ statusLabel(row.request.requestedStatus) }}</strong>
+            </p>
+            <p class="card__reason">"{{ row.request.reason }}"</p>
 
-        <input
-          class="note-input"
-          type="text"
-          placeholder="Note for the teacher (optional)"
-          maxlength="500"
-          [value]="row.note"
-          [disabled]="decidingId() === row.request.id"
-          (input)="setNote(row.request.id, $any($event.target).value)"
-        />
+            <input
+              class="note-input"
+              type="text"
+              placeholder="Note for the teacher (optional)"
+              maxlength="500"
+              [value]="row.note"
+              [disabled]="decidingId() === row.request.id"
+              (input)="setNote(row.request.id, $any($event.target).value)"
+            />
 
-        <div class="card__actions">
-          <cb-button
-            variant="secondary"
-            [disabled]="!!decidingId() && decidingId() !== row.request.id"
-            [loading]="decidingId() === row.request.id"
-            (click)="decide(row.request.id, 'REJECTED')"
-          >
-            Reject
-          </cb-button>
-          <cb-button
-            [disabled]="!!decidingId() && decidingId() !== row.request.id"
-            [loading]="decidingId() === row.request.id"
-            (click)="decide(row.request.id, 'APPROVED')"
-          >
-            Approve
-          </cb-button>
-        </div>
+            <div class="card__actions">
+              <cb-button
+                variant="secondary"
+                [disabled]="!!decidingId() && decidingId() !== row.request.id"
+                [loading]="decidingId() === row.request.id"
+                (click)="decide(row.request.id, 'REJECTED')"
+              >
+                Reject
+              </cb-button>
+              <cb-button
+                [disabled]="!!decidingId() && decidingId() !== row.request.id"
+                [loading]="decidingId() === row.request.id"
+                (click)="decide(row.request.id, 'APPROVED')"
+              >
+                Approve
+              </cb-button>
+            </div>
+          </div>
+        </cb-card>
       </li>
     }
   </ul>
