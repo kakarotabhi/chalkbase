@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import in.chalkbase.platform.devdata.DemoRoster.Child;
 import in.chalkbase.platform.devdata.DemoRoster.Guardian;
 import in.chalkbase.platform.tenancy.SchemaName;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
@@ -55,23 +57,39 @@ import org.springframework.stereotype.Component;
  * write, signed in as an account this seeder created. A demo school that finishes building is a demo
  * school whose whole stack has just been exercised end to end.
  *
+ * <p><strong>Six hundred students go in as one file, not six hundred requests.</strong> The ladder
+ * and the accounts are still built one call per row — there are only a few dozen of those and the
+ * point of going through the real endpoints stands. Students, their enrolment and their guardians
+ * are built as one CSV file instead and sent to {@code POST /api/students/import} (ADR-0021), the
+ * bulk endpoint the product ships for a school's first roll upload. That is not a shortcut around
+ * the "through the real stack" rule above — the import endpoint <em>is</em> the real stack for this
+ * volume of data, exercised the way a school actually would on its first day, and it turns what
+ * would be well over a thousand sequential HTTP round trips (a create, an enrolment and up to two
+ * guardian links per child) into one request the server commits in a single transaction. See
+ * {@link #admitEveryone} for what that call carries and {@link DemoRoster#build} for the roster
+ * behind it.
+ *
  * <p>The one thing that cannot go over HTTP is the accounts, because there is no endpoint that
  * creates one yet — identity ships sign-in, not user administration. Those four rows are written
  * with {@link JdbcClient} against schema-qualified tables, which is what the module's own tests do,
  * and the password goes through the injected {@link PasswordEncoder} so the stored hash carries its
  * {@code {bcrypt}} prefix. A hand-written hash without that prefix is a 500 on sign-in.
  *
- * <p><strong>The audit log fills up, and that is deliberate.</strong> Roughly two hundred
- * {@code ENTITY_CREATED} rows land in {@code demo_school.audit_event}, attributed to the demo
- * principal, because the seeder goes through the same endpoints a human would. It is not a bug and
- * it is not noise to suppress: the audit screen is a screen, and a screen with nothing on it cannot
- * be judged.
+ * <p><strong>The audit log fills up, and that is deliberate.</strong> The ladder, the accounts and
+ * the school profile still write one {@code ENTITY_CREATED} row apiece, attributed to the demo
+ * principal, because the seeder goes through the same endpoints a human would. The six hundred
+ * students do not: {@code STUDENTS_IMPORTED} and, when the roster creates new guardians,
+ * {@code GUARDIANS_IMPORTED} are each one row for the whole import (ADR-0021 §7), the same way a
+ * real school's onboarding would read on the audit screen. It is not a bug and it is not noise to
+ * suppress: the audit screen is a screen, and a screen with nothing on it cannot be judged.
  *
  * <p><strong>No person's name is logged</strong>, here or anywhere below (AGENTS rule 9). The block
  * printed at the end names usernames, role codes and the shared password — an account identifier is
  * not personal data, and the password is a constant in this file on a profile that only ever runs on
- * a laptop. The display names behind those accounts, and every one of the sixty children, stay out
- * of the log.
+ * a laptop. The display names behind those accounts, and every one of the six hundred children, stay
+ * out of the log. Where a failed import must say something about the file this seeder built, it
+ * reports the row number and the column {@code StudentImportService} named, never a value — exactly
+ * what ADR-0021 already requires the endpoint's own report to do.
  */
 @Component
 @Profile(DemoSchoolSeeder.LOCAL_PROFILE)
@@ -359,7 +377,9 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
                 UUID sectionId = idOf(api.postForData(
                         "/api/academics/classes/" + classId + "/sections",
                         new LinkedHashMap<>(Map.of("name", sectionName))));
-                sections.add(new SeedSection(rung, sectionId));
+                // The name travels with the id: the bulk import (ADR-0021 §3) places a child by the
+                // class and section <em>names</em> in a CSV cell, not by a UUID it was never handed.
+                sections.add(new SeedSection(rung, className, sectionName, sectionId));
             }
         }
         log.info("Created {} classes and {} sections", DemoRoster.CLASS_NAMES.size(), sections.size());
@@ -369,92 +389,222 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
     // ── children and the people responsible for them ─────────────────────────────────────────
 
     /**
-     * Every guardian household once, then every child, then the links between them.
+     * The header of the CSV this seeder builds, in the column names {@code StudentImportService}
+     * matches (case and separators forgiven, spelling not).
+     */
+    private static final String IMPORT_CSV_HEADER = "admission_number,full_name,date_of_birth,gender,status,"
+            + "admitted_on,class,section,roll_number,guardian_name,guardian_phone,guardian_relation,"
+            + "guardian_email,guardian_primary";
+
+    /**
+     * The whole roster, as one file to {@code POST /api/students/import} (ADR-0021).
      *
-     * <p>The order is the whole demonstration. Guardians are created first and their ids kept, so a
-     * family's three children link to <em>one</em> person record (ADR-0020 §5) — which is what makes
-     * correcting a phone number on the guardian screen visibly correct it for all three. Creating a
-     * guardian per child would have been fewer lines and would have modelled the thing this product
-     * exists not to do.
+     * <p><strong>Why one file instead of one call per child.</strong> The bulk import format carries
+     * one guardian per row, so it cannot by itself put both parents on the same child — but it dedupes
+     * a repeated phone number into one guardian record across the <em>whole file</em> (ADR-0021 §4),
+     * which is exactly the sibling-sharing behaviour ADR-0020 §5 exists for and is the common shape of
+     * this roster (see {@link DemoRoster#build}). What it cannot do — the second guardian on the
+     * handful of households that have two — is done afterwards, the way a school does it after any
+     * import: found by the admission number just written, and linked through the same
+     * {@code /api/guardians} and {@code /api/students/{id}/guardians} calls the smaller seed always
+     * used. See {@link #linkSecondGuardians}.
      *
-     * @return how many guardian records were created, which is meaningfully fewer than the number of
-     *     links
+     * <p>The import is all-or-nothing (ADR-0021 §2): a row this method got wrong comes back as a
+     * report with {@code imported} at zero and a row number and column naming the mistake, never an
+     * exception from a half-built request. That is treated as a bug in this seeder, not in the
+     * endpoint, and fails startup loudly rather than leaving a partial school behind.
+     *
+     * @return how many guardian records exist afterwards — what the CSV import created or matched,
+     *     plus every second guardian linked on top of it
      */
     private static int admitEveryone(SeedApiClient api, UUID sessionId, AcademicYear year, List<SeedSection> sections) {
-        Map<String, List<UUID>> guardianIds = new LinkedHashMap<>();
-        for (Map.Entry<String, List<Guardian>> family : DemoRoster.families().entrySet()) {
-            List<UUID> created = new ArrayList<>();
-            for (Guardian guardian : family.getValue()) {
-                Map<String, Object> body = new LinkedHashMap<>();
-                body.put("fullName", guardian.fullName());
-                body.put("phone", guardian.phone());
-                body.put("occupation", guardian.occupation());
-                if (guardian.email() != null) {
-                    body.put("email", guardian.email());
-                }
-                created.add(idOf(api.postForData("/api/guardians", body)));
-            }
-            guardianIds.put(family.getKey(), List.copyOf(created));
+        List<Child> children = DemoRoster.children();
+        Map<String, String> admissionNumberOfDualGuardianFamily = new LinkedHashMap<>();
+        String csv = buildImportCsv(year, sections, children, admissionNumberOfDualGuardianFamily);
+
+        JsonNode report = api.postMultipartForData(
+                "/api/students/import?academicSessionId=" + sessionId,
+                "demo-school-roster.csv",
+                "text/csv",
+                csv.getBytes(StandardCharsets.UTF_8));
+
+        int imported = report.path("imported").asInt();
+        if (imported != children.size()) {
+            throw new IllegalStateException("The demo seed built a CSV of " + children.size()
+                    + " students and the real import endpoint imported " + imported
+                    + ". That is a bug in DemoRoster or DemoSchoolSeeder, not in the import endpoint — "
+                    + describeFirstProblem(report));
         }
         log.info(
-                "Created {} guardian records",
-                guardianIds.values().stream().mapToInt(List::size).sum());
+                "Imported {} students in one request: {} new guardian(s), {} already on file, {} guardian link(s)",
+                imported,
+                report.path("guardiansCreated").asInt(),
+                report.path("guardiansMatched").asInt(),
+                report.path("guardianLinksCreated").asInt());
 
+        int secondGuardians = linkSecondGuardians(api, admissionNumberOfDualGuardianFamily);
+        return report.path("guardiansCreated").asInt()
+                + report.path("guardiansMatched").asInt()
+                + secondGuardians;
+    }
+
+    /**
+     * One CSV row per child, in the column order {@link #IMPORT_CSV_HEADER} names.
+     *
+     * <p>Placement, date of birth, roll number and the once-in-seven missing admission date are all
+     * unchanged from the small seed's own per-child logic — only where the result goes is different:
+     * into a cell rather than a request body.
+     *
+     * @param admissionNumberOfDualGuardianFamily filled in as rows are written, one entry per
+     *     household this roster gives two guardians — the admission number is how
+     *     {@link #linkSecondGuardians} finds the child again after the import has run
+     */
+    private static String buildImportCsv(
+            AcademicYear year,
+            List<SeedSection> sections,
+            List<Child> children,
+            Map<String, String> admissionNumberOfDualGuardianFamily) {
         Map<UUID, Integer> rollNumbers = new HashMap<>();
-        List<Child> children = DemoRoster.children();
+        StringBuilder csv = new StringBuilder(IMPORT_CSV_HEADER).append('\n');
+
         for (int i = 0; i < children.size(); i++) {
             Child child = children.get(i);
             SeedSection section = sections.get(i % sections.size());
-
-            Map<String, Object> student = new LinkedHashMap<>();
-            student.put("admissionNumber", "%d/%04d".formatted(year.startsOn().getYear(), i + 1));
-            student.put("fullName", child.fullName());
-            student.put("dateOfBirth", dateOfBirth(year, section.rung(), i).toString());
-            student.put("gender", child.gender());
-            student.put("status", "ACTIVE");
+            String admissionNumber = "%d/%04d".formatted(year.startsOn().getYear(), i + 1);
+            LocalDate dateOfBirth = dateOfBirth(year, section.rung(), i);
             // Every seventh record has no admission date, because a register copied off paper often
-            // does not have one and the field is optional for that reason.
-            if (i % 7 != 3) {
-                student.put("admittedOn", year.startsOn().plusDays(i % 21L).toString());
-            }
-            UUID studentId = idOf(api.postForData("/api/students", student));
-
+            // does not have one and the column is optional for that reason.
+            String admittedOn = i % 7 != 3 ? year.startsOn().plusDays(i % 21L).toString() : "";
             int roll = rollNumbers.merge(section.sectionId(), 1, Integer::sum);
-            api.post(
-                    "/api/students/" + studentId + "/enrolments",
-                    new LinkedHashMap<>(Map.of(
-                            "academicSessionId", sessionId.toString(),
-                            "sectionId", section.sectionId().toString(),
-                            "rollNumber", "%02d".formatted(roll))));
-
-            // Progress, because this is slow against a hosted database — sixty children is roughly
-            // two hundred and forty requests, and a developer watching a silent log wants to know it
-            // is working rather than hung.
-            if ((i + 1) % 10 == 0) {
-                log.info("Admitted {} of {} students", i + 1, children.size());
-            }
 
             List<Guardian> guardians = DemoRoster.guardiansOf(child);
-            List<UUID> ids = child.family() == null ? List.of() : guardianIds.get(child.family());
-            for (int g = 0; g < guardians.size(); g++) {
-                api.post(
-                        "/api/students/" + studentId + "/guardians",
-                        new LinkedHashMap<>(Map.of(
-                                "guardianId", ids.get(g).toString(),
-                                "relation", guardians.get(g).relation(),
-                                "primary", guardians.get(g).primary())));
+            Guardian onThisRow = guardians.isEmpty() ? null : guardians.getFirst();
+            if (guardians.size() > 1 && child.family() != null) {
+                admissionNumberOfDualGuardianFamily.put(child.family(), admissionNumber);
             }
+
+            csv.append(csvField(admissionNumber))
+                    .append(',')
+                    .append(csvField(child.fullName()))
+                    .append(',')
+                    .append(dateOfBirth)
+                    .append(',')
+                    .append(child.gender())
+                    .append(",ACTIVE,")
+                    .append(admittedOn)
+                    .append(',')
+                    .append(csvField(section.className()))
+                    .append(',')
+                    .append(csvField(section.sectionName()))
+                    .append(',')
+                    .append("%02d".formatted(roll))
+                    .append(',')
+                    .append(onThisRow == null ? "" : csvField(onThisRow.fullName()))
+                    .append(',')
+                    .append(onThisRow == null ? "" : onThisRow.phone())
+                    .append(',')
+                    .append(onThisRow == null ? "" : onThisRow.relation())
+                    .append(',')
+                    .append(onThisRow == null || onThisRow.email() == null ? "" : csvField(onThisRow.email()))
+                    .append(',')
+                    .append(onThisRow == null ? "" : onThisRow.primary())
+                    .append('\n');
         }
-        log.info("Admitted and enrolled {} students", children.size());
-        return guardianIds.values().stream().mapToInt(List::size).sum();
+        return csv.toString();
+    }
+
+    /** RFC 4180 quoting, applied defensively — nothing this roster generates actually needs it. */
+    private static String csvField(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        if (value.indexOf(',') >= 0 || value.indexOf('"') >= 0 || value.indexOf('\n') >= 0) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    /**
+     * The second guardian for every household the roster gives two, linked after the import rather
+     * than in it — the CSV format has nowhere to put a second guardian on one row (ADR-0021 §4).
+     *
+     * <p>A small, fixed number of extra calls rather than a second bulk path: this roster gives both
+     * parents to a few dozen children out of six hundred, and finding each by the admission number the
+     * import just wrote, then calling the same {@code /api/guardians} and
+     * {@code /api/students/{id}/guardians} endpoints the small seed always used, costs a handful of
+     * requests rather than a second file format.
+     */
+    private static int linkSecondGuardians(SeedApiClient api, Map<String, String> admissionNumberOfFamily) {
+        int linked = 0;
+        for (Map.Entry<String, String> household : admissionNumberOfFamily.entrySet()) {
+            List<Guardian> guardians = DemoRoster.families().get(household.getKey());
+            if (guardians == null || guardians.size() < 2) {
+                continue;
+            }
+            Guardian second = guardians.get(1);
+            UUID studentId = findByAdmissionNumber(api, household.getValue());
+
+            Map<String, Object> guardianBody = new LinkedHashMap<>();
+            guardianBody.put("fullName", second.fullName());
+            guardianBody.put("phone", second.phone());
+            guardianBody.put("occupation", second.occupation());
+            if (second.email() != null) {
+                guardianBody.put("email", second.email());
+            }
+            UUID guardianId = idOf(api.postForData("/api/guardians", guardianBody));
+            api.post(
+                    "/api/students/" + studentId + "/guardians",
+                    new LinkedHashMap<>(Map.of(
+                            "guardianId", guardianId.toString(),
+                            "relation", second.relation(),
+                            "primary", second.primary())));
+            linked++;
+        }
+        if (linked > 0) {
+            log.info("Linked a second guardian for {} student(s) whose demo household has two", linked);
+        }
+        return linked;
+    }
+
+    /**
+     * Finds the student the import just created, by the admission number this seeder gave it.
+     *
+     * <p>The import's report carries counts, not the ids it created (ADR-0021's report is a summary
+     * of a file, not a list of what it wrote), so a student needing a second guardian is found the way
+     * the register screen finds anyone: {@code GET /api/students?q=}. An admission number is unique
+     * and this search matches it exactly, so one result is always the whole answer.
+     */
+    private static UUID findByAdmissionNumber(SeedApiClient api, String admissionNumber) {
+        JsonNode content = api.get("/api/students?q=" + URLEncoder.encode(admissionNumber, StandardCharsets.UTF_8))
+                .path("data")
+                .path("content");
+        if (!content.isArray() || content.isEmpty()) {
+            throw new IllegalStateException(
+                    "The demo seed could not find the student it just imported by admission number");
+        }
+        return idOf(content.get(0));
+    }
+
+    /**
+     * The first thing wrong with a rejected import, from the report's own {@code errors} list — a row
+     * number and a column name, never a value (ADR-0021, ADR-0014).
+     */
+    private static String describeFirstProblem(JsonNode report) {
+        JsonNode errors = report.path("errors");
+        if (!errors.isArray() || errors.isEmpty()) {
+            return "the report named no specific problem";
+        }
+        JsonNode first = errors.get(0);
+        return "row " + first.path("row").asInt() + ", column '"
+                + first.path("column").asText() + "': " + first.path("message").asText();
     }
 
     /**
      * A date of birth that matches the rung the child is on, varied so no two records look copied.
      *
      * <p>Nursery is three, and every class above adds a year. The month and day move with the
-     * child's position in the roster, which keeps every date comfortably in the past and stops sixty
-     * students sharing one birthday.
+     * child's position in the roster, which keeps every date comfortably in the past and stops six
+     * hundred students sharing one birthday.
      */
     private static LocalDate dateOfBirth(AcademicYear year, int rung, int index) {
         int born = year.startsOn().getYear() - (DemoRoster.YOUNGEST_AGE + rung);
@@ -484,8 +634,8 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
      * What to type to get in, in one block at the end of startup.
      *
      * <p>Usernames, role codes and the shared password only. The display names behind these accounts
-     * and every one of the sixty children stay out of the log, because AGENTS rule 9 does not have an
-     * exception for invented people — the habit is what protects the real ones.
+     * and every one of the six hundred children stay out of the log, because AGENTS rule 9 does not
+     * have an exception for invented people — the habit is what protects the real ones.
      */
     private void announce(int port, AcademicYear year, int sectionCount, int guardianCount, long seconds) {
         StringBuilder block =
@@ -510,7 +660,8 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         block.append("""
 
                    %d students · %d classes · %d sections · %d guardian records
-                   The audit log now has content, because the seeder used the real endpoints.
+                   The roster came in as one file, through the same bulk import a real school's
+                   onboarding uses (ADR-0021) — see the audit log for STUDENTS_IMPORTED.
                    Seeded in %d s. This runs once: restart and it is skipped.
                 ────────────────────────────────────────────────────────────────────────────
                 """.formatted(
@@ -545,7 +696,7 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         }
     }
 
-    private record SeedSection(int rung, UUID sectionId) {}
+    private record SeedSection(int rung, String className, String sectionName, UUID sectionId) {}
 
     private record AcademicYear(String name, LocalDate startsOn, LocalDate endsOn) {}
 }

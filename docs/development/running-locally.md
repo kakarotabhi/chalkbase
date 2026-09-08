@@ -61,10 +61,17 @@ To skip the demo data, set `chalkbase.dev.seed-demo-school: false` in `applicati
 > *"already registered; leaving it alone"* and skip. That is the intended outcome — you get the data
 > without the wait, and the seeder never touches a school it did not create.
 >
-> **If you are the one creating it, the first run is slow** — around fifteen minutes against a
-> database in Seoul, because the seeder drives the real REST API and that is several hundred round
-> trips. Against a PostgreSQL on your own machine it is seconds. It happens once; every later start
-> skips.
+> **If you are the one creating it, the first run has a wait, but it is one file, not one round trip
+> per child.** Six hundred students, their enrolment and their guardians go in as a single request to
+> the bulk import endpoint (ADR-0021) — the same one a real school's onboarding uses — rather than a
+> create-and-link sequence per child. The rest of the seed (the ladder, the accounts, the handful of
+> households with two guardians) is still one call per row, which puts the whole run at roughly a
+> hundred HTTP round trips in total. Against a database in Seoul, where each round trip has cost
+> several seconds since before this roster grew, that should land in a few minutes rather than the
+> fifteen a naive per-child version of six hundred students would take; against a PostgreSQL on your
+> own machine it is seconds either way. Measure the real number the first time you build one and
+> update this note — it has not been run against a hosted database as of this change. It happens
+> once; every later start skips.
 >
 > To rebuild it from scratch: `drop schema demo_school cascade;` and
 > `delete from public.school where code = 'DEMO-001';` then restart.
@@ -143,13 +150,17 @@ the start order does not matter.
 | School | `DEMO-001` — Chalkbase Demo Public School, CBSE, Nagpur |
 | Session | the current Indian school year, April–March, marked current |
 | Ladder | Nursery, LKG, UKG, Class 1–8 — 11 classes, sections A and B each |
-| Students | 60, spread across the sections with roll numbers, ages matching the rung |
-| Guardians | 52 records for 60 children — **because siblings share one** |
+| Students | 600, spread across the sections with roll numbers, ages matching the rung |
+| Guardians | ~378 records for 600 children — **because siblings share one** |
 
-The guardian numbers are the interesting part. Sunil Kulkarni is one record linked to three children;
-Amitava Bose to three; Latha Nair and two others to two each. One student, Kavya Iyer, has both a
-father and a mother; one, Ansh Mishra, has no guardian at all. Some numbers are stored `+91 98450
-10002` and others `98450 10001`, so the phone search has both shapes to match.
+The guardian numbers are the interesting part. A hundred and fifty households put two, three or four
+siblings behind one guardian record, so the common case on this demo school's guardian screen is a
+person responsible for more than one child, not the exception. Twenty-four students have both a
+father and a mother on file; thirty-six have no guardian recorded at all. Some numbers are stored
+`+91 98450 20002` and others `98450 20001`, so the phone search has both shapes to match. This is
+also the first roster with enough guardians to be worth watching: the search does a sequential
+`like '%digits%'` scan (see `docs/status.md`), and six hundred students is the first time this repo
+has had enough rows to notice if that stops being fine.
 
 ## Checking it worked
 
@@ -157,8 +168,8 @@ Sign in as the principal and you should see the menu build itself from the serve
 Students, Academics, Settings. Then:
 
 - **Students → the list** has the seeded children with their class and section.
-- **Open one** and the guardians are there. At least three families share one guardian record between
-  siblings — change that guardian's phone on one child and it changes for the others, which is
+- **Open one** and the guardians are there. Most families share one guardian record between two or
+  more siblings — change that guardian's phone on one child and it changes for the others, which is
   [ADR-0020](../architecture/adr/0020-student-and-guardian-model.md) §5 working.
 - **Academics → Classes** shows the ladder in order, with move-up and move-down.
 - **Sign in as the auditor** instead and the Audit log appears in the menu — it is not there for the
