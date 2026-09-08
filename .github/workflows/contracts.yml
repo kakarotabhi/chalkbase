@@ -3,8 +3,9 @@ name: Contracts
 # Regenerates contracts/ in Actions and commits the result to the pull request branch.
 #
 # Why this exists. `contracts/openapi.json` is written by OpenApiContractTests during
-# `./mvnw verify`, and both other workflows fail on a `contracts/` diff — so before this file, the
-# only way to change an endpoint was to run the full backend build locally. On the machine this
+# `./mvnw verify`, and `contracts/navigation-ids.json` the same way by NavigationContractExportTests
+# — and both other workflows fail on a `contracts/` diff, so before this file, the only way to
+# change an endpoint or a navigation id was to run the full backend build locally. On the machine this
 # project is developed on that is not available: concurrent builds are OOM-killed, and the
 # instruction to every agent is "targeted tests locally, push and read the Actions run"
 # (docs/development/assigning-work.md). A gate whose only remedy cannot be run is a gate that stops
@@ -68,11 +69,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       # Not `verify`: the Backend workflow is already running the whole gate on this same commit,
-      # and running it twice doubles the wait for no second opinion. OpenApiContractTests is the
-      # one test that writes the file, and it brings up the full context and Testcontainers itself.
-      - name: Export the OpenAPI document
+      # and running it twice doubles the wait for no second opinion. OpenApiContractTests and
+      # NavigationContractExportTests are the two tests that write files here, and each brings up
+      # the full context and Testcontainers itself.
+      - name: Export the OpenAPI document and the navigation ids
         working-directory: backend
-        run: ./mvnw -B test -Dtest=OpenApiContractTests -DfailIfNoTests=false
+        run: ./mvnw -B test -Dtest=OpenApiContractTests,NavigationContractExportTests -DfailIfNoTests=false
 
       - name: Generate the TypeScript types
         working-directory: frontend

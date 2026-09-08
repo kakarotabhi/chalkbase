@@ -2,6 +2,7 @@ package in.chalkbase.platform.devdata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -10,9 +11,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Talks to this application's own HTTP API, as a browser would.
@@ -41,6 +44,18 @@ final class SeedApiClient {
     private static final String CSRF_COOKIE = "XSRF-TOKEN";
     private static final String CSRF_HEADER = "X-XSRF-TOKEN";
 
+    /** Plenty for one row — a school, a class, a session, a single student or guardian. */
+    private static final Duration TIMEOUT = Duration.ofSeconds(60);
+
+    /**
+     * A generous timeout for the one request that is not a single row: the import commits several
+     * thousand inserts in one transaction (a student, an enrolment and up to a guardian and a link
+     * per row), and none of it is batched — see {@code StudentImportService}. {@link #TIMEOUT} is
+     * sized for a handful of rows apiece; this one is sized for the whole roster arriving at once,
+     * against a database that may be a continent away.
+     */
+    private static final Duration BULK_IMPORT_TIMEOUT = Duration.ofMinutes(10);
+
     private final URI base;
     private final CookieManager cookies;
     private final HttpClient http;
@@ -55,7 +70,7 @@ final class SeedApiClient {
     }
 
     JsonNode get(String path) {
-        return send(HttpRequest.newBuilder(base.resolve(path)).GET(), path);
+        return send(HttpRequest.newBuilder(base.resolve(path)).GET(), path, TIMEOUT);
     }
 
     JsonNode post(String path, Map<String, Object> body) {
@@ -63,7 +78,8 @@ final class SeedApiClient {
                 HttpRequest.newBuilder(base.resolve(path))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(serialise(body))),
-                path);
+                path,
+                TIMEOUT);
     }
 
     JsonNode put(String path, Map<String, Object> body) {
@@ -71,7 +87,8 @@ final class SeedApiClient {
                 HttpRequest.newBuilder(base.resolve(path))
                         .header("Content-Type", "application/json")
                         .PUT(HttpRequest.BodyPublishers.ofString(serialise(body))),
-                path);
+                path,
+                TIMEOUT);
     }
 
     /** The {@code data} of the ADR-0007 envelope, which is where every successful payload lives. */
@@ -79,11 +96,46 @@ final class SeedApiClient {
         return post(path, body).path("data");
     }
 
-    private JsonNode send(HttpRequest.Builder request, String path) {
+    /**
+     * Uploads one file as {@code multipart/form-data}, the shape {@code StudentImportController}
+     * needs and the one thing {@code java.net.http} has no built-in support for encoding.
+     *
+     * <p>Hand-built rather than pulled in from a library: it is a boundary line, one part header and
+     * the bytes, which {@code AGENTS.md} rule 8 does not think is worth a dependency for. The part is
+     * always named {@code file}, because that is the only name {@code StudentImportController} reads.
+     *
+     * @param pathWithQuery the endpoint, query string included — {@code academicSessionId} is a
+     *     request parameter on the import endpoints, not a form field
+     */
+    JsonNode postMultipartForData(String pathWithQuery, String filename, String contentType, byte[] content) {
+        String boundary = "ChalkbaseDemoSeed-" + UUID.randomUUID();
+        byte[] body = multipartBody(boundary, filename, contentType, content);
+        return send(
+                        HttpRequest.newBuilder(base.resolve(pathWithQuery))
+                                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                                .POST(HttpRequest.BodyPublishers.ofByteArray(body)),
+                        pathWithQuery,
+                        BULK_IMPORT_TIMEOUT)
+                .path("data");
+    }
+
+    private static byte[] multipartBody(String boundary, String filename, String contentType, byte[] content) {
+        String head = "--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n"
+                + "Content-Type: " + contentType + "\r\n\r\n";
+        String tail = "\r\n--" + boundary + "--\r\n";
+        ByteArrayOutputStream out = new ByteArrayOutputStream(content.length + 256);
+        out.writeBytes(head.getBytes(StandardCharsets.UTF_8));
+        out.writeBytes(content);
+        out.writeBytes(tail.getBytes(StandardCharsets.UTF_8));
+        return out.toByteArray();
+    }
+
+    private JsonNode send(HttpRequest.Builder request, String path, Duration timeout) {
         csrfToken().ifPresent(token -> request.header(CSRF_HEADER, token));
         HttpResponse<String> response;
         try {
-            response = http.send(request.timeout(Duration.ofSeconds(60)).build(), HttpResponse.BodyHandlers.ofString());
+            response = http.send(request.timeout(timeout).build(), HttpResponse.BodyHandlers.ofString());
         } catch (IOException ex) {
             throw new IllegalStateException("Demo seed could not reach " + path, ex);
         } catch (InterruptedException ex) {

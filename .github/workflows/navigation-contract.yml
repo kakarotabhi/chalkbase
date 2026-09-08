@@ -1,0 +1,54 @@
+name: Navigation contract
+
+# ADR-0008: "The navigation contract needs a test on both sides — the backend must not emit an id
+# the frontend cannot resolve." This is that test. It is a script rather than a JUnit test or a
+# frontend spec because it needs both sides' artefacts and belongs in neither module — see
+# contracts/README.md and tools/navigation-contract/check.mjs for the design.
+#
+# What it checks, at a glance (the full reasoning is in check.mjs):
+#   - A backend id with no frontend route is an ERROR, unless it is named in
+#     tools/navigation-contract/allowlist.json with a reason — that is how a deliberately
+#     not-yet-built screen (ADR-0008's own designed behaviour) stays distinguishable from a typo.
+#   - A frontend id no backend NavigationProvider emits is a WARNING: dead weight, never a broken
+#     menu, because NavigationStore only resolves ids the server actually sends.
+#   - An allowlist entry that no longer matches a real gap (the frontend caught up, or the backend
+#     stopped emitting the id) is also an ERROR, so the allowlist cannot silently go stale.
+#
+# No build. It reads two committed files (contracts/navigation-ids.json, written by the backend's
+# NavigationContractExportTests, and nav-routes.ts) and does not compile or type-check either side.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: navigation-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Backend ids resolve on the frontend (or are named as exceptions)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # Fixture-based proof that the comparison logic itself is correct — including that a typo
+      # like `settings.acess` is reported as an error rather than read as a deliberate gap. No
+      # dependencies: Node's own test runner, against a script with none.
+      - name: Test the checker itself
+        run: node --test tools/navigation-contract/check.test.mjs
+
+      # The real gate: today's backend ids against today's frontend registry.
+      - name: Compare the backend's ids to the frontend's registry
+        run: |
+          node tools/navigation-contract/check.mjs \
+            contracts/navigation-ids.json \
+            frontend/src/app/core/navigation/nav-routes.ts \
+            tools/navigation-contract/allowlist.json
