@@ -29,12 +29,23 @@ import { TextInput } from '../../shared/components/text-input/text-input';
 const PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
 const PHONE_PATTERN = /^[+0-9][0-9 ()-]{6,19}$/;
 const WEBSITE_PATTERN = /^https?:\/\/\S+$/;
+/**
+ * Loose on purpose, the same relationship `UpdateSchoolProfileRequest.timezone` has with its own
+ * `@ValidTimeZone`: a regexp can rule out characters that cannot appear in an IANA zone id, but it
+ * cannot tell a real one from a typo that merely looks like one — that is what the server's
+ * `ZoneId.of(...)` check is for, and its refusal is what `MALFORMED` shows.
+ */
+const TIMEZONE_PATTERN = /^[A-Za-z0-9_+/-]{1,50}$/;
+
+/** Every school this product targets starts here (ADR-0032); most never have a reason to change it. */
+const DEFAULT_TIMEZONE = 'Asia/Kolkata';
 
 /** Every editable control. `code` is not one of them — it identifies the tenant (ADR-0011). */
 type FieldName =
   | 'name'
   | 'board'
   | 'affiliationNumber'
+  | 'timezone'
   | 'addressLine1'
   | 'addressLine2'
   | 'city'
@@ -50,6 +61,7 @@ interface ProfileFormValue {
   name: string;
   board: string;
   affiliationNumber: string;
+  timezone: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -66,6 +78,9 @@ const EMPTY: ProfileFormValue = {
   name: '',
   board: '',
   affiliationNumber: '',
+  // Not blank like every other empty control: a new profile should not make anybody in India
+  // choose a time zone they have never had to think about (ADR-0032).
+  timezone: DEFAULT_TIMEZONE,
   addressLine1: '',
   addressLine2: '',
   city: '',
@@ -85,6 +100,7 @@ const FIELD_IDS: Readonly<Record<FieldName, string>> = {
   name: 'school-name',
   board: 'school-board',
   affiliationNumber: 'school-affiliation',
+  timezone: 'school-timezone',
   addressLine1: 'school-address1',
   addressLine2: 'school-address2',
   city: 'school-city',
@@ -100,6 +116,7 @@ const FIELD_ORDER: readonly FieldName[] = [
   'name',
   'board',
   'affiliationNumber',
+  'timezone',
   'addressLine1',
   'addressLine2',
   'city',
@@ -115,6 +132,7 @@ const FIELD_ORDER: readonly FieldName[] = [
 const REQUIRED: Readonly<Record<string, string>> = {
   name: 'Enter the school name.',
   board: 'Choose the board this school is affiliated to.',
+  timezone: 'Enter the time zone.',
   addressLine1: 'Enter the first line of the address.',
   city: 'Enter the city or town.',
   state: 'Choose the state.',
@@ -129,6 +147,7 @@ const MALFORMED: Readonly<Record<string, string>> = {
   pincode: 'A PIN code is six digits and does not start with a zero.',
   phone: 'Use digits, spaces, brackets or dashes — for example +91 20 2721 0000.',
   website: 'Include the https:// at the front, for example https://school.example.',
+  timezone: 'Enter an IANA time zone, for example Asia/Kolkata.',
 };
 
 /**
@@ -206,6 +225,10 @@ export class SchoolProfile implements HasUnsavedChanges {
     name: ['', [Validators.required, Validators.maxLength(200)]],
     board: ['', Validators.required],
     affiliationNumber: ['', Validators.maxLength(40)],
+    timezone: [
+      '',
+      [Validators.required, Validators.maxLength(50), Validators.pattern(TIMEZONE_PATTERN)],
+    ],
     addressLine1: ['', [Validators.required, Validators.maxLength(200)]],
     addressLine2: ['', Validators.maxLength(200)],
     city: ['', [Validators.required, Validators.maxLength(100)]],
@@ -258,6 +281,7 @@ export class SchoolProfile implements HasUnsavedChanges {
       name: this.messageFor('name'),
       board: this.messageFor('board'),
       affiliationNumber: this.messageFor('affiliationNumber'),
+      timezone: this.messageFor('timezone'),
       addressLine1: this.messageFor('addressLine1'),
       addressLine2: this.messageFor('addressLine2'),
       city: this.messageFor('city'),
@@ -368,6 +392,7 @@ export class SchoolProfile implements HasUnsavedChanges {
         email: value.email,
         website: value.website,
         affiliationNumber: value.affiliationNumber,
+        timezone: value.timezone,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -462,6 +487,7 @@ export class SchoolProfile implements HasUnsavedChanges {
       name: profile.name,
       board: profile.board,
       affiliationNumber: profile.affiliationNumber ?? '',
+      timezone: profile.timezone,
       addressLine1: profile.addressLine1 ?? '',
       addressLine2: profile.addressLine2 ?? '',
       city: profile.city ?? '',

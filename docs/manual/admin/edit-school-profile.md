@@ -12,8 +12,9 @@ it — it does not need a developer.
 
 1. Open **Settings → School profile** from the menu.
 2. Fill in the three sections:
-   - **Identity** — the school's name, its board, and your affiliation or registration number with
-     that board.
+   - **Identity** — the school's name, its board, your affiliation or registration number with
+     that board, and the time zone every date and time is shown in. Almost every school leaves the
+     time zone as it is — it defaults to India's, which is correct for everyone here.
    - **Location** — the address as it should appear on a certificate, including the PIN code.
    - **Contact** — the principal's name, and the phone, email and website parents and the board
      should use.
@@ -50,5 +51,5 @@ brings you back to the form with everything you typed still there.
 ## What is recorded
 
 Every save is written to the school's audit log: who changed the profile, when, and which fields
-they changed. The log records the *names* of the fields, never the old or new values. Anyone with
+they changed. The log records the _names_ of the fields, never the old or new values. Anyone with
 the Auditor role can read it.

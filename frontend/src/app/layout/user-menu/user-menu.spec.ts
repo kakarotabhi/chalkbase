@@ -10,7 +10,7 @@ const USER = {
   userId: '2f1c9b60-1b1e-4a2f-9a1e-6c1f0f2b4d55',
   displayName: 'Priya Sharma',
   mustChangePassword: false,
-  school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+  school: { code: 'GPS-S12', name: 'Greenfield Public School', timezone: 'Asia/Kolkata' },
   permissions: [],
 };
 

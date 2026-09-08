@@ -11,6 +11,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { apiErrorCode } from '../../core/api/api-error';
 import { AUDIT_PAGE_SIZE, AuditApi } from '../../core/api/audit-api';
 import { AuditEvent, AuditOutcome } from '../../core/api/models';
+import { SessionStore } from '../../core/auth/session-store';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
@@ -38,27 +39,45 @@ const OUTCOME_LABELS: Readonly<Record<AuditOutcome, string>> = {
   DENIED: 'Denied',
 };
 
-/** The day and time as a reader scans them. Local, because the log is read at the school. */
-const SHORT_TIME = new Intl.DateTimeFormat('en-IN', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
+/**
+ * The day and time as a reader scans them, in the *school's* zone (ADR-0032) — not the reader's
+ * device.
+ *
+ * Before the school carried a time zone, this had no choice but to default to the device's own
+ * zone, which read correctly for everyone in India (one country, one zone) and misleadingly for
+ * anyone opening the log from abroad: a login at 21:00 in Mumbai would print as 15:30 to a reader
+ * in London, on a screen whose whole job is saying exactly when something happened. Naming the
+ * school's own zone here means every reader — at the school or off it — sees the time the event
+ * actually happened there, which is the time worth investigating an incident against.
+ */
+function shortTimeFormat(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+  });
+}
 
 /**
  * The same instant, said in full and with the zone named.
  *
  * The zone is not decoration. An audit row is evidence, and "14:32" is only evidence if a reader
  * can tell which 14:32 it was — so the detail panel says the zone out loud, even though the column
- * above it does not have room to.
+ * above it does not have room to. Naming the school's zone explicitly (rather than leaving it to
+ * `timeStyle` to guess the device's) is what keeps that true now that the column above renders in
+ * the school's zone rather than the reader's own.
  */
-const FULL_TIME = new Intl.DateTimeFormat('en-IN', {
-  dateStyle: 'full',
-  timeStyle: 'long',
-});
+function fullTimeFormat(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'full',
+    timeStyle: 'long',
+    timeZone,
+  });
+}
 
 /** One row, with everything the template needs already decided. */
 interface AuditRow {
@@ -120,9 +139,18 @@ export class AuditLog {
   private readonly auditApi = inject(AuditApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sessionStore = inject(SessionStore);
 
   protected readonly actionOptions = ACTION_OPTIONS;
   protected readonly pageSize = AUDIT_PAGE_SIZE;
+
+  /**
+   * The zone every row on this screen is rendered in (ADR-0032), off the session `GET /api/me`
+   * already carried — never a second request just to find out which zone to format with.
+   */
+  private readonly timeZone = computed(() => this.sessionStore.schoolTimezone());
+  private readonly shortTime = computed(() => shortTimeFormat(this.timeZone()));
+  private readonly fullTime = computed(() => fullTimeFormat(this.timeZone()));
 
   /** `from` and `to` are `yyyy-MM-dd` — a day the user picked, not an instant. */
   protected readonly filters = this.formBuilder.group({
@@ -162,11 +190,13 @@ export class AuditLog {
   /** Set when the range reads backwards. Shown against `To`, and nothing is requested. */
   protected readonly rangeError = signal<string | null>(null);
 
-  protected readonly view = computed<readonly AuditRow[]>(() =>
-    this.rows().map((event) => ({
+  protected readonly view = computed<readonly AuditRow[]>(() => {
+    const shortTime = this.shortTime();
+    const fullTime = this.fullTime();
+    return this.rows().map((event) => ({
       id: event.id,
-      occurredAt: formatTime(SHORT_TIME, event.occurredAt),
-      occurredAtFull: formatTime(FULL_TIME, event.occurredAt),
+      occurredAt: formatTime(shortTime, event.occurredAt),
+      occurredAtFull: formatTime(fullTime, event.occurredAt),
       occurredAtIso: event.occurredAt,
       actorId: event.actorId ?? null,
       // A failed sign-in has no actor at all — the account was never established. Saying so beats
@@ -182,8 +212,8 @@ export class AuditLog {
       ipAddress: event.ipAddress?.trim() || 'Not recorded',
       userAgent: event.userAgent?.trim() || 'Not recorded',
       traceId: event.traceId?.trim() || 'Not recorded',
-    })),
-  );
+    }));
+  });
 
   /** "1–25 of 137". Counted off the rows actually received, so the last page reads correctly. */
   protected readonly position = computed(() => {
