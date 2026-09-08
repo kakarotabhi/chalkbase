@@ -493,12 +493,23 @@ Recorded so they are decided rather than discovered.
   keys must be globally unique — UUIDv7, already the convention. Not exercised by the MVP, which is
   scoped to a single-campus school.
 
-- **The navigation contract still has no test across the two sides.** The backend now declares
-  `settings`, `settings.access`, `settings.profile`, `schools` and `audit`; the frontend registry
-  maps all but `settings.access` and `audit`, which stay dropped-and-logged because neither has a
-  screen. That is ADR-0008's designed behaviour, not a defect — but the guard against a genuine typo
-  is a CI check comparing the backend's ids to the frontend's registry, which needs both artefacts
-  and so belongs in neither agent's half. Both sides carry a matching `TODO(contract)`.
+- ~~The navigation contract still has no test across the two sides.~~ ✅ Closed. That bullet was
+  itself already stale by the time it was picked up: `settings.access` and `audit` had since been
+  mapped on the frontend for a different reason (the screens shipped), and `settings.users` had
+  gone missing from the frontend registry for a while with nothing to catch it — which is the
+  argument for this check, not a hypothetical. `NavigationContractExportTests` now writes every id
+  the running backend declares to `contracts/navigation-ids.json`, the same way `openapi.json` is
+  exported, and `.github/workflows/navigation-contract.yml` compares that against
+  `nav-routes.ts`. A backend id absent from the frontend is an ERROR unless it is named in
+  `tools/navigation-contract/allowlist.json` with a required reason (today, only
+  `students.documents`, which has no screen yet); a frontend id no backend provider emits (`schools`,
+  `students.import`) is a WARNING, never a failure, because `NavigationStore` only resolves an id
+  the server actually sends; an allowlist entry that stops matching a real gap is an ERROR too, so
+  the allowlist cannot go stale unnoticed. `tools/navigation-contract/check.test.mjs` proves the
+  distinction with fixtures, including a `settings.acess`-style typo reported as an error. The
+  frontend's `TODO(contract)` in `nav-routes.ts` is resolved and removed — the backend had none in
+  code despite this bullet's earlier claim of "a matching `TODO(contract)`" on both sides; only the
+  frontend one ever existed.
 - ~~ADR-0008's staleness rule is not implemented~~ ✅ Closed. Any `403` other than one on `/api/me`
   itself now makes `apiErrorInterceptor` call `SessionBootstrap.refreshAfterForbidden()` before the
   error reaches the screen: it refetches `/api/me`, re-renders navigation from the answer, and only

@@ -1,0 +1,6 @@
+[
+  {
+    "id": "students.documents",
+    "reason": "DocumentNavigation (backend/src/main/java/in/chalkbase/document/infrastructure/DocumentNavigation.java) ships the id ahead of the screen, the same way settings.access and audit shipped theirs — ADR-0025. No frontend route exists yet; remove this entry in the same change that adds one."
+  }
+]
