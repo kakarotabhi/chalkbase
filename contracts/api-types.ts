@@ -1922,6 +1922,7 @@ export interface components {
             readonly principalName?: string;
             readonly schemaName: string;
             readonly state?: string;
+            readonly timezone: string;
             /** Format: date-time */
             readonly updatedAt?: string;
             readonly website?: string;
@@ -1937,10 +1938,12 @@ export interface components {
             readonly name: string;
             readonly schemaName: string;
             readonly state?: string;
+            readonly timezone: string;
         };
         readonly SchoolSummary: {
             readonly code: string;
             readonly name: string;
+            readonly timezone: string;
         };
         readonly SectionAttendanceView: {
             /** Format: uuid */
@@ -2079,6 +2082,7 @@ export interface components {
             readonly principalName: string;
             readonly schemaName?: string;
             readonly state: string;
+            readonly timezone: string;
             readonly website?: string;
         };
         readonly UpdateSectionRequest: {
