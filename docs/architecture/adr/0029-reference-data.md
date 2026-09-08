@@ -142,6 +142,23 @@ as a decision with a reason, not a gap left unexamined — the next lane that op
 another reason should add `idx_audit_event_action` and revisit this ADR, not silently ship a full
 scan behind a dropdown.
 
+## Amendment, 2026-09-08: `GET /api/schools/boards` needed an exemption from `SetupKeyFilter`
+
+Landing this endpoint under `/api/schools/**` was the right call for the reason given above — but it
+did not account for `platform.config.SetupKeyFilter` (`@Profile("prod")`), which guards that whole
+prefix behind a shared setup key regardless of what `@PreAuthorize` says underneath. On `prod` — the
+only profile where the filter runs, which is why `test`-only CI never caught it — a signed-in school
+administrator's Board picker on the school-profile form got the same `NF_002` a stranger's
+unauthorized write would. `test`-profile coverage (`ReferenceDataApiTests`, this ADR's own test file)
+proved the endpoint worked and missed the one profile where it did not.
+
+Fixed in [ADR-0032](0032-school-timezone.md), which named the endpoint an explicit exemption in
+`SetupKeyFilter` rather than moving it off this prefix — moving it would have undone the "ownership
+shows through the URL" reasoning above for no endpoint this ADR did not already place deliberately.
+See that ADR's own section on the bug for the two options weighed and why the exemption, not a move,
+is what shipped. `SetupKeyFilterTests` now pins `GET /api/schools/boards` against the `prod` profile,
+which is the coverage this bug shows every endpoint under this prefix needs and did not have before.
+
 ## Consequences
 
 - `public.state`, `platform.reference.*` (`IndianStates`, `ReferenceDataSeeder`, `State`,
