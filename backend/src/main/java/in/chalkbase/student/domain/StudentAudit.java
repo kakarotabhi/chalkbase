@@ -116,6 +116,15 @@ public final class StudentAudit {
      * over the wire. Auditing the record view instead would write a row on every page load a class
      * teacher makes; auditing nothing would leave ADR-0014's "every read is audited" unmet. This is
      * the line between "looked at the record" and "looked at the Restricted value".
+     *
+     * <p>{@code changed_fields} carries the NAMES of the Restricted fields that actually held a
+     * value for this student — never the values (ADR-0014, ADR-0018 rule 11). A field the school
+     * never recorded is not named: nothing was disclosed for it, so there is nothing for the row to
+     * say. This differs from {@link #STUDENT_EXPORT}, whose field list is the shape of the file —
+     * every column the mode allows, the same for every row it contains — rather than a fact about
+     * any one student. A reveal has exactly one student behind it, so "what did this row disclose"
+     * and "what could this row have disclosed" are the same question asked two different ways, and
+     * this is the one the audit log answers.
      */
     public static final String RESTRICTED_DATA_REVEALED = "RESTRICTED_DATA_REVEALED";
 
