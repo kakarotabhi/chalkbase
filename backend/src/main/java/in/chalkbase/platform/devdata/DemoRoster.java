@@ -3,6 +3,7 @@ package in.chalkbase.platform.devdata;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -13,18 +14,31 @@ import java.util.Map;
  * it came from a real school and none of it ever may — demo data that started life as a real class
  * list is a data breach with a friendly name on it. The phone numbers are in the reserved-looking
  * ranges nobody answers and the email addresses are all under {@code example.com}, which RFC 2606
- * reserves for exactly this.
+ * reserves for exactly this. Names below are built by combining common given names with common
+ * surnames, both drawn from open pools rather than copied off any one list — the same technique the
+ * smaller version of this file already used for every guardian it invented for a solo child.
  *
- * <p>The shape here is chosen to make ADR-0020 §5 visible on screen rather than to look tidy: five
- * families put two or three children behind a <em>single</em> guardian record, so correcting one
- * phone number in the demo visibly corrects it for every sibling. Four children have both parents
- * linked, and four have no guardian at all — the empty state is a state, and a screen that has never
- * been shown one is a screen nobody has tested.
+ * <p><strong>Six hundred children, not a few dozen.</strong> A list screen, a page size and a
+ * guardian search exercised against sixty rows proves nothing about what a real school's six hundred
+ * do to them — see {@code docs/status.md}. Hand-naming six hundred children the way the original
+ * sixty were named would be six hundred lines making the same point over and over, so this file
+ * generates households — a surname, a phone number, one or two parents — and lets
+ * {@link DemoSchoolSeeder} turn them into rows of a CSV file for the bulk import endpoint
+ * (ADR-0021) rather than six hundred individual admissions.
+ *
+ * <p>The shape here is still chosen to make ADR-0020 §5 visible on screen rather than to look tidy:
+ * a large share of households put two, three or four children behind a <em>single</em> guardian
+ * record, so correcting one phone number in the demo visibly corrects it for every sibling — see
+ * {@link #build()} for the exact composition and why it adds up to six hundred. A run of children
+ * with no guardian recorded stays in the mix, and so does a run of households with both parents
+ * linked to the same child, because an empty state and a two-guardian state are both states a screen
+ * has to survive and neither is exercised by a roster that never contains one.
  *
  * <p>Values are plain strings rather than the owning modules' enums on purpose. {@code Gender},
  * {@code StudentStatus}, {@code GuardianRelation} and {@code Board} live in their modules'
  * {@code domain} packages, which are not exposed across a module boundary — see the class javadoc on
- * {@link DemoSchoolSeeder} for why this seeder speaks JSON instead of importing them.
+ * {@link DemoSchoolSeeder} for why this seeder speaks JSON (now mostly one CSV file) instead of
+ * importing them.
  */
 final class DemoRoster {
 
@@ -43,6 +57,9 @@ final class DemoRoster {
     /** Nursery admits three-year-olds; every rung above adds a year. */
     static final int YOUNGEST_AGE = 3;
 
+    /** How many children this roster admits in total — see {@link #build()} for the composition. */
+    static final int TOTAL_CHILDREN = 600;
+
     private static final String FATHER = "FATHER";
     private static final String MOTHER = "MOTHER";
 
@@ -50,121 +67,133 @@ final class DemoRoster {
     private static final String FEMALE = "FEMALE";
     private static final String OTHER = "OTHER";
 
-    /**
-     * A child on the demo rolls.
-     *
-     * @param family the guardian household this child belongs to, or null for a child with no
-     *     guardian recorded. Several children sharing a key share one guardian <em>record</em>,
-     *     which is the property this whole roster exists to demonstrate.
-     */
-    record Child(String fullName, String gender, String family) {}
+    // ── How many households of each shape (must sum, in children, to TOTAL_CHILDREN) ────────────
+    //
+    // Chosen to make the guardian directory's dedup the dominant pattern in this roster rather than
+    // a handful of examples in it: a hundred and fifty households below share a guardian between two,
+    // three or four siblings, against a hundred and eighty that stand alone — so the common case on
+    // this demo school's guardian screen is a person responsible for more than one child, which is
+    // the case ADR-0020 §5 exists for. A one-in-six run of households leaves no guardian at all
+    // (an admission taken over the phone, the details still to come) and a one-in-twenty-five run
+    // gives both parents to the same child.
+    private static final int NO_GUARDIAN_HOUSEHOLDS = 36;
+    private static final int DUAL_GUARDIAN_HOUSEHOLDS = 24;
+    private static final int QUAD_HOUSEHOLDS = 10;
+    private static final int TRIO_HOUSEHOLDS = 40;
+    private static final int PAIR_HOUSEHOLDS = 100;
+    // Everything else is a solo household: one child, one guardian. Computed in build() rather than
+    // written here twice, so the two can never drift apart.
 
-    /** A person responsible for one or more children. Created once and linked to each of them. */
-    record Guardian(String fullName, String relation, String phone, String email, String occupation, boolean primary) {}
+    private static final List<String> MALE_FIRST_NAMES = List.of(
+            "Aarav",
+            "Kabir",
+            "Rudra",
+            "Arjun",
+            "Dhruv",
+            "Rohan",
+            "Neel",
+            "Ishaan",
+            "Yuvan",
+            "Reyansh",
+            "Vihaan",
+            "Krish",
+            "Veer",
+            "Aryan",
+            "Ansh",
+            "Advik",
+            "Shaurya",
+            "Ayaan",
+            "Rehan",
+            "Vivaan",
+            "Atharv",
+            "Ritvik",
+            "Daksh",
+            "Samar",
+            "Hriday",
+            "Ekansh",
+            "Tejas",
+            "Kian",
+            "Aditya",
+            "Karan",
+            "Rahul",
+            "Vikrant",
+            "Nikhil",
+            "Siddharth",
+            "Varun",
+            "Aakash",
+            "Devansh",
+            "Harsh",
+            "Kunal",
+            "Mohit",
+            "Rajat",
+            "Sahil",
+            "Tarun",
+            "Uday",
+            "Vivek",
+            "Yash",
+            "Zubin",
+            "Om",
+            "Parth",
+            "Raghav");
 
-    /**
-     * Households whose guardians are written out rather than generated, because each is making a
-     * point: the first five share one guardian between siblings, and the last three link both a
-     * father and a mother to the same child.
-     */
-    private static final Map<String, List<Guardian>> SHARED_FAMILIES = Map.of(
-            "KULKARNI",
-                    List.of(new Guardian(
-                            "Sunil Kulkarni", FATHER, "98450 10001", "sunil.kulkarni@example.com", "Bank clerk", true)),
-            "NAIR", List.of(new Guardian("Latha Nair", MOTHER, "+91 98450 10002", null, "School teacher", true)),
-            "BOSE",
-                    List.of(new Guardian(
-                            "Amitava Bose", FATHER, "98450 10003", "amitava.bose@example.com", "Pharmacist", true)),
-            "IYER",
-                    List.of(
-                            new Guardian("Ganesh Iyer", FATHER, "98450 10004", null, "Civil engineer", true),
-                            new Guardian("Revathi Iyer", MOTHER, "98450 10005", null, "Homemaker", false)),
-            "DESHMUKH", List.of(new Guardian("Sunita Deshmukh", MOTHER, "98450 10006", null, "Nurse", true)),
-            "LAKSHMI", List.of(new Guardian("Ambika Devi", MOTHER, "98450 10007", null, "Tailor", true)),
-            "SHEIKH",
-                    List.of(
-                            new Guardian("Imran Sheikh", FATHER, "+91 98450 10008", null, "Shopkeeper", true),
-                            new Guardian("Farida Sheikh", MOTHER, "98450 10009", null, "Homemaker", false)),
-            "PILLAI",
-                    List.of(
-                            new Guardian("Rajesh Pillai", FATHER, "98450 10010", null, "Auto driver", true),
-                            new Guardian("Anitha Pillai", MOTHER, "98450 10011", null, "Nurse", false)));
+    private static final List<String> FEMALE_FIRST_NAMES = List.of(
+            "Meera", "Diya", "Saanvi", "Kavya", "Myra", "Riya", "Zoya", "Ira", "Anaya", "Pari", "Trisha", "Tara",
+            "Aadhya", "Avni", "Nitya", "Aisha", "Sara", "Kiara", "Amara", "Navya", "Prisha", "Anika", "Mahi", "Siya",
+            "Aarohi", "Vanya", "Ridhi", "Naina", "Zara", "Ananya", "Bhavya", "Charvi", "Disha", "Esha", "Gauri", "Hina",
+            "Ishita", "Jia", "Kritika", "Lavanya", "Manya", "Nandini", "Ojasvi", "Pihu", "Radhika", "Sanya", "Tanvi",
+            "Urvi", "Vidya", "Yamini");
 
-    /**
-     * Sixty children, in the order they are admitted.
-     *
-     * <p>The order is load-bearing twice over. Sections are assigned round-robin down this list, so
-     * siblings written next to each other would land in the same room; they are spaced instead, and
-     * a family's children come out in different classes, which is what makes a shared guardian look
-     * like a shared guardian. And the position decides the age, so a child's date of birth matches
-     * the rung they are on.
-     */
-    private static final List<Child> CHILDREN = List.of(
-            new Child("Aarav Kulkarni", MALE, "KULKARNI"),
-            solo("Meera Joshi", FEMALE),
-            new Child("Diya Nair", FEMALE, "NAIR"),
-            solo("Kabir Rao", MALE),
-            new Child("Rudra Bose", MALE, "BOSE"),
-            solo("Saanvi Menon", FEMALE),
-            new Child("Kavya Iyer", FEMALE, "IYER"),
-            solo("Arjun Sethi", MALE),
-            new Child("Myra Deshmukh", FEMALE, "DESHMUKH"),
-            solo("Riya Chatterjee", FEMALE),
-            new Child("Zoya Sheikh", FEMALE, "SHEIKH"),
-            solo("Dhruv Malhotra", MALE),
-            new Child("Rohan Pillai", MALE, "PILLAI"),
-            solo("Ira Banerjee", FEMALE),
-            new Child("Anaya Kulkarni", FEMALE, "KULKARNI"),
-            solo("Neel Verma", MALE),
-            new Child("Ishaan Nair", MALE, "NAIR"),
-            solo("Pari Sinha", FEMALE),
-            new Child("Trisha Bose", FEMALE, "BOSE"),
-            solo("Yuvan Ghosh", MALE),
-            new Child("Adhrit Iyer", MALE, "IYER"),
-            solo("Tara Bhat", FEMALE),
-            new Child("Aadhya Deshmukh", FEMALE, "DESHMUKH"),
-            solo("Reyansh Patil", MALE),
-            new Child("Vihaan Kulkarni", MALE, "KULKARNI"),
-            solo("Avni Shetty", FEMALE),
-            solo("Krish Dubey", MALE),
-            new Child("Aritra Bose", MALE, "BOSE"),
-            // A single-name student, which is the case ADR-0020 §1 keeps one name field for. Her
-            // guardian is written out above rather than generated, because there is no surname to
-            // generate one from — which is the point.
-            new Child("Lakshmi", FEMALE, "LAKSHMI"),
-            solo("Nitya Rane", FEMALE),
-            solo("Aisha Qureshi", FEMALE),
-            solo("Veer Chauhan", MALE),
-            solo("Sara Thomas", FEMALE),
-            solo("Aryan Gowda", MALE),
-            noGuardian("Ansh Mishra", MALE),
-            solo("Kiara Fernandes", FEMALE),
-            solo("Advik Saxena", MALE),
-            solo("Amara Dsouza", FEMALE),
-            noGuardian("Shaurya Bhatia", MALE),
-            solo("Navya Agarwal", FEMALE),
-            solo("Ayaan Khan", MALE),
-            solo("Prisha Kaur", FEMALE),
-            solo("Rehan Ali", MALE),
-            solo("Anika Das", FEMALE),
-            noGuardian("Vivaan Nanda", MALE),
-            solo("Mahi Solanki", FEMALE),
-            solo("Atharv Jadhav", MALE),
-            solo("Siya Kamath", FEMALE),
-            solo("Ritvik Hegde", MALE),
-            solo("Aarohi Pandey", FEMALE),
-            solo("Daksh Tiwari", MALE),
-            noGuardian("Vanya Chopra", FEMALE),
-            solo("Samar Ahluwalia", MALE),
-            solo("Ridhi Barua", FEMALE),
-            solo("Hriday Panicker", MALE),
-            solo("Naina Bajwa", FEMALE),
-            solo("Ekansh Mahajan", MALE),
-            solo("Zara Merchant", FEMALE),
-            solo("Tejas Wagh", MALE),
-            // The third value of the enum is a value, and a demo that only ever shows two of them
-            // is how a screen ships with a two-way toggle on it.
-            solo("Kian Roy", OTHER));
+    private static final List<String> SURNAMES = List.of(
+            "Kulkarni",
+            "Joshi",
+            "Nair",
+            "Rao",
+            "Bose",
+            "Menon",
+            "Iyer",
+            "Sethi",
+            "Deshmukh",
+            "Chatterjee",
+            "Sheikh",
+            "Malhotra",
+            "Pillai",
+            "Banerjee",
+            "Verma",
+            "Sinha",
+            "Ghosh",
+            "Bhat",
+            "Patil",
+            "Shetty",
+            "Dubey",
+            "Qureshi",
+            "Chauhan",
+            "Thomas",
+            "Gowda",
+            "Mishra",
+            "Fernandes",
+            "Saxena",
+            "Dsouza",
+            "Bhatia",
+            "Agarwal",
+            "Khan",
+            "Kaur",
+            "Das",
+            "Nanda",
+            "Solanki",
+            "Jadhav",
+            "Kamath",
+            "Hegde",
+            "Pandey",
+            "Tiwari",
+            "Chopra",
+            "Ahluwalia",
+            "Barua",
+            "Panicker",
+            "Bajwa",
+            "Mahajan",
+            "Merchant",
+            "Wagh",
+            "Reddy");
 
     private static final List<String> FATHER_NAMES = List.of(
             "Suresh",
@@ -201,8 +230,24 @@ final class DemoRoster {
             "Pharmacist",
             "Accountant");
 
-    /** Every household, keyed the way {@link Child#family()} names it. Written-out ones plus generated ones. */
-    private static final Map<String, List<Guardian>> FAMILIES = buildFamilies();
+    /**
+     * A child on the demo rolls.
+     *
+     * @param family the guardian household this child belongs to, or null for a child with no
+     *     guardian recorded. Several children sharing a key share one guardian <em>record</em>,
+     *     which is the property this whole roster exists to demonstrate.
+     */
+    record Child(String fullName, String gender, String family) {}
+
+    /** A person responsible for one or more children. Created once and linked to each of them. */
+    record Guardian(String fullName, String relation, String phone, String email, String occupation, boolean primary) {}
+
+    /** What {@link #build()} produced: the roster and the households behind it. */
+    private record Built(List<Child> children, Map<String, List<Guardian>> families) {}
+
+    private static final Built BUILT = build();
+    private static final List<Child> CHILDREN = BUILT.children();
+    private static final Map<String, List<Guardian>> FAMILIES = BUILT.families();
 
     private DemoRoster() {}
 
@@ -212,66 +257,152 @@ final class DemoRoster {
 
     /** The guardians of one child, in the order they should be linked. Empty for a child who has none. */
     static List<Guardian> guardiansOf(Child child) {
-        return child.family() == null ? List.of() : FAMILIES.get(child.family());
+        return child.family() == null ? List.of() : FAMILIES.getOrDefault(child.family(), List.of());
     }
 
-    /** The distinct guardian households, so each person is created once and then linked more than once. */
+    /** Every household, keyed the way {@link Child#family()} names it. */
     static Map<String, List<Guardian>> families() {
         return FAMILIES;
     }
 
-    /** A child whose guardian is generated from their own surname: their own household, one parent. */
-    private static Child solo(String fullName, String gender) {
-        return new Child(fullName, gender, "SOLO:" + fullName);
+    // ── Building the roster ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Six hundred children in six household shapes, and the guardians those households share.
+     *
+     * <p>Households are emitted in blocks — every no-guardian household, then every two-parent one,
+     * then descending sibling-group sizes, then solo households filling out the rest — rather than
+     * interleaved. That is deliberate and it costs nothing: {@link DemoSchoolSeeder} places children
+     * into sections by their position in this list modulo the section count, and with two sections
+     * per class that assignment cycles through the whole ladder well within any one block, so a
+     * block of no-guardian children still lands across most of the school rather than in one room of
+     * it. Within a household, consecutive children fall in different sections for the same reason —
+     * exactly the "siblings in different classes" property the original, hand-written roster called
+     * out, produced here as a side effect of the arithmetic rather than by hand-spacing them.
+     */
+    private static Built build() {
+        List<Child> children = new ArrayList<>();
+        Map<String, List<Guardian>> families = new LinkedHashMap<>();
+
+        int next = 0;
+        next = addHouseholds(children, families, NO_GUARDIAN_HOUSEHOLDS, 1, 0, next);
+        next = addHouseholds(children, families, DUAL_GUARDIAN_HOUSEHOLDS, 1, 2, next);
+        next = addHouseholds(children, families, QUAD_HOUSEHOLDS, 4, 1, next);
+        next = addHouseholds(children, families, TRIO_HOUSEHOLDS, 3, 1, next);
+        next = addHouseholds(children, families, PAIR_HOUSEHOLDS, 2, 1, next);
+        int soloHouseholds = TOTAL_CHILDREN
+                - NO_GUARDIAN_HOUSEHOLDS
+                - DUAL_GUARDIAN_HOUSEHOLDS
+                - QUAD_HOUSEHOLDS * 4
+                - TRIO_HOUSEHOLDS * 3
+                - PAIR_HOUSEHOLDS * 2;
+        int soloStart = children.size();
+        addHouseholds(children, families, soloHouseholds, 1, 1, next);
+
+        // Two edge cases the smaller roster hand-wrote once each, kept here for the same reason:
+        // a single-name student (ADR-0020 §1 keeps one name field for exactly this — there is no
+        // surname to append one to) and the OTHER value of a toggle that looks two-way until a demo
+        // shows it is not. Both land in the solo block, so neither disturbs a shared guardian.
+        Child singleName = children.get(soloStart);
+        children.set(soloStart, new Child("Lakshmi", singleName.gender(), singleName.family()));
+        Child otherGender = children.get(soloStart + 1);
+        children.set(soloStart + 1, new Child(otherGender.fullName(), OTHER, otherGender.family()));
+
+        return new Built(List.copyOf(children), Map.copyOf(families));
     }
 
     /**
-     * A child with nobody recorded yet — an admission taken over the phone, with the parent's
-     * details still to come. Every screen that lists guardians has to survive this.
+     * Emits {@code count} households of {@code childrenPerHousehold} children apiece, sharing
+     * {@code guardiansPerHousehold} guardians between them.
+     *
+     * @return the next unused household index, so the caller can hand it to the next block without
+     *     two blocks ever generating the same surname, phone number or first-name rotation
      */
-    private static Child noGuardian(String fullName, String gender) {
-        return new Child(fullName, gender, null);
-    }
-
-    private static Map<String, List<Guardian>> buildFamilies() {
-        Map<String, List<Guardian>> families = new LinkedHashMap<>(SHARED_FAMILIES);
-        List<String> generated = new ArrayList<>();
-        for (Child child : CHILDREN) {
-            if (child.family() != null && child.family().startsWith("SOLO:")) {
-                generated.add(child.family());
+    private static int addHouseholds(
+            List<Child> children,
+            Map<String, List<Guardian>> families,
+            int count,
+            int childrenPerHousehold,
+            int guardiansPerHousehold,
+            int startIndex) {
+        for (int h = 0; h < count; h++) {
+            int index = startIndex + h;
+            String surname = SURNAMES.get(index % SURNAMES.size());
+            String key = guardiansPerHousehold == 0 ? null : "HH-" + index;
+            if (key != null) {
+                families.put(key, generateGuardians(surname, index, guardiansPerHousehold));
+            }
+            for (int c = 0; c < childrenPerHousehold; c++) {
+                int childIndex = children.size();
+                boolean male = childIndex % 2 == 0;
+                String given = male
+                        ? MALE_FIRST_NAMES.get(childIndex % MALE_FIRST_NAMES.size())
+                        : FEMALE_FIRST_NAMES.get(childIndex % FEMALE_FIRST_NAMES.size());
+                children.add(new Child(given + " " + surname, male ? MALE : FEMALE, key));
             }
         }
-        for (int i = 0; i < generated.size(); i++) {
-            String key = generated.get(i);
-            families.put(key, List.of(generateGuardian(key.substring("SOLO:".length()), i)));
-        }
-        return Map.copyOf(families);
+        return startIndex + count;
     }
 
     /**
-     * One parent for a child with no siblings here, built from their surname so the pair reads as a
-     * family. Alternating father and mother, and a phone number in a shape the office would
-     * actually have typed — some with a country code, some without, because
-     * {@code guardian.phone_digits} exists precisely so the search survives that.
+     * One or two parents for a household, built from its surname so the household reads as a
+     * family — the same technique the smaller roster's {@code generateGuardian} used for every solo
+     * child it invented.
+     *
+     * @param guardianCount 1 for the common case (one parent on file, alternating which), or 2 for a
+     *     household with both parents linked — two distinct people, two distinct phone numbers, the
+     *     father marked primary
      */
-    private static Guardian generateGuardian(String childFullName, int index) {
-        int space = childFullName.lastIndexOf(' ');
-        String surname = space < 0 ? childFullName : childFullName.substring(space + 1);
+    private static List<Guardian> generateGuardians(String surname, int index, int guardianCount) {
+        String fatherGiven = FATHER_NAMES.get(index % FATHER_NAMES.size());
+        String motherGiven = MOTHER_NAMES.get(index % MOTHER_NAMES.size());
+        String occupation = OCCUPATIONS.get(index % OCCUPATIONS.size());
+
+        if (guardianCount == 2) {
+            return List.of(
+                    new Guardian(
+                            fatherGiven + " " + surname,
+                            FATHER,
+                            phoneFor(index),
+                            emailFor(index, fatherGiven, surname),
+                            occupation,
+                            true),
+                    new Guardian(
+                            motherGiven + " " + surname,
+                            MOTHER,
+                            // A distinct number in a range no other household's index reaches, so a
+                            // household's two parents are never mistaken for one shared phone.
+                            phoneFor(index + 1_000),
+                            emailFor(index + 1_000, motherGiven, surname),
+                            "Homemaker",
+                            false));
+        }
+
         boolean father = index % 2 == 0;
-        String given =
-                father ? FATHER_NAMES.get(index % FATHER_NAMES.size()) : MOTHER_NAMES.get(index % MOTHER_NAMES.size());
-        String digits = "98450 " + (20000 + index);
-        String phone = index % 5 == 0 ? "+91 " + digits : digits;
-        String email = index % 3 == 0
-                ? given.toLowerCase(java.util.Locale.ROOT) + "." + surname.toLowerCase(java.util.Locale.ROOT)
-                        + "@example.com"
-                : null;
-        return new Guardian(
+        String given = father ? fatherGiven : motherGiven;
+        return List.of(new Guardian(
                 given + " " + surname,
                 father ? FATHER : MOTHER,
-                phone,
-                email,
-                OCCUPATIONS.get(index % OCCUPATIONS.size()),
-                true);
+                phoneFor(index),
+                emailFor(index, given, surname),
+                occupation,
+                true));
+    }
+
+    /**
+     * A phone number in a shape the office would actually have typed — some with a country code,
+     * some without, because {@code guardian.phone_digits} exists precisely so the search survives
+     * that — in the reserved-looking range nobody answers.
+     */
+    private static String phoneFor(int index) {
+        String digits = "98450 " + (20000 + index);
+        return index % 5 == 0 ? "+91 " + digits : digits;
+    }
+
+    /** Roughly one household in three gives an email; the rest leave it blank, as a paper form would. */
+    private static String emailFor(int index, String given, String surname) {
+        return index % 3 == 0
+                ? given.toLowerCase(Locale.ROOT) + "." + surname.toLowerCase(Locale.ROOT) + "@example.com"
+                : null;
     }
 }

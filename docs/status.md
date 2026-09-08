@@ -76,9 +76,12 @@ _Decisions taken and not to be reopened_ and in the operations notes rather than
 rediscovered.
 
 The honest caveat on "complete": it means every feature the roadmap named exists end to end, not
-that it has met a real school. The largest untested thing is volume — the seed is a few dozen
-students, so no list screen, no paging and no search has ever been exercised at the ~600 rows a real
-school has.
+that it has met a real school. The largest untested thing was volume — the seed used to be a few
+dozen students, so no list screen, no paging and no search had ever been exercised at the ~600 rows a
+real school has. The `local` seed now admits ~600 (see _Also queued, not blocking_, below), which
+makes the exercise possible; it does not itself constitute having done it. Nobody has yet paged
+through the student list, timed the guardian phone search, or watched an import at this size against
+a database that is not a developer's own laptop — that is still the open question, not a closed one.
 
 **Built in Phase 1 but not on its list**, because the roadmap assumed them rather than naming them:
 identity, login and server-side sessions; forced password change, enforced on the server; schema-per-
@@ -201,8 +204,16 @@ not build one here.
 - Deploy to Coolify on the Hostinger Mumbai box ([ADR-0015](architecture/adr/0015-deployment-baseline.md)).
 - ~~Export, which is deliberately unbuilt~~ ✅ Closed. See the Export row above and
   [ADR-0027](architecture/adr/0027-export-masking.md).
-- A larger synthetic seed — the `local` profile seeds one school with a few dozen students
-  ([running locally](development/running-locally.md)); list screens and performance want ~600.
+- ~~A larger synthetic seed — the `local` profile seeds one school with a few dozen students~~
+  ✅ Closed. The `local` seed now admits ~600 students behind ~378 guardian records, with most
+  households sharing a guardian across two to four siblings rather than a handful of hand-picked
+  examples of it, plus a run of no-guardian children and a run with both parents on file. It goes in
+  as one file to the bulk import endpoint ([ADR-0021](architecture/adr/0021-bulk-import.md)) instead
+  of a create-and-link sequence per child, which is what keeps six hundred students from turning a
+  developer's `./mvnw spring-boot:run` into a coffee break. See
+  [running locally](development/running-locally.md). List screens, paging and the guardian phone
+  search below now have six hundred rows to be measured against — that measurement itself is not
+  done, see below.
 
 ## Blocking the first real school
 
@@ -427,7 +438,12 @@ Recorded so they are decided rather than discovered.
   reads to the next person as though the search were indexed, and under ADR-0011 it would be created
   once per school forever for nothing. The answer when it stops being fine is a `pg_trgm` GIN index;
   the extension is available on the dev database and not installed, and installing it is a
-  database-wide change wanting a measurement behind it.
+  database-wide change wanting a measurement behind it. **The demo school's ~378 guardians are that
+  measurement's first opportunity** — nobody has yet run `explain analyze` on the guardian search
+  against a school this size, on a database sized like the shared dev Supabase project rather than a
+  developer's laptop. That is the thing to actually do, not this note: time the search with the seed
+  in place, at ~400 and then again once a school is closer to the 2,000-row cap a single import
+  allows, before deciding whether the `pg_trgm` index is still a "when," not a "now."
 - **The import reads CSV, not `.xlsx`.** The requirement says "import from Excel"; every Excel can
   _Save As_ CSV, and reading `.xlsx` directly needs Apache POI — megabytes of dependency and real CVE
   surface, which AGENTS rule 8 says to ask about. A `.xlsx` upload is detected by its magic bytes and
