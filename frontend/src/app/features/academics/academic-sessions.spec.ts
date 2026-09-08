@@ -103,7 +103,7 @@ describe('AcademicSessions', () => {
     expect(text()).toContain('Current session: 2026–27');
     expect(text()).toContain('1 Apr 2026 – 31 Mar 2027');
 
-    const currentRow = element().querySelector('.session--current');
+    const currentRow = element().querySelector('cb-card.cb-card--accent');
     expect(currentRow?.textContent).toContain('2026–27');
     expect(currentRow?.textContent).toContain('Current session');
 
@@ -138,7 +138,7 @@ describe('AcademicSessions', () => {
     arrive([{ ...CURRENT, current: false }, PREVIOUS]);
 
     expect(text()).toContain('No session is current');
-    expect(element().querySelector('.session--current')).toBeNull();
+    expect(element().querySelector('cb-card.cb-card--accent')).toBeNull();
   });
 
   it('offers a retry when the list cannot be loaded', () => {
@@ -205,7 +205,7 @@ describe('AcademicSessions', () => {
     settleRefresh([{ ...CURRENT, current: false }, PREVIOUS]);
 
     expect(text()).toContain('2026–27 added.');
-    expect(element().querySelectorAll('.session')).toHaveLength(2);
+    expect(element().querySelectorAll('.sessions > li')).toHaveLength(2);
   });
 
   it('edits a session in place', () => {
