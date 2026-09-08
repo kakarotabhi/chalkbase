@@ -18,7 +18,7 @@ const me = (mustChangePassword: boolean): MeResponse => ({
     displayName: 'Priya Sharma',
     mustChangePassword,
   },
-  school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+  school: { code: 'GPS-S12', name: 'Greenfield Public School', timezone: 'Asia/Kolkata' },
   permissionsVersion: '7',
   permissions: [],
   navigation: [],

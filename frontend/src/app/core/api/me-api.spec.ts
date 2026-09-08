@@ -12,7 +12,7 @@ const ME: MeResponse = {
     displayName: 'Priya Sharma',
     mustChangePassword: false,
   },
-  school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+  school: { code: 'GPS-S12', name: 'Greenfield Public School', timezone: 'Asia/Kolkata' },
   permissionsVersion: '7',
   permissions: ['school:school:read', 'fees:receipt:create'],
   navigation: [

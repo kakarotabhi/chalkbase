@@ -156,4 +156,46 @@ class SetupKeyFilterTests {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("AUTH_002"));
     }
+
+    // ── The boards exemption ─────────────────────────────────────────────────────────────────
+
+    /**
+     * The bug this class exists to catch, pinned on the profile it was invisible on.
+     *
+     * <p>{@code SetupKeyFilter} is {@code @Profile("prod")}, so before this exemption existed
+     * {@code GET /api/schools/boards} answered {@code 200} on {@code test} alone
+     * ({@code ReferenceDataApiTests}) and a byte-identical {@code NF_002} on {@code prod} — a
+     * signed-in school administrator's Board picker, not a stranger's write. No key is sent here on
+     * purpose: a browser never has one, and the whole point is that this read needs none.
+     */
+    @Test
+    void servesTheBoardsListOnProdWithNoSetupKey() throws Exception {
+        mockMvc.perform(get("/api/schools/boards").with(user("some-signed-in-user")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].value").value("CBSE"));
+    }
+
+    /** The exemption is one path, not "any authenticated caller" — the register stays hidden. */
+    @Test
+    void doesNotWidenTheExemptionToTheRestOfTheRegister() throws Exception {
+        mockMvc.perform(get("/api/schools").with(user("some-signed-in-user")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NF_002"));
+    }
+
+    /**
+     * Nor does the exemption's path match anything but a {@code GET} — {@code BOARDS_READ} names
+     * the method. There is no {@code POST /api/schools/boards} mapping either, so this would 404
+     * regardless; the assertion is that it is still {@code SetupKeyFilter}'s own {@code NF_002}
+     * rather than something that reveals a mapping exists one method away from a real one.
+     */
+    @Test
+    void doesNotWidenTheExemptionToAWriteNamedLikeIt() throws Exception {
+        mockMvc.perform(post("/api/schools/boards")
+                        .with(user("some-signed-in-user"))
+                        .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NF_002"));
+    }
 }

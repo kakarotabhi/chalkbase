@@ -22,6 +22,8 @@ public record SchoolResponse(
         @Schema(nullable = true) @Classification(Tier.PUBLIC)
         String state,
 
+        @Classification(Tier.PUBLIC) String timezone,
+
         @Classification(Tier.INTERNAL) boolean active) {
 
     public static SchoolResponse from(School school) {
@@ -33,6 +35,7 @@ public record SchoolResponse(
                 school.getBoard(),
                 school.getCity(),
                 school.getState(),
+                school.getTimezone(),
                 school.isActive());
     }
 

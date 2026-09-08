@@ -29,9 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Each call touches two schemas, and it is worth being clear about which and why. The profile
  * itself lives in the tenant schema and is reached through {@code search_path}. The registry row in
- * {@code public.school} is written too, because it keeps a copy of the name, board and town so the
- * platform can list schools without binding a tenant — leaving that copy stale would make the
- * school register disagree with the school. Both writes share one transaction and one connection.
+ * {@code public.school} is written too, because it keeps a copy of the name, board, town and time
+ * zone so the platform can list schools — and identity can build a session — without binding a
+ * tenant. Leaving that copy stale would make the school register disagree with the school. Both
+ * writes share one transaction and one connection.
  *
  * <p>This is the first endpoint in the system that changes anything, so it is the first to audit
  * (ADR-0018). The audit row joins this transaction: if the save rolls back the log does not claim
@@ -90,7 +91,8 @@ public class SchoolProfileService {
                     request.email(),
                     blankToNull(request.website()),
                     blankToNull(request.affiliationNumber()),
-                    request.board());
+                    request.board(),
+                    request.timezone());
         } else {
             profile.apply(
                     request.addressLine1(),
@@ -103,11 +105,13 @@ public class SchoolProfileService {
                     request.email(),
                     blankToNull(request.website()),
                     blankToNull(request.affiliationNumber()),
-                    request.board());
+                    request.board(),
+                    request.timezone());
         }
         SchoolProfile saved = profiles.saveAndFlush(profile);
 
-        school.updateRegistryDetails(request.name(), request.board(), request.city(), request.state());
+        school.updateRegistryDetails(
+                request.name(), request.board(), request.city(), request.state(), request.timezone());
         schools.saveAndFlush(school);
 
         // Nothing recorded when nothing changed. A row saying "the profile was updated, no fields
@@ -146,7 +150,8 @@ public class SchoolProfileService {
             new Field("phone", before.getPhone(), request.phone()),
             new Field("email", before.getEmail(), request.email()),
             new Field("website", before.getWebsite(), blankToNull(request.website())),
-            new Field("affiliationNumber", before.getAffiliationNumber(), blankToNull(request.affiliationNumber()))
+            new Field("affiliationNumber", before.getAffiliationNumber(), blankToNull(request.affiliationNumber())),
+            new Field("timezone", before.getTimezone(), request.timezone())
         }) {
             if (!Objects.equals(field.before(), field.after())) {
                 changed.add(field.name());
@@ -157,8 +162,17 @@ public class SchoolProfileService {
 
     /** On the first save there is nothing to diff against, so every field that was filled in counts. */
     private static Set<String> suppliedFields(UpdateSchoolProfileRequest request) {
-        Set<String> supplied = new LinkedHashSet<>(
-                Set.of("name", "board", "addressLine1", "city", "state", "pincode", "principalName", "phone", "email"));
+        Set<String> supplied = new LinkedHashSet<>(Set.of(
+                "name",
+                "board",
+                "addressLine1",
+                "city",
+                "state",
+                "pincode",
+                "principalName",
+                "phone",
+                "email",
+                "timezone"));
         if (blankToNull(request.addressLine2()) != null) {
             supplied.add("addressLine2");
         }

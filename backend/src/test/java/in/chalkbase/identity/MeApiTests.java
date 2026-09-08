@@ -180,6 +180,8 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.user.mustChangePassword").value(false))
                 .andExpect(jsonPath("$.data.school.code").value(ORCHARD_CODE))
                 .andExpect(jsonPath("$.data.school.name").value(ORCHARD_NAME))
+                // Off the session, not a fresh tenant-bound read (ADR-0032) — see the class doc.
+                .andExpect(jsonPath("$.data.school.timezone").value("Asia/Kolkata"))
                 .andExpect(jsonPath("$.data.permissions")
                         .value(org.hamcrest.Matchers.containsInAnyOrder(
                                 SCHOOL_READ,

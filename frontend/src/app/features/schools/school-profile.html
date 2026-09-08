@@ -185,6 +185,28 @@
               [readOnly]="saving()"
             />
           </cb-form-field>
+
+          <!--
+            Every report card, receipt and audit log entry is timestamped in this zone (ADR-0032).
+            Defaults to Asia/Kolkata, which is right for every school in the country — this box is
+            for the rare school reading its own records from abroad.
+          -->
+          <cb-form-field
+            #timezoneField
+            label="Time zone"
+            [controlId]="fieldIds.timezone"
+            [required]="true"
+            hint="An IANA time zone, for example Asia/Kolkata. Almost every school leaves this as it is."
+            [error]="fieldErrors().timezone"
+          >
+            <cb-text-input
+              formControlName="timezone"
+              [id]="timezoneField.controlId()"
+              [describedBy]="timezoneField.describedById()"
+              [invalid]="timezoneField.hasError()"
+              [readOnly]="saving()"
+            />
+          </cb-form-field>
         </div>
       </section>
 

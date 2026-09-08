@@ -72,6 +72,8 @@ export type UpdateDocumentRequest = Schemas['UpdateDocumentRequest'];
  *
  * - `configured` — false when the school has never saved one: the other fields are seeds, not
  *   saved answers.
+ * - `timezone` — an IANA zone id, e.g. `Asia/Kolkata`. Never absent, even when `configured` is
+ *   false: the registry seeds it the same way it seeds `board`, `city` and `state` (ADR-0032).
  */
 export type SchoolProfile = Schemas['SchoolProfileResponse'];
 
@@ -121,8 +123,13 @@ export type LoginRequest = Schemas['LoginRequest'];
  * The school a successful sign-in resolves to, as echoed back by the login endpoint.
  *
  * The backend answers this and `MeSchool` with one type, `SchoolSummary`, because it is the same
- * two fields answering the same question. Both names are kept because both readings are useful at
- * their call sites.
+ * three fields answering the same question. Both names are kept because both readings are useful
+ * at their call sites.
+ *
+ * - `timezone` — an IANA zone id, e.g. `Asia/Kolkata` (ADR-0032). Resolved once at login and
+ *   carried on the session for its whole lifetime, the same staleness contract `code` and `name`
+ *   already have: a school that changes it mid-session is corrected at the next login, not by a
+ *   background refresh. `SessionStore.schoolTimezone()` is how a screen reads it.
  */
 export type LoginSchool = Schemas['SchoolSummary'];
 

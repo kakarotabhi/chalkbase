@@ -3,6 +3,9 @@ import { LoginResponse, MeResponse } from '../api/models';
 import { NavigationStore } from '../navigation/navigation-store';
 import { Permission } from './permissions';
 
+/** Matches the backend's own default (ADR-0032) for a school with no session yet. */
+const DEFAULT_TIMEZONE = 'Asia/Kolkata';
+
 /**
  * Who is signed in, as signals the shell and the auth screens read.
  *
@@ -45,6 +48,15 @@ export class SessionStore {
   readonly isSignedIn = computed(() => this.currentUser() !== null);
   readonly mustChangePassword = computed(() => this.currentUser()?.mustChangePassword ?? false);
   readonly schoolName = computed(() => this.currentUser()?.school.name ?? null);
+
+  /**
+   * The IANA zone id every date and time should be rendered in, e.g. `Asia/Kolkata`.
+   *
+   * The fallback matches the backend's own default (ADR-0032): every school this product targets
+   * starts in that zone, so a screen reached before a session has landed — or a spec that never
+   * signs one in — still has a real zone to format with rather than `undefined`.
+   */
+  readonly schoolTimezone = computed(() => this.currentUser()?.school.timezone ?? DEFAULT_TIMEZONE);
 
   /**
    * What this user may do, as a set, recomputed whenever the session changes.

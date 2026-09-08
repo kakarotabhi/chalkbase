@@ -38,6 +38,7 @@ const SAVED_PROFILE = {
   email: 'office@evergreen.example',
   website: 'https://evergreen.example',
   affiliationNumber: '1130456',
+  timezone: 'Asia/Kolkata',
   configured: true,
   updatedAt: '2026-09-06T09:00:00Z',
 };
@@ -121,6 +122,7 @@ describe('SchoolProfile', () => {
     expect(field('school-pincode').value).toBe('411045');
     expect(field('school-principal').value).toBe('Meera Iyer');
     expect(field('school-email').value).toBe('office@evergreen.example');
+    expect(field('school-timezone').value).toBe('Asia/Kolkata');
     expect(picker('school-board').value).toBe('CBSE');
     expect(picker('school-state').value).toBe('Maharashtra');
   });
@@ -141,12 +143,14 @@ describe('SchoolProfile', () => {
       board: 'CBSE',
       city: 'Pune',
       state: 'Maharashtra',
+      timezone: 'Asia/Kolkata',
       configured: false,
     });
 
     expect(text()).toContain("This school's profile is not filled in yet");
     // The registry's own details are seeded in rather than asked for twice.
     expect(field('school-name').value).toBe('Evergreen Public School');
+    expect(field('school-timezone').value).toBe('Asia/Kolkata');
     expect(field('school-address1').value).toBe('');
   });
 
@@ -258,6 +262,64 @@ describe('SchoolProfile', () => {
     expect(element().querySelector('#school-city-error')).toBeNull();
 
     httpMock.expectNone(URL);
+  });
+
+  /**
+   * The client's own check is a shape guard, not an IANA lookup (ADR-0032) — it catches a value
+   * that cannot possibly be a zone id, and leaves telling a typo from a real one to the server's
+   * `ZoneId.of(...)`, asserted separately below.
+   */
+  it('refuses a time zone with characters that cannot appear in one', () => {
+    arrive();
+
+    type('school-timezone', 'not a zone!!');
+    submit();
+
+    expect(element().querySelector('#school-timezone-error')?.textContent).toContain(
+      'Enter an IANA time zone',
+    );
+    httpMock.expectNone(URL);
+  });
+
+  /** The server is the authority on whether a well-shaped value is a real zone. */
+  it('shows the server refusal when a well-shaped time zone is not a real one', () => {
+    arrive();
+
+    type('school-timezone', 'Asia/Kalkota');
+    submit();
+
+    httpMock.expectOne(URL).flush(
+      {
+        success: false,
+        timestamp: '2026-09-06T10:00:00Z',
+        error: {
+          code: 'VAL_001',
+          message: 'Some of the information provided is not valid',
+          details: { timezone: 'must be a time zone Chalkbase knows, for example Asia/Kolkata' },
+        },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    fixture.detectChanges();
+
+    expect(element().querySelector('#school-timezone-error')?.textContent).toContain(
+      'must be a time zone Chalkbase knows',
+    );
+  });
+
+  it('sends the time zone on save, alongside every other field', () => {
+    arrive();
+
+    type('school-timezone', 'Asia/Dubai');
+    submit();
+
+    const request = httpMock.expectOne(URL);
+    expect(request.request.body).toMatchObject({ timezone: 'Asia/Dubai' });
+
+    request.flush(envelope({ ...SAVED_PROFILE, timezone: 'Asia/Dubai' }));
+    fixture.detectChanges();
+
+    expect(field('school-timezone').value).toBe('Asia/Dubai');
   });
 
   it('refuses to save with a required field emptied', () => {

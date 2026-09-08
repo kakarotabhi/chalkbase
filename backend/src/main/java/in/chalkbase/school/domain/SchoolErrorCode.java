@@ -35,7 +35,13 @@ public enum SchoolErrorCode implements ErrorCode {
     BOOTSTRAP_SCHEMA_MISMATCH(
             "SCHOOL_007",
             "A school with this code is already registered under a different schema name",
-            HttpStatus.CONFLICT);
+            HttpStatus.CONFLICT),
+
+    /**
+     * Not an IANA zone id {@code java.time.ZoneId} recognises. A typo here would otherwise be
+     * accepted silently and render every timestamp this school reads wrong.
+     */
+    INVALID_TIMEZONE("SCHOOL_008", "That is not a time zone Chalkbase knows", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;

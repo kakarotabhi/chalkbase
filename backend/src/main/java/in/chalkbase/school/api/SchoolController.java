@@ -77,6 +77,13 @@ public class SchoolController {
      * reaching {@code GlobalExceptionHandler}, not one the filter chain's anonymous-aware entry
      * point ever sees. No shipped screen calls this without a session; the day one does (a public
      * onboarding form, say) this is the annotation to relax, deliberately, not by omission.
+     *
+     * <p>On the {@code prod} profile this path is also named explicitly in {@code SetupKeyFilter},
+     * which otherwise treats every {@code /api/schools/**} request the same regardless of what
+     * {@code @PreAuthorize} says about it — a signed-in school administrator has no setup key and
+     * got a byte-identical {@code NF_002} here until that exemption existed. A future endpoint added
+     * to this controller that is <em>not</em> a platform-operator action needs the same exemption
+     * added there, not assumed.
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/boards")

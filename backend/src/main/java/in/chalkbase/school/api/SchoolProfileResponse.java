@@ -25,6 +25,9 @@ import java.time.Instant;
  * @param configured false when no profile row exists yet, i.e. nothing below has been filled in.
  *     The screen uses it to say "complete your profile" rather than showing an empty form as if
  *     something had been lost.
+ * @param timezone an IANA zone id, e.g. {@code Asia/Kolkata}. Never absent, even when
+ *     {@code configured} is false: the registry carries a copy with the same default a new school
+ *     gets, so there is always one to render a time with.
  * @param updatedAt when the profile was last saved, or null when it never has been
  */
 public record SchoolProfileResponse(
@@ -64,6 +67,7 @@ public record SchoolProfileResponse(
         String affiliationNumber,
 
         @Classification(Tier.INTERNAL) boolean configured,
+        @Classification(Tier.PUBLIC) String timezone,
 
         @Schema(nullable = true) @Classification(Tier.INTERNAL)
         Instant updatedAt) {
@@ -71,8 +75,8 @@ public record SchoolProfileResponse(
     public static SchoolProfileResponse of(School school, SchoolProfile profile) {
         if (profile == null) {
             // A school with no profile row is not an error and is not empty either: the registry
-            // already knows its name, board and town, so those are seeded into the form rather than
-            // asked for a second time.
+            // already knows its name, board, town and time zone, so those are seeded into the form
+            // rather than asked for a second time.
             return new SchoolProfileResponse(
                     school.getCode(),
                     school.getSchemaName(),
@@ -89,6 +93,7 @@ public record SchoolProfileResponse(
                     null,
                     null,
                     false,
+                    school.getTimezone(),
                     null);
         }
         return new SchoolProfileResponse(
@@ -107,6 +112,7 @@ public record SchoolProfileResponse(
                 profile.getWebsite(),
                 profile.getAffiliationNumber(),
                 true,
+                profile.getTimezone(),
                 profile.getUpdatedAt());
     }
 

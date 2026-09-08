@@ -18,7 +18,7 @@ describe('SessionStore permissions', () => {
     userId: '018f3a10-0000-7000-8000-0000000000fe',
     displayName: 'Test Principal',
     mustChangePassword: false,
-    school: { code: 'EVG', name: 'Test School' },
+    school: { code: 'EVG', name: 'Test School', timezone: 'Asia/Kolkata' },
     permissions: [...permissions],
   });
 

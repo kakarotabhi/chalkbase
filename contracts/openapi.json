@@ -3191,6 +3191,9 @@
           "state": {
             "type": "string"
           },
+          "timezone": {
+            "type": "string"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -3204,7 +3207,8 @@
           "code",
           "configured",
           "name",
-          "schemaName"
+          "schemaName",
+          "timezone"
         ],
         "type": "object"
       },
@@ -3242,6 +3246,9 @@
           },
           "state": {
             "type": "string"
+          },
+          "timezone": {
+            "type": "string"
           }
         },
         "required": [
@@ -3250,7 +3257,8 @@
           "code",
           "id",
           "name",
-          "schemaName"
+          "schemaName",
+          "timezone"
         ],
         "type": "object"
       },
@@ -3261,11 +3269,15 @@
           },
           "name": {
             "type": "string"
+          },
+          "timezone": {
+            "type": "string"
           }
         },
         "required": [
           "code",
-          "name"
+          "name",
+          "timezone"
         ],
         "type": "object"
       },
@@ -3778,6 +3790,11 @@
             "minLength": 0,
             "type": "string"
           },
+          "timezone": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
           "website": {
             "maxLength": 200,
             "minLength": 0,
@@ -3794,7 +3811,8 @@
           "phone",
           "pincode",
           "principalName",
-          "state"
+          "state",
+          "timezone"
         ],
         "type": "object"
       },

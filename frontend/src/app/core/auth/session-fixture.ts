@@ -35,7 +35,7 @@ export function me(permissions: readonly Permission[] = []): MeResponse {
       displayName: 'Test Teacher',
       mustChangePassword: false,
     },
-    school: { code: 'EVG', name: 'Test School' },
+    school: { code: 'EVG', name: 'Test School', timezone: 'Asia/Kolkata' },
     permissionsVersion: 'test-permissions-version',
     permissions: [...permissions],
     navigation: [],

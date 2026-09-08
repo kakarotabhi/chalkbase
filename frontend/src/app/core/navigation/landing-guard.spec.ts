@@ -32,7 +32,7 @@ const me = (over: Partial<MeResponse> = {}): MeResponse => ({
     displayName: 'Priya Sharma',
     mustChangePassword: false,
   },
-  school: { code: 'GPS-S12', name: 'Greenfield Public School' },
+  school: { code: 'GPS-S12', name: 'Greenfield Public School', timezone: 'Asia/Kolkata' },
   permissionsVersion: '7',
   permissions: [],
   navigation: [],

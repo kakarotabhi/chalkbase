@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -44,6 +45,19 @@ import tools.jackson.databind.json.JsonMapper;
  * length, not whether the request carried one. There is deliberately no logger in this class: a
  * rejection is indistinguishable in the logs from a request to any other unmapped address, which
  * is the same property the 404 gives the caller.
+ *
+ * <p><strong>One exemption: {@code GET /api/schools/boards}.</strong> It is not an onboarding
+ * action — it discloses nothing about which schools exist, only the fixed list of curriculum boards
+ * {@code Board} declares — and {@code SchoolController} already requires {@code isAuthenticated()}
+ * on it independently of this filter, the same treatment {@code /api/reference/states} gets in
+ * {@code platform}. It sits under {@code /api/schools/**} only because {@code Board} is
+ * {@code school.domain}'s own type and {@code platform} must not import it the other way round
+ * (ADR-0029), not because it is part of the platform-operator registry this filter exists to hide.
+ * Before this exemption existed, a browser signed in to a real school 404'd this read on {@code
+ * prod} exactly as it would a stranger's write — the school-profile form's Board picker could not
+ * load, and the byte-identical {@code NF_002} this filter is designed to produce made it look like
+ * ordinary routing rather than a bug. {@code SetupKeyFilterTests} pins this on the {@code prod}
+ * profile, which is the only profile where it was ever wrong.
  */
 class SetupKeyFilter extends OncePerRequestFilter {
 
@@ -63,6 +77,10 @@ class SetupKeyFilter extends OncePerRequestFilter {
     private static final RequestMatcher ONBOARDING =
             PathPatternRequestMatcher.withDefaults().matcher("/api/schools/**");
 
+    /** See the class Javadoc's "One exemption" paragraph. Named, not folded into {@link #ONBOARDING}. */
+    private static final RequestMatcher BOARDS_READ =
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/schools/boards");
+
     private final byte[] expected;
     private final JsonMapper jsonMapper;
 
@@ -73,7 +91,7 @@ class SetupKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !ONBOARDING.matches(request);
+        return !ONBOARDING.matches(request) || BOARDS_READ.matches(request);
     }
 
     @Override

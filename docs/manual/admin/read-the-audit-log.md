@@ -44,6 +44,7 @@ date around the time it happened; the entry with that trace id is the action the
 
 ## Times
 
-Times are shown using your own device's clock. Everyone in India is on the same clock, so this
-matches the school — but if you are reading the log from another country, open a row to see the full
-timestamp with its timezone named.
+Times are shown in your school's own time zone — set on **Settings → School profile**, and
+`Asia/Kolkata` unless someone has changed it. That is the time the event actually happened at the
+school, whichever country you are reading the log from. Open a row to see the full timestamp with
+the zone named, so there is never a doubt about which clock you are reading.

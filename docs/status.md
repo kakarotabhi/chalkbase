@@ -348,6 +348,8 @@ no reason, and the sections land with the modules.
 | Student and guardian CSV export, masked by classification with an audited unmasked permission of its own                                                                                                                                                                                                                                                                     | [ADR-0027](architecture/adr/0027-export-masking.md), `platform/export/`, `StudentExportService`                                                     |
 | Global reference data: states move to `public.state`, seeded from code, cached in memory, read through `GET /api/reference/states`; boards stay the `school` enum but drop their frontend-side label copy at `GET /api/schools/boards`; the audit action filter examined and deliberately left as is, with the index it would need first named                               | [ADR-0029](architecture/adr/0029-reference-data.md), `platform/reference/`                                                                          |
 | **Phase 2, first feature:** daily attendance end to end — mark a section, view it, correction request and admin approval, locking at end of day plus 24 hours. One table shaped for the period-wise grain too, with no write path for it yet. The marking screen is card-based at every width, not only below the wide breakpoint: its primary user is a teacher on a phone. | [ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md), `attendance/`, `features/attendance/`                                               |
+| A school carries an IANA time zone, defaulted to `Asia/Kolkata`: authoritative on the profile, copied to the registry and the session, validated against `java.time.ZoneId`; the audit log renders every timestamp in it instead of the reader's device zone | [ADR-0032](architecture/adr/0032-school-timezone.md), `school/`, `features/audit/audit-log.ts` |
+| Fixed on `prod`: `GET /api/schools/boards` was hidden behind `SetupKeyFilter` along with the rest of `/api/schools/**`, so the school-profile form's Board picker 404'd for every real user on every deployed environment; the filter now names it an explicit exemption, pinned by a `prod`-profile test | [ADR-0029 amendment](architecture/adr/0029-reference-data.md), `SetupKeyFilter`, `SetupKeyFilterTests` |
 
 ## What is left on the frontend
 
@@ -566,10 +568,13 @@ Recorded so they are decided rather than discovered.
   administrator opens during an incident. It lists the actions this build ships, so a verb a future
   module invents is filterable by neither name nor dropdown — those rows still list, label legibly
   and are reachable by actor or date. `idx_audit_event_action` first, then this is worth revisiting.
-- **A school has no timezone**, so the audit screen renders times in the reader's own device zone.
-  India is one zone, so this is right for everyone in the country and wrong only for someone reading
-  from abroad — the row detail names the zone so they are not misled. A `timezone` on the school
-  closes it properly, and is a contract change rather than a screen fix.
+- **The audit log's date-range filter still reads "a day" off the browser's own clock**, not the
+  school's timezone ([ADR-0032](architecture/adr/0032-school-timezone.md)): the column and the row
+  detail render in the school's zone now, but `instantAtStartOfDay`/`instantAfter` still build
+  midnight from the reader's device. Converting that needs either the `Temporal` API or a hand-rolled
+  DST-safe offset calculation — real work for a narrower payoff, since "the 5th" read as the reader's
+  own local day is a defensible reading of the filter, unlike a bare "14:32" silently meaning the
+  wrong clock. Left for whoever next opens this screen.
 - **The audit log still uses the labelled-form filter pattern** the students list has just left
   behind (`features/audit/audit-log.html`). That is deliberate for now, not an oversight: two of its
   three filters are dates, which have no sensible "current value" to print on a pill, and the
