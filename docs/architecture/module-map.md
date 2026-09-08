@@ -40,8 +40,10 @@ Modules are added in roadmap order — see
   `db/migration/tenant` (ADR-0011).
 - **Registry versus profile.** `public.school` is identity and routing — code, name and schema name,
   read before any tenant is bound. A school's editable detail lives in `school_profile`, inside its
-  own schema. The registry's copy of name, board, city and state is written back on every profile
-  save, because a school register that disagrees with the school is worse than a duplicated column.
+  own schema. The registry's copy of name, board, city, state and time zone is written back on every
+  profile save, because a school register that disagrees with the school is worse than a duplicated
+  column — the time zone rides further still, onto the session as `SchoolSummary`, so `/api/me`
+  (ADR-0008) never binds a tenant just to render a time ([ADR-0032](adr/0032-school-timezone.md)).
 - **`academic_session` belongs to `academics`, not to `school`.** It moved there with the classes
   work: it is the time axis the academic model hangs off, and leaving it beside the school registry
   would make every academics query reach across a boundary for it. The table did not change — only

@@ -98,6 +98,7 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `GEN_001` | 500 | Unexpected server failure. Quote the trace id. |
 | `GEN_002` | 500 | A stored value could not be decrypted (ADR-0022) — the key is wrong or the row is corrupt. Quote the trace id. |
 | `SCHOOL_001` | 409 | A school with this code already exists. |
+| `SCHOOL_008` | 400 | That is not a time zone Chalkbase knows. |
 | `ATT_001` | 422 | A student named in a mark is not actively enrolled in that section and session. |
 | `ATT_002` | 400 | Attendance marked for a date after today. |
 | `ATT_003` | 409 | This attendance date is locked (end of day plus 24 hours); file a correction request instead. |

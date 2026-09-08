@@ -94,7 +94,8 @@ class SchoolProfileApiTests {
 
     /**
      * A school that has never saved a profile has no row, and that is not an error. The registry
-     * already knows its name, code, board and town; the answer is those, with the rest empty.
+     * already knows its name, code, board, town and time zone; the answer is those, with the rest
+     * empty.
      */
     @Test
     void answersWithTheRegistrysOwnDetailsWhenNoProfileHasBeenSavedYet() throws Exception {
@@ -108,6 +109,9 @@ class SchoolProfileApiTests {
                 .andExpect(jsonPath("$.data.name").value("Evergreen Public School"))
                 .andExpect(jsonPath("$.data.board").value("CBSE"))
                 .andExpect(jsonPath("$.data.city").value("Pune"))
+                // Every school this product targets is in one zone (ADR-0032) — present even though
+                // nothing has been saved yet, never one of the fields the envelope omits.
+                .andExpect(jsonPath("$.data.timezone").value("Asia/Kolkata"))
                 // Absent rather than null: the envelope drops nulls (ADR-0007).
                 .andExpect(jsonPath("$.data.addressLine1").doesNotExist())
                 .andExpect(jsonPath("$.data.updatedAt").doesNotExist());
@@ -236,23 +240,61 @@ class SchoolProfileApiTests {
     }
 
     /**
-     * The registry keeps its own copy of the name, board and town so the platform can list schools
-     * without binding a tenant. Saving the profile has to keep that copy honest, or the school
-     * register quietly disagrees with the school.
+     * The registry keeps its own copy of the name, board, town and time zone so the platform can
+     * list schools — and identity can build a session — without binding a tenant. Saving the
+     * profile has to keep that copy honest, or the school register quietly disagrees with the
+     * school.
      */
     @Test
     void keepsTheRegistrysCopyOfTheDisplayDetailsInStep() throws Exception {
         Cookie session = signInAsAdministrator(EVERGREEN_SCHEMA, EVERGREEN_CODE);
 
-        save(session, profileBody(EVERGREEN_CODE, "Evergreen Public School, Baner", "Pimpri", "411018"));
+        save(session, profileBody(EVERGREEN_CODE, "Evergreen Public School, Baner", "Pimpri", "411018", "Asia/Dubai"));
 
         School registry = schools.findBySchemaName(EVERGREEN_SCHEMA).orElseThrow();
         assertThat(registry.getName()).isEqualTo("Evergreen Public School, Baner");
         assertThat(registry.getCity()).isEqualTo("Pimpri");
         assertThat(registry.getBoard()).isEqualTo(Board.CISCE);
+        assertThat(registry.getTimezone()).isEqualTo("Asia/Dubai");
         // And the parts that address the tenant are untouched.
         assertThat(registry.getCode()).isEqualTo(EVERGREEN_CODE);
         assertThat(registry.getSchemaName()).isEqualTo(EVERGREEN_SCHEMA);
+    }
+
+    /**
+     * A school that changes its time zone away from the default reads it back — the profile is
+     * authoritative, not the registry's copy (ADR-0032).
+     */
+    @Test
+    void savesANonDefaultTimezoneAndReadsItBack() throws Exception {
+        Cookie session = signInAsAdministrator(EVERGREEN_SCHEMA, EVERGREEN_CODE);
+
+        save(session, profileBody(EVERGREEN_CODE, "Evergreen Public School", "Pune", "411045", "Asia/Dubai"));
+
+        mockMvc.perform(get(PROFILE).cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.timezone").value("Asia/Dubai"));
+    }
+
+    /**
+     * A typo that merely looks like a zone id is not a shape a pattern would catch — this is what
+     * {@code ZoneId.of(...)} is for (ADR-0032).
+     */
+    @Test
+    void refusesATimezoneThatIsNotOneJavaKnows() throws Exception {
+        Cookie session = signInAsAdministrator(EVERGREEN_SCHEMA, EVERGREEN_CODE);
+
+        mockMvc.perform(put(PROFILE)
+                        .cookie(session)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(profileBody(
+                                EVERGREEN_CODE, "Evergreen Public School", "Pune", "411045", "Asia/Kalkota")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VAL_001"))
+                .andExpect(jsonPath("$.error.details.timezone").exists());
+
+        assertThat(profileCount(EVERGREEN_SCHEMA)).isZero();
     }
 
     // ── Tenancy ──────────────────────────────────────────────────────────────────────────────
@@ -466,6 +508,10 @@ class SchoolProfileApiTests {
     }
 
     private static String profileBody(String code, String name, String city, String pincode) {
+        return profileBody(code, name, city, pincode, "Asia/Kolkata");
+    }
+
+    private static String profileBody(String code, String name, String city, String pincode, String timezone) {
         return """
                 {
                   "code": "%s",
@@ -481,9 +527,10 @@ class SchoolProfileApiTests {
                   "phone": "+91 20 2721 0000",
                   "email": "office@evergreen.example",
                   "website": "https://evergreen.example",
-                  "affiliationNumber": "1130456"
+                  "affiliationNumber": "1130456",
+                  "timezone": "%s"
                 }
-                """.formatted(code, schemaFor(code), name, city, pincode);
+                """.formatted(code, schemaFor(code), name, city, pincode, timezone);
     }
 
     private static String schemaFor(String code) {

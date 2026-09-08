@@ -52,7 +52,8 @@ public class SchoolService implements SchoolLookup {
     @Override
     public Optional<SchoolRef> byCode(String code) {
         return schools.findByCodeAndActiveIsTrue(code)
-                .map(school -> new SchoolRef(school.getCode(), school.getName(), school.getSchemaName()));
+                .map(school -> new SchoolRef(
+                        school.getCode(), school.getName(), school.getSchemaName(), school.getTimezone()));
     }
 
     public SchoolResponse findById(UUID id) {

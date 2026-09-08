@@ -143,7 +143,7 @@ public class AuthenticationService {
                 account.getId(),
                 account.getDisplayName(),
                 account.isMustChangePassword(),
-                new SchoolSummary(school.code(), school.name()),
+                new SchoolSummary(school.code(), school.name(), school.timezone()),
                 signedIn.access().permissions().stream().sorted().toList());
     }
 
@@ -351,7 +351,7 @@ public class AuthenticationService {
                 username,
                 account.getDisplayName(),
                 school.schemaName(),
-                new SchoolSummary(school.code(), school.name()),
+                new SchoolSummary(school.code(), school.name(), school.timezone()),
                 signedIn.access());
         List<GrantedAuthority> authorities = signedIn.access().permissions().stream()
                 .sorted()

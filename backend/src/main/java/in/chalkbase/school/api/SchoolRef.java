@@ -14,11 +14,15 @@ import in.chalkbase.platform.classification.Tier;
  * @param code the code a user types, e.g. on the login form
  * @param name the school's display name
  * @param schemaName the tenant schema to bind before touching that school's data (ADR-0011)
+ * @param timezone an IANA zone id, e.g. {@code Asia/Kolkata} — identity carries it onto the session
+ *     at login (as {@code SchoolSummary}) precisely so that later requests never need to bind a
+ *     tenant just to find out which zone to render a time in
  */
 public record SchoolRef(
         @Classification(Tier.PUBLIC) String code,
         @Classification(Tier.PUBLIC) String name,
-        @Classification(Tier.INTERNAL) String schemaName) {
+        @Classification(Tier.INTERNAL) String schemaName,
+        @Classification(Tier.PUBLIC) String timezone) {
     /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */
     @Override
     public String toString() {

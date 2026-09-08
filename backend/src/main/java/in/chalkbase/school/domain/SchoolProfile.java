@@ -69,6 +69,15 @@ public class SchoolProfile {
     @Column(nullable = false, length = 16)
     private Board board;
 
+    /**
+     * An IANA zone id, e.g. {@code Asia/Kolkata}. Authoritative here, not in {@code public.school}
+     * — this is the school's own editable data, and the registry keeps only a copy for the sessions
+     * and lookups that run before a tenant is bound (see {@code School#timezone}). Every date and
+     * time this school's staff, parents and students read is rendered in it.
+     */
+    @Column(nullable = false, length = 50)
+    private String timezone;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -90,7 +99,8 @@ public class SchoolProfile {
             String email,
             String website,
             String affiliationNumber,
-            Board board) {
+            Board board,
+            String timezone) {
         apply(
                 addressLine1,
                 addressLine2,
@@ -102,7 +112,8 @@ public class SchoolProfile {
                 email,
                 website,
                 affiliationNumber,
-                board);
+                board,
+                timezone);
     }
 
     /**
@@ -122,7 +133,8 @@ public class SchoolProfile {
             String email,
             String website,
             String affiliationNumber,
-            Board board) {
+            Board board,
+            String timezone) {
         this.addressLine1 = addressLine1;
         this.addressLine2 = addressLine2;
         this.city = city;
@@ -134,6 +146,7 @@ public class SchoolProfile {
         this.website = website;
         this.affiliationNumber = affiliationNumber;
         this.board = board;
+        this.timezone = timezone;
         this.updatedAt = Instant.now();
     }
 
@@ -188,6 +201,10 @@ public class SchoolProfile {
 
     public Board getBoard() {
         return board;
+    }
+
+    public String getTimezone() {
+        return timezone;
     }
 
     public Instant getCreatedAt() {

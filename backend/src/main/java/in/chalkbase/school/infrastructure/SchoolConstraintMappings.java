@@ -31,7 +31,12 @@ public class SchoolConstraintMappings {
                 mapping("ck_school_profile_email", SchoolErrorCode.INVALID_CONTACT),
                 mapping("ck_school_profile_phone", SchoolErrorCode.INVALID_CONTACT),
                 mapping("ck_school_profile_website", SchoolErrorCode.INVALID_CONTACT),
-                mapping("ck_school_profile_board", SchoolErrorCode.UNKNOWN_BOARD));
+                mapping("ck_school_profile_board", SchoolErrorCode.UNKNOWN_BOARD),
+                mapping("ck_school_profile_timezone", SchoolErrorCode.INVALID_TIMEZONE),
+
+                // public.school. Loose for the same reason as the row above: the request DTO's own
+                // ZoneId check is the one a client sees first.
+                mapping("ck_school_timezone", SchoolErrorCode.INVALID_TIMEZONE));
     }
 
     /** The common case: the error code's own sentence is the one to show. */

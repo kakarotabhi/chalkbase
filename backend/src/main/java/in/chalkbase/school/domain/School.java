@@ -40,6 +40,17 @@ public class School {
     @Column(length = 100)
     private String state;
 
+    /**
+     * An IANA zone id, e.g. {@code Asia/Kolkata}. Defaults for every school this product targets —
+     * one country, one zone — so only a school reading from abroad ever has a reason to change it
+     * (see {@code school_profile}, which is where it is actually edited). The registry keeps this
+     * copy for the same reason it keeps a copy of the name, board and town: {@code SchoolLookup} and
+     * the session it feeds are read with no tenant bound, and a login before any schema is opened is
+     * the wrong place to add a query.
+     */
+    @Column(nullable = false, length = 50)
+    private String timezone = "Asia/Kolkata";
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -71,11 +82,12 @@ public class School {
      * so it keeps enough to describe a school without opening that school's schema. The profile is
      * authoritative; this keeps the copy honest.
      */
-    public void updateRegistryDetails(String name, Board board, String city, String state) {
+    public void updateRegistryDetails(String name, Board board, String city, String state, String timezone) {
         this.name = name;
         this.board = board;
         this.city = city;
         this.state = state;
+        this.timezone = timezone;
     }
 
     public UUID getId() {
@@ -104,6 +116,10 @@ public class School {
 
     public String getState() {
         return state;
+    }
+
+    public String getTimezone() {
+        return timezone;
     }
 
     public boolean isActive() {

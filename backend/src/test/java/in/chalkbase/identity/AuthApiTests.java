@@ -95,6 +95,9 @@ class AuthApiTests {
                 .andExpect(jsonPath("$.data.mustChangePassword").value(true))
                 .andExpect(jsonPath("$.data.school.code").value(RIVERDALE_CODE))
                 .andExpect(jsonPath("$.data.school.name").value("Riverdale Public School"))
+                // Every school defaults here (ADR-0032) — carried on the session from login, never
+                // a second, tenant-bound read.
+                .andExpect(jsonPath("$.data.school.timezone").value("Asia/Kolkata"))
                 .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.traceId").exists());
     }

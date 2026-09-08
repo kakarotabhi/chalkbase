@@ -66,7 +66,15 @@ public record UpdateSchoolProfileRequest(
         @Pattern(regexp = UpdateSchoolProfileRequest.WEBSITE_PATTERN, message = "must start with http:// or https://") @Size(max = 200)
         String website,
 
-        @Classification(Tier.PUBLIC) @Size(max = 40) String affiliationNumber) {
+        @Classification(Tier.PUBLIC) @Size(max = 40) String affiliationNumber,
+
+        /**
+         * An IANA zone id, e.g. {@code Asia/Kolkata}. Every date and time this school's staff,
+         * parents and students read is rendered in it — the audit log first, and every other screen
+         * that has been converted since (see the class doing the converting for the current list).
+         */
+        @Classification(Tier.PUBLIC) @NotBlank @Size(max = 50) @ValidTimeZone
+        String timezone) {
 
     /** Six digits, never leading zero — an Indian PIN code. */
     public static final String PINCODE_PATTERN = "^[1-9][0-9]{5}$";
