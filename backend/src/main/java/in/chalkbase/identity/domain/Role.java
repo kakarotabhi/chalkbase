@@ -47,6 +47,16 @@ public class Role {
     @Column(name = "template_code", length = 40)
     private String templateCode;
 
+    /**
+     * Set the moment role management replaces this role's permission set, and never cleared
+     * (ADR-0031). {@code RoleTemplateInstaller} reconciles a template-derived role only while this
+     * is false — the instant a school edits what a role grants, that role is the school's own and
+     * a later release adding a permission to the template it was copied from must not silently
+     * rewrite it.
+     */
+    @Column(name = "customised", nullable = false)
+    private boolean customised;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "role_permission", joinColumns = @JoinColumn(name = "role_id"))
     @Column(name = "permission_code", nullable = false, length = 80)
@@ -64,17 +74,33 @@ public class Role {
      * typed into a form. {@code RoleTemplateInstaller} is the only other place a {@link Role} row is
      * created, and it goes straight to SQL rather than through this constructor because it runs
      * before the entity manager exists.
+     *
+     * <p>{@code customised} starts true: nothing shipped this role, so there is no template
+     * reconciliation could ever safely apply to it. It happens to be moot for
+     * {@code RoleTemplateInstaller} today — a school-created code cannot collide with a template's,
+     * see {@code RoleCode} — but the row should read as the school's own from the moment it exists
+     * rather than depend on that being true forever.
      */
     public Role(String code, String name, String description, Set<String> permissions) {
         this.code = code;
         this.name = name;
         this.description = description;
         this.permissions = new LinkedHashSet<>(permissions);
+        this.customised = true;
     }
 
-    /** Wholesale replacement, not a delta — the caller has already computed what should remain. */
+    /**
+     * Wholesale replacement, not a delta — the caller has already computed what should remain.
+     *
+     * <p>Also marks this role {@link #isCustomised() customised}, permanently. This is the one
+     * mutator role management uses to change what a role grants (ADR-0031), so it is the one place
+     * that needs to say so: from this call onward, {@code RoleTemplateInstaller} must never again
+     * add a template permission this role does not have, because the school may have removed it on
+     * purpose.
+     */
     public void replacePermissions(Set<String> permissions) {
         this.permissions = new LinkedHashSet<>(permissions);
+        this.customised = true;
     }
 
     public UUID getId() {
@@ -96,6 +122,11 @@ public class Role {
     /** The shipped template this was copied from, or null for a role the school invented. */
     public String getTemplateCode() {
         return templateCode;
+    }
+
+    /** Whether role management has ever replaced this role's permission set. See {@link #replacePermissions}. */
+    public boolean isCustomised() {
+        return customised;
     }
 
     public Set<String> getPermissions() {

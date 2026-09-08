@@ -15,8 +15,12 @@ import java.util.stream.Collectors;
  * <p><strong>The permission sets are deliberately thin, because the catalogue is.</strong> A
  * template may only hold permissions that exist in this build — {@code RoleTemplateInstaller}
  * checks that against the {@code PermissionCatalog} at startup and refuses to start otherwise. As
- * modules land, the templates grow here and each school's administrator is shown a "new permissions
- * available" review prompt rather than having them applied silently.
+ * modules land, the templates grow here. ADR-0005 originally imagined each school's administrator
+ * reviewing a "new permissions available" prompt before a change like that reached their roles; that
+ * screen was never built, and a school onboarded before the growth simply never received it — the
+ * bug ADR-0031 closes. What ships instead, and is not a placeholder for the review screen: a role a
+ * school has never edited receives the new permission automatically, on the school's next startup;
+ * a role the school has changed never does, permanently. See {@code RoleTemplateInstaller}.
  *
  * <p>Permission codes appear as string literals rather than as constants imported from the owning
  * module: a module's constants live behind its own boundary, and these strings are the published

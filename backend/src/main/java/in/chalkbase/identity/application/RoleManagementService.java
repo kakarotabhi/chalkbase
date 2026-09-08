@@ -123,11 +123,16 @@ public class RoleManagementService {
 
         Set<String> removed = new LinkedHashSet<>(current);
         removed.removeAll(requested);
+        boolean becomesCustomised = !role.isCustomised();
 
         role.replacePermissions(requested);
         roles.saveAndFlush(role);
 
-        audit.recordChange(AuditAction.ENTITY_UPDATED, "ROLE", roleId.toString(), List.of("permissions"));
+        audit.recordChange(
+                AuditAction.ENTITY_UPDATED,
+                "ROLE",
+                roleId.toString(),
+                becomesCustomised ? List.of("permissions", "customised") : List.of("permissions"));
 
         if (!removed.isEmpty()) {
             // Taking a permission away must not wait up to seven days to matter (ADR-0023): every
