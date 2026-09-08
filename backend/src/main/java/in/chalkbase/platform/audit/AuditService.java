@@ -217,6 +217,25 @@ public class AuditService {
 
     /**
      * As {@link #recordSecurityEvent(String, AuditOutcome, String, String)}, additionally naming
+     * which Restricted fields a single-record read actually disclosed — a reveal of one student's
+     * or one record's own fields, not a batch with a row count to state.
+     *
+     * <p>{@code fields} holds NAMES only, rejected the same way {@link #recordChange} rejects a
+     * value dressed up as a name (ADR-0014): a field that held nothing for this record is not
+     * named, so the row says what was disclosed, not what the endpoint is shaped to return.
+     * {@code record_count} is left null, the same value every other single-record security event
+     * already leaves it — see {@link AuditEvent#getRecordCount()}. Use the five-argument overload
+     * below instead when the read spans more than one record and a count belongs on the row.
+     *
+     * @param fields the Restricted field names actually disclosed, never a value
+     */
+    public void recordSecurityEvent(
+            String action, AuditOutcome outcome, String entityType, String entityId, Collection<String> fields) {
+        recordSecurityEventInternal(action, outcome, entityType, entityId, fields, null, null);
+    }
+
+    /**
+     * As {@link #recordSecurityEvent(String, AuditOutcome, String, String)}, additionally naming
      * which fields a disclosure carried and how many rows — an export's own shape (ADR-0014,
      * ADR-0018 §2b), not a general-purpose facility every future security event is expected to use.
      *
