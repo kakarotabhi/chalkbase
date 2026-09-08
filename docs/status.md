@@ -34,6 +34,8 @@ the way Phase 1's work was)
 | Documents (FR-013, FR-032)                                            | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render                                                          |
 | Basic dashboards                                                      | ✅ Done                                                                                                                                                     |
 | Export                                                                | ✅ Done                                                                                                                                                     |
+| **Phase 2 — daily attendance** | ✅ Done |
+| **Phase 2 — enquiries, fee structure** | 🔨 In progress |
 | Deployment                                                            | ✅ Render dev · ⬜ Coolify/VPS (production, Phase 4)                                                                       |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
@@ -89,6 +91,44 @@ tenant with a migration orchestrator ([ADR-0011](architecture/adr/0011-schema-pe
 navigation ([ADR-0008](architecture/adr/0008-server-driven-navigation.md)); the generated API contract
 ([contracts/README.md](../contracts/README.md) — it has no ADR, which is worth noticing given how much
 depends on it); and the Render dev deployment.
+
+## Phase 2 in detail
+
+[The roadmap](requirements/06-roadmap-and-mvp.md) lists fifteen features for Phase 2;
+[the scope document](requirements/08-phase-2-scope.md) maps them onto **61 functional requirements**
+and names, for each one, the version of it that would look finished and not be. Read that before
+picking anything up here — this table is the state, not the brief.
+
+| Roadmap feature | Module | State |
+|---|---|---|
+| **Daily attendance** | `attendance` | ✅ Done — mark, view, lock, correction request and approval ([ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md)) |
+| **Enquiry management** | `admission` | 🔨 In progress |
+| **Fee structure** | `fee` | 🔨 In progress |
+| Online admission form | `admission` | ⬜ Not started |
+| Admission workflow | `admission` | ⬜ Not started |
+| Student conversion | `admission` → `student` | ⬜ Not started |
+| Fee demand | `fee` | ⬜ Not started |
+| Offline fee collection | `fee` | ⬜ Not started |
+| Receipts | `fee` | ⬜ Not started |
+| Dues and reminders | `fee` | ⬜ Not started — this is where "the fee ledger reconciles correctly" actually lives |
+| Circulars and notices | `communication` | ⬜ Not started — the class/section slice is unblocked; targeting by fee or attendance status waits on those modules |
+| Leave requests | `attendance` | ⬜ Not started |
+| **Online fee collection** | `fee` | 🚧 Blocked — payment gateway undecided; Phase 0 chose offline-only for v1 behind a port ([ADR-0013](architecture/adr/0013-external-provider-ports.md)) |
+| **Absence alerts** | `attendance` + `communication` | 🚧 Blocked — TRAI DLT registration, weeks of paperwork, not started |
+| **Parent portal basics** | — | 🚧 Blocked — see below. The most blocked item in the phase |
+| **Teacher portal basics** | — | ⬜ Not started, less blocked than the parent portal |
+
+### The parent portal is an identity problem, not a portal problem
+
+Worth stating here rather than leaving in the scope document, because it is the one item where
+building the obvious thing would be a data breach. `platform/security/ScopeType` declares a `WARD`
+scope and `RoleManagementService` **rejects it outright** — a parent's reach is derived from the
+guardian relationship, never assigned. The shipped `PARENT` role template holds **zero permissions**,
+and the code says why: there is no scope resolution to enforce with.
+
+So the only pattern that exists today is a `SCHOOL`-scoped read. A parent portal built on it would
+show every parent the whole school. That is not a screen to be careful with; it is a decision to take
+before any screen exists.
 
 ## Deployed
 
