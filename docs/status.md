@@ -364,6 +364,17 @@ Transport and hostel sections on the student record are **not** on this list: th
 modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
 model until those exist.
 
+## Verified against the deployed environment
+
+Phase 1 was exercised end to end on the deployed environment on 2026-09-08 — four agents against the
+API in parallel, and every screen driven in a browser. **55 of 59 checks passed.** The full account,
+including the evidence for each, is in [the verification report](phase-1-verification.md).
+
+It is worth reading for what it says about the *kind* of thing that survived CI: a seed that cannot
+reach the database it was written for, a screen whose prose contradicts its own behaviour, an audit
+row that records less than it promises, and a role nobody can delete. None of those are visible to a
+test suite, and all four were found within an hour of using the product as a person.
+
 ## Known gaps and debt
 
 Recorded so they are decided rather than discovered.
