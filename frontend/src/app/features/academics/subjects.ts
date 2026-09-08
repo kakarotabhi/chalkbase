@@ -17,6 +17,7 @@ import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { Subject } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
+import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
@@ -75,7 +76,7 @@ interface SubjectRow {
  */
 @Component({
   selector: 'cb-subjects',
-  imports: [ReactiveFormsModule, Button, FormField, TextInput],
+  imports: [ReactiveFormsModule, Badge, Button, FormField, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './subjects.html',
   styleUrl: './subjects.scss',
