@@ -1,0 +1,44 @@
+- generic [ref=f5e379]:
+  - banner [ref=f5e380]:
+    - generic [ref=f5e381]: Chalkbase Demo Public School
+    - button "Nandini Apte" [ref=f5e388] [cursor=pointer]:
+      - generic [aria-hidden] [ref=f5e389]: NA
+  - navigation "Primary" [ref=f5e393]:
+    - link "Dashboard" [ref=f5e394] [cursor=pointer]:
+      - /url: /dashboard
+    - link "Students" [ref=f5e402] [cursor=pointer]:
+      - /url: /students
+    - link "All students" [ref=f5e410] [cursor=pointer]:
+      - /url: /students
+    - link "Guardians" [ref=f5e418] [cursor=pointer]:
+      - /url: /students/guardians
+    - link "Academics" [ref=f5e426] [cursor=pointer]:
+      - /url: /academics
+    - link "Academic sessions" [ref=f5e432] [cursor=pointer]:
+      - /url: /academics/sessions
+    - link "Classes and sections" [ref=f5e438] [cursor=pointer]:
+      - /url: /academics/classes
+    - link "Subjects" [ref=f5e444] [cursor=pointer]:
+      - /url: /academics/subjects
+    - link "Attendance" [ref=f5e450] [cursor=pointer]:
+      - /url: /attendance
+    - link "Mark attendance" [ref=f5e456] [cursor=pointer]:
+      - /url: /attendance/mark
+    - link "Corrections" [ref=f5e462] [cursor=pointer]:
+      - /url: /attendance/corrections
+    - link "Settings" [ref=f5e468] [cursor=pointer]:
+      - /url: /settings
+    - link "Roles and access" [ref=f5e474] [cursor=pointer]:
+      - /url: /settings/access
+    - link "User accounts" [ref=f5e480] [cursor=pointer]:
+      - /url: /settings/users
+    - link "School profile" [ref=f5e486] [cursor=pointer]:
+      - /url: /settings/school-profile
+  - main [ref=f5e5]:
+    - generic [ref=f5e492]:
+      - paragraph [ref=f5e493]:
+        - link "Students" [ref=f5e494] [cursor=pointer]:
+          - /url: /students
+        - text: › Record
+      - heading "Student record" [level=1] [ref=f5e495]
+      - status [ref=f5e496]: Loading this student…

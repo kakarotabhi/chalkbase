@@ -154,7 +154,13 @@ export class AuditLog {
    * The zone every row on this screen is rendered in (ADR-0032), off the session `GET /api/me`
    * already carried — never a second request just to find out which zone to format with.
    */
-  private readonly timeZone = computed(() => this.sessionStore.schoolTimezone());
+  /**
+   * The school's zone, not the reader's ([ADR-0032](../../../../../docs/architecture/adr/0032-school-timezone.md)).
+   * Protected rather than private because the lede names it: a time with no zone beside it is a
+   * time a reader in another country silently misreads, and this screen is the one people open
+   * when they are reconstructing what happened and when.
+   */
+  protected readonly timeZone = computed(() => this.sessionStore.schoolTimezone());
   private readonly shortTime = computed(() => shortTimeFormat(this.timeZone()));
   private readonly fullTime = computed(() => fullTimeFormat(this.timeZone()));
 
