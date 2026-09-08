@@ -54,7 +54,7 @@ naming the school code, the usernames and the password — that is how you sign 
 
 To skip the demo data, set `chalkbase.dev.seed-demo-school: false` in `application-local.yml`.
 
-> **Two things to know about the demo school.**
+> **Three things to know about the demo school.**
 >
 > **It is probably already there.** The example config points at a Supabase project shared by
 > everyone working on Chalkbase, so `DEMO-001` exists already and your seeder will log
@@ -73,7 +73,21 @@ To skip the demo data, set `chalkbase.dev.seed-demo-school: false` in `applicati
 > update this note — it has not been run against a hosted database as of this change. It happens
 > once; every later start skips.
 >
-> To rebuild it from scratch: `drop schema demo_school cascade;` and
+> **If it is already there with fewer than 600 students, "already registered" is not "fully
+> seeded".** The shared database has held `DEMO-001` since before the roster grew from a few dozen to
+> ~600 (ADR-0021), and the seeder never touches a school it did not just create — so restarting
+> against it keeps logging *"leaving it alone"* forever, at the old, smaller count. To grow it, set
+> **`chalkbase.dev.top-up-demo-school: true`** in `application-local.yml` (or export
+> `CHALKBASE_DEV_TOP_UP_DEMO_SCHOOL=true`) and restart once. That signs in, reads how many students
+> the school already has, and imports only the difference through the same bulk endpoint — a school
+> at 60 gains the other 540 through one multipart request of that size; a school already at 600 does
+> one cheap read (sign in, then `GET /api/students?size=1` for the count) and writes nothing. Booting
+> repeatedly with the property left on is safe either way: once the count reaches 600 there is nothing
+> left to import, so the second boot and every one after it cost that one read and no more. This is an
+> estimate, not a measurement — it has not been run against the hosted database as of this change. You
+> can turn the property back off afterwards; a school already at 600 has nothing more to gain from it.
+>
+> To rebuild it from scratch instead of topping it up: `drop schema demo_school cascade;` and
 > `delete from public.school where code = 'DEMO-001';` then restart.
 
 ### 3. Start the frontend

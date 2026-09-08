@@ -39,11 +39,24 @@ import org.springframework.stereotype.Component;
  * annotations are a filter on whether the bean exists; the assertion is the one that would still
  * catch a profile list assembled wrongly in a deployment.
  *
- * <p><strong>It is idempotent, and it will not touch a school it did not create.</strong> The first
- * thing it does is ask the API whether {@link #SCHOOL_CODE} is already registered, and if it is, it
- * logs one line and returns. Nothing here updates, deletes or repairs anything: a developer who
- * wants the demo school rebuilt drops the schema and the registry row by hand, deliberately. Twenty
- * restarts produce one school.
+ * <p><strong>It is idempotent, and by default it will not touch a school it did not create.</strong>
+ * The first thing it does is ask the API whether {@link #SCHOOL_CODE} is already registered. If it
+ * is, it logs one line and returns — unless {@value #TOP_UP_PROPERTY} is set, in which case it signs
+ * in and tops the roster up to {@link DemoRoster#TOTAL_CHILDREN} instead of skipping outright. See
+ * {@link #topUp} for why that is a top-up and not a second seed: it imports only the children beyond
+ * however many the school already has, so restarting with the property left on twenty times still
+ * leaves the roster at {@link DemoRoster#TOTAL_CHILDREN}, not twenty times that. Nothing here
+ * updates, deletes or repairs a student that is already there; a developer who wants the demo school
+ * rebuilt from nothing drops the schema and the registry row by hand, deliberately.
+ *
+ * <p><strong>Why a school with the smaller, pre-ADR-0021 roster can exist at all.</strong> The
+ * shared Supabase project every `local` developer points at already had {@link #SCHOOL_CODE}
+ * registered with a few dozen students before this roster grew to {@link DemoRoster#TOTAL_CHILDREN},
+ * and the guard above means nobody who runs against that database sees the larger roster by simply
+ * restarting — the school is "already registered" the moment the first few students exist. {@value
+ * #TOP_UP_PROPERTY} exists for exactly that database: set it once, restart, and the difference is
+ * imported through the same bulk endpoint the fresh-school path uses, never a second create-and-skip
+ * of what is already there.
  *
  * <p><strong>Why it speaks HTTP to its own API instead of calling services.</strong> A seeder needs
  * to create a school, an academic year, a ladder of classes, students, guardians and accounts —
@@ -66,7 +79,7 @@ import org.springframework.stereotype.Component;
  * volume of data, exercised the way a school actually would on its first day, and it turns what
  * would be well over a thousand sequential HTTP round trips (a create, an enrolment and up to two
  * guardian links per child) into one request the server commits in a single transaction. See
- * {@link #admitEveryone} for what that call carries and {@link DemoRoster#build} for the roster
+ * {@link #admit} for what that call carries and {@link DemoRoster#build} for the roster
  * behind it.
  *
  * <p>The one thing that cannot go over HTTP is the accounts, because there is no endpoint that
@@ -103,6 +116,15 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
 
     private static final String SCHOOL_NAME = "Chalkbase Demo Public School";
     private static final String SCHOOL_SCHEMA = "demo_school";
+
+    /**
+     * Off by default, deliberately: a developer restarting {@code local} against a school that
+     * already exists should pay one cheap read to confirm nothing needs to change, not sign in and
+     * scan the roster on every boot forever. Set true — or the equivalent env var,
+     * {@code CHALKBASE_DEV_TOP_UP_DEMO_SCHOOL} — to grow an existing {@link #SCHOOL_CODE} up to
+     * {@link DemoRoster#TOTAL_CHILDREN}. See {@link #topUp}.
+     */
+    static final String TOP_UP_PROPERTY = "chalkbase.dev.top-up-demo-school";
 
     /**
      * One password for every demo account, printed at the end of startup. It satisfies
@@ -158,11 +180,32 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         SeedApiClient api = new SeedApiClient(port);
 
         if (alreadySeeded(api)) {
-            log.info(
-                    "Demo school {} is already registered; leaving it alone. Drop the {} schema and its"
-                            + " public.school row by hand if you want it rebuilt.",
-                    SCHOOL_CODE,
-                    SCHOOL_SCHEMA);
+            if (!environment.getProperty(TOP_UP_PROPERTY, Boolean.class, false)) {
+                log.info(
+                        "Demo school {} is already registered; leaving it alone. It may not have the full"
+                                + " ~{}-student roster this build ships — set {}=true (env var"
+                                + " CHALKBASE_DEV_TOP_UP_DEMO_SCHOOL) and restart to top it up without touching a"
+                                + " student already there. Drop the {} schema and its public.school row by hand if"
+                                + " you want the whole school rebuilt instead.",
+                        SCHOOL_CODE,
+                        DemoRoster.TOTAL_CHILDREN,
+                        TOP_UP_PROPERTY,
+                        SCHOOL_SCHEMA);
+                return;
+            }
+            try {
+                topUp(api);
+            } catch (RuntimeException ex) {
+                // Same reasoning as the fresh-seed catch below: not fatal, and the next start (with the
+                // property still set) picks up wherever the student count actually landed, because
+                // admit(...) below is keyed on that count rather than on a flag saying "done".
+                log.error(
+                        "Topping up demo school {}'s roster failed. The next start with {}=true will pick up"
+                                + " wherever the student count actually landed.",
+                        SCHOOL_CODE,
+                        TOP_UP_PROPERTY,
+                        ex);
+            }
             return;
         }
 
@@ -260,9 +303,120 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         AcademicYear year = currentIndianSchoolYear(LocalDate.now());
         UUID sessionId = createAcademicSession(api, year);
         List<SeedSection> sections = createLadder(api);
-        int guardianCount = admitEveryone(api, sessionId, year, sections);
+        int guardianCount = admit(api, sessionId, year, sections, 0);
 
         announce(port, year, sections.size(), guardianCount, (System.currentTimeMillis() - started) / 1000);
+    }
+
+    // ── topping up an existing school ───────────────────────────────────────────────────────────
+
+    /**
+     * Grows an already-registered {@link #SCHOOL_CODE} up to {@link DemoRoster#TOTAL_CHILDREN},
+     * without rebuilding the school, the ladder or the accounts it already has.
+     *
+     * <p>Signs in, reads how many students the school already holds, and — if that is short of the
+     * roster's current size — imports exactly the difference through the same bulk endpoint
+     * {@link #admit} always uses, resuming the roster where it left off rather than restarting it.
+     * Running this twice in a row does nothing the second time: the count read on the second run is
+     * already {@link DemoRoster#TOTAL_CHILDREN}, so there is nothing left to import — the same
+     * property that makes a single {@link #admit} call safe to retry after a failure also makes
+     * repeated top-ups safe.
+     *
+     * <p>The ladder and the current academic session are read back rather than recreated —
+     * {@link #existingLadder} and {@link #currentSession} — because a school that already exists
+     * already has both, and creating either again would either fail (a class or section with a name
+     * that already exists) or leave a second academic year in the school nobody asked for.
+     */
+    private void topUp(SeedApiClient api) {
+        long started = System.currentTimeMillis();
+        signIn(api, ACCOUNTS.getFirst().username());
+
+        int existing = studentCount(api);
+        if (existing >= DemoRoster.TOTAL_CHILDREN) {
+            log.info(
+                    "Demo school {} already has {} students, at or past the roster's current size of {};"
+                            + " nothing to top up.",
+                    SCHOOL_CODE,
+                    existing,
+                    DemoRoster.TOTAL_CHILDREN);
+            return;
+        }
+
+        SeedSession session = currentSession(api);
+        List<SeedSection> sections = existingLadder(api);
+        int guardianCount = admit(api, session.id(), session.year(), sections, existing);
+
+        log.info(
+                "Topped up demo school {} from {} to {} students ({} guardian record(s) on file"
+                        + " afterwards) in {} s.",
+                SCHOOL_CODE,
+                existing,
+                DemoRoster.children().size(),
+                guardianCount,
+                (System.currentTimeMillis() - started) / 1000);
+    }
+
+    /** How many students {@link #SCHOOL_CODE} already has, read the way the register screen would. */
+    private static int studentCount(SeedApiClient api) {
+        return api.get("/api/students?page=0&size=1")
+                .path("data")
+                .path("totalElements")
+                .asInt();
+    }
+
+    /**
+     * The school's current academic session and the year it covers, read back rather than created —
+     * {@link #topUp} runs against a school that already has one.
+     */
+    private static SeedSession currentSession(SeedApiClient api) {
+        for (JsonNode session : api.get("/api/academics/sessions").path("data")) {
+            if (session.path("current").asBoolean(false)) {
+                return new SeedSession(
+                        UUID.fromString(session.path("id").asText()),
+                        new AcademicYear(
+                                session.path("name").asText(),
+                                LocalDate.parse(session.path("startsOn").asText()),
+                                LocalDate.parse(session.path("endsOn").asText())));
+            }
+        }
+        throw new IllegalStateException(
+                "Demo school " + SCHOOL_CODE + " has no current academic session; cannot top up its roster.");
+    }
+
+    /**
+     * The school's classes and sections, read back in ladder order rather than created again —
+     * {@link #createLadder} would either collide on a name already taken or, worse, succeed and
+     * leave the school with two Nurseries.
+     *
+     * <p>{@code GET /api/academics/classes} answers in sequence order already (ADR-0019) and returns
+     * retired classes and sections alongside active ones, so both are filtered out here — a top-up
+     * placing a child in a retired section would be its own small bug on top of the one this method
+     * exists to fix.
+     */
+    private static List<SeedSection> existingLadder(SeedApiClient api) {
+        List<SeedSection> sections = new ArrayList<>();
+        int rung = 0;
+        for (JsonNode schoolClass : api.get("/api/academics/classes").path("data")) {
+            if (!schoolClass.path("active").asBoolean(true)) {
+                continue;
+            }
+            for (JsonNode section : schoolClass.path("sections")) {
+                if (!section.path("active").asBoolean(true)) {
+                    continue;
+                }
+                sections.add(new SeedSection(
+                        rung,
+                        schoolClass.path("name").asText(),
+                        section.path("name").asText(),
+                        UUID.fromString(section.path("id").asText())));
+            }
+            rung++;
+        }
+        if (sections.isEmpty()) {
+            throw new IllegalStateException(
+                    "Demo school " + SCHOOL_CODE + " has no classes or sections; cannot top up its roster.");
+        }
+        return List.copyOf(sections);
     }
 
     /**
@@ -397,7 +551,11 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
             + "guardian_email,guardian_primary";
 
     /**
-     * The whole roster, as one file to {@code POST /api/students/import} (ADR-0021).
+     * The roster from {@code fromIndex} onward, as one file to {@code POST /api/students/import}
+     * (ADR-0021). {@code fromIndex} is {@code 0} for a brand-new school admitting the whole roster in
+     * one call, or however many students an already-registered school has, for {@link #topUp} — see
+     * {@link #buildImportCsv} for why the file only ever carries the rows nobody has seen yet, while
+     * the arithmetic behind every row still runs over the roster from the very start.
      *
      * <p><strong>Why one file instead of one call per child.</strong> The bulk import format carries
      * one guardian per row, so it cannot by itself put both parents on the same child — but it dedupes
@@ -417,10 +575,14 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
      * @return how many guardian records exist afterwards — what the CSV import created or matched,
      *     plus every second guardian linked on top of it
      */
-    private static int admitEveryone(SeedApiClient api, UUID sessionId, AcademicYear year, List<SeedSection> sections) {
+    private static int admit(
+            SeedApiClient api, UUID sessionId, AcademicYear year, List<SeedSection> sections, int fromIndex) {
         List<Child> children = DemoRoster.children();
+        if (fromIndex >= children.size()) {
+            return 0;
+        }
         Map<String, String> admissionNumberOfDualGuardianFamily = new LinkedHashMap<>();
-        String csv = buildImportCsv(year, sections, children, admissionNumberOfDualGuardianFamily);
+        String csv = buildImportCsv(year, sections, children, fromIndex, admissionNumberOfDualGuardianFamily);
 
         JsonNode report = api.postMultipartForData(
                 "/api/students/import?academicSessionId=" + sessionId,
@@ -428,9 +590,10 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
                 "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8));
 
+        int expected = children.size() - fromIndex;
         int imported = report.path("imported").asInt();
-        if (imported != children.size()) {
-            throw new IllegalStateException("The demo seed built a CSV of " + children.size()
+        if (imported != expected) {
+            throw new IllegalStateException("The demo seed built a CSV of " + expected
                     + " students and the real import endpoint imported " + imported
                     + ". That is a bug in DemoRoster or DemoSchoolSeeder, not in the import endpoint — "
                     + describeFirstProblem(report));
@@ -449,20 +612,34 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
     }
 
     /**
-     * One CSV row per child, in the column order {@link #IMPORT_CSV_HEADER} names.
+     * One CSV row per child from {@code fromIndex} onward, in the column order
+     * {@link #IMPORT_CSV_HEADER} names.
      *
      * <p>Placement, date of birth, roll number and the once-in-seven missing admission date are all
      * unchanged from the small seed's own per-child logic — only where the result goes is different:
      * into a cell rather than a request body.
      *
-     * @param admissionNumberOfDualGuardianFamily filled in as rows are written, one entry per
-     *     household this roster gives two guardians — the admission number is how
-     *     {@link #linkSecondGuardians} finds the child again after the import has run
+     * <p><strong>The loop runs over every child from the start, even when only a suffix is written.</strong>
+     * A child's admission number, section and roll number all depend on how many children before it
+     * were assigned to the same section — the same {@code rollNumbers} counter a fresh, whole-roster
+     * import already used. Starting that counter at zero for a top-up's shorter file would hand two
+     * different children the same roll number in the same section: one from whichever earlier run
+     * imported the prefix, one from this one. Running the full loop and skipping the rows before
+     * {@code fromIndex} costs nothing — it is in-memory arithmetic, not a request — and it is what
+     * keeps a top-up's rows numbered exactly where they would have landed had the whole roster gone in
+     * as a single file.
+     *
+     * @param admissionNumberOfDualGuardianFamily filled in as rows at or after {@code fromIndex} are
+     *     written, one entry per household this roster gives two guardians — the admission number is
+     *     how {@link #linkSecondGuardians} finds the child again after the import has run. A household
+     *     entirely before {@code fromIndex} is left out, because a previous run already linked its
+     *     second guardian and this one does not touch that child again.
      */
     private static String buildImportCsv(
             AcademicYear year,
             List<SeedSection> sections,
             List<Child> children,
+            int fromIndex,
             Map<String, String> admissionNumberOfDualGuardianFamily) {
         Map<UUID, Integer> rollNumbers = new HashMap<>();
         StringBuilder csv = new StringBuilder(IMPORT_CSV_HEADER).append('\n');
@@ -476,6 +653,13 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
             // does not have one and the column is optional for that reason.
             String admittedOn = i % 7 != 3 ? year.startsOn().plusDays(i % 21L).toString() : "";
             int roll = rollNumbers.merge(section.sectionId(), 1, Integer::sum);
+
+            if (i < fromIndex) {
+                // Already imported by an earlier run. The bookkeeping above still had to run for this
+                // row so the rows that follow land on the right roll number — see the method javadoc —
+                // but nothing about this particular child is written again.
+                continue;
+            }
 
             List<Guardian> guardians = DemoRoster.guardiansOf(child);
             Guardian onThisRow = guardians.isEmpty() ? null : guardians.getFirst();
@@ -699,4 +883,7 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
     private record SeedSection(int rung, String className, String sectionName, UUID sectionId) {}
 
     private record AcademicYear(String name, LocalDate startsOn, LocalDate endsOn) {}
+
+    /** The school's current academic session, read back by {@link #currentSession} for a top-up. */
+    private record SeedSession(UUID id, AcademicYear year) {}
 }

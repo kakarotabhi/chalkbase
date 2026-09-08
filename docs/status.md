@@ -206,6 +206,15 @@ not build one here.
   [running locally](development/running-locally.md). List screens, paging and the guardian phone
   search below now have six hundred rows to be measured against — that measurement itself is not
   done, see below.
+- **That larger seed could not reach a database that already had `DEMO-001`.** The seeder is
+  idempotent by skipping outright once the school code is registered, and the shared Supabase project
+  registered `DEMO-001` back when the roster was a few dozen students — so every `local` boot against
+  it kept logging "already registered; leaving it alone" at the old count, never at ~600. Fixed by a
+  top-up path gated behind `chalkbase.dev.top-up-demo-school` (off by default, so a plain restart
+  still costs nothing extra): set it once and the seeder imports only the difference between what the
+  school has and `DemoRoster.TOTAL_CHILDREN`, through the same bulk import endpoint, safe to leave on
+  across further restarts because a school already at the target size has nothing left to import. See
+  [running locally](development/running-locally.md).
 
 ## Blocking the first real school
 

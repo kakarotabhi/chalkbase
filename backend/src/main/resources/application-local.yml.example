@@ -42,15 +42,21 @@ chalkbase:
     # screen. See `in.chalkbase.platform.devdata.DemoSchoolSeeder`.
     #
     # What it creates: school DEMO-001 (schema `demo_school`), the current April–March academic year,
-    # Nursery through Class 8 with sections A and B, sixty invented students with enrolments and roll
+    # Nursery through Class 8 with sections A and B, ~600 invented students with enrolments and roll
     # numbers, guardians deliberately shared between siblings (ADR-0020 §5), and four accounts —
     # `principal`, `classteacher`, `auditor` and `newteacher` — all with one password, which is
     # printed in a block at the end of startup. Every person in it is invented; none of it is real
     # student data and none of it ever may be (AGENTS rule 9).
     #
     # It runs ONCE. On every later start it finds DEMO-001 already registered, logs one line and does
-    # nothing, so restarting twenty times does not produce twenty schools. To rebuild it, drop the
-    # schema and the registry row by hand:
+    # nothing, so restarting twenty times does not produce twenty schools. If DEMO-001 already exists
+    # with fewer students than DemoRoster ships today — the shared dev database's ordinary state, since
+    # it was registered before the roster grew — that "already registered" skip leaves it at the old,
+    # smaller count. Set chalkbase.dev.top-up-demo-school: true below and restart once to import the
+    # difference through the same bulk endpoint; leave it set and later restarts cost one cheap read
+    # once the roster reaches its target size, nothing more. See docs/development/running-locally.md.
+    #
+    # To rebuild the whole school instead, drop the schema and the registry row by hand:
     #
     #     drop schema demo_school cascade;
     #     delete from public.school where code = 'DEMO-001';
@@ -63,3 +69,6 @@ chalkbase:
     # same as true — a developer whose application-local.yml predates this property still gets a
     # school to look at.
     seed-demo-school: true
+    # Off by default. See the top-up note above — set true to grow an already-registered DEMO-001 up
+    # to DemoRoster's current roster size instead of leaving it at whatever it already has.
+    top-up-demo-school: false
