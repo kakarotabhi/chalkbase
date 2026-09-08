@@ -6,9 +6,20 @@ The API contract shared by `backend/` and `frontend/`.
 |---|---|---|
 | `openapi.json` | The API, as the running backend describes it. | `cd backend && ./mvnw verify` |
 | `api-types.ts` | TypeScript types for every schema in it. | `cd frontend && npm run contracts:types` |
+| `navigation-ids.json` | Every navigation id (ADR-0008) the running backend declares, sorted. | `cd backend && ./mvnw verify` |
 
-Both are committed, so a contract change shows up as a reviewable diff rather than as a surprise
-in somebody's browser. Neither is edited by hand.
+All three are committed, so a contract change shows up as a reviewable diff rather than as a
+surprise in somebody's browser. None is edited by hand.
+
+`navigation-ids.json` is written by `NavigationContractExportTests`, the same way `openapi.json` is
+written by `OpenApiContractTests` — see that class for why a test rather than a plugin. It exists so
+that [`.github/workflows/navigation-contract.yml`](../.github/workflows/navigation-contract.yml) has
+something to compare the frontend's route registry
+(`frontend/src/app/core/navigation/nav-routes.ts`) against, without either side having to parse the
+other's source: the backend already produces a committed artefact for exactly this purpose, so the
+navigation check reuses it rather than inventing a second way to read Java. See
+[`tools/navigation-contract/check.mjs`](../tools/navigation-contract/check.mjs) for what counts as
+an error, a warning, or a deliberate, allow-listed gap.
 
 ## The three steps, and where each one lives
 
