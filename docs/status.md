@@ -353,6 +353,9 @@ no reason, and the sections land with the modules.
 | Fixed on `prod`: `GET /api/schools/boards` was hidden behind `SetupKeyFilter` along with the rest of `/api/schools/**`, so the school-profile form's Board picker 404'd for every real user on every deployed environment; the filter now names it an explicit exemption, pinned by a `prod`-profile test | [ADR-0029 amendment](architecture/adr/0029-reference-data.md), `SetupKeyFilter`, `SetupKeyFilterTests` |
 
 | The design drift assessment's three cheap, real fixes: the active nav item tinted `--cb-primary-surface` instead of reading as unselected, the page gutter restored to 32px from `from-expanded` up, and shared `cb-card`/`cb-badge` components adopted in place of the hand-rolled surfaces in 18 feature stylesheets (a handful of forms styled as a surface, and the responsive card-to-table rows on four list screens, deliberately left for a follow-up — see the assessment). Also found and fixed while driving the app: the primary nav rendered top-level items only, so a section's own screens (`academics.classes`, `settings.users`, …) were reachable only by typing a URL — the rail and sidebar now render a container's children beside it, not only inside the compact-width More sheet. | `layout/main-layout/`, `shared/components/card/`, `shared/components/badge/`, [the assessment](design-drift-assessment.md) |
+
+| Fixed, verified live: `RESTRICTED_DATA_REVEALED` audit rows recorded that a student's medical or compliance reveal happened but never which of the Restricted fields it disclosed (`changedFields: []` on every one) — `StudentRecordService#revealMedical`/`revealCompliance` now name whichever Restricted fields actually held a value for that student, the same "present fields only" rule a first-time save already used, via a new `AuditService.recordSecurityEvent` overload for a single-record disclosure with no row count to state | [ADR-0014](architecture/adr/0014-data-classification.md), [ADR-0018](architecture/adr/0018-audit-log.md), `StudentRecordService`, `AuditService` |
+
 ## What is left on the frontend
 
 Every backend controller has a screen except one, so this list is short and specific. It exists
@@ -369,6 +372,17 @@ separated them.
 Transport and hostel sections on the student record are **not** on this list: they are Phase 4
 modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
 model until those exist.
+
+## Verified against the deployed environment
+
+Phase 1 was exercised end to end on the deployed environment on 2026-09-08 — four agents against the
+API in parallel, and every screen driven in a browser. **55 of 59 checks passed.** The full account,
+including the evidence for each, is in [the verification report](phase-1-verification.md).
+
+It is worth reading for what it says about the *kind* of thing that survived CI: a seed that cannot
+reach the database it was written for, a screen whose prose contradicts its own behaviour, an audit
+row that records less than it promises, and a role nobody can delete. None of those are visible to a
+test suite, and all four were found within an hour of using the product as a person.
 
 ## Known gaps and debt
 

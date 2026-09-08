@@ -192,7 +192,10 @@ public class StudentRecordService {
 
     /**
      * The real values of the six Restricted fields. <strong>Every call is an audited read</strong>
-     * (ADR-0014) — see {@link StudentAudit#RESTRICTED_DATA_REVEALED}.
+     * (ADR-0014) — see {@link StudentAudit#RESTRICTED_DATA_REVEALED}. The audit row names whichever
+     * of the six actually held a value for this student, the same "present fields only" rule
+     * {@link #saveMedical} already uses for a first-time save: the row answers what this reveal
+     * disclosed, not which fields the endpoint is shaped to return.
      */
     public MedicalDetail revealMedical(UUID studentId) {
         requireStudent(studentId);
@@ -202,7 +205,14 @@ public class StudentRecordService {
                 StudentAudit.RESTRICTED_DATA_REVEALED,
                 AuditOutcome.SUCCESS,
                 StudentAudit.STUDENT_MEDICAL,
-                studentId.toString());
+                studentId.toString(),
+                presentFields(
+                        "bloodGroup", detail.bloodGroup(),
+                        "cwsnStatus", detail.cwsnStatus(),
+                        "disabilityDetails", detail.disabilityDetails(),
+                        "allergies", detail.allergies(),
+                        "chronicConditions", detail.chronicConditions(),
+                        "medication", detail.medication()));
         return detail;
     }
 
@@ -299,7 +309,10 @@ public class StudentRecordService {
 
     /**
      * The real values of the four Restricted fields. <strong>Every call is an audited read</strong>
-     * (ADR-0014) — see {@link StudentAudit#RESTRICTED_DATA_REVEALED}.
+     * (ADR-0014) — see {@link StudentAudit#RESTRICTED_DATA_REVEALED}. The audit row names whichever
+     * of the four actually held a value for this student, the same "present fields only" rule
+     * {@link #saveCompliance} already uses for a first-time save: the row answers what this reveal
+     * disclosed, not which fields the endpoint is shaped to return.
      */
     public ComplianceDetail revealCompliance(UUID studentId) {
         requireStudent(studentId);
@@ -309,7 +322,12 @@ public class StudentRecordService {
                 StudentAudit.RESTRICTED_DATA_REVEALED,
                 AuditOutcome.SUCCESS,
                 StudentAudit.STUDENT_COMPLIANCE,
-                studentId.toString());
+                studentId.toString(),
+                presentFields(
+                        "casteCategory", detail.casteCategory(),
+                        "religion", detail.religion(),
+                        "specialCategory", detail.specialCategory(),
+                        "apaarId", detail.apaarId()));
         return detail;
     }
 

@@ -183,6 +183,16 @@ class StudentSensitiveApiTests {
         assertThat(auditActionsFor(student, "STUDENT_MEDICAL"))
                 .containsExactlyInAnyOrder("ENTITY_CREATED", "RESTRICTED_DATA_REVEALED");
 
+        // The reveal names exactly the fields that held a value — bloodGroup, cwsnStatus and
+        // allergies were set, disabilityDetails/chronicConditions/medication were not — and never
+        // the value itself.
+        String revealedFields = changedFieldsFor(student, "STUDENT_MEDICAL", "RESTRICTED_DATA_REVEALED");
+        assertThat(revealedFields).isEqualTo("allergies,bloodGroup,cwsnStatus");
+        assertThat(revealedFields)
+                .doesNotContainIgnoringCase("O+")
+                .doesNotContainIgnoringCase("Locomotor")
+                .doesNotContainIgnoringCase("Peanuts");
+
         // And the value on disk is not the plaintext at all — it is ciphertext under the current key.
         String stored = jdbc.sql("select blood_group from " + SCHEMA + ".student_medical where student_id = ?")
                 .param(student)
@@ -211,6 +221,47 @@ class StudentSensitiveApiTests {
 
         // A denied reveal is not a granted one: no RESTRICTED_DATA_REVEALED row for this child.
         assertThat(auditActionsFor(student, "STUDENT_MEDICAL")).containsExactly("ENTITY_CREATED");
+    }
+
+    /**
+     * The compliance half of {@link #masksRestrictedFieldsOnTheOrdinaryReadAndRevealsThemOnTheAuditedOne},
+     * kept as its own test because that one already carries the full masked/revealed/audited walk for
+     * medical and adding a second Restricted section to it would blur which fields belong to which
+     * claim. Proves the same defect fix on {@code STUDENT_COMPLIANCE}: only the fields that actually
+     * held a value are named, never all four the endpoint could return, and never a value.
+     */
+    @Test
+    void revealingComplianceDataNamesOnlyTheFieldsItActuallyDisclosed() throws Exception {
+        Cookie session = signInWithPermissions(
+                "PRINCIPAL_LIKE",
+                "student:student:read",
+                "student:student:manage",
+                "student:student:reveal_restricted");
+        UUID student = createStudent(session, "2026/1008", "Anaya Chandran");
+
+        // casteCategory and religion are set; specialCategory and apaarId are left unset.
+        mockMvc.perform(request(put(STUDENTS + "/" + student + "/compliance"), session, """
+                        {"casteCategory": "OBC", "religion": "Hindu", "apaarConsentGiven": false}
+                        """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(STUDENTS + "/" + student + "/compliance/restricted")
+                        .cookie(session)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.casteCategory").value("OBC"))
+                .andExpect(jsonPath("$.data.religion").value("Hindu"))
+                .andExpect(jsonPath("$.data.specialCategory").doesNotExist())
+                .andExpect(jsonPath("$.data.apaarId").doesNotExist());
+
+        assertThat(auditActionsFor(student, "STUDENT_COMPLIANCE"))
+                .containsExactlyInAnyOrder("ENTITY_CREATED", "RESTRICTED_DATA_REVEALED");
+
+        // Only casteCategory and religion are named — not specialCategory or apaarId, which held
+        // nothing for this student — and the names carry no trace of "OBC" or "Hindu" themselves.
+        String revealedFields = changedFieldsFor(student, "STUDENT_COMPLIANCE", "RESTRICTED_DATA_REVEALED");
+        assertThat(revealedFields).isEqualTo("casteCategory,religion");
+        assertThat(revealedFields).doesNotContainIgnoringCase("OBC").doesNotContainIgnoringCase("Hindu");
     }
 
     @Test
@@ -295,6 +346,15 @@ class StudentSensitiveApiTests {
         return jdbc.sql("select count(*) from " + SCHEMA + ".audit_event where entity_id = ? and entity_type = ?")
                 .params(studentId.toString(), entityType)
                 .query(Integer.class)
+                .single();
+    }
+
+    /** {@code changed_fields} on the one row matching {@code entityType}/{@code action} for this student. */
+    private String changedFieldsFor(UUID studentId, String entityType, String action) {
+        return jdbc.sql("select changed_fields from " + SCHEMA
+                        + ".audit_event where entity_id = ? and entity_type = ? and action = ?")
+                .params(studentId.toString(), entityType, action)
+                .query(String.class)
                 .single();
     }
 
