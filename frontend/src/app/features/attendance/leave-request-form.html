@@ -1,0 +1,94 @@
+<p class="crumbs">
+  <a routerLink="/attendance/leave">Leave requests</a> <span aria-hidden="true">›</span> New
+</p>
+<h1 class="page-title">New leave request</h1>
+
+<p class="page-lede">
+  For a day that already happened, mark it and request a correction instead — this is advance notice
+  only.
+</p>
+
+@if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to request leave</strong>
+    <span>Ask your principal to add "Request leave" to your role.</span>
+  </div>
+} @else {
+  <cb-card tone="surface" class="panel">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <cb-form-field #sectionField label="Section" controlId="leave-section">
+        <cb-select
+          formControlName="sectionId"
+          ariaLabel="Section"
+          [id]="sectionField.controlId()"
+          [options]="sectionOptions()"
+        />
+      </cb-form-field>
+      @if (ladderFailed()) {
+        <p class="field-note">
+          The list of classes could not be loaded. Reload the page to try again.
+        </p>
+      }
+
+      <cb-form-field #studentField label="Student" controlId="leave-student">
+        <cb-select
+          formControlName="studentId"
+          ariaLabel="Student"
+          [id]="studentField.controlId()"
+          [options]="studentOptions()"
+        />
+      </cb-form-field>
+      @if (rosterFailed()) {
+        <p class="field-note">
+          This section's roster could not be loaded. Choose the section again.
+        </p>
+      }
+
+      <div class="date-row">
+        <cb-form-field #startField label="First day" controlId="leave-start">
+          <cb-text-input
+            type="date"
+            formControlName="startDate"
+            [id]="startField.controlId()"
+            [attr.min]="today"
+          />
+        </cb-form-field>
+        <cb-form-field #endField label="Last day" controlId="leave-end">
+          <cb-text-input
+            type="date"
+            formControlName="endDate"
+            [id]="endField.controlId()"
+            [attr.min]="today"
+          />
+        </cb-form-field>
+      </div>
+
+      <cb-form-field
+        #reasonField
+        label="Reason"
+        controlId="leave-reason"
+        hint="A sentence is enough — this is what whoever decides the request reads."
+      >
+        <textarea
+          class="reason-input"
+          formControlName="reason"
+          rows="3"
+          maxlength="500"
+          [id]="reasonField.controlId()"
+          [attr.aria-describedby]="reasonField.describedById()"
+        ></textarea>
+      </cb-form-field>
+
+      @if (failureMessage(); as message) {
+        <p class="banner__title" role="alert">{{ message }}</p>
+      }
+
+      <div class="actions">
+        <a class="link-button" routerLink="/attendance/leave">Cancel</a>
+        <cb-button type="submit" [loading]="saving()" loadingLabel="Sending…">
+          Send request
+        </cb-button>
+      </div>
+    </form>
+  </cb-card>
+}

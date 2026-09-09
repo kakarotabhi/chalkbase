@@ -5,7 +5,11 @@ import { environment } from '../../../environments/environment';
 import {
   ApiResponse,
   CorrectionRequestResponse,
+  CreateLeaveRequest,
   DecideCorrectionRequest,
+  DecideLeaveRequest,
+  LeaveDecision,
+  LeaveRequestResponse,
   MarkAttendanceRequest,
   PageResponse,
   RequestCorrectionRequest,
@@ -17,9 +21,12 @@ import { unwrap } from './unwrap';
 /** Rows per page for the correction queue. There is no reason to match any other list's size. */
 export const CORRECTION_QUEUE_PAGE_SIZE = 25;
 
+/** Rows per page for the leave request list. There is no reason to match any other list's size. */
+export const LEAVE_REQUEST_PAGE_SIZE = 25;
+
 /**
- * HTTP access to the attendance module: daily marking, one student's history, and correction
- * requests (Phase 2, ADR-0030).
+ * HTTP access to the attendance module: daily marking, one student's history, correction requests,
+ * and leave requests (Phase 2, ADR-0030, FR-047).
  *
  * No school parameter anywhere, like every tenant-scoped call: the session says which school
  * (ADR-0011). `withCredentials` on every call for the same reason — the session is a cookie the
@@ -126,6 +133,57 @@ export class AttendanceApi {
     return this.http
       .post<ApiResponse<CorrectionRequestResponse>>(
         `${this.baseUrl}/correction-requests/${requestId}/decision`,
+        decision,
+        { withCredentials: true },
+      )
+      .pipe(unwrap);
+  }
+
+  // ── Leave requests (FR-047) ────────────────────────────────────────────────────────────────
+
+  /** Files a leave request for a student on this section's live roster. */
+  requestLeave(sectionId: string, request: CreateLeaveRequest): Observable<LeaveRequestResponse> {
+    return this.http
+      .post<ApiResponse<LeaveRequestResponse>>(
+        `${this.baseUrl}/sections/${sectionId}/leave-requests`,
+        request,
+        { withCredentials: true },
+      )
+      .pipe(unwrap);
+  }
+
+  /** Every leave request, newest first, or only those in `decision` if given (oldest first). */
+  leaveRequests(
+    page = 0,
+    size = LEAVE_REQUEST_PAGE_SIZE,
+    decision?: LeaveDecision,
+  ): Observable<PageResponse<LeaveRequestResponse>> {
+    let params = new HttpParams().set('page', Math.max(0, page)).set('size', size);
+    if (decision) {
+      params = params.set('decision', decision);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<LeaveRequestResponse>>>(`${this.baseUrl}/leave-requests`, {
+        params,
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  /** One leave request. */
+  leaveRequest(id: string): Observable<LeaveRequestResponse> {
+    return this.http
+      .get<ApiResponse<LeaveRequestResponse>>(`${this.baseUrl}/leave-requests/${id}`, {
+        withCredentials: true,
+      })
+      .pipe(unwrap);
+  }
+
+  /** Approves or rejects one leave request. */
+  decideLeaveRequest(id: string, decision: DecideLeaveRequest): Observable<LeaveRequestResponse> {
+    return this.http
+      .post<ApiResponse<LeaveRequestResponse>>(
+        `${this.baseUrl}/leave-requests/${id}/decision`,
         decision,
         { withCredentials: true },
       )

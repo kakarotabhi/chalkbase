@@ -893,6 +893,32 @@ export type CorrectionDecision = Schemas['CorrectionRequestResponse']['decision'
 
 /** An administrator's decision on a correction request: `APPROVED` or `REJECTED`, never `PENDING`. */
 export type DecideCorrectionRequest = Schemas['DecideCorrectionRequest'];
+
+/* ── Attendance: leave requests (Phase 2, GET/POST /api/attendance/leave-requests) ────────── */
+
+/**
+ * A guardian-or-teacher's advance notice that a student will be away, and an authorised person's
+ * decision on it (FR-047). `LeaveRequestResponse` on the backend.
+ *
+ * Approving this does not by itself write any attendance mark — see the ADR-0030 amendment. The
+ * marking screen reads approved leave when a section's register is opened for the covered date and
+ * offers `EXCUSED_LEAVE` as an unmarked student's default; a teacher may still mark otherwise.
+ */
+export type LeaveRequestResponse = Schemas['LeaveRequestResponse'];
+
+/**
+ * Filing a leave request for a student on a section's live roster, in advance of the date(s) it
+ * names. `sectionId` is not on this shape — it is the URL segment the request is posted to, the
+ * same relationship `MarkAttendanceRequest` has to the section it marks.
+ */
+export type CreateLeaveRequest = Schemas['CreateLeaveRequest'];
+
+/** Where a leave request stands. A closed set on the backend, so a union here. */
+export type LeaveDecision = Schemas['LeaveRequestResponse']['decision'];
+
+/** An authorised person's decision on a leave request: `APPROVED` or `REJECTED`, never `PENDING`. */
+export type DecideLeaveRequest = Schemas['DecideLeaveRequest'];
+
 /* ── Admissions: enquiry management (Phase 2, FR-016/017, /api/admissions/**) ─────────────
  * Enquiry management only — capture, status, an assigned counsellor and the due-date follow-up
  * queue. Not the online admission form, not the workflow past an enquiry's own four statuses, not

@@ -107,6 +107,12 @@ export const Permissions = {
   ATTENDANCE_MANAGE: 'attendance:mark:manage',
   /** Approving or rejecting a correction request. `AttendancePermissions.CORRECTION_APPROVE`. */
   ATTENDANCE_CORRECTION_APPROVE: 'attendance:correction:approve',
+  /** Seeing the leave request queue and one request's own screen. `AttendancePermissions.LEAVE_READ`. */
+  ATTENDANCE_LEAVE_READ: 'attendance:leave:read',
+  /** Filing a leave request for a student on a section's roster. `AttendancePermissions.LEAVE_REQUEST`. */
+  ATTENDANCE_LEAVE_REQUEST: 'attendance:leave:request',
+  /** Approving or rejecting a leave request. `AttendancePermissions.LEAVE_APPROVE`. */
+  ATTENDANCE_LEAVE_APPROVE: 'attendance:leave:approve',
 
   /**
    * Seeing the enquiry list, one enquiry's detail and follow-up history, and the due-date

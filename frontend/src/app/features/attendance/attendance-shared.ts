@@ -1,8 +1,11 @@
-import { AttendanceStatus } from '../../core/api/models';
+import { AttendanceStatus, LeaveDecision } from '../../core/api/models';
 import { BadgeTone } from '../../shared/components/badge/badge';
 
 /** The code the backend answers when a permission this screen needs is missing. */
 export const ACCESS_DENIED = 'PERM_001';
+
+/** The code the backend answers when the resource named in the URL does not exist. */
+export const NOT_FOUND = 'NF_001';
 
 /** One status a teacher may pick, in the order it reads best on a phone: the common case first. */
 export interface StatusOption {
@@ -60,4 +63,24 @@ export function todayIsoDate(): string {
 /** `Class 5 · A`, the same shape the student list's section filter reads. */
 export function classAndSection(className: string, sectionName: string): string {
   return `${className} · ${sectionName}`;
+}
+
+const LEAVE_DECISION_LABELS: Readonly<Record<LeaveDecision, string>> = {
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+};
+
+export function leaveDecisionLabel(decision: LeaveDecision): string {
+  return LEAVE_DECISION_LABELS[decision] ?? decision;
+}
+
+const LEAVE_DECISION_TONES: Readonly<Record<LeaveDecision, BadgeTone>> = {
+  PENDING: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'danger',
+};
+
+export function leaveDecisionTone(decision: LeaveDecision): BadgeTone {
+  return LEAVE_DECISION_TONES[decision] ?? 'neutral';
 }

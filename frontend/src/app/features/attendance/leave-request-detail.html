@@ -1,0 +1,99 @@
+<p class="crumbs">
+  <a routerLink="/attendance/leave">Leave requests</a> <span aria-hidden="true">›</span> Request
+</p>
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading the leave request…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view leave requests</strong>
+    <span>Ask your principal to add "View leave requests" to your role.</span>
+  </div>
+} @else if (missing()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">This leave request could not be found</strong>
+    <span>It may have been filed at another school, or the link may be wrong.</span>
+  </div>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load this leave request</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else if (view(); as view) {
+  <div class="page-head">
+    <h1 class="page-title">{{ view.studentName }}</h1>
+    <cb-badge [tone]="view.decisionTone">{{ view.decisionLabel }}</cb-badge>
+  </div>
+
+  <cb-card padding="md" class="panel">
+    <dl class="details">
+      <div class="details__row">
+        <dt>Class and section</dt>
+        <dd>{{ view.placement }}</dd>
+      </div>
+      <div class="details__row">
+        <dt>Dates</dt>
+        <dd class="dates">{{ view.dateRange }}</dd>
+      </div>
+      <div class="details__row">
+        <dt>Reason</dt>
+        <dd>{{ view.reason }}</dd>
+      </div>
+      @if (!view.pending) {
+        <div class="details__row">
+          <dt>Decided</dt>
+          <dd>
+            {{ view.decidedAt }}
+            @if (view.decisionNote) {
+              <span class="decision-note">"{{ view.decisionNote }}"</span>
+            }
+          </dd>
+        </div>
+      }
+    </dl>
+  </cb-card>
+
+  @if (view.pending && canApprove()) {
+    <cb-card padding="md" class="panel decision-panel">
+      <label class="note-label" for="leave-decision-note">Note (optional)</label>
+      <input
+        id="leave-decision-note"
+        class="note-input"
+        type="text"
+        placeholder="What the requester should know"
+        maxlength="500"
+        [formControl]="noteControl"
+        [disabled]="!!deciding()"
+      />
+
+      @if (decisionFailureCode()) {
+        <p class="banner__title" role="alert">
+          Could not send this decision. Check your connection and try again.
+        </p>
+      }
+
+      <div class="decision-actions">
+        <cb-button
+          variant="secondary"
+          [disabled]="!!deciding() && deciding() !== 'REJECTED'"
+          [loading]="deciding() === 'REJECTED'"
+          (click)="decide('REJECTED')"
+        >
+          Reject
+        </cb-button>
+        <cb-button
+          [disabled]="!!deciding() && deciding() !== 'APPROVED'"
+          [loading]="deciding() === 'APPROVED'"
+          (click)="decide('APPROVED')"
+        >
+          Approve
+        </cb-button>
+      </div>
+    </cb-card>
+  }
+}

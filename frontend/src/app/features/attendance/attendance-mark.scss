@@ -138,6 +138,15 @@
   color: var(--cb-text-muted);
 }
 
+.card__leave-note {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
 // ── The six-way status control ────────────────────────────────────────────────
 
 .status-group {

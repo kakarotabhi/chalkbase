@@ -121,6 +121,28 @@ export const routes: Routes = [
             (m) => m.AttendanceCorrections,
           ),
       },
+      // Leave requests (FR-047, ADR-0030 amendment). `attendance/leave/new` is declared before
+      // `attendance/leave/:id` for the same reason `students/import` precedes `students/:id`
+      // below — the router matches in order, and `:id` would otherwise swallow the word "new".
+      {
+        path: 'attendance/leave',
+        pathMatch: 'full',
+        title: 'Leave requests · Chalkbase',
+        loadComponent: () =>
+          import('./features/attendance/leave-request-list').then((m) => m.LeaveRequestList),
+      },
+      {
+        path: 'attendance/leave/new',
+        title: 'New leave request · Chalkbase',
+        loadComponent: () =>
+          import('./features/attendance/leave-request-form').then((m) => m.LeaveRequestForm),
+      },
+      {
+        path: 'attendance/leave/:id',
+        title: 'Leave request · Chalkbase',
+        loadComponent: () =>
+          import('./features/attendance/leave-request-detail').then((m) => m.LeaveRequestDetail),
+      },
       // Admissions: enquiry management only (Phase 2, FR-016/017). No guard on any of the three,
       // same reasoning as academics and attendance above: the endpoints enforce
       // `admission:enquiry:read` / `admission:enquiry:manage` on their own, and each screen's menu
