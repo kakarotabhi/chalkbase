@@ -11,9 +11,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_7"];
+        readonly get: operations["list_8"];
         readonly put?: never;
-        readonly post: operations["create_7"];
+        readonly post: operations["create_8"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -28,7 +28,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_7"];
+        readonly put: operations["update_9"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -91,9 +91,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_6"];
+        readonly get: operations["list_7"];
         readonly put?: never;
-        readonly post: operations["create_6"];
+        readonly post: operations["create_7"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -108,7 +108,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_6"];
+        readonly put: operations["update_8"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -139,9 +139,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_5"];
+        readonly get: operations["list_6"];
         readonly put?: never;
-        readonly post: operations["create_5"];
+        readonly post: operations["create_6"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -156,7 +156,7 @@ export interface paths {
             readonly cookie?: never;
         };
         readonly get?: never;
-        readonly put: operations["update_5"];
+        readonly put: operations["update_7"];
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -237,7 +237,7 @@ export interface paths {
         };
         readonly get: operations["users"];
         readonly put?: never;
-        readonly post: operations["create_4"];
+        readonly post: operations["create_5"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -334,102 +334,6 @@ export interface paths {
         readonly get?: never;
         readonly put?: never;
         readonly post: operations["unlock"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/counsellors": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["counsellors"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/enquiries": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["list_4"];
-        readonly put?: never;
-        readonly post: operations["create_3"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/enquiries/{id}": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["detail"];
-        readonly put?: never;
-        readonly post?: never;
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/enquiries/{id}/assign": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post: operations["assign"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/enquiries/{id}/follow-ups": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get?: never;
-        readonly put?: never;
-        readonly post: operations["logFollowUp"];
-        readonly delete?: never;
-        readonly options?: never;
-        readonly head?: never;
-        readonly patch?: never;
-        readonly trace?: never;
-    };
-    readonly "/api/admissions/follow-ups/due": {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly get: operations["dueFollowUps"];
-        readonly put?: never;
-        readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -603,7 +507,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_3"];
+        readonly get: operations["list_5"];
         readonly put?: never;
         readonly post: operations["upload"];
         readonly delete?: never;
@@ -619,8 +523,8 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["get"];
-        readonly put: operations["update_4"];
+        readonly get: operations["get_1"];
+        readonly put: operations["update_6"];
         readonly post?: never;
         readonly delete: operations["delete"];
         readonly options?: never;
@@ -638,6 +542,118 @@ export interface paths {
         readonly get: operations["content"];
         readonly put?: never;
         readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/concession-types": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_4"];
+        readonly put?: never;
+        readonly post: operations["create_4"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/concession-types/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["update_5"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/heads": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_3"];
+        readonly put?: never;
+        readonly post: operations["create_3"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/heads/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put: operations["update_4"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/structures": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_9"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/structures/{sessionId}/{classId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["get"];
+        readonly put: operations["save"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/fees/structures/copy": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["copy"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -779,7 +795,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["get_1"];
+        readonly get: operations["get_2"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -1129,6 +1145,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseCopyFeeStructureResponse: {
+            readonly data?: components["schemas"]["CopyFeeStructureResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseCorrectionRequestResponse: {
             readonly data?: components["schemas"]["CorrectionRequestResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1153,16 +1177,32 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
-        readonly ApiResponseEnquiryDetailResponse: {
-            readonly data?: components["schemas"]["EnquiryDetailResponse"];
+        readonly ApiResponseEnrolment: {
+            readonly data?: components["schemas"]["Enrolment"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
             readonly timestamp: string;
             readonly traceId?: string;
         };
-        readonly ApiResponseEnrolment: {
-            readonly data?: components["schemas"]["Enrolment"];
+        readonly ApiResponseFeeConcessionTypeResponse: {
+            readonly data?: components["schemas"]["FeeConcessionTypeResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseFeeHeadResponse: {
+            readonly data?: components["schemas"]["FeeHeadResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseFeeStructureResponse: {
+            readonly data?: components["schemas"]["FeeStructureResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1211,6 +1251,30 @@ export interface components {
         };
         readonly ApiResponseListDocumentSummary: {
             readonly data?: readonly components["schemas"]["DocumentSummary"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListFeeConcessionTypeResponse: {
+            readonly data?: readonly components["schemas"]["FeeConcessionTypeResponse"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListFeeHeadResponse: {
+            readonly data?: readonly components["schemas"]["FeeHeadResponse"][];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseListFeeStructureResponse: {
+            readonly data?: readonly components["schemas"]["FeeStructureResponse"][];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1339,22 +1403,6 @@ export interface components {
         };
         readonly ApiResponsePageResponseCorrectionRequestResponse: {
             readonly data?: components["schemas"]["PageResponseCorrectionRequestResponse"];
-            readonly error?: components["schemas"]["ApiError"];
-            readonly success: boolean;
-            /** Format: date-time */
-            readonly timestamp: string;
-            readonly traceId?: string;
-        };
-        readonly ApiResponsePageResponseEnquiryFollowUpQueueItem: {
-            readonly data?: components["schemas"]["PageResponseEnquiryFollowUpQueueItem"];
-            readonly error?: components["schemas"]["ApiError"];
-            readonly success: boolean;
-            /** Format: date-time */
-            readonly timestamp: string;
-            readonly traceId?: string;
-        };
-        readonly ApiResponsePageResponseEnquirySummary: {
-            readonly data?: components["schemas"]["PageResponseEnquirySummary"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1497,10 +1545,6 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
-        readonly AssignCounsellorRequest: {
-            /** Format: uuid */
-            readonly counsellorId: string;
-        };
         readonly AttendanceEntryRequest: {
             readonly remarks?: string;
             /** @enum {string} */
@@ -1589,6 +1633,16 @@ export interface components {
             readonly email?: string;
             readonly phone?: string;
         };
+        readonly CopyFeeStructureRequest: {
+            /** Format: uuid */
+            readonly fromSessionId: string;
+            /** Format: uuid */
+            readonly toSessionId: string;
+        };
+        readonly CopyFeeStructureResponse: {
+            readonly copied: readonly components["schemas"]["FeeStructureResponse"][];
+            readonly skippedClassNames: readonly string[];
+        };
         readonly CorrectionRequestResponse: {
             /** Format: date */
             readonly attendanceDate: string;
@@ -1611,22 +1665,6 @@ export interface components {
             /** Format: uuid */
             readonly studentId: string;
             readonly studentName: string;
-        };
-        readonly CreateEnquiryRequest: {
-            /** Format: uuid */
-            readonly assignedCounsellorId: string;
-            /** Format: date */
-            readonly childDateOfBirth?: string;
-            readonly childFullName: string;
-            /** Format: uuid */
-            readonly interestedClassId?: string;
-            /** Format: email */
-            readonly parentEmail?: string;
-            readonly parentName: string;
-            readonly parentPhone: string;
-            readonly remarks?: string;
-            /** @enum {string} */
-            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
         };
         readonly CreateEnrolmentRequest: {
             /** Format: uuid */
@@ -1700,78 +1738,6 @@ export interface components {
             /** @enum {string} */
             readonly verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
         };
-        readonly EnquiryDetailResponse: {
-            /** Format: uuid */
-            readonly assignedCounsellorId: string;
-            readonly assignedCounsellorName: string;
-            readonly capturedByName: string;
-            /** Format: date */
-            readonly childDateOfBirth?: string;
-            readonly childFullName: string;
-            /** Format: date-time */
-            readonly createdAt: string;
-            readonly followUps: readonly components["schemas"]["EnquiryFollowUpResponse"][];
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: uuid */
-            readonly interestedClassId?: string;
-            readonly interestedClassName?: string;
-            /** Format: date */
-            readonly nextFollowUpDate?: string;
-            readonly parentEmail?: string;
-            readonly parentName: string;
-            readonly parentPhone: string;
-            readonly remarks?: string;
-            /** @enum {string} */
-            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
-            /** @enum {string} */
-            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
-            /** Format: date-time */
-            readonly updatedAt: string;
-        };
-        readonly EnquiryFollowUpQueueItem: {
-            readonly assignedCounsellorName: string;
-            readonly childFullName: string;
-            /** Format: uuid */
-            readonly enquiryId: string;
-            readonly interestedClassName?: string;
-            /** Format: date */
-            readonly nextFollowUpDate: string;
-            readonly overdue: boolean;
-            readonly parentName: string;
-            readonly parentPhone: string;
-            /** @enum {string} */
-            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
-        };
-        readonly EnquiryFollowUpResponse: {
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: date */
-            readonly nextFollowUpDate?: string;
-            readonly note: string;
-            /** Format: date-time */
-            readonly recordedAt: string;
-            readonly recordedByName: string;
-            /** @enum {string} */
-            readonly resultingStatus?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
-        };
-        readonly EnquirySummary: {
-            readonly assignedCounsellorName: string;
-            readonly childFullName: string;
-            /** Format: date-time */
-            readonly createdAt: string;
-            /** Format: uuid */
-            readonly id: string;
-            readonly interestedClassName?: string;
-            /** Format: date */
-            readonly nextFollowUpDate?: string;
-            readonly parentName: string;
-            readonly parentPhone: string;
-            /** @enum {string} */
-            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
-            /** @enum {string} */
-            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
-        };
         readonly Enrolment: {
             readonly active: boolean;
             /** Format: uuid */
@@ -1788,6 +1754,73 @@ export interface components {
             /** Format: uuid */
             readonly sessionId: string;
             readonly sessionName?: string;
+        };
+        readonly FeeConcessionTypeResponse: {
+            readonly active: boolean;
+            /** @enum {string} */
+            readonly category: "SIBLING" | "STAFF_CHILD" | "MANAGEMENT_QUOTA" | "RTE_EWS" | "SCHOLARSHIP" | "OTHER";
+            readonly description?: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly name: string;
+            readonly requiresApproval: boolean;
+        };
+        readonly FeeHeadResponse: {
+            readonly active: boolean;
+            readonly capPercentOfTuition?: number;
+            /** @enum {string} */
+            readonly category: "TUITION" | "ADMISSION" | "ANNUAL_DEVELOPMENT" | "TRANSPORT" | "EXAM" | "ACTIVITY" | "LATE_FEE";
+            /** Format: uuid */
+            readonly id: string;
+            readonly name: string;
+        };
+        readonly FeeInstallmentRequest: {
+            readonly amount: number;
+            /** Format: date */
+            readonly dueDate: string;
+        };
+        readonly FeeInstallmentResponse: {
+            readonly amount: number;
+            /** Format: date */
+            readonly dueDate: string;
+            /** Format: uuid */
+            readonly id: string;
+        };
+        readonly FeeStructureItemRequest: {
+            readonly amount: number;
+            /** Format: uuid */
+            readonly feeHeadId: string;
+            /** @enum {string} */
+            readonly frequency: "ONE_TIME" | "MONTHLY" | "QUARTERLY" | "TERM_WISE" | "ANNUAL" | "CUSTOM";
+            readonly installments: readonly components["schemas"]["FeeInstallmentRequest"][];
+        };
+        readonly FeeStructureItemResponse: {
+            readonly amount: number;
+            /** @enum {string} */
+            readonly feeHeadCategory: "TUITION" | "ADMISSION" | "ANNUAL_DEVELOPMENT" | "TRANSPORT" | "EXAM" | "ACTIVITY" | "LATE_FEE";
+            /** Format: uuid */
+            readonly feeHeadId: string;
+            readonly feeHeadName: string;
+            /** @enum {string} */
+            readonly frequency: "ONE_TIME" | "MONTHLY" | "QUARTERLY" | "TERM_WISE" | "ANNUAL" | "CUSTOM";
+            /** Format: uuid */
+            readonly id: string;
+            readonly installments: readonly components["schemas"]["FeeInstallmentResponse"][];
+        };
+        readonly FeeStructureResponse: {
+            /** Format: uuid */
+            readonly academicSessionId: string;
+            readonly academicSessionName: string;
+            /** Format: date-time */
+            readonly createdAt: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly items: readonly components["schemas"]["FeeStructureItemResponse"][];
+            /** Format: uuid */
+            readonly schoolClassId: string;
+            readonly schoolClassName: string;
+            /** Format: int32 */
+            readonly version: number;
         };
         readonly GrantResponse: {
             /** Format: uuid */
@@ -1872,13 +1905,6 @@ export interface components {
             readonly primary: boolean;
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
-        };
-        readonly LogFollowUpRequest: {
-            /** Format: date */
-            readonly nextFollowUpDate?: string;
-            readonly note: string;
-            /** @enum {string} */
-            readonly resultingStatus?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
         };
         readonly LoginRequest: {
             readonly password: string;
@@ -1967,28 +1993,6 @@ export interface components {
         };
         readonly PageResponseCorrectionRequestResponse: {
             readonly content: readonly components["schemas"]["CorrectionRequestResponse"][];
-            /** Format: int32 */
-            readonly page: number;
-            /** Format: int32 */
-            readonly size: number;
-            /** Format: int64 */
-            readonly totalElements: number;
-            /** Format: int32 */
-            readonly totalPages: number;
-        };
-        readonly PageResponseEnquiryFollowUpQueueItem: {
-            readonly content: readonly components["schemas"]["EnquiryFollowUpQueueItem"][];
-            /** Format: int32 */
-            readonly page: number;
-            /** Format: int32 */
-            readonly size: number;
-            /** Format: int64 */
-            readonly totalElements: number;
-            /** Format: int32 */
-            readonly totalPages: number;
-        };
-        readonly PageResponseEnquirySummary: {
-            readonly content: readonly components["schemas"]["EnquirySummary"][];
             /** Format: int32 */
             readonly page: number;
             /** Format: int32 */
@@ -2091,6 +2095,24 @@ export interface components {
             /** Format: email */
             readonly email?: string;
             readonly phone?: string;
+        };
+        readonly SaveFeeConcessionTypeRequest: {
+            readonly active: boolean;
+            /** @enum {string} */
+            readonly category: "SIBLING" | "STAFF_CHILD" | "MANAGEMENT_QUOTA" | "RTE_EWS" | "SCHOLARSHIP" | "OTHER";
+            readonly description?: string;
+            readonly name: string;
+            readonly requiresApproval: boolean;
+        };
+        readonly SaveFeeHeadRequest: {
+            readonly active: boolean;
+            readonly capPercentOfTuition?: number;
+            /** @enum {string} */
+            readonly category: "TUITION" | "ADMISSION" | "ANNUAL_DEVELOPMENT" | "TRANSPORT" | "EXAM" | "ACTIVITY" | "LATE_FEE";
+            readonly name: string;
+        };
+        readonly SaveFeeStructureRequest: {
+            readonly items: readonly components["schemas"]["FeeStructureItemRequest"][];
         };
         readonly SaveGuardianRequest: {
             /** Format: email */
@@ -2366,7 +2388,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly list_7: {
+    readonly list_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2386,7 +2408,7 @@ export interface operations {
             };
         };
     };
-    readonly create_7: {
+    readonly create_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2410,7 +2432,7 @@ export interface operations {
             };
         };
     };
-    readonly update_7: {
+    readonly update_9: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2512,7 +2534,7 @@ export interface operations {
             };
         };
     };
-    readonly list_6: {
+    readonly list_7: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2532,7 +2554,7 @@ export interface operations {
             };
         };
     };
-    readonly create_6: {
+    readonly create_7: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2556,7 +2578,7 @@ export interface operations {
             };
         };
     };
-    readonly update_6: {
+    readonly update_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2604,7 +2626,7 @@ export interface operations {
             };
         };
     };
-    readonly list_5: {
+    readonly list_6: {
         readonly parameters: {
             readonly query: {
                 readonly pageable: components["schemas"]["Pageable"];
@@ -2627,7 +2649,7 @@ export interface operations {
             };
         };
     };
-    readonly create_5: {
+    readonly create_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2651,7 +2673,7 @@ export interface operations {
             };
         };
     };
-    readonly update_5: {
+    readonly update_7: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2809,7 +2831,7 @@ export interface operations {
             };
         };
     };
-    readonly create_4: {
+    readonly create_5: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2986,175 +3008,6 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
-                };
-            };
-        };
-    };
-    readonly counsellors: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseListUserSummary"];
-                };
-            };
-        };
-    };
-    readonly list_4: {
-        readonly parameters: {
-            readonly query: {
-                readonly assignedCounsellorId?: string;
-                readonly interestedClassId?: string;
-                readonly pageable: components["schemas"]["Pageable"];
-                readonly q?: string;
-                readonly source?: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
-                readonly status?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
-            };
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponsePageResponseEnquirySummary"];
-                };
-            };
-        };
-    };
-    readonly create_3: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["CreateEnquiryRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
-                };
-            };
-        };
-    };
-    readonly detail: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
-                };
-            };
-        };
-    };
-    readonly assign: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["AssignCounsellorRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
-                };
-            };
-        };
-    };
-    readonly logFollowUp: {
-        readonly parameters: {
-            readonly query?: never;
-            readonly header?: never;
-            readonly path: {
-                readonly id: string;
-            };
-            readonly cookie?: never;
-        };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": components["schemas"]["LogFollowUpRequest"];
-            };
-        };
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
-                };
-            };
-        };
-    };
-    readonly dueFollowUps: {
-        readonly parameters: {
-            readonly query?: {
-                readonly mine?: boolean;
-                readonly page?: number;
-                readonly size?: number;
-            };
-            readonly header?: never;
-            readonly path?: never;
-            readonly cookie?: never;
-        };
-        readonly requestBody?: never;
-        readonly responses: {
-            /** @description OK */
-            readonly 200: {
-                headers: {
-                    readonly [name: string]: unknown;
-                };
-                content: {
-                    readonly "*/*": components["schemas"]["ApiResponsePageResponseEnquiryFollowUpQueueItem"];
                 };
             };
         };
@@ -3444,7 +3297,7 @@ export interface operations {
             };
         };
     };
-    readonly list_3: {
+    readonly list_5: {
         readonly parameters: {
             readonly query: {
                 readonly studentId: string;
@@ -3498,7 +3351,7 @@ export interface operations {
             };
         };
     };
-    readonly get: {
+    readonly get_1: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3520,7 +3373,7 @@ export interface operations {
             };
         };
     };
-    readonly update_4: {
+    readonly update_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3584,6 +3437,242 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": string;
+                };
+            };
+        };
+    };
+    readonly list_4: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListFeeConcessionTypeResponse"];
+                };
+            };
+        };
+    };
+    readonly create_4: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveFeeConcessionTypeRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeConcessionTypeResponse"];
+                };
+            };
+        };
+    };
+    readonly update_5: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveFeeConcessionTypeRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeConcessionTypeResponse"];
+                };
+            };
+        };
+    };
+    readonly list_3: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListFeeHeadResponse"];
+                };
+            };
+        };
+    };
+    readonly create_3: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveFeeHeadRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeHeadResponse"];
+                };
+            };
+        };
+    };
+    readonly update_4: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveFeeHeadRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeHeadResponse"];
+                };
+            };
+        };
+    };
+    readonly list_9: {
+        readonly parameters: {
+            readonly query: {
+                readonly sessionId: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListFeeStructureResponse"];
+                };
+            };
+        };
+    };
+    readonly get: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly classId: string;
+                readonly sessionId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeStructureResponse"];
+                };
+            };
+        };
+    };
+    readonly save: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly classId: string;
+                readonly sessionId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SaveFeeStructureRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseFeeStructureResponse"];
+                };
+            };
+        };
+    };
+    readonly copy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CopyFeeStructureRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCopyFeeStructureResponse"];
                 };
             };
         };
@@ -3831,7 +3920,7 @@ export interface operations {
             };
         };
     };
-    readonly get_1: {
+    readonly get_2: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
