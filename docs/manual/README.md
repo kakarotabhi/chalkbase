@@ -5,10 +5,9 @@ accountant never need the same page.
 
 | Role | Pages |
 |---|---|
-| [Admin / principal](admin/) | dashboard, school setup, sessions, classes, staff, reports, [approve attendance corrections](admin/approve-attendance-corrections.md) |
-| [Admission counsellor](admission-counsellor/) | [capture an enquiry](admission-counsellor/capture-an-enquiry.md), [work your follow-up queue](admission-counsellor/work-your-follow-up-queue.md) |
 | [Admin / principal](admin/) | dashboard, school setup, sessions, classes, staff, reports, [approve attendance corrections](admin/approve-attendance-corrections.md), [set up the fee structure](admin/set-up-fee-structure.md) |
-| [Teacher](teacher/) | [mark attendance](teacher/mark-attendance.md), marks, timetable, homework, parent messages |
+| [Admission counsellor](admission-counsellor/) | [capture an enquiry](admission-counsellor/capture-an-enquiry.md), [work your follow-up queue](admission-counsellor/work-your-follow-up-queue.md) |
+| [Teacher](teacher/) | [mark attendance](teacher/mark-attendance.md), [request and approve leave](teacher/request-and-approve-leave.md), marks, timetable, homework, parent messages |
 | [Parent](parent/) | fees, attendance, report cards, notices |
 | [Student](student/) | timetable, assignments, results |
 | [Accountant](accountant/) | fee collection, receipts, concessions, day book |

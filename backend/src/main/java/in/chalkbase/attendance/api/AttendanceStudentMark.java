@@ -22,6 +22,12 @@ import java.util.UUID;
  * @param status null alongside {@code markId} for the same reason.
  * @param editable false once this date has locked (end of day plus 24 hours). The screen shows a
  *     correction action instead of letting the status be changed directly.
+ * @param approvedLeave true when an approved leave request (this module's Phase 2 lane) covers this
+ *     student and this date. Confidential, the same tier as {@code status}: this is functionally the
+ *     same fact ("this child is expected to be away, and someone signed off on why") whether it came
+ *     from a mark or a request nobody has acted on yet. Carried alongside an existing mark as well as
+ *     an unmarked row — see {@code AttendanceMarkingService.buildView} and the ADR-0030 amendment for
+ *     why this is a read-time signal rather than a write to the mark itself.
  */
 public record AttendanceStudentMark(
         @Classification(Tier.INTERNAL) UUID studentId,
@@ -40,9 +46,10 @@ public record AttendanceStudentMark(
         @Schema(nullable = true) @Classification(Tier.CONFIDENTIAL)
         String remarks,
 
-        @Classification(Tier.INTERNAL) boolean editable) {
+        @Classification(Tier.INTERNAL) boolean editable,
+        @Classification(Tier.CONFIDENTIAL) boolean approvedLeave) {
 
-    public static AttendanceStudentMark unmarked(EnrolledStudentRef student, boolean editable) {
+    public static AttendanceStudentMark unmarked(EnrolledStudentRef student, boolean editable, boolean approvedLeave) {
         return new AttendanceStudentMark(
                 student.studentId(),
                 student.admissionNumber(),
@@ -51,10 +58,12 @@ public record AttendanceStudentMark(
                 null,
                 null,
                 null,
-                editable);
+                editable,
+                approvedLeave);
     }
 
-    public static AttendanceStudentMark of(EnrolledStudentRef student, AttendanceMark mark, boolean editable) {
+    public static AttendanceStudentMark of(
+            EnrolledStudentRef student, AttendanceMark mark, boolean editable, boolean approvedLeave) {
         return new AttendanceStudentMark(
                 student.studentId(),
                 student.admissionNumber(),
@@ -63,7 +72,8 @@ public record AttendanceStudentMark(
                 mark.getId(),
                 mark.getStatus(),
                 mark.getRemarks(),
-                editable);
+                editable,
+                approvedLeave);
     }
 
     /** Redacted by tier: ADR-0014 forbids Confidential and Restricted values in any log sink. */

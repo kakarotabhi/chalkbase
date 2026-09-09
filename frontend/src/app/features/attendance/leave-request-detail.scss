@@ -1,0 +1,133 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  a {
+    color: inherit;
+  }
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-4);
+}
+
+.page-title {
+  @include page-title;
+
+  margin: 0;
+}
+
+// Surface, border and radius come from cb-card; width and spacing stay here.
+.panel {
+  max-width: 32rem;
+}
+
+.panel + .panel {
+  margin-top: var(--cb-space-4);
+}
+
+.details {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0;
+}
+
+.details__row {
+  display: grid;
+  gap: var(--cb-space-1);
+}
+
+dt {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+dd {
+  margin: 0;
+}
+
+.dates {
+  font-family: var(--cb-font-numeric);
+}
+
+.decision-note {
+  display: block;
+  margin-top: var(--cb-space-1);
+  color: var(--cb-text-muted);
+  font-style: italic;
+}
+
+.decision-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+}
+
+.note-label {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.note-input {
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-3);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font: inherit;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--cb-focus);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.decision-actions {
+  display: flex;
+  gap: var(--cb-space-2);
+}

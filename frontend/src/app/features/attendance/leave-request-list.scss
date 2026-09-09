@@ -1,0 +1,246 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-title {
+  @include page-title;
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+}
+
+.filters__label {
+  @include visually-hidden;
+}
+
+.filters__pill {
+  min-width: 0;
+}
+
+// ── The list (ADR-0010: cards first, a table from expanded up) ──────────────
+
+.list__table {
+  display: block;
+  width: 100%;
+}
+
+.list__caption {
+  @include visually-hidden;
+}
+
+.list__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name status'
+    'placement placement'
+    'dates dates'
+    'reason reason';
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--name {
+  grid-area: name;
+}
+
+.cell--status {
+  grid-area: status;
+  text-align: right;
+}
+
+.cell--placement {
+  grid-area: placement;
+}
+
+.cell--dates {
+  grid-area: dates;
+}
+
+.cell--reason {
+  grid-area: reason;
+}
+
+.cell__label {
+  display: block;
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}
+
+.name {
+  display: inline-block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-1) 0;
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.dates {
+  font-family: var(--cb-font-numeric);
+}
+
+.reason {
+  display: block;
+  overflow: hidden;
+  color: var(--cb-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+}
+
+.paging__position {
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}
+
+// ── The table, from expanded up ────────────────────────────────────────────
+
+@include from-expanded {
+  .list {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .list__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .list__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-top: 1px solid var(--cb-border);
+    vertical-align: top;
+  }
+
+  .cell--status {
+    text-align: left;
+  }
+
+  .cell--reason {
+    max-width: 20rem;
+  }
+
+  .cell__label {
+    @include visually-hidden;
+  }
+
+  .name {
+    min-height: 0;
+    padding: 0;
+  }
+}

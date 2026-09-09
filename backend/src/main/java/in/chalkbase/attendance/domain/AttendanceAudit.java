@@ -18,6 +18,16 @@ public final class AttendanceAudit {
     public static final String CORRECTION_REQUEST = "ATTENDANCE_CORRECTION_REQUEST";
 
     /**
+     * A leave request (FR-047). Unlike {@link #CORRECTION_REQUEST}, deciding one never produces a
+     * second audit entry against {@link #ATTENDANCE_MARK}: approving a leave request does not write
+     * a mark (see the ADR-0030 amendment), so there is no second row for a decision to disturb. The
+     * decision itself — {@code decision}, {@code decisionNote} — is still its own
+     * {@code ENTITY_UPDATED} entry against this entity, field names only, the same as any other
+     * change.
+     */
+    public static final String LEAVE_REQUEST = "ATTENDANCE_LEAVE_REQUEST";
+
+    /**
      * A section's attendance was marked or edited for one date, inside the ordinary edit window.
      *
      * <p>One bulk event per save (see {@code AuditService#recordBulkChange}), not one per student —

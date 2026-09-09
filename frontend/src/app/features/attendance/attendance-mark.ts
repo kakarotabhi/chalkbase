@@ -44,6 +44,14 @@ interface RosterRow {
   readonly savedStatus: AttendanceStatus | null;
   readonly savedRemarks: string | null;
   readonly correctionRequested: boolean;
+  /**
+   * True when an approved leave request (FR-047) covers this student for this date. Shown as a
+   * note on the card whether or not the student is already marked; also what {@link applyView}
+   * uses to default an unmarked student's {@link draftStatus} to `EXCUSED_LEAVE` — see the
+   * ADR-0030 amendment for why the connection is made here, at mark time, rather than by the
+   * approval itself.
+   */
+  readonly approvedLeave: boolean;
 }
 
 /**
@@ -363,19 +371,25 @@ export class AttendanceMark {
   private applyView(result: SectionAttendanceView): void {
     this.view.set(result);
     this.rows.set(
-      result.entries.map((entry) => ({
-        studentId: entry.studentId,
-        admissionNumber: entry.admissionNumber,
-        fullName: entry.fullName,
-        rollNumber: entry.rollNumber ?? null,
-        markId: entry.markId ?? null,
-        draftStatus: entry.status ?? null,
-        draftRemarks: entry.remarks ?? '',
-        showRemarks: !!entry.remarks,
-        savedStatus: entry.status ?? null,
-        savedRemarks: entry.remarks ?? null,
-        correctionRequested: false,
-      })),
+      result.entries.map((entry) => {
+        const approvedLeave = !!entry.approvedLeave;
+        return {
+          studentId: entry.studentId,
+          admissionNumber: entry.admissionNumber,
+          fullName: entry.fullName,
+          rollNumber: entry.rollNumber ?? null,
+          markId: entry.markId ?? null,
+          // An unmarked student with an approved leave request defaults to Excused leave rather
+          // than staying blank — still a draft, still overridable by a tap, never sent until Save.
+          draftStatus: entry.status ?? (approvedLeave ? 'EXCUSED_LEAVE' : null),
+          draftRemarks: entry.remarks ?? '',
+          showRemarks: !!entry.remarks,
+          savedStatus: entry.status ?? null,
+          savedRemarks: entry.remarks ?? null,
+          correctionRequested: false,
+          approvedLeave,
+        };
+      }),
     );
   }
 }

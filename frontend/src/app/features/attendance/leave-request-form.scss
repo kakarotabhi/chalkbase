@@ -1,0 +1,91 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  a {
+    color: inherit;
+  }
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+// Surface, border and radius come from cb-card (tone="surface"); width and spacing stay here.
+.panel {
+  max-width: 32rem;
+}
+
+.field-note {
+  margin: calc(-1 * var(--cb-space-3)) 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.date-row {
+  display: grid;
+  gap: var(--cb-space-4);
+
+  @include from-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.reason-input {
+  width: 100%;
+  min-height: 5.5rem;
+  padding: var(--cb-space-2) var(--cb-space-3);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font: inherit;
+  resize: vertical;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--cb-focus);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--cb-space-4);
+  margin-top: var(--cb-space-2);
+}
+
+.link-button {
+  @include link-button;
+}

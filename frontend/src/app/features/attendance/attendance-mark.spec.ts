@@ -45,6 +45,7 @@ const view = (over: Partial<SectionAttendanceView> = {}): SectionAttendanceView 
       fullName: 'Aarav Sharma',
       rollNumber: '1',
       editable: true,
+      approvedLeave: false,
     },
   ],
   ...over,
@@ -111,5 +112,43 @@ describe('AttendanceMark', () => {
 
     expect(text()).toContain('Aarav Sharma');
     expect(text()).toContain('Mark all present');
+  });
+
+  it('notes an approved leave request and pre-selects Excused leave for an unmarked student', () => {
+    signInWith(Permissions.ATTENDANCE_READ, Permissions.ATTENDANCE_MANAGE);
+    fixture = TestBed.createComponent(AttendanceMark);
+    fixture.detectChanges();
+    httpMock.expectOne(CLASSES_URL).flush(envelope(oneClass()));
+    fixture.detectChanges();
+
+    const select = element().querySelector<HTMLSelectElement>('#attendance-section');
+    select!.value = 'section-5a';
+    select!.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === '/api/attendance/sections/section-5a',
+    );
+    request.flush(
+      envelope(
+        view({
+          entries: [
+            {
+              studentId: 'student-1',
+              admissionNumber: 'ADM-001',
+              fullName: 'Aarav Sharma',
+              rollNumber: '1',
+              editable: true,
+              approvedLeave: true,
+            },
+          ],
+        }),
+      ),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('Leave approved');
+    const selected = element().querySelector<HTMLButtonElement>('.status-btn--selected');
+    expect(selected?.textContent).toContain('Excused leave');
   });
 });

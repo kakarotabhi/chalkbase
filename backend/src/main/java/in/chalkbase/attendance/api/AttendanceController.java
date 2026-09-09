@@ -1,5 +1,6 @@
 package in.chalkbase.attendance.api;
 
+import in.chalkbase.attendance.application.AttendanceLeaveService;
 import in.chalkbase.attendance.application.AttendanceMarkingService;
 import in.chalkbase.platform.api.ApiResponse;
 import jakarta.validation.Valid;
@@ -32,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttendanceController {
 
     private final AttendanceMarkingService marking;
+    private final AttendanceLeaveService leave;
 
-    public AttendanceController(AttendanceMarkingService marking) {
+    public AttendanceController(AttendanceMarkingService marking, AttendanceLeaveService leave) {
         this.marking = marking;
+        this.leave = leave;
     }
 
     /**
@@ -87,5 +90,21 @@ public class AttendanceController {
     @GetMapping("/marks/{markId}/correction-requests")
     public ApiResponse<List<CorrectionRequestResponse>> correctionHistory(@PathVariable UUID markId) {
         return ApiResponse.success(marking.correctionHistory(markId));
+    }
+
+    /**
+     * Files a leave request for a student on this section's live roster, in advance of the date(s)
+     * it names.
+     *
+     * <p>The queue, a single request, and the decision on one live in
+     * {@link AttendanceLeaveController} instead — this endpoint sits here because it is validated
+     * against a section's roster the same way {@link #mark} is, not because it shares
+     * {@code AttendanceLeaveController}'s permission.
+     */
+    @PreAuthorize("hasAuthority('attendance:leave:request')")
+    @PostMapping("/sections/{sectionId}/leave-requests")
+    public ApiResponse<LeaveRequestResponse> requestLeave(
+            @PathVariable UUID sectionId, @Valid @RequestBody CreateLeaveRequest request) {
+        return ApiResponse.success(leave.create(sectionId, request));
     }
 }

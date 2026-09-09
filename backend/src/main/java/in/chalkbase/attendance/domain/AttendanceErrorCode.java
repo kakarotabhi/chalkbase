@@ -60,7 +60,32 @@ public enum AttendanceErrorCode implements ErrorCode {
      * only for a school that has not finished setting itself up — {@code academics:session:manage}
      * is what fixes it.
      */
-    NO_CURRENT_SESSION("ATT_008", "This school has not set a current academic session yet", HttpStatus.CONFLICT);
+    NO_CURRENT_SESSION("ATT_008", "This school has not set a current academic session yet", HttpStatus.CONFLICT),
+
+    /** A leave request named an end date before its own start date. */
+    LEAVE_INVALID_DATE_RANGE(
+            "ATT_009", "A leave request's end date cannot be before its start date", HttpStatus.BAD_REQUEST),
+
+    /**
+     * A leave request named a start date before today. This module's Phase 2 leave requests are
+     * advance notice of a day that has not happened; a date that already has is a correction to
+     * what actually happened, which this module already has a workflow for —
+     * {@code AttendanceMarkingService#requestCorrection} — rather than a second, parallel approval
+     * mechanism doing nearly the same thing. That flow needs a mark to correct, which a day nobody
+     * has marked yet does not have; a school in that position marks the day honestly (absent, if
+     * that is what happened) and files a correction afterwards if it needs the day read as excused.
+     */
+    LEAVE_DATE_IN_PAST(
+            "ATT_010",
+            "A leave request must start today or later; a past date needs a correction request instead",
+            HttpStatus.BAD_REQUEST),
+
+    /**
+     * An approval or rejection was attempted on a leave request that has already been decided.
+     * {@link AttendanceLeaveRequest#decide} is what throws this, the same shape
+     * {@link AttendanceCorrectionRequest#decide} gives {@link #CORRECTION_NOT_PENDING}.
+     */
+    LEAVE_REQUEST_NOT_PENDING("ATT_011", "This leave request has already been decided", HttpStatus.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

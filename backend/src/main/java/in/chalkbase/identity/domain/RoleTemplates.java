@@ -50,6 +50,9 @@ public final class RoleTemplates {
     private static final String ATTENDANCE_READ = "attendance:mark:read";
     private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
     private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
+    private static final String ATTENDANCE_LEAVE_READ = "attendance:leave:read";
+    private static final String ATTENDANCE_LEAVE_REQUEST = "attendance:leave:request";
+    private static final String ATTENDANCE_LEAVE_APPROVE = "attendance:leave:approve";
     private static final String ENQUIRY_READ = "admission:enquiry:read";
     private static final String ENQUIRY_MANAGE = "admission:enquiry:manage";
     private static final String FEE_HEAD_READ = "fee:head:read";
@@ -142,6 +145,19 @@ public final class RoleTemplates {
      * that a memory of a locked day overrides what was recorded at the time is oversight, the same
      * shape as {@code STUDENT_REVEAL_RESTRICTED} on {@code PRINCIPAL}.
      *
+     * <p>{@code attendance:leave:*} (FR-047) follows {@code CLASS_TEACHER}'s "owns one section"
+     * description too, but not the correction split above: filing a leave request and deciding it
+     * are both routine work for the teacher who owns the section, not oversight of somebody else's
+     * memory, so {@code CLASS_TEACHER} holds all three — read, request and approve — the same as it
+     * holds {@code ATTENDANCE_MANAGE}. {@code PRINCIPAL} and {@code VICE_PRINCIPAL} hold all three
+     * too, as the same override every other attendance permission gives them. {@code
+     * SUBJECT_TEACHER} holds only {@code ATTENDANCE_LEAVE_READ} — context on who is expected away,
+     * not a role in filing or deciding it, the same asymmetry it already has on
+     * {@code ATTENDANCE_READ} versus {@code ATTENDANCE_MANAGE}. See
+     * {@code AttendancePermissions}'s own Javadoc for why filing and approving are two permissions
+     * rather than one, and for the scope caveat that applies to {@code CLASS_TEACHER} holding
+     * {@code ATTENDANCE_LEAVE_APPROVE} at all.
+     *
      * <p>{@code admission:enquiry:*} (FR-016, FR-017) is {@code ADMISSION_COUNSELLOR}'s own —
      * enquiries are that template's daily work, the reason its description already read "from the
      * first call to the admission" before this module existed to back it. {@code PRINCIPAL} and
@@ -190,6 +206,9 @@ public final class RoleTemplates {
                     ATTENDANCE_READ,
                     ATTENDANCE_MANAGE,
                     ATTENDANCE_CORRECTION_APPROVE,
+                    ATTENDANCE_LEAVE_READ,
+                    ATTENDANCE_LEAVE_REQUEST,
+                    ATTENDANCE_LEAVE_APPROVE,
                     ENQUIRY_READ,
                     ENQUIRY_MANAGE,
                     FEE_HEAD_READ,
@@ -220,6 +239,9 @@ public final class RoleTemplates {
                     ATTENDANCE_READ,
                     ATTENDANCE_MANAGE,
                     ATTENDANCE_CORRECTION_APPROVE,
+                    ATTENDANCE_LEAVE_READ,
+                    ATTENDANCE_LEAVE_REQUEST,
+                    ATTENDANCE_LEAVE_APPROVE,
                     ENQUIRY_READ,
                     ENQUIRY_MANAGE,
                     FEE_HEAD_READ,
@@ -240,7 +262,10 @@ public final class RoleTemplates {
                     GUARDIAN_READ,
                     DOCUMENT_READ,
                     ATTENDANCE_READ,
-                    ATTENDANCE_MANAGE),
+                    ATTENDANCE_MANAGE,
+                    ATTENDANCE_LEAVE_READ,
+                    ATTENDANCE_LEAVE_REQUEST,
+                    ATTENDANCE_LEAVE_APPROVE),
             // Reads students, because marks are recorded against a child. Deliberately does NOT read
             // guardians, and the distinction is the point: with no scope narrower than the school,
             // that permission is a searchable directory of every parent's mobile number, handed to
@@ -257,7 +282,8 @@ public final class RoleTemplates {
                     CLASS_READ,
                     SUBJECT_READ,
                     STUDENT_READ,
-                    ATTENDANCE_READ),
+                    ATTENDANCE_READ,
+                    ATTENDANCE_LEAVE_READ),
             // Reads students and guardians because a fee is charged to a child and chased through a
             // parent's phone number. Holds neither manage: an accountant corrects a ledger, not a
             // date of birth.

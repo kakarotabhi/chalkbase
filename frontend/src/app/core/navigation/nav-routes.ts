@@ -105,6 +105,7 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   // children.
   ['attendance', { path: '/attendance', icon: 'attendance' }],
   ['attendance.mark', { path: '/attendance/mark', icon: 'attendance' }],
+  ['attendance.leave', { path: '/attendance/leave', icon: 'attendance' }],
   ['attendance.corrections', { path: '/attendance/corrections', icon: 'attendance' }],
 
   // Admissions (Phase 2): enquiry management only — FR-016, FR-017. Both screens share the one

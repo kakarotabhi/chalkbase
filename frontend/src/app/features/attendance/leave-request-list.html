@@ -1,0 +1,103 @@
+<p class="crumbs">Attendance <span aria-hidden="true">›</span> Leave requests</p>
+
+<div class="page-head">
+  <h1 class="page-title">Leave requests</h1>
+  @if (!forbidden() && canRequest()) {
+    <cb-button [id]="'leave-request-new'" routerLink="/attendance/leave/new">
+      New leave request
+    </cb-button>
+  }
+</div>
+
+<p class="page-lede">
+  Advance notice that a student will be away, and the decision on it. Approving does not change the
+  register by itself — it is read when a section's attendance is marked for the covered date.
+</p>
+
+<form class="filters" (submit)="$event.preventDefault()">
+  <label class="filters__label" for="leave-status-filter">Status</label>
+  <cb-select
+    class="filters__pill"
+    variant="pill"
+    ariaLabel="Status"
+    [formControl]="decisionFilter"
+    [id]="'leave-status-filter'"
+    [options]="decisionFilterOptions"
+  />
+</form>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading leave requests…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view leave requests</strong>
+    <span>Ask your principal to add "View leave requests" to your role.</span>
+  </div>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load leave requests</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else if (rows().length === 0) {
+  <p class="page-status" role="status">No leave requests match this filter.</p>
+} @else {
+  <!--
+    One table, two shapes (ADR-0010): a real table from the wide breakpoint up, the same elements
+    as cards below it.
+  -->
+  <div class="list">
+    <table class="list__table">
+      <caption class="list__caption">
+        Leave requests, newest first.
+      </caption>
+      <thead class="list__head">
+        <tr>
+          <th scope="col">Student</th>
+          <th scope="col">Class and section</th>
+          <th scope="col">Dates</th>
+          <th scope="col">Reason</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr class="row">
+            <td class="cell cell--name">
+              <span class="cell__label">Student</span>
+              <a class="name" [routerLink]="['/attendance/leave', row.id]">{{ row.studentName }}</a>
+            </td>
+            <td class="cell cell--placement">
+              <span class="cell__label">Class and section</span>
+              {{ row.placement }}
+            </td>
+            <td class="cell cell--dates">
+              <span class="cell__label">Dates</span>
+              <span class="dates">{{ row.dateRange }}</span>
+            </td>
+            <td class="cell cell--reason">
+              <span class="cell__label">Reason</span>
+              <span class="reason">{{ row.reason }}</span>
+            </td>
+            <td class="cell cell--status">
+              <span class="cell__label">Status</span>
+              <cb-badge [tone]="row.decisionTone">{{ row.decisionLabel }}</cb-badge>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalPages() > 1) {
+    <nav class="paging" aria-label="Pages">
+      <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+        Previous
+      </cb-button>
+      <span class="paging__position">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+      <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+    </nav>
+  }
+}

@@ -126,6 +126,18 @@
               <span class="card__admission">{{ row.admissionNumber }}</span>
             </div>
 
+            @if (row.approvedLeave) {
+              <!--
+                A read, not a write (ADR-0030 amendment): an approved leave request never changes
+                this student's mark by itself. Shown whether the student is already marked or not —
+                a teacher who marked otherwise still benefits from knowing a request covers today.
+              -->
+              <p class="card__leave-note">
+                <cb-badge tone="info">Leave approved</cb-badge>
+                for this date.
+              </p>
+            }
+
             @if (locked()) {
               <div class="card__locked">
                 <cb-badge [tone]="statusTone(row.savedStatus)">
