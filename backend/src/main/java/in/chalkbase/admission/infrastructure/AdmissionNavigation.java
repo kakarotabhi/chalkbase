@@ -15,9 +15,13 @@ import org.springframework.context.annotation.Configuration;
  * onto nothing. Both children share {@code ENQUIRY_READ} — the queue is a read of the same data the
  * list is, filtered differently, not a separate capability.
  *
- * <p>Ordered at 22, ahead of {@code students} (25): an admission happens before a student record
- * exists, and the menu reads better with the front office's own work above the roster it eventually
- * feeds.
+ * <p>Ordered at 45, just after {@code attendance} (40) and well ahead of {@code settings} (90) —
+ * a class teacher's daily work and a front office's daily work sit together, above configuration
+ * screens. Deliberately not placed ahead of {@code students} (25) despite an admission happening
+ * before a student record exists: {@code students}, {@code academics} and {@code attendance} are
+ * pinned by {@code MeApiTests} at exact array positions, and slotting in after all three rather
+ * than before any of them is one line of new assertions there instead of a rewrite of existing
+ * ones for no functional gain.
  */
 @Configuration
 public class AdmissionNavigation {
@@ -32,7 +36,7 @@ public class AdmissionNavigation {
                 ADMISSIONS,
                 "nav.admissions",
                 "admissions",
-                22,
+                45,
                 null,
                 List.of(
                         new NavigationItem(

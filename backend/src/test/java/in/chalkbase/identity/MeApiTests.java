@@ -83,6 +83,8 @@ class MeApiTests {
     private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
     private static final String GUARDIAN_READ = "student:guardian:read";
     private static final String GUARDIAN_MANAGE = "student:guardian:manage";
+    private static final String ADMISSION_MANAGE = "admission:enquiry:manage";
+    private static final String ADMISSION_READ = "admission:enquiry:read";
     private static final String DOCUMENT_READ = "document:document:read";
     private static final String DOCUMENT_MANAGE = "document:document:manage";
     private static final String AUDIT_READ = "platform:audit:read";
@@ -204,7 +206,9 @@ class MeApiTests {
                                 DOCUMENT_MANAGE,
                                 ATTENDANCE_READ,
                                 ATTENDANCE_MANAGE,
-                                ATTENDANCE_CORRECTION_APPROVE)))
+                                ATTENDANCE_CORRECTION_APPROVE,
+                                ADMISSION_MANAGE,
+                                ADMISSION_READ)))
                 // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
                 // on the deployment — which no school user may read; leaving it in the menu meant
                 // every user was shown a link to a list of every other school.
@@ -233,14 +237,19 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[3].id").value("attendance"))
                 .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("attendance.mark"))
                 .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("attendance.corrections"))
-                .andExpect(jsonPath("$.data.navigation[4].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[4].children[0].id").value("settings.access"))
+                // Admissions (Phase 2), at order 45 — just after attendance for the same reason
+                // attendance sits just after academics, and well ahead of settings (90).
+                .andExpect(jsonPath("$.data.navigation[4].id").value("admissions"))
+                .andExpect(jsonPath("$.data.navigation[4].children[0].id").value("admissions.enquiries"))
+                .andExpect(jsonPath("$.data.navigation[4].children[1].id").value("admissions.follow_ups"))
+                .andExpect(jsonPath("$.data.navigation[5].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[5].children[0].id").value("settings.access"))
                 // The account roster, ordered right after Access (10) and ahead of the school
                 // module's Profile (20) — see IdentityNavigation's Javadoc for why 15.
-                .andExpect(jsonPath("$.data.navigation[4].children[1].id").value("settings.users"))
+                .andExpect(jsonPath("$.data.navigation[5].children[1].id").value("settings.users"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees all three children.
-                .andExpect(jsonPath("$.data.navigation[4].children[2].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[5].children[2].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
