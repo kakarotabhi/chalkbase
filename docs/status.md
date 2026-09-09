@@ -3,7 +3,7 @@
 Living status. **Updated in the same pull request as the work it describes** — a status file that is
 updated "later" is worse than none, because people trust it.
 
-Last updated: 2026-09-07 · Roadmap phase: **2** — Phases 0 and 1 are complete
+Last updated: 2026-09-09 · Roadmap phase: **2** — Phases 0 and 1 are complete
 ([Phase definitions](requirements/06-roadmap-and-mvp.md) · [Phase 0 decisions](requirements/07-phase-0-decisions.md) ·
 [Phase 2 scope](requirements/08-phase-2-scope.md), planned ahead of Phase 1 finishing so it can be handed out
 the way Phase 1's work was)
@@ -395,6 +395,8 @@ no reason, and the sections land with the modules.
 | The design drift assessment's three cheap, real fixes: the active nav item tinted `--cb-primary-surface` instead of reading as unselected, the page gutter restored to 32px from `from-expanded` up, and shared `cb-card`/`cb-badge` components adopted in place of the hand-rolled surfaces in 18 feature stylesheets (a handful of forms styled as a surface, and the responsive card-to-table rows on four list screens, deliberately left for a follow-up — see the assessment). Also found and fixed while driving the app: the primary nav rendered top-level items only, so a section's own screens (`academics.classes`, `settings.users`, …) were reachable only by typing a URL — the rail and sidebar now render a container's children beside it, not only inside the compact-width More sheet. | `layout/main-layout/`, `shared/components/card/`, `shared/components/badge/`, [the assessment](design-drift-assessment.md) |
 
 | Fixed, verified live: `RESTRICTED_DATA_REVEALED` audit rows recorded that a student's medical or compliance reveal happened but never which of the Restricted fields it disclosed (`changedFields: []` on every one) — `StudentRecordService#revealMedical`/`revealCompliance` now name whichever Restricted fields actually held a value for that student, the same "present fields only" rule a first-time save already used, via a new `AuditService.recordSecurityEvent` overload for a single-record disclosure with no row count to state | [ADR-0014](architecture/adr/0014-data-classification.md), [ADR-0018](architecture/adr/0018-audit-log.md), `StudentRecordService`, `AuditService` |
+
+| **Phase 2, second feature:** admission enquiry management end to end — capture from a walk-in, phone call, website, referral, campaign or import; a four-status pipeline front (New, In progress, Converted, Lost — the front box of Phase 0 decision 5's pipeline, not FR-021's later application stages); a required assigned counsellor, so an enquiry can never sit unowned; an append-only follow-up history; and the due-date follow-up queue that is the actual feature, not the capture form alone. `identity.api.IdentityLookup` is a new named interface, the first cross-module read of a staff account rather than a student. FR-018-027 (the online form, the workflow past an enquiry's own statuses, and student conversion) are separate, later lanes, said so in the module itself. | `admission/`, `features/admissions/`, `identity/api/IdentityLookup.java` |
 
 ## What is left on the frontend
 
