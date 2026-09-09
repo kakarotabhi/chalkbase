@@ -131,8 +131,16 @@ public class FeeStructureService {
         FeeStructure created = buildVersion(sessionId, classId, session, itemSpecs, version, currentUser.require());
 
         if (existing != null) {
+            // Flushed on its own, before the insert below. uq_fee_structure_one_current is not
+            // deferrable — Hibernate's own flush order runs every pending insert before any
+            // pending update, so without this the new version's insert and the old row's "no
+            // longer current" update would land in the same flush with the insert first, and the
+            // index would see two current rows for an instant and refuse the write with the wrong
+            // reason (FEE_009, as if the session had already run its course). Clearing the old
+            // version first, and only then inserting the new one, is what AcademicSession.
+            // becomeCurrent's own Javadoc requires of makeCurrent for exactly this reason.
             existing.supersede();
-            structures.save(existing);
+            structures.saveAndFlush(existing);
         }
         structures.saveAndFlush(created);
 
