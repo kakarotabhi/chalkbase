@@ -19,7 +19,11 @@ import org.springframework.test.context.ActiveProfiles;
  * {@code application-prod.yml}'s {@code ${SPRING_DATASOURCE_URL}} placeholders resolve — the
  * connection actually used is the Testcontainers one, which {@code @ServiceConnection} supplies as a
  * {@code JdbcConnectionDetails} bean that takes precedence over any property. Nothing here reaches
- * Supabase.
+ * Supabase. {@code chalkbase.setup-key} is set for the same reason {@code SetupKeyFilterTests} sets
+ * it: {@code SetupKeyConfiguration} is {@code @Profile("prod")}, not {@code "prod & !test"} —
+ * unlike {@code EncryptionKeyConfiguration}, it has no carve-out for {@code test} being active
+ * alongside {@code prod} — so its tripwire fires here exactly as it would on a real deployment
+ * that forgot the environment variable, and this test is not what that tripwire exists to catch.
  *
  * <p>Without the exclusion in {@code application.yml}, Boot auto-configures an
  * {@code InMemoryUserDetailsManager} — a {@link UserDetailsService} bean — and logs a fresh random
@@ -32,7 +36,8 @@ import org.springframework.test.context.ActiveProfiles;
         properties = {
             "SPRING_DATASOURCE_URL=jdbc:postgresql://overridden-by-testcontainers/chalkbase",
             "SPRING_DATASOURCE_USERNAME=unused",
-            "SPRING_DATASOURCE_PASSWORD=unused"
+            "SPRING_DATASOURCE_PASSWORD=unused",
+            "chalkbase.setup-key=correct-horse-battery-staple"
         })
 @ActiveProfiles({"test", "prod"})
 @Import(TestcontainersConfiguration.class)
