@@ -430,6 +430,20 @@ reach the database it was written for, a screen whose prose contradicts its own 
 row that records less than it promises, and a role nobody can delete. None of those are visible to a
 test suite, and all four were found within an hour of using the product as a person.
 
+A second pass on 2026-09-09 drove **every control on every screen** rather than sampling them —
+[phase-2-verification.md](phase-2-verification.md). Twelve findings stand and two were withdrawn on
+inspection. Two features turned out not to work at all: **"Add a document" closes the form it opens**,
+so upload, edit, download and delete are unreachable and ADR-0025's storage adapter has never been
+exercised from the UI; and **the student record header shows the newest enrolment rather than the
+current one**, so from the February a school does next year's promotions until the year turns over,
+every record page names a class the child is not in yet and contradicts the list it was opened from.
+A third, **stopping a class takes its enrolled children off the register with no confirmation at
+all**, is not a bug in the code so much as a missing sentence.
+
+The pattern is the same one Phase 1 found and worth stating again: the API returns the right answer
+and the screen shows a different one. Nothing reachable from `curl` was wrong. What was wrong was
+only visible by pressing the button.
+
 ## Known gaps and debt
 
 Recorded so they are decided rather than discovered.
