@@ -1,0 +1,141 @@
+<p class="crumbs">Admissions <span aria-hidden="true">›</span> Follow-up queue</p>
+
+<div class="page-head">
+  <div class="page-head__titles">
+    <h1 class="page-title">Follow-up queue</h1>
+    <p class="page-subtitle">Enquiries due for a follow-up today, or already overdue.</p>
+  </div>
+</div>
+
+@if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view the follow-up queue</strong>
+      <span>Ask your principal to add "View enquiries" to your role.</span>
+    </div>
+  </div>
+} @else {
+  <div class="scope">
+    <label class="scope__label" for="queue-scope">Show</label>
+    <cb-select
+      variant="pill"
+      ariaLabel="Show"
+      [formControl]="scope"
+      [id]="'queue-scope'"
+      [options]="scopeOptions"
+    />
+  </div>
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading the queue…</p>
+  } @else if (failed()) {
+    <div class="banner banner--danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.9"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M12 7.5v5" />
+        <path d="M12 16.2v.1" />
+      </svg>
+      <div>
+        <strong class="banner__title">Could not load the queue</strong>
+        <span>Check your connection and try again.</span>
+        <p class="banner__action">
+          <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+        </p>
+      </div>
+    </div>
+  } @else if (view().length === 0) {
+    <p class="page-status" role="status">
+      Nothing due right now. Every open enquiry
+      {{ scope.value === 'mine' ? 'assigned to you has' : 'has' }} a later follow-up scheduled.
+    </p>
+  } @else {
+    <div class="list">
+      <table class="list__table">
+        <caption class="list__caption">
+          Enquiries due for a follow-up, oldest due date first.
+        </caption>
+        <thead class="list__head">
+          <tr>
+            <th scope="col">Child</th>
+            <th scope="col">Parent</th>
+            <th scope="col">Class</th>
+            <th scope="col">Counsellor</th>
+            <th scope="col">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of view(); track row.enquiryId) {
+            <tr class="row">
+              <td class="cell cell--child">
+                <span class="cell__label">Child</span>
+                <a class="name" [routerLink]="row.link">{{ row.childFullName }}</a>
+                <span class="status">{{ row.statusLabel }}</span>
+              </td>
+
+              <td class="cell cell--parent">
+                <span class="cell__label">Parent</span>
+                <span class="parent">{{ row.parentName }}</span>
+                <span class="phone">{{ row.parentPhone }}</span>
+              </td>
+
+              <td class="cell cell--class">
+                <span class="cell__label">Class</span>
+                @if (row.interestedClassName) {
+                  <span>{{ row.interestedClassName }}</span>
+                } @else {
+                  <span class="muted">No class given</span>
+                }
+              </td>
+
+              <td class="cell cell--counsellor">
+                <span class="cell__label">Counsellor</span>
+                <span>{{ row.assignedCounsellorName }}</span>
+              </td>
+
+              <td class="cell cell--due">
+                <span class="cell__label">Due</span>
+                <cb-badge [tone]="row.dueTone">{{ row.dueLabel }}</cb-badge>
+                <span class="due-date">{{ row.nextFollowUpDate }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="paging" aria-label="Follow-up queue pages">
+      <p class="paging__position" role="status">Showing {{ position() }}</p>
+      <div class="paging__buttons">
+        <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()"
+          >Previous</cb-button
+        >
+        <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+      </div>
+    </nav>
+  }
+}

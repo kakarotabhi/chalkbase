@@ -137,6 +137,20 @@ const GLYPHS = {
     ],
   },
   /**
+   * Admissions: an enquiry arriving at the front office, drawn as an inbox tray with something
+   * dropping into it — the front office's own "something just came in", rather than the mortarboard
+   * `school` already means (the institution, not this module) or the family shape `students` means
+   * (a child already on the roll, which an enquiry is deliberately not yet — see `Enquiry`'s own
+   * Javadoc on the backend).
+   *
+   * Hand-drawn on the same 24×24 grid as the rest, per ADR-0009 rather than pulled from an icon
+   * library: a funnel-sided tray and a downward arrow landing in it.
+   */
+  admissions: {
+    rects: [{ x: 3.5, y: 13, width: 17, height: 7.5, rx: 1.6 }],
+    paths: ['M3.5 13 6.2 4h11.6l2.7 9', 'M12 3.5v8.2', 'M8.6 8.3 12 11.7l3.4-3.4'],
+  },
+  /**
    * The stand-in for an item whose registry entry names an icon that does not exist. It renders
    * rather than throwing, because a menu that disappears over a typo in an icon name is a worse
    * failure than one item drawn as a plain square.

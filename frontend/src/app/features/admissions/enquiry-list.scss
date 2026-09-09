@@ -1,0 +1,319 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-4);
+}
+
+.page-head__titles {
+  min-width: 0;
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-1);
+}
+
+.page-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-3);
+  flex: 1 0 100%;
+
+  @include from-medium {
+    flex: none;
+  }
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-subtitle,
+.page-status,
+.filters__note,
+.muted,
+.parent,
+.source,
+.cell__label,
+.paging__position {
+  color: var(--cb-text-muted);
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.page-status__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+}
+
+.filters__label {
+  @include visually-hidden;
+}
+
+.filters__search {
+  flex: 1 1 17.5rem;
+  min-width: 0;
+  max-width: 22rem;
+}
+
+.filters__pill {
+  min-width: 0;
+}
+
+.filters__note {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+}
+
+.panel {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-4);
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+// Cards first, a table from expanded up (ADR-0010) — the same switch `student-list` uses.
+.list__table {
+  display: block;
+  width: 100%;
+}
+
+.list__caption {
+  @include visually-hidden;
+}
+
+.list__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'child status'
+    'parent parent'
+    'meta meta'
+    'counsellor due';
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--child {
+  grid-area: child;
+}
+
+.cell--status {
+  grid-area: status;
+  text-align: right;
+}
+
+.cell--parent {
+  grid-area: parent;
+}
+
+.cell--meta {
+  grid-area: meta;
+}
+
+.cell--counsellor {
+  grid-area: counsellor;
+}
+
+.cell--due {
+  grid-area: due;
+  text-align: right;
+}
+
+.cell__label {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.name {
+  display: inline-block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-1) 0;
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.parent,
+.source {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.phone {
+  font-family: var(--cb-font-numeric);
+}
+
+.placement {
+  font-weight: 600;
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paging__position {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.paging__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The table, from expanded up ────────────────────────────────────────────
+
+@include from-expanded {
+  .list {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .list__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .list__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-top: 1px solid var(--cb-border);
+    vertical-align: top;
+  }
+
+  .cell--status,
+  .cell--due {
+    text-align: left;
+  }
+
+  .cell__label {
+    @include visually-hidden;
+  }
+
+  .name {
+    min-height: 0;
+    padding: 0;
+  }
+}
