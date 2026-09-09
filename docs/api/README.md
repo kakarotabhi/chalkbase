@@ -111,6 +111,17 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `ADM_002` | 422 | The account named as counsellor is not an active user of this school. |
 | `ADM_003` | 400 | A follow-up tried to set an enquiry's status back to New. |
 | `ADM_004` | 400 | A follow-up left an enquiry open (New or In progress) with no next follow-up date. |
+| `FEE_001` | 409 | A fee head with this name already exists. |
+| `FEE_002` | 409 | A concession type with this name already exists. |
+| `FEE_003` | 400 | A cap on tuition only applies to an annual/development fee head. |
+| `FEE_004` | 422 | The development fee in this structure exceeds the cap set on that fee head. |
+| `FEE_005` | 422 | The same fee head appears twice in one fee structure. |
+| `FEE_006` | 422 | An item's installments do not add up to that item's own amount. |
+| `FEE_007` | 422 | Two installments of the same item share one due date. |
+| `FEE_008` | 422 | An installment is due before its academic session starts. |
+| `FEE_009` | 409 | This academic session has already run; its fee structure can no longer be changed (ADR-0033) — only the very first version, backfilled after the fact, is ever allowed. |
+| `FEE_010` | 422 | A deactivated fee head cannot be added to a fee structure. |
+| `FEE_011` | 400 | `copy-from-previous` was asked to copy a session's structure into itself. |
 
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
 them turns the login form into a way to discover which parents are registered.
