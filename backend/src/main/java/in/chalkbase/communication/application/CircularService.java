@@ -1,5 +1,6 @@
 package in.chalkbase.communication.application;
 
+import in.chalkbase.academics.api.AcademicSessionRef;
 import in.chalkbase.academics.api.AcademicsLookup;
 import in.chalkbase.academics.api.SchoolClassRef;
 import in.chalkbase.academics.api.SectionRef;
@@ -8,6 +9,7 @@ import in.chalkbase.communication.api.CircularSummary;
 import in.chalkbase.communication.api.CircularTargetRequest;
 import in.chalkbase.communication.api.CircularTargetResponse;
 import in.chalkbase.communication.api.CreateCircularRequest;
+import in.chalkbase.communication.api.TargetPreviewResponse;
 import in.chalkbase.communication.domain.Circular;
 import in.chalkbase.communication.domain.CircularRecipient;
 import in.chalkbase.communication.domain.CircularTarget;
@@ -27,6 +29,7 @@ import in.chalkbase.student.api.StudentLookup;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
