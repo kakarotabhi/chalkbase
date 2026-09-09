@@ -91,6 +91,9 @@ class MeApiTests {
     private static final String ATTENDANCE_READ = "attendance:mark:read";
     private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
     private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
+    private static final String ATTENDANCE_LEAVE_READ = "attendance:leave:read";
+    private static final String ATTENDANCE_LEAVE_REQUEST = "attendance:leave:request";
+    private static final String ATTENDANCE_LEAVE_APPROVE = "attendance:leave:approve";
     private static final String FEE_HEAD_READ = "fee:head:read";
     private static final String FEE_HEAD_MANAGE = "fee:head:manage";
     private static final String FEE_CONCESSION_TYPE_READ = "fee:concession_type:read";
@@ -213,6 +216,9 @@ class MeApiTests {
                                 ATTENDANCE_READ,
                                 ATTENDANCE_MANAGE,
                                 ATTENDANCE_CORRECTION_APPROVE,
+                                ATTENDANCE_LEAVE_READ,
+                                ATTENDANCE_LEAVE_REQUEST,
+                                ATTENDANCE_LEAVE_APPROVE,
                                 ADMISSION_MANAGE,
                                 ADMISSION_READ,
                                 FEE_HEAD_READ,
@@ -244,11 +250,15 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
                 .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
                 .andExpect(jsonPath("$.data.navigation[2].children[2].id").value("academics.subjects"))
-                // Attendance, at order 40 — just after academics (30) and ahead of fees, which is
-                // where a class teacher's daily work belongs relative to fee setup.
+                // Attendance, at order 40 — just after academics (30) and ahead of fees and
+                // settings, which is where a class teacher's daily work belongs relative to fee
+                // setup and configuration screens. Leave requests (FR-047) sit between marking and
+                // corrections: routine work a class teacher does often, ahead of the corrections
+                // queue an admin visits far less often.
                 .andExpect(jsonPath("$.data.navigation[3].id").value("attendance"))
                 .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("attendance.mark"))
-                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("attendance.corrections"))
+                .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("attendance.leave"))
+                .andExpect(jsonPath("$.data.navigation[3].children[2].id").value("attendance.corrections"))
                 // Admissions (Phase 2), at order 45 — just after attendance for the same reason
                 // attendance sits just after academics, and well ahead of settings (90).
                 .andExpect(jsonPath("$.data.navigation[4].id").value("admissions"))

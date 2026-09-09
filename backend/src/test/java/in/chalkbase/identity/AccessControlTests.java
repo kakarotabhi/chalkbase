@@ -109,6 +109,9 @@ class AccessControlTests {
 
     private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
     private static final String ATTENDANCE_READ = "attendance:mark:read";
+    private static final String ATTENDANCE_LEAVE_READ = "attendance:leave:read";
+    private static final String ATTENDANCE_LEAVE_REQUEST = "attendance:leave:request";
+    private static final String ATTENDANCE_LEAVE_APPROVE = "attendance:leave:approve";
 
     /**
      * ADR-0025's grants: {@code document:} sorts between {@code academics:} and {@code identity:},
@@ -207,6 +210,9 @@ class AccessControlTests {
                             ADMISSION_MANAGE,
                             ADMISSION_READ,
                             ATTENDANCE_CORRECTION_APPROVE,
+                            ATTENDANCE_LEAVE_APPROVE,
+                            ATTENDANCE_LEAVE_READ,
+                            ATTENDANCE_LEAVE_REQUEST,
                             ATTENDANCE_MANAGE,
                             ATTENDANCE_READ,
                             DOCUMENT_MANAGE,
@@ -263,6 +269,9 @@ class AccessControlTests {
                         ADMISSION_MANAGE,
                         ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_LEAVE_APPROVE,
+                        ATTENDANCE_LEAVE_READ,
+                        ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
@@ -293,6 +302,9 @@ class AccessControlTests {
                         ADMISSION_MANAGE,
                         ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_LEAVE_APPROVE,
+                        ATTENDANCE_LEAVE_READ,
+                        ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
@@ -350,6 +362,9 @@ class AccessControlTests {
                         ADMISSION_MANAGE,
                         ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
+                        ATTENDANCE_LEAVE_APPROVE,
+                        ATTENDANCE_LEAVE_READ,
+                        ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
@@ -388,9 +403,10 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
         // school:school:read comes from all three; the three academics reads, the two student
-        // reads, document:document:read and the two attendance grants only from the class teacher
-        // grant; identity:user:read and platform:audit:read only from the auditor grant.
-        // identity:role:manage comes from none of them, and no union of allows can produce it.
+        // reads, document:document:read and the five attendance grants (mark read/manage, leave
+        // read/request/approve) only from the class teacher grant; identity:user:read and
+        // platform:audit:read only from the auditor grant. identity:role:manage comes from none of
+        // them, and no union of allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
@@ -405,7 +421,10 @@ class AccessControlTests {
                                 USER_READ,
                                 AUDIT_READ,
                                 ATTENDANCE_READ,
-                                ATTENDANCE_MANAGE)));
+                                ATTENDANCE_MANAGE,
+                                ATTENDANCE_LEAVE_READ,
+                                ATTENDANCE_LEAVE_REQUEST,
+                                ATTENDANCE_LEAVE_APPROVE)));
     }
 
     @Test
@@ -475,6 +494,9 @@ class AccessControlTests {
                                 ATTENDANCE_READ,
                                 ATTENDANCE_MANAGE,
                                 ATTENDANCE_CORRECTION_APPROVE,
+                                ATTENDANCE_LEAVE_READ,
+                                ATTENDANCE_LEAVE_REQUEST,
+                                ATTENDANCE_LEAVE_APPROVE,
                                 DOCUMENT_MANAGE,
                                 DOCUMENT_READ,
                                 FEE_CONCESSION_TYPE_MANAGE,
