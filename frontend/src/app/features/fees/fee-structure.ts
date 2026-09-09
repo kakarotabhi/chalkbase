@@ -26,7 +26,6 @@ import { Button } from '../../shared/components/button/button';
 import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
-import { TextInput } from '../../shared/components/text-input/text-input';
 import {
   ACCESS_DENIED,
   CANNOT_COPY_SESSION_INTO_ITSELF,
@@ -93,7 +92,7 @@ interface ClassRow {
  */
 @Component({
   selector: 'cb-fee-structure',
-  imports: [ReactiveFormsModule, RouterLink, Badge, Button, Card, FormField, Select, TextInput],
+  imports: [ReactiveFormsModule, RouterLink, Badge, Button, Card, FormField, Select],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fee-structure.html',
   styleUrl: './fee-structure.scss',

@@ -110,7 +110,7 @@ describe('FeeHeads', () => {
     fixture = TestBed.createComponent(FeeHeads);
     fixture.detectChanges();
     headsRequest().flush(envelope([TUITION]));
-    concessionsRequest().flush(refusal('PERM_001'));
+    concessionsRequest().flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
 
     expect(text()).toContain('Tuition Fee');
