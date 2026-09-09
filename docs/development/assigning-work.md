@@ -35,7 +35,11 @@ Everything above is already written down. These five are not, and each one has c
    to choose between the contract gate and this rule.
 4. **A fresh worktree has no `node_modules`.** A frontend task starts with `npm ci`, and the failure
    without it looks like a broken checkout rather than a missing install.
-5. **Timestamp a migration when you merge it, not when you start it.** `outOfOrder` is off, so an
+5. **Timestamp a migration when you merge it, not when you start it.** A future-dated one is now
+   refused by CI ([migration-timestamps.yml](../../.github/workflows/migration-timestamps.yml)),
+   because that direction breaks the *next* person's migration rather than your own; a stale one is
+   still yours to get right, since whether it is too old depends on what a database has already
+   applied and no check can know that from the repository. `outOfOrder` is off, so an
    older version than one a database has already applied is refused — and it passes CI, which starts
    from an empty container, then fails on the shared dev database and on Render.
 
