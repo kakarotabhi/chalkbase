@@ -31,6 +31,16 @@
         ],
         "type": "object"
       },
+      "AcknowledgeRecipientRequest": {
+        "properties": {
+          "note": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApiError": {
         "properties": {
           "code": {
@@ -56,6 +66,56 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/AcademicSessionResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseCircularDetail": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CircularDetail"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseCircularRecipientResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CircularRecipientResponse"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -1047,6 +1107,56 @@
         ],
         "type": "object"
       },
+      "ApiResponsePageResponseCircularRecipientResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseCircularRecipientResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseCircularSummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseCircularSummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponsePageResponseCorrectionRequestResponse": {
         "properties": {
           "data": {
@@ -1497,6 +1607,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseTargetPreviewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TargetPreviewResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseTemporaryPasswordResponse": {
         "properties": {
           "data": {
@@ -1808,6 +1943,210 @@
         ],
         "type": "object"
       },
+      "CircularDetail": {
+        "properties": {
+          "acknowledgedCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recipientCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "requiresAcknowledgement": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
+            "type": "string"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/CircularTargetResponse"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "acknowledgedCount",
+          "body",
+          "createdAt",
+          "id",
+          "recipientCount",
+          "requiresAcknowledgement",
+          "status",
+          "targets",
+          "title"
+        ],
+        "type": "object"
+      },
+      "CircularRecipientResponse": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "acknowledgementNote": {
+            "type": "string"
+          },
+          "admissionNumber": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "deliveredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          },
+          "studentFullName": {
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "admissionNumber",
+          "className",
+          "deliveredAt",
+          "id",
+          "sectionId",
+          "sectionName",
+          "studentFullName",
+          "studentId"
+        ],
+        "type": "object"
+      },
+      "CircularSummary": {
+        "properties": {
+          "acknowledgedCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recipientCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "requiresAcknowledgement": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
+            "type": "string"
+          },
+          "targetCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "acknowledgedCount",
+          "createdAt",
+          "id",
+          "recipientCount",
+          "requiresAcknowledgement",
+          "status",
+          "targetCount",
+          "title"
+        ],
+        "type": "object"
+      },
+      "CircularTargetRequest": {
+        "properties": {
+          "classId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "classId"
+        ],
+        "type": "object"
+      },
+      "CircularTargetResponse": {
+        "properties": {
+          "classId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "classId",
+          "className",
+          "id"
+        ],
+        "type": "object"
+      },
       "ClassEnrolmentCount": {
         "properties": {
           "classId": {
@@ -2020,6 +2359,35 @@
           "requestedStatus",
           "studentId",
           "studentName"
+        ],
+        "type": "object"
+      },
+      "CreateCircularRequest": {
+        "properties": {
+          "body": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "requiresAcknowledgement": {
+            "type": "boolean"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/CircularTargetRequest"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body",
+          "targets",
+          "title"
         ],
         "type": "object"
       },
@@ -3602,6 +3970,74 @@
         ],
         "type": "object"
       },
+      "PageResponseCircularRecipientResponse": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/CircularRecipientResponse"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseCircularSummary": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/CircularSummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
       "PageResponseCorrectionRequestResponse": {
         "properties": {
           "content": {
@@ -4870,6 +5306,18 @@
         ],
         "type": "object"
       },
+      "TargetPreviewResponse": {
+        "properties": {
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "type": "object"
+      },
       "TemporaryPasswordResponse": {
         "properties": {
           "id": {
@@ -5203,7 +5651,7 @@
   "paths": {
     "/api/academics/classes": {
       "get": {
-        "operationId": "list_9",
+        "operationId": "list_10",
         "responses": {
           "200": {
             "content": {
@@ -5221,7 +5669,7 @@
         ]
       },
       "post": {
-        "operationId": "create_9",
+        "operationId": "create_10",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5404,7 +5852,7 @@
     },
     "/api/academics/sessions": {
       "get": {
-        "operationId": "list_8",
+        "operationId": "list_9",
         "responses": {
           "200": {
             "content": {
@@ -5422,7 +5870,7 @@
         ]
       },
       "post": {
-        "operationId": "create_8",
+        "operationId": "create_9",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5524,7 +5972,7 @@
     },
     "/api/academics/subjects": {
       "get": {
-        "operationId": "list_7",
+        "operationId": "list_8",
         "parameters": [
           {
             "in": "query",
@@ -5560,7 +6008,7 @@
         ]
       },
       "post": {
-        "operationId": "create_7",
+        "operationId": "create_8",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5789,7 +6237,7 @@
         ]
       },
       "post": {
-        "operationId": "create_6",
+        "operationId": "create_7",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6066,7 +6514,7 @@
     },
     "/api/admissions/enquiries": {
       "get": {
-        "operationId": "list_6",
+        "operationId": "list_7",
         "parameters": [
           {
             "in": "query",
@@ -6150,7 +6598,7 @@
         ]
       },
       "post": {
-        "operationId": "create_5",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6415,7 +6863,7 @@
     },
     "/api/attendance/leave-requests": {
       "get": {
-        "operationId": "list_11",
+        "operationId": "list_12",
         "parameters": [
           {
             "in": "query",
@@ -6458,7 +6906,7 @@
     },
     "/api/attendance/leave-requests/{id}": {
       "get": {
-        "operationId": "get_3",
+        "operationId": "get_4",
         "parameters": [
           {
             "in": "path",
@@ -6912,6 +7360,255 @@
         ]
       }
     },
+    "/api/communication/circulars": {
+      "get": {
+        "operationId": "list_6",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseCircularSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_5",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCircularRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCircularDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
+    "/api/communication/circulars/target-preview": {
+      "get": {
+        "operationId": "targetPreview",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "classId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectionId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseTargetPreviewResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
+    "/api/communication/circulars/{id}": {
+      "get": {
+        "operationId": "get_3",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCircularDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
+    "/api/communication/circulars/{id}/publish": {
+      "post": {
+        "operationId": "publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCircularDetail"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
+    "/api/communication/circulars/{id}/recipients": {
+      "get": {
+        "operationId": "recipients",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseCircularRecipientResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
+    "/api/communication/circulars/{id}/recipients/{recipientId}/acknowledge": {
+      "post": {
+        "operationId": "acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "recipientId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgeRecipientRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCircularRecipientResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "circular-controller"
+        ]
+      }
+    },
     "/api/dashboard": {
       "get": {
         "operationId": "dashboard",
@@ -7348,7 +8045,7 @@
     },
     "/api/fees/structures": {
       "get": {
-        "operationId": "list_10",
+        "operationId": "list_11",
         "parameters": [
           {
             "in": "query",

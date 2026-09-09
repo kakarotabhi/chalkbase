@@ -11,6 +11,8 @@
   "attendance.leave",
   "attendance.mark",
   "audit",
+  "communication",
+  "communication.circulars",
   "dashboard",
   "fees",
   "fees.heads",
