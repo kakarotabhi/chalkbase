@@ -1,0 +1,47 @@
+name: Migration timestamps
+
+# Refuses a migration dated in the future.
+#
+# The rule it enforces is in docs/development/assigning-work.md: name a migration with the timestamp
+# of the moment it MERGES. That rule was written down, repeated in every lane brief, and broken four
+# times in a single day — not through carelessness, but because the natural instinct is to timestamp
+# the moment you write the file, and until now nothing contradicted it.
+#
+# It checks one direction, deliberately. A stale timestamp is not knowable from the repository: it
+# depends on what some database has already applied. A future one is knowable from a clock, and it is
+# the direction that damages somebody else — a file dated ahead sorts above every migration merged in
+# between, so the NEXT lane's correctly-named file lands below it and Flyway refuses that one, on
+# every database that took the future-dated one first. outOfOrder is off, deliberately (ADR-0011).
+
+on:
+  pull_request:
+    paths:
+      - 'backend/src/main/resources/db/migration/**'
+      - 'tools/migration-timestamps/**'
+      - '.github/workflows/migration-timestamps.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: migration-timestamps-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: No migration is dated in the future
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+
+      # No install step and no dependencies: the check reads filenames and compares them to a clock.
+      - name: The check's own tests
+        run: node --test tools/migration-timestamps/check.test.mjs
+
+      - name: Check the migrations on this branch
+        run: node tools/migration-timestamps/check.mjs
