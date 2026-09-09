@@ -252,6 +252,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseEnquiryDetailResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EnquiryDetailResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseEnrolment": {
         "properties": {
           "data": {
@@ -1022,6 +1047,56 @@
         ],
         "type": "object"
       },
+      "ApiResponsePageResponseEnquiryFollowUpQueueItem": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseEnquiryFollowUpQueueItem"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponsePageResponseEnquirySummary": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseEnquirySummary"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponsePageResponseGuardianSummary": {
         "properties": {
           "data": {
@@ -1442,6 +1517,18 @@
         "required": [
           "success",
           "timestamp"
+        ],
+        "type": "object"
+      },
+      "AssignCounsellorRequest": {
+        "properties": {
+          "counsellorId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "counsellorId"
         ],
         "type": "object"
       },
@@ -1882,6 +1969,67 @@
         ],
         "type": "object"
       },
+      "CreateEnquiryRequest": {
+        "properties": {
+          "assignedCounsellorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "childDateOfBirth": {
+            "format": "date",
+            "type": "string"
+          },
+          "childFullName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "interestedClassId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "parentEmail": {
+            "format": "email",
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "parentName": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "parentPhone": {
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "remarks": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "WALK_IN",
+              "PHONE",
+              "WEBSITE",
+              "REFERRAL",
+              "CAMPAIGN",
+              "IMPORTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignedCounsellorId",
+          "childFullName",
+          "parentName",
+          "parentPhone",
+          "source"
+        ],
+        "type": "object"
+      },
       "CreateEnrolmentRequest": {
         "properties": {
           "academicSessionId": {
@@ -2162,6 +2310,253 @@
           "sizeBytes",
           "studentId",
           "verificationStatus"
+        ],
+        "type": "object"
+      },
+      "EnquiryDetailResponse": {
+        "properties": {
+          "assignedCounsellorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "assignedCounsellorName": {
+            "type": "string"
+          },
+          "capturedByName": {
+            "type": "string"
+          },
+          "childDateOfBirth": {
+            "format": "date",
+            "type": "string"
+          },
+          "childFullName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "followUps": {
+            "items": {
+              "$ref": "#/components/schemas/EnquiryFollowUpResponse"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "interestedClassId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "interestedClassName": {
+            "type": "string"
+          },
+          "nextFollowUpDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "parentEmail": {
+            "type": "string"
+          },
+          "parentName": {
+            "type": "string"
+          },
+          "parentPhone": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "WALK_IN",
+              "PHONE",
+              "WEBSITE",
+              "REFERRAL",
+              "CAMPAIGN",
+              "IMPORTED"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "CONVERTED",
+              "LOST"
+            ],
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignedCounsellorId",
+          "assignedCounsellorName",
+          "capturedByName",
+          "childFullName",
+          "createdAt",
+          "followUps",
+          "id",
+          "parentName",
+          "parentPhone",
+          "source",
+          "status",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "EnquiryFollowUpQueueItem": {
+        "properties": {
+          "assignedCounsellorName": {
+            "type": "string"
+          },
+          "childFullName": {
+            "type": "string"
+          },
+          "enquiryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "interestedClassName": {
+            "type": "string"
+          },
+          "nextFollowUpDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "parentName": {
+            "type": "string"
+          },
+          "parentPhone": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "CONVERTED",
+              "LOST"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignedCounsellorName",
+          "childFullName",
+          "enquiryId",
+          "nextFollowUpDate",
+          "overdue",
+          "parentName",
+          "parentPhone",
+          "status"
+        ],
+        "type": "object"
+      },
+      "EnquiryFollowUpResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nextFollowUpDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedByName": {
+            "type": "string"
+          },
+          "resultingStatus": {
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "CONVERTED",
+              "LOST"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "note",
+          "recordedAt",
+          "recordedByName"
+        ],
+        "type": "object"
+      },
+      "EnquirySummary": {
+        "properties": {
+          "assignedCounsellorName": {
+            "type": "string"
+          },
+          "childFullName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "interestedClassName": {
+            "type": "string"
+          },
+          "nextFollowUpDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "parentName": {
+            "type": "string"
+          },
+          "parentPhone": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "WALK_IN",
+              "PHONE",
+              "WEBSITE",
+              "REFERRAL",
+              "CAMPAIGN",
+              "IMPORTED"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "CONVERTED",
+              "LOST"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "assignedCounsellorName",
+          "childFullName",
+          "createdAt",
+          "id",
+          "parentName",
+          "parentPhone",
+          "source",
+          "status"
         ],
         "type": "object"
       },
@@ -2723,6 +3118,32 @@
         },
         "type": "object"
       },
+      "LogFollowUpRequest": {
+        "properties": {
+          "nextFollowUpDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "resultingStatus": {
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "CONVERTED",
+              "LOST"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "password": {
@@ -3014,6 +3435,74 @@
           "content": {
             "items": {
               "$ref": "#/components/schemas/CorrectionRequestResponse"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseEnquiryFollowUpQueueItem": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/EnquiryFollowUpQueueItem"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseEnquirySummary": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/EnquirySummary"
             },
             "type": "array"
           },
@@ -4508,7 +4997,7 @@
   "paths": {
     "/api/academics/classes": {
       "get": {
-        "operationId": "list_8",
+        "operationId": "list_9",
         "responses": {
           "200": {
             "content": {
@@ -4526,7 +5015,7 @@
         ]
       },
       "post": {
-        "operationId": "create_8",
+        "operationId": "create_9",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4709,7 +5198,7 @@
     },
     "/api/academics/sessions": {
       "get": {
-        "operationId": "list_7",
+        "operationId": "list_8",
         "responses": {
           "200": {
             "content": {
@@ -4727,7 +5216,7 @@
         ]
       },
       "post": {
-        "operationId": "create_7",
+        "operationId": "create_8",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4829,7 +5318,7 @@
     },
     "/api/academics/subjects": {
       "get": {
-        "operationId": "list_6",
+        "operationId": "list_7",
         "parameters": [
           {
             "in": "query",
@@ -4865,7 +5354,7 @@
         ]
       },
       "post": {
-        "operationId": "create_6",
+        "operationId": "create_7",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5094,7 +5583,7 @@
         ]
       },
       "post": {
-        "operationId": "create_5",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5346,6 +5835,304 @@
         },
         "tags": [
           "user-account-controller"
+        ]
+      }
+    },
+    "/api/admissions/counsellors": {
+      "get": {
+        "operationId": "counsellors",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListUserSummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admission-controller"
+        ]
+      }
+    },
+    "/api/admissions/enquiries": {
+      "get": {
+        "operationId": "list_6",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "NEW",
+                "IN_PROGRESS",
+                "CONVERTED",
+                "LOST"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "enum": [
+                "WALK_IN",
+                "PHONE",
+                "WEBSITE",
+                "REFERRAL",
+                "CAMPAIGN",
+                "IMPORTED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assignedCounsellorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "interestedClassId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseEnquirySummary"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "enquiry-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_5",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnquiryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnquiryDetailResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "enquiry-controller"
+        ]
+      }
+    },
+    "/api/admissions/enquiries/{id}": {
+      "get": {
+        "operationId": "detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnquiryDetailResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "enquiry-controller"
+        ]
+      }
+    },
+    "/api/admissions/enquiries/{id}/assign": {
+      "post": {
+        "operationId": "assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCounsellorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnquiryDetailResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "enquiry-controller"
+        ]
+      }
+    },
+    "/api/admissions/enquiries/{id}/follow-ups": {
+      "post": {
+        "operationId": "logFollowUp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogFollowUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEnquiryDetailResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "enquiry-controller"
+        ]
+      }
+    },
+    "/api/admissions/follow-ups/due": {
+      "get": {
+        "operationId": "dueFollowUps",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseEnquiryFollowUpQueueItem"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "admission-controller"
         ]
       }
     },
@@ -6199,7 +6986,7 @@
     },
     "/api/fees/structures": {
       "get": {
-        "operationId": "list_9",
+        "operationId": "list_10",
         "parameters": [
           {
             "in": "query",

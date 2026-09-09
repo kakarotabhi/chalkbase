@@ -11,9 +11,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_8"];
+        readonly get: operations["list_9"];
         readonly put?: never;
-        readonly post: operations["create_8"];
+        readonly post: operations["create_9"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -91,9 +91,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_7"];
+        readonly get: operations["list_8"];
         readonly put?: never;
-        readonly post: operations["create_7"];
+        readonly post: operations["create_8"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -139,9 +139,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_6"];
+        readonly get: operations["list_7"];
         readonly put?: never;
-        readonly post: operations["create_6"];
+        readonly post: operations["create_7"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -237,7 +237,7 @@ export interface paths {
         };
         readonly get: operations["users"];
         readonly put?: never;
-        readonly post: operations["create_5"];
+        readonly post: operations["create_6"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -334,6 +334,102 @@ export interface paths {
         readonly get?: never;
         readonly put?: never;
         readonly post: operations["unlock"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/counsellors": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["counsellors"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/enquiries": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_6"];
+        readonly put?: never;
+        readonly post: operations["create_5"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/enquiries/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["detail"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/enquiries/{id}/assign": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["assign"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/enquiries/{id}/follow-ups": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["logFollowUp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/admissions/follow-ups/due": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["dueFollowUps"];
+        readonly put?: never;
+        readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -619,7 +715,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_9"];
+        readonly get: operations["list_10"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -1177,6 +1273,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseEnquiryDetailResponse: {
+            readonly data?: components["schemas"]["EnquiryDetailResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseEnrolment: {
             readonly data?: components["schemas"]["Enrolment"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1409,6 +1513,22 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponsePageResponseEnquiryFollowUpQueueItem: {
+            readonly data?: components["schemas"]["PageResponseEnquiryFollowUpQueueItem"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponsePageResponseEnquirySummary: {
+            readonly data?: components["schemas"]["PageResponseEnquirySummary"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponsePageResponseGuardianSummary: {
             readonly data?: components["schemas"]["PageResponseGuardianSummary"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1545,6 +1665,10 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly AssignCounsellorRequest: {
+            /** Format: uuid */
+            readonly counsellorId: string;
+        };
         readonly AttendanceEntryRequest: {
             readonly remarks?: string;
             /** @enum {string} */
@@ -1666,6 +1790,22 @@ export interface components {
             readonly studentId: string;
             readonly studentName: string;
         };
+        readonly CreateEnquiryRequest: {
+            /** Format: uuid */
+            readonly assignedCounsellorId: string;
+            /** Format: date */
+            readonly childDateOfBirth?: string;
+            readonly childFullName: string;
+            /** Format: uuid */
+            readonly interestedClassId?: string;
+            /** Format: email */
+            readonly parentEmail?: string;
+            readonly parentName: string;
+            readonly parentPhone: string;
+            readonly remarks?: string;
+            /** @enum {string} */
+            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
+        };
         readonly CreateEnrolmentRequest: {
             /** Format: uuid */
             readonly academicSessionId: string;
@@ -1737,6 +1877,78 @@ export interface components {
             readonly studentId: string;
             /** @enum {string} */
             readonly verificationStatus: "UNVERIFIED" | "VERIFIED" | "REJECTED";
+        };
+        readonly EnquiryDetailResponse: {
+            /** Format: uuid */
+            readonly assignedCounsellorId: string;
+            readonly assignedCounsellorName: string;
+            readonly capturedByName: string;
+            /** Format: date */
+            readonly childDateOfBirth?: string;
+            readonly childFullName: string;
+            /** Format: date-time */
+            readonly createdAt: string;
+            readonly followUps: readonly components["schemas"]["EnquiryFollowUpResponse"][];
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly interestedClassId?: string;
+            readonly interestedClassName?: string;
+            /** Format: date */
+            readonly nextFollowUpDate?: string;
+            readonly parentEmail?: string;
+            readonly parentName: string;
+            readonly parentPhone: string;
+            readonly remarks?: string;
+            /** @enum {string} */
+            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
+            /** @enum {string} */
+            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
+            /** Format: date-time */
+            readonly updatedAt: string;
+        };
+        readonly EnquiryFollowUpQueueItem: {
+            readonly assignedCounsellorName: string;
+            readonly childFullName: string;
+            /** Format: uuid */
+            readonly enquiryId: string;
+            readonly interestedClassName?: string;
+            /** Format: date */
+            readonly nextFollowUpDate: string;
+            readonly overdue: boolean;
+            readonly parentName: string;
+            readonly parentPhone: string;
+            /** @enum {string} */
+            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
+        };
+        readonly EnquiryFollowUpResponse: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date */
+            readonly nextFollowUpDate?: string;
+            readonly note: string;
+            /** Format: date-time */
+            readonly recordedAt: string;
+            readonly recordedByName: string;
+            /** @enum {string} */
+            readonly resultingStatus?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
+        };
+        readonly EnquirySummary: {
+            readonly assignedCounsellorName: string;
+            readonly childFullName: string;
+            /** Format: date-time */
+            readonly createdAt: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly interestedClassName?: string;
+            /** Format: date */
+            readonly nextFollowUpDate?: string;
+            readonly parentName: string;
+            readonly parentPhone: string;
+            /** @enum {string} */
+            readonly source: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
+            /** @enum {string} */
+            readonly status: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
         };
         readonly Enrolment: {
             readonly active: boolean;
@@ -1906,6 +2118,13 @@ export interface components {
             /** @enum {string} */
             readonly relation: "FATHER" | "MOTHER" | "GUARDIAN" | "LOCAL_GUARDIAN" | "OTHER";
         };
+        readonly LogFollowUpRequest: {
+            /** Format: date */
+            readonly nextFollowUpDate?: string;
+            readonly note: string;
+            /** @enum {string} */
+            readonly resultingStatus?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
+        };
         readonly LoginRequest: {
             readonly password: string;
             readonly remembered?: boolean;
@@ -1993,6 +2212,28 @@ export interface components {
         };
         readonly PageResponseCorrectionRequestResponse: {
             readonly content: readonly components["schemas"]["CorrectionRequestResponse"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        readonly PageResponseEnquiryFollowUpQueueItem: {
+            readonly content: readonly components["schemas"]["EnquiryFollowUpQueueItem"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        readonly PageResponseEnquirySummary: {
+            readonly content: readonly components["schemas"]["EnquirySummary"][];
             /** Format: int32 */
             readonly page: number;
             /** Format: int32 */
@@ -2388,7 +2629,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly list_8: {
+    readonly list_9: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2408,7 +2649,7 @@ export interface operations {
             };
         };
     };
-    readonly create_8: {
+    readonly create_9: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2534,7 +2775,7 @@ export interface operations {
             };
         };
     };
-    readonly list_7: {
+    readonly list_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2554,7 +2795,7 @@ export interface operations {
             };
         };
     };
-    readonly create_7: {
+    readonly create_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2626,7 +2867,7 @@ export interface operations {
             };
         };
     };
-    readonly list_6: {
+    readonly list_7: {
         readonly parameters: {
             readonly query: {
                 readonly pageable: components["schemas"]["Pageable"];
@@ -2649,7 +2890,7 @@ export interface operations {
             };
         };
     };
-    readonly create_6: {
+    readonly create_7: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2831,7 +3072,7 @@ export interface operations {
             };
         };
     };
-    readonly create_5: {
+    readonly create_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3008,6 +3249,175 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseUserAccountResponse"];
+                };
+            };
+        };
+    };
+    readonly counsellors: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseListUserSummary"];
+                };
+            };
+        };
+    };
+    readonly list_6: {
+        readonly parameters: {
+            readonly query: {
+                readonly assignedCounsellorId?: string;
+                readonly interestedClassId?: string;
+                readonly pageable: components["schemas"]["Pageable"];
+                readonly q?: string;
+                readonly source?: "WALK_IN" | "PHONE" | "WEBSITE" | "REFERRAL" | "CAMPAIGN" | "IMPORTED";
+                readonly status?: "NEW" | "IN_PROGRESS" | "CONVERTED" | "LOST";
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseEnquirySummary"];
+                };
+            };
+        };
+    };
+    readonly create_5: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateEnquiryRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
+                };
+            };
+        };
+    };
+    readonly detail: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
+                };
+            };
+        };
+    };
+    readonly assign: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["AssignCounsellorRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
+                };
+            };
+        };
+    };
+    readonly logFollowUp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["LogFollowUpRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseEnquiryDetailResponse"];
+                };
+            };
+        };
+    };
+    readonly dueFollowUps: {
+        readonly parameters: {
+            readonly query?: {
+                readonly mine?: boolean;
+                readonly page?: number;
+                readonly size?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseEnquiryFollowUpQueueItem"];
                 };
             };
         };
@@ -3581,7 +3991,7 @@ export interface operations {
             };
         };
     };
-    readonly list_9: {
+    readonly list_10: {
         readonly parameters: {
             readonly query: {
                 readonly sessionId: string;
