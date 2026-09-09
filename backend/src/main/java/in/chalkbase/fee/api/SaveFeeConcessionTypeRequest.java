@@ -4,7 +4,6 @@ import in.chalkbase.fee.domain.FeeConcessionCategory;
 import in.chalkbase.platform.classification.Classification;
 import in.chalkbase.platform.classification.Classified;
 import in.chalkbase.platform.classification.Tier;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -14,13 +13,17 @@ import jakarta.validation.constraints.Size;
  * {@code SaveFeeHeadRequest}: {@code requiresApproval} and {@code active} are boxed
  * {@link Boolean}s with {@link NotNull} so a client that forgot one is told, rather than the field
  * silently defaulting to {@code false}.
+ *
+ * <p>{@code description} carries no {@code @Schema(nullable = true)} — see
+ * {@code SaveFeeHeadRequest}'s own note on why a request field's optionality is expressed by the
+ * absence of {@code @NotNull} alone.
  */
 public record SaveFeeConcessionTypeRequest(
         @Classification(Tier.INTERNAL) @NotBlank @Size(max = 80) String name,
 
         @Classification(Tier.INTERNAL) @NotNull FeeConcessionCategory category,
 
-        @Schema(nullable = true) @Classification(Tier.INTERNAL) @Size(max = 300) String description,
+        @Classification(Tier.INTERNAL) @Size(max = 300) String description,
 
         @Classification(Tier.INTERNAL) @NotNull Boolean requiresApproval,
         @Classification(Tier.INTERNAL) @NotNull Boolean active) {

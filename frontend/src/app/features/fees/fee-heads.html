@@ -227,12 +227,7 @@
         controlId="head-cap"
         hint="Delhi's DoE caps Development Fee this way. Leave blank for no cap."
       >
-        <cb-text-input
-          formControlName="capPercentOfTuition"
-          id="head-cap"
-          type="number"
-          [readOnly]="saving()"
-        />
+        <cb-text-input formControlName="capPercentOfTuition" id="head-cap" [readOnly]="saving()" />
       </cb-form-field>
     }
 

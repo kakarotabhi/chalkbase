@@ -177,7 +177,7 @@ describe('FeeStructurePage', () => {
     const saveButton = Array.from(element().querySelectorAll('cb-button button')).find(
       (button) => button.textContent?.trim() === 'Save',
     ) as HTMLButtonElement;
-    expect(saveButton.disabled).toBeFalse();
+    expect(saveButton.disabled).toBe(false);
     saveButton.click();
 
     const save = httpMock.expectOne({
