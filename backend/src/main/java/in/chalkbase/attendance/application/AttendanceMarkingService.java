@@ -13,9 +13,12 @@ import in.chalkbase.attendance.api.StudentAttendanceRecord;
 import in.chalkbase.attendance.domain.AttendanceAudit;
 import in.chalkbase.attendance.domain.AttendanceCorrectionRequest;
 import in.chalkbase.attendance.domain.AttendanceErrorCode;
+import in.chalkbase.attendance.domain.AttendanceLeaveRequest;
 import in.chalkbase.attendance.domain.AttendanceMark;
 import in.chalkbase.attendance.domain.CorrectionDecision;
+import in.chalkbase.attendance.domain.LeaveDecision;
 import in.chalkbase.attendance.infrastructure.AttendanceCorrectionRequestRepository;
+import in.chalkbase.attendance.infrastructure.AttendanceLeaveRequestRepository;
 import in.chalkbase.attendance.infrastructure.AttendanceMarkRepository;
 import in.chalkbase.platform.audit.AuditAction;
 import in.chalkbase.platform.audit.AuditService;
@@ -42,6 +45,12 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>The school's <strong>current</strong> academic session is resolved here, never accepted from
  * the client: see {@link MarkAttendanceRequest}'s own Javadoc for why.
+ *
+ * <p><strong>{@link #buildView} also reads {@code attendance_leave_request}</strong>, for the reason
+ * the ADR-0030 amendment gives in full: an approved leave request cannot pre-write a mark (a future
+ * date is refused, and the roster it would write against is only known as of the day itself), so the
+ * connection is made here instead, at the moment a register is actually opened for the date the
+ * leave covers. This is a read; nothing about {@link #mark} changes because of it.
  */
 @Service
 @Transactional(readOnly = true)
@@ -52,6 +61,7 @@ public class AttendanceMarkingService {
 
     private final AttendanceMarkRepository marks;
     private final AttendanceCorrectionRequestRepository corrections;
+    private final AttendanceLeaveRequestRepository leaveRequests;
     private final AcademicsLookup academics;
     private final StudentLookup students;
     private final AuditService audit;
@@ -60,12 +70,14 @@ public class AttendanceMarkingService {
     public AttendanceMarkingService(
             AttendanceMarkRepository marks,
             AttendanceCorrectionRequestRepository corrections,
+            AttendanceLeaveRequestRepository leaveRequests,
             AcademicsLookup academics,
             StudentLookup students,
             AuditService audit,
             CurrentUser currentUser) {
         this.marks = marks;
         this.corrections = corrections;
+        this.leaveRequests = leaveRequests;
         this.academics = academics;
         this.students = students;
         this.audit = audit;
@@ -197,12 +209,22 @@ public class AttendanceMarkingService {
                 marks.findBySectionIdAndAttendanceDateAndPeriodNumberIsNull(section.id(), date).stream()
                         .collect(Collectors.toMap(AttendanceMark::getStudentId, mark -> mark));
 
+        Set<UUID> studentIds =
+                roster.stream().map(EnrolledStudentRef::studentId).collect(Collectors.toSet());
+        Set<UUID> approvedLeaveStudentIds = leaveRequests
+                .findByDecisionAndStudentIdInAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                        LeaveDecision.APPROVED, studentIds, date, date)
+                .stream()
+                .map(AttendanceLeaveRequest::getStudentId)
+                .collect(Collectors.toSet());
+
         List<AttendanceStudentMark> entries = roster.stream()
                 .map(student -> {
                     AttendanceMark mark = existingByStudent.get(student.studentId());
+                    boolean approvedLeave = approvedLeaveStudentIds.contains(student.studentId());
                     return mark == null
-                            ? AttendanceStudentMark.unmarked(student, editable)
-                            : AttendanceStudentMark.of(student, mark, editable);
+                            ? AttendanceStudentMark.unmarked(student, editable, approvedLeave)
+                            : AttendanceStudentMark.of(student, mark, editable, approvedLeave);
                 })
                 .toList();
 
