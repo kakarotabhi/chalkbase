@@ -159,4 +159,66 @@ describe('FeeHeads', () => {
 
     expect(text()).toContain('Admission Fee added.');
   });
+
+  // ── The reported defect: a form that refuses to save without saying why ─────────────────
+
+  /**
+   * `cb-form-field` has always supported an `[error]` input; `attempted` and `serverErrors` were
+   * already tracked here and set on every refused save — nothing ever read them back into a
+   * message. This is the fix, and the DOM assertion at the end is what the reported defect looked
+   * like on screen: the button did nothing, silently.
+   */
+  it('says a fee head needs a name, and refuses to save one without one', () => {
+    arrive([]);
+
+    (element().querySelector('#head-add') as HTMLButtonElement | null)?.click();
+    fixture.detectChanges();
+
+    const name = element().querySelector('#head-name') as HTMLInputElement;
+    expect(name.getAttribute('aria-invalid')).toBeNull();
+
+    (element().querySelector('form.editor') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { cancelable: true }),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('Give this fee head a name.');
+    expect(name.getAttribute('aria-invalid')).toBe('true');
+    // Nothing was sent: `httpMock.verify()` in `afterEach` is what asserts that.
+  });
+
+  it('clears the fee head name message once a name is typed', () => {
+    arrive([]);
+
+    (element().querySelector('#head-add') as HTMLButtonElement | null)?.click();
+    fixture.detectChanges();
+    (element().querySelector('form.editor') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { cancelable: true }),
+    );
+    fixture.detectChanges();
+    expect(text()).toContain('Give this fee head a name.');
+
+    const name = element().querySelector('#head-name') as HTMLInputElement;
+    name.value = 'Admission Fee';
+    name.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('Give this fee head a name.');
+  });
+
+  it('says a concession type needs a name, and refuses to save one without one', () => {
+    arrive([], []);
+
+    (element().querySelector('#concession-add') as HTMLButtonElement | null)?.click();
+    fixture.detectChanges();
+
+    (element().querySelector('form.editor') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { cancelable: true }),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('Give this concession type a name.');
+    const name = element().querySelector('#concession-name') as HTMLInputElement;
+    expect(name.getAttribute('aria-invalid')).toBe('true');
+  });
 });

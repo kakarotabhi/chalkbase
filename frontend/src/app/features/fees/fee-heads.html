@@ -208,8 +208,19 @@
   <form class="editor" [formGroup]="headForm" (ngSubmit)="saveHead()" novalidate>
     <p class="editor__heading">{{ addingHead() ? 'Add a fee head' : 'Edit this fee head' }}</p>
 
-    <cb-form-field #headName label="Name" controlId="head-name" [required]="true">
-      <cb-text-input formControlName="name" [id]="headName.controlId()" [readOnly]="saving()" />
+    <cb-form-field
+      #headName
+      label="Name"
+      controlId="head-name"
+      [required]="true"
+      [error]="headFieldErrors().name"
+    >
+      <cb-text-input
+        formControlName="name"
+        [id]="headName.controlId()"
+        [invalid]="headName.hasError()"
+        [readOnly]="saving()"
+      />
     </cb-form-field>
 
     <cb-form-field label="Category" controlId="head-category" [required]="true">
@@ -244,10 +255,17 @@
       {{ addingConcession() ? 'Add a concession type' : 'Edit this concession type' }}
     </p>
 
-    <cb-form-field #concessionName label="Name" controlId="concession-name" [required]="true">
+    <cb-form-field
+      #concessionName
+      label="Name"
+      controlId="concession-name"
+      [required]="true"
+      [error]="concessionFieldErrors().name"
+    >
       <cb-text-input
         formControlName="name"
         [id]="concessionName.controlId()"
+        [invalid]="concessionName.hasError()"
         [readOnly]="saving()"
       />
     </cb-form-field>

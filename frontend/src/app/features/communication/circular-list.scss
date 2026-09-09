@@ -1,6 +1,7 @@
 @use '../../../styles/mixins' as *;
 @use '../../../styles/page' as *;
 @use '../../../styles/banner' as *;
+@use '../../../styles/controls' as *;
 
 .crumbs {
   margin: 0 0 var(--cb-space-1);
@@ -137,6 +138,12 @@
     border-color: var(--cb-focus);
     box-shadow: var(--cb-focus-ring);
   }
+}
+
+// Kept distinct from `:focus` above the underlying control still owns: an invalid textarea is
+// red until it is corrected, whether or not it currently has focus.
+.body-input--invalid {
+  @include control-invalid;
 }
 
 .targets-heading {

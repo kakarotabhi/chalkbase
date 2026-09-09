@@ -17,20 +17,32 @@
 @if (editing()) {
   <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
     <div class="editor__fields">
-      <cb-form-field #nameField label="Previous school" controlId="previous-school-name">
+      <cb-form-field
+        #nameField
+        label="Previous school"
+        controlId="previous-school-name"
+        [error]="fieldErrors().previousSchoolName"
+      >
         <cb-text-input
           formControlName="previousSchoolName"
           [id]="nameField.controlId()"
           [describedBy]="nameField.describedById()"
+          [invalid]="nameField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #boardField label="Board" controlId="previous-school-board">
+      <cb-form-field
+        #boardField
+        label="Board"
+        controlId="previous-school-board"
+        [error]="fieldErrors().previousSchoolBoard"
+      >
         <cb-text-input
           formControlName="previousSchoolBoard"
           [id]="boardField.controlId()"
           [describedBy]="boardField.describedById()"
+          [invalid]="boardField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
@@ -39,15 +51,21 @@
         #tcNumberField
         label="Transfer certificate number"
         controlId="previous-school-tc-number"
+        [error]="fieldErrors().transferCertificateNumber"
       >
         <cb-text-input
           formControlName="transferCertificateNumber"
           [id]="tcNumberField.controlId()"
           [describedBy]="tcNumberField.describedById()"
+          [invalid]="tcNumberField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
+      <!--
+        No `[error]` here: `transferCertificateIssuedOn` carries no validator. The column is
+        nullable and a date, so nothing typed into it can fail — see `student-previous-school.ts`.
+      -->
       <cb-form-field
         #tcDateField
         label="Transfer certificate issued on"
@@ -62,11 +80,17 @@
         />
       </cb-form-field>
 
-      <cb-form-field #reasonField label="Reason for leaving" controlId="previous-school-reason">
+      <cb-form-field
+        #reasonField
+        label="Reason for leaving"
+        controlId="previous-school-reason"
+        [error]="fieldErrors().reasonForLeaving"
+      >
         <cb-text-input
           formControlName="reasonForLeaving"
           [id]="reasonField.controlId()"
           [describedBy]="reasonField.describedById()"
+          [invalid]="reasonField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>

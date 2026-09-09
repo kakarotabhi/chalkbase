@@ -95,20 +95,34 @@
       </p>
     }
     <form [formGroup]="composeForm" (ngSubmit)="submitCompose()" novalidate>
-      <cb-form-field #titleField label="Title" controlId="circular-title">
+      <cb-form-field
+        #titleField
+        label="Title"
+        controlId="circular-title"
+        [error]="composeFieldErrors().title"
+      >
         <cb-text-input
           formControlName="title"
           [id]="titleField.controlId()"
           [describedBy]="titleField.describedById()"
+          [invalid]="titleField.hasError()"
         />
       </cb-form-field>
 
-      <cb-form-field #bodyField label="Message" controlId="circular-body">
+      <cb-form-field
+        #bodyField
+        label="Message"
+        controlId="circular-body"
+        [error]="composeFieldErrors().body"
+      >
         <textarea
           class="body-input"
+          [class.body-input--invalid]="bodyField.hasError()"
           formControlName="body"
           [id]="bodyField.controlId()"
           rows="5"
+          [attr.aria-describedby]="bodyField.describedById()"
+          [attr.aria-invalid]="bodyField.hasError() ? 'true' : null"
         ></textarea>
       </cb-form-field>
 

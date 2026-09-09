@@ -32,6 +32,9 @@ import { ACCESS_DENIED, circularStatusLabel, circularStatusTone } from './commun
 
 const WHOLE_CLASS = '';
 
+/** The backend's own limit, restated so a value is refused before the round trip rather than after. */
+const TITLE_MAX_LENGTH = 200;
+
 /** One target row in the composer, with the class's own sections and the live preview count. */
 interface TargetRow {
   readonly key: number;
@@ -106,7 +109,7 @@ export class CircularList {
 
   protected readonly composeOpen = signal(false);
   protected readonly composeForm = this.formBuilder.group({
-    title: ['', [Validators.required, Validators.maxLength(200)]],
+    title: ['', [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
     body: ['', Validators.required],
     requiresAcknowledgement: [false],
   });
@@ -115,6 +118,27 @@ export class CircularList {
   protected readonly targetRows = signal<readonly TargetRow[]>([]);
   protected readonly composeSaving = signal(false);
   protected readonly composeFailureCode = signal<string | null>(null);
+
+  /** True once "Save as draft" has been pressed: before that, only touched fields show a message. */
+  private readonly composeAttempted = signal(false);
+  /** Bumped on every change so the messages recompute; values come off the controls. */
+  private readonly composeRevision = signal(0);
+
+  /**
+   * Only `title` and `body` are wired up here. Each target row's class/section is a plain
+   * `ngModel`, not a validated control — there is no empty-but-required state to report because
+   * `hasAtLeastOneTarget` already disables "Save as draft" and says why beside it.
+   */
+  protected readonly composeFieldErrors = computed<
+    Readonly<{ title: string | null; body: string | null }>
+  >(() => {
+    this.composeRevision();
+    this.composeAttempted();
+    return {
+      title: this.composeMessageFor('title'),
+      body: this.composeMessageFor('body'),
+    };
+  });
 
   protected readonly hasAtLeastOneTarget = computed(() =>
     this.targetRows().some((row) => row.classId !== ''),
@@ -127,6 +151,9 @@ export class CircularList {
   constructor() {
     this.load();
     this.loadLadder();
+    this.composeForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.composeRevision.update((count) => count + 1);
+    });
   }
 
   protected reload(): void {
@@ -151,6 +178,7 @@ export class CircularList {
 
   protected openCompose(): void {
     this.composeFailureCode.set(null);
+    this.composeAttempted.set(false);
     this.composeForm.reset({ title: '', body: '', requiresAcknowledgement: false });
     this.targetRows.set([]);
     this.addTarget();
@@ -215,7 +243,9 @@ export class CircularList {
     if (this.composeSaving()) {
       return;
     }
+    this.composeAttempted.set(true);
     this.composeForm.markAllAsTouched();
+    this.composeRevision.update((count) => count + 1);
     if (this.composeForm.invalid || !this.hasAtLeastOneTarget()) {
       return;
     }
@@ -354,5 +384,21 @@ export class CircularList {
           this.failureCode.set(apiErrorCode(error));
         },
       });
+  }
+
+  private composeMessageFor(name: 'title' | 'body'): string | null {
+    const control = this.composeForm.controls[name];
+    if (!control.touched && !this.composeAttempted()) {
+      return null;
+    }
+    if (control.hasError('required')) {
+      return name === 'title'
+        ? 'Give this circular a title.'
+        : 'Write the circular before saving it.';
+    }
+    if (name === 'title' && control.hasError('maxlength')) {
+      return `A title is ${TITLE_MAX_LENGTH} characters or fewer.`;
+    }
+    return null;
   }
 }

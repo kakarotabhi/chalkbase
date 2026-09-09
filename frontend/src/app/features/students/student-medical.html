@@ -40,20 +40,32 @@
   <form class="editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
     <h3 class="editor__heading">Restricted (masked until you save)</h3>
     <div class="editor__fields">
-      <cb-form-field #bloodGroupField label="Blood group" controlId="medical-blood-group">
+      <cb-form-field
+        #bloodGroupField
+        label="Blood group"
+        controlId="medical-blood-group"
+        [error]="fieldErrors().bloodGroup"
+      >
         <cb-text-input
           formControlName="bloodGroup"
           [id]="bloodGroupField.controlId()"
           [describedBy]="bloodGroupField.describedById()"
+          [invalid]="bloodGroupField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #cwsnField label="CWSN / disability status" controlId="medical-cwsn-status">
+      <cb-form-field
+        #cwsnField
+        label="CWSN / disability status"
+        controlId="medical-cwsn-status"
+        [error]="fieldErrors().cwsnStatus"
+      >
         <cb-text-input
           formControlName="cwsnStatus"
           [id]="cwsnField.controlId()"
           [describedBy]="cwsnField.describedById()"
+          [invalid]="cwsnField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
@@ -62,20 +74,28 @@
         #disabilityField
         label="Disability details"
         controlId="medical-disability-details"
+        [error]="fieldErrors().disabilityDetails"
       >
         <cb-text-input
           formControlName="disabilityDetails"
           [id]="disabilityField.controlId()"
           [describedBy]="disabilityField.describedById()"
+          [invalid]="disabilityField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #allergiesField label="Allergies" controlId="medical-allergies">
+      <cb-form-field
+        #allergiesField
+        label="Allergies"
+        controlId="medical-allergies"
+        [error]="fieldErrors().allergies"
+      >
         <cb-text-input
           formControlName="allergies"
           [id]="allergiesField.controlId()"
           [describedBy]="allergiesField.describedById()"
+          [invalid]="allergiesField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
@@ -84,20 +104,28 @@
         #chronicField
         label="Chronic conditions"
         controlId="medical-chronic-conditions"
+        [error]="fieldErrors().chronicConditions"
       >
         <cb-text-input
           formControlName="chronicConditions"
           [id]="chronicField.controlId()"
           [describedBy]="chronicField.describedById()"
+          [invalid]="chronicField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #medicationField label="Medication" controlId="medical-medication">
+      <cb-form-field
+        #medicationField
+        label="Medication"
+        controlId="medical-medication"
+        [error]="fieldErrors().medication"
+      >
         <cb-text-input
           formControlName="medication"
           [id]="medicationField.controlId()"
           [describedBy]="medicationField.describedById()"
+          [invalid]="medicationField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
@@ -105,30 +133,48 @@
 
     <h3 class="editor__heading">Emergency contact</h3>
     <div class="editor__fields">
-      <cb-form-field #contactNameField label="Name" controlId="medical-emergency-name">
+      <cb-form-field
+        #contactNameField
+        label="Name"
+        controlId="medical-emergency-name"
+        [error]="fieldErrors().emergencyContactName"
+      >
         <cb-text-input
           formControlName="emergencyContactName"
           [id]="contactNameField.controlId()"
           [describedBy]="contactNameField.describedById()"
+          [invalid]="contactNameField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #contactPhoneField label="Phone" controlId="medical-emergency-phone">
+      <cb-form-field
+        #contactPhoneField
+        label="Phone"
+        controlId="medical-emergency-phone"
+        [error]="fieldErrors().emergencyContactPhone"
+      >
         <cb-text-input
           formControlName="emergencyContactPhone"
           type="tel"
           [id]="contactPhoneField.controlId()"
           [describedBy]="contactPhoneField.describedById()"
+          [invalid]="contactPhoneField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #contactRelationField label="Relation" controlId="medical-emergency-relation">
+      <cb-form-field
+        #contactRelationField
+        label="Relation"
+        controlId="medical-emergency-relation"
+        [error]="fieldErrors().emergencyContactRelation"
+      >
         <cb-text-input
           formControlName="emergencyContactRelation"
           [id]="contactRelationField.controlId()"
           [describedBy]="contactRelationField.describedById()"
+          [invalid]="contactRelationField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
