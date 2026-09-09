@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { timestampOf, findFutureDated } from './check.mjs';
+import { timestampOf, findFutureDated, findOutOfOrder } from './check.mjs';
 
 const NOW = new Date(Date.UTC(2026, 8, 9, 1, 9)); // 2026-09-09 01:09 UTC
 
@@ -39,4 +39,35 @@ test('reports every future-dated migration, not just the first', () => {
     NOW,
   );
   assert.equal(found.length, 2, 'both future-dated files should be named, so one fix does not hide another');
+});
+
+// --- the half that was missing, and cost three failed deploys ---
+
+const BASE = [
+  'V2026_09_08_1805__school_add_school_profile_timezone.sql',
+  'V2026_09_09_0128__admission_create_enquiry.sql',
+];
+
+test('catches a migration that sorts below one already on the base branch', () => {
+  // The real failure: fee's 0109 merged after admission's 0128 was already applied, and Flyway
+  // refused it — "Detected resolved migration not applied to database: 2026.09.09.0109."
+  const branch = [...BASE, 'V2026_09_09_0109__fee_create_fee_head.sql'];
+  const found = findOutOfOrder(branch, BASE);
+  assert.equal(found.length, 1);
+  assert.match(found[0].file, /fee_create_fee_head/);
+  assert.equal(found[0].highest.toISOString(), '2026-09-09T01:28:00.000Z');
+});
+
+test('accepts a migration above everything on the base branch', () => {
+  const branch = [...BASE, 'V2026_09_09_0305__fee_create_fee_head.sql'];
+  assert.deepEqual(findOutOfOrder(branch, BASE), []);
+});
+
+test('ignores migrations already on the base branch, however old', () => {
+  assert.deepEqual(findOutOfOrder(BASE, BASE), []);
+});
+
+test('says nothing when the base listing is unavailable', () => {
+  // workflow_dispatch has no base branch to compare against; the future-dating half still runs.
+  assert.deepEqual(findOutOfOrder(['V2026_09_09_0109__fee.sql'], []), []);
 });

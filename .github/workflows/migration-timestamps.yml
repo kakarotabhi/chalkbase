@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The out-of-order half compares this branch against its base, so the base ref has to be
+          # fetched rather than just the pull request's own head.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -42,6 +46,18 @@ jobs:
       # No install step and no dependencies: the check reads filenames and compares them to a clock.
       - name: The check's own tests
         run: node --test tools/migration-timestamps/check.test.mjs
+
+      # What the base branch already has. Anything merged there is applied on every deployment from
+      # it, so a migration below the highest of them is refused by Flyway the moment this merges.
+      - name: List the base branch's migrations
+        if: github.event_name == 'pull_request'
+        run: |
+          git ls-tree -r --name-only "origin/${{ github.base_ref }}" \
+            -- backend/src/main/resources/db/migration \
+            | xargs -n1 basename \
+            > /tmp/base-migrations.txt
+          echo "MIGRATION_BASE_LIST=/tmp/base-migrations.txt" >> "$GITHUB_ENV"
+          wc -l < /tmp/base-migrations.txt | xargs echo 'base migrations:'
 
       - name: Check the migrations on this branch
         run: node tools/migration-timestamps/check.mjs

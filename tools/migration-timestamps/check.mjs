@@ -13,9 +13,21 @@
  * The failure is invisible locally and invisible in CI, because CI starts from an empty container
  * where any order works. It only appears on a database that has real history.
  *
- * A STALE timestamp breaks its own migration, loudly, on the next deploy — bad, but self-announcing,
- * and this check cannot see it anyway: whether `0900` is too old depends on what some database has
- * already applied, which is not knowable from the repository.
+ * A STALE timestamp was originally dismissed here as unknowable — "whether 0900 is too old depends on
+ * what some database has already applied". That was wrong, and it cost three failed deploys the same
+ * night this check was written. It is knowable, from a proxy that is good enough: **the highest
+ * migration already on the base branch.** Anything merged to `main` will be applied to every database
+ * that deploys from it, so a pull request adding a migration BELOW main's highest is out of order for
+ * all of them the moment it lands.
+ *
+ * That is exactly what happened: the fee lane's migrations were renamed to 0109 — correct at the
+ * moment of renaming — and then spent eighty minutes in CI while the admission lane merged 0128. By
+ * the time fee merged, 0109 and 0110 sat below an applied 0128, and Flyway refused them on every
+ * school: "Detected resolved migration not applied to database: 2026.09.09.0109."
+ *
+ * So the rule is not "name it when you write it" or even "name it when you open the pull request". It
+ * is "name it when it MERGES", and the only way to enforce that is to check it at merge time against
+ * what has already merged.
  *
  * A FUTURE timestamp breaks SOMEBODY ELSE'S. A migration dated eight hours ahead sorts above every
  * migration merged in those eight hours, so the next lane's correctly-named file lands below it and
@@ -23,7 +35,7 @@
  * caused it sees nothing wrong. That asymmetry is why this check exists and why it checks the one
  * direction it can actually know about.
  */
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIRS = [
@@ -43,6 +55,25 @@ export function findFutureDated(files, now) {
   return files
     .map((f) => ({ file: f, at: timestampOf(f) }))
     .filter((x) => x.at && x.at.getTime() > now.getTime());
+}
+
+/**
+ * Migrations this branch adds that sort BELOW the highest one already on the base branch.
+ *
+ * `baseFiles` is the same directory as it stands on `main`. Anything already there will have been
+ * applied by every deployment from `main`, so a new migration below the highest of them is refused
+ * by Flyway with `outOfOrder=false` — on every database, immediately, and only after merging.
+ */
+export function findOutOfOrder(branchFiles, baseFiles) {
+  const stamp = (f) => timestampOf(f)?.getTime();
+  const baseTimes = baseFiles.map(stamp).filter(Boolean);
+  if (baseTimes.length === 0) return [];
+  const highest = Math.max(...baseTimes);
+  const added = branchFiles.filter((f) => !baseFiles.includes(f));
+  return added
+    .map((f) => ({ file: f, at: timestampOf(f) }))
+    .filter((x) => x.at && x.at.getTime() < highest)
+    .map((x) => ({ ...x, highest: new Date(highest) }));
 }
 
 function main() {
@@ -72,9 +103,38 @@ function main() {
     process.exit(1);
   }
 
-  const future = findFutureDated(files.map((f) => f.file), cutoff);
+  // The workflow writes the base branch's migration filenames here, one per line. Absent on a
+  // workflow_dispatch run, in which case only the future-dating half runs.
+  let baseFiles = [];
+  const basePath = process.env.MIGRATION_BASE_LIST;
+  if (basePath) {
+    try {
+      baseFiles = readFileSync(basePath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+    } catch {
+      console.error(`Cannot read the base migration list at ${basePath}.`);
+      process.exit(1);
+    }
+  }
+
+  const names = files.map((f) => f.file);
+  const stale = findOutOfOrder(names, baseFiles);
+  if (stale.length > 0) {
+    console.error('These migrations sort BELOW one already merged, so Flyway will refuse them:\n');
+    for (const { file, at, highest } of stale) {
+      console.error(`  ${file}`);
+      console.error(`      names ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC, but the base branch already has`);
+      console.error(`      ${highest.toISOString().slice(0, 16).replace('T', ' ')} UTC applied on every deployment\n`);
+    }
+    console.error('Rename it above that. outOfOrder is off (ADR-0011), so a migration below one already');
+    console.error('applied is refused on every database — after merging, never before. This is the half of');
+    console.error('the rule that "name it when it merges" exists for: a name that was right when you wrote');
+    console.error('it stops being right the moment another lane merges ahead of you.');
+    process.exit(1);
+  }
+
+  const future = findFutureDated(names, cutoff);
   if (future.length === 0) {
-    console.log(`${files.length} migrations checked; none dated in the future.`);
+    console.log(`${files.length} migrations checked; none dated in the future, none below the base branch.`);
     return;
   }
 
