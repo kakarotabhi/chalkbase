@@ -58,9 +58,9 @@ export const STATUS_TONES: Readonly<Record<EnquiryStatus, BadgeTone>> = {
 /** A status a follow-up may move an enquiry to. Never `NEW` — see `AdmissionErrorCode.STATUS_CANNOT_REOPEN_TO_NEW`. */
 export const FOLLOW_UP_RESULT_OPTIONS: readonly SelectOption[] = [
   { value: '', label: 'No change' },
-  { value: 'IN_PROGRESS', label: STATUS_LABELS.IN_PROGRESS },
-  { value: 'CONVERTED', label: STATUS_LABELS.CONVERTED },
-  { value: 'LOST', label: STATUS_LABELS.LOST },
+  { value: 'IN_PROGRESS', label: STATUS_LABELS['IN_PROGRESS'] },
+  { value: 'CONVERTED', label: STATUS_LABELS['CONVERTED'] },
+  { value: 'LOST', label: STATUS_LABELS['LOST'] },
 ];
 
 /**
