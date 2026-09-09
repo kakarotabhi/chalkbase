@@ -1068,3 +1068,58 @@ export type CopyFeeStructureRequest = Schemas['CopyFeeStructureRequest'];
  * `copied` are the newly written version-1 structures.
  */
 export type CopyFeeStructureResponse = Schemas['CopyFeeStructureResponse'];
+
+/* ── Communication (Phase 2, GET/POST /api/communication/circulars/**) ───── */
+
+/**
+ * One class or section to target when composing a circular. `CircularTargetRequest` on the
+ * backend.
+ *
+ * `sectionId` absent means "every active section of `classId`"; given, it must belong to
+ * `classId`.
+ */
+export type CircularTargetRequest = Schemas['CircularTargetRequest'];
+
+/**
+ * Composes a circular in `DRAFT`, with every target given up front — there is no endpoint to edit
+ * a draft's targets afterwards, so a circular is composed whole, the same "everything in one call"
+ * shape `MarkAttendanceRequest` uses for a section's roster.
+ */
+export type CreateCircularRequest = Schemas['CreateCircularRequest'];
+
+/** One target, resolved to names. `sectionId`/`sectionName` both absent means "every active section". */
+export type CircularTargetResponse = Schemas['CircularTargetResponse'];
+
+/** Where a circular stands. `DRAFT` is mutable; `PUBLISHED` is a one-way door — there is no going back. */
+export type CircularStatus = Schemas['CircularDetail']['status'];
+
+/**
+ * One circular in full: its content, its targets, and its recipient counts. `CircularDetail` on
+ * the backend.
+ *
+ * `recipientCount` is zero until published. There is no separate "delivered" count: an in-app
+ * circular is delivered the instant its recipient rows are created, so it would always equal
+ * `recipientCount` — see the backend module's own package doc for why there is no send queue here.
+ */
+export type CircularDetail = Schemas['CircularDetail'];
+
+/** One row of the circular list, newest first. `CircularSummary` on the backend. */
+export type CircularSummary = Schemas['CircularSummary'];
+
+/**
+ * How many actively enrolled students one candidate class or section would reach — the composer's
+ * own preview, before a target is added to a circular. `TargetPreviewResponse` on the backend.
+ */
+export type TargetPreviewResponse = Schemas['TargetPreviewResponse'];
+
+/**
+ * One student a published circular reached, as the recipient screen shows it.
+ * `CircularRecipientResponse` on the backend.
+ *
+ * `acknowledgedAt` absent means not yet acknowledged. There is no acknowledger's name here — who
+ * recorded it is audit-log material, not a field on the row.
+ */
+export type CircularRecipientResponse = Schemas['CircularRecipientResponse'];
+
+/** Records that a recipient's family acknowledged a circular, on their behalf. */
+export type AcknowledgeRecipientRequest = Schemas['AcknowledgeRecipientRequest'];

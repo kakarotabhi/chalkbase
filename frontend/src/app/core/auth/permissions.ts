@@ -136,6 +136,21 @@ export const Permissions = {
   FEE_STRUCTURE_READ: 'fee:structure:read',
   /** Writing a new version of a class's fee structure, and copying one from a previous session. */
   FEE_STRUCTURE_MANAGE: 'fee:structure:manage',
+
+  /**
+   * Reading circulars, their targets and per-recipient status, and the target-preview count shown
+   * while composing one. `CommunicationPermissions.CIRCULAR_READ` — deliberately this module's own
+   * permission, never borrowed from `fee` or `attendance`, because the targeting query it gates is
+   * Confidential-adjacent in its own right (ADR-0014).
+   */
+  COMMUNICATION_READ: 'communication:circular:read',
+  /** Composing a circular, adding its targets, and publishing it. `CommunicationPermissions.CIRCULAR_MANAGE`. */
+  COMMUNICATION_MANAGE: 'communication:circular:manage',
+  /**
+   * Recording that a recipient's family acknowledged a circular, on their behalf — there is no
+   * parent login yet to do this themselves. `CommunicationPermissions.CIRCULAR_ACKNOWLEDGE`.
+   */
+  COMMUNICATION_ACKNOWLEDGE: 'communication:circular:acknowledge',
 } as const;
 
 /** One of the codes above. Nothing else may be passed to a permission check. */
