@@ -118,6 +118,18 @@ export const Permissions = {
    * `AdmissionPermissions.ENQUIRY_MANAGE`.
    */
   ADMISSION_ENQUIRY_MANAGE: 'admission:enquiry:manage',
+  /** Seeing the school's catalogue of fee heads. `FeePermissions.HEAD_READ`. */
+  FEE_HEAD_READ: 'fee:head:read',
+  /** Adding, renaming, recategorising, capping and deactivating fee heads. */
+  FEE_HEAD_MANAGE: 'fee:head:manage',
+  /** Seeing the school's catalogue of concession types. `FeePermissions.CONCESSION_TYPE_READ`. */
+  FEE_CONCESSION_TYPE_READ: 'fee:concession_type:read',
+  /** Adding, renaming and deactivating concession types. Applying one to a student is not built yet. */
+  FEE_CONCESSION_TYPE_MANAGE: 'fee:concession_type:manage',
+  /** Seeing a class's fee structure for a session. `FeePermissions.STRUCTURE_READ`. */
+  FEE_STRUCTURE_READ: 'fee:structure:read',
+  /** Writing a new version of a class's fee structure, and copying one from a previous session. */
+  FEE_STRUCTURE_MANAGE: 'fee:structure:manage',
 } as const;
 
 /** One of the codes above. Nothing else may be passed to a permission check. */

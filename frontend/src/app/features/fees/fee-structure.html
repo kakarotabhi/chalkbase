@@ -1,0 +1,267 @@
+<p class="crumbs">Fees <span aria-hidden="true">›</span> Fee structure</p>
+<h1 class="page-title">Fee structure</h1>
+
+<p class="page-lede">
+  What each class is charged for the academic session you pick below. Saving here never edits a past
+  record — it writes a new version, and a session that has already run its course cannot be given a
+  second one. Last year's structure stays exactly as it was filed.
+</p>
+
+@if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view fee structures</strong>
+    <span>Ask your principal to add "View fee structures" to your role.</span>
+  </div>
+} @else if (loadFailed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load the fee structure</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else {
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  @if (writeFailure(); as message) {
+    <div class="banner banner--danger" role="alert">
+      <strong class="banner__title">{{ message.title }}</strong>
+      <span>{{ message.detail }}</span>
+    </div>
+  }
+
+  <div class="session-picker">
+    <cb-form-field label="Academic session" controlId="session-select">
+      <cb-select id="session-select" [formControl]="sessionControl" [options]="sessionOptions()" />
+    </cb-form-field>
+  </div>
+
+  @if (loading()) {
+    <p class="page-status" role="status">Loading the fee structure…</p>
+  } @else {
+    @if (canManage() && sessions().length > 1) {
+      <cb-card tone="surface" class="copy-panel">
+        <h2 class="copy-panel__title">Copy from a previous session</h2>
+        <p class="copy-panel__lede">
+          Starts each class from what it was charged in the session you choose. A class that already
+          has a structure in the session above is left exactly as it is — this never overwrites
+          anything already entered.
+        </p>
+        <div class="copy-panel__row">
+          <cb-form-field label="Copy from" controlId="copy-from-select">
+            <cb-select
+              id="copy-from-select"
+              [formControl]="copyFromControl"
+              [options]="copyFromOptions()"
+              placeholder="Choose a session"
+            />
+          </cb-form-field>
+          <cb-button
+            variant="secondary"
+            [disabled]="!copyFromSessionId() || copying()"
+            [loading]="copying()"
+            loadingLabel="Copying…"
+            (click)="copyFromPrevious()"
+          >
+            Copy
+          </cb-button>
+        </div>
+        @if (copySummary(); as summary) {
+          <p class="copy-panel__result" role="status">{{ summary }}</p>
+        }
+        @if (copyFailure(); as message) {
+          <p class="copy-panel__result copy-panel__result--error" role="alert">{{ message }}</p>
+        }
+      </cb-card>
+    }
+
+    @if (feeHeads().length === 0) {
+      <p class="page-status" role="status">
+        No fee heads exist yet.
+        <a routerLink="/fees/heads">Add one</a>
+        before setting up a structure.
+      </p>
+    } @else if (rows().length === 0) {
+      <p class="page-status" role="status">No classes exist yet.</p>
+    } @else {
+      <div class="list">
+        <table class="list__table">
+          <caption class="list__caption">
+            Each class's fee structure for the selected session
+          </caption>
+          <thead class="list__head">
+            <tr>
+              <th scope="col">Class</th>
+              <th scope="col">Status</th>
+              <th scope="col">Total per year</th>
+              <th scope="col"><span class="hidden-label">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="row">
+                <td class="cell cell--name">
+                  {{ row.name }}
+                  @if (!row.active) {
+                    <cb-badge tone="neutral">Not running</cb-badge>
+                  }
+                </td>
+                <td class="cell cell--status">
+                  @if (row.structure) {
+                    <cb-badge tone="success">Set up · v{{ row.structure.version }}</cb-badge>
+                  } @else {
+                    <cb-badge tone="warning">Not set up</cb-badge>
+                  }
+                </td>
+                <td class="cell cell--total">{{ row.structure ? row.total : '—' }}</td>
+                <td class="cell cell--action">
+                  <cb-button
+                    variant="secondary"
+                    [disabled]="!!editingClassId()"
+                    (click)="startEdit(row)"
+                  >
+                    {{ row.structure ? 'Edit' : 'Set up'
+                    }}<span class="hidden-label"> {{ row.name }}</span>
+                  </cb-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (editingClassId()) {
+      <div class="item-editor">
+        <h2 class="item-editor__title">{{ editingClassName() }}'s fee structure</h2>
+        <p class="item-editor__lede">
+          Every fee head charged to this class, for this session. Saving replaces the whole
+          structure with exactly what is shown here.
+        </p>
+
+        @if (draftItems().length === 0) {
+          <p class="page-status" role="status">No fee heads added to this structure yet.</p>
+        }
+
+        <ul class="items">
+          @for (item of draftItems(); track item.key) {
+            <li>
+              <cb-card class="item-card">
+                <div class="item-card__row">
+                  <label class="field">
+                    <span class="field__label">Fee head</span>
+                    <select
+                      class="native-select"
+                      [value]="item.feeHeadId"
+                      (change)="updateItem(item.key, { feeHeadId: $any($event.target).value })"
+                    >
+                      <option value="" disabled>Choose a fee head</option>
+                      @for (option of headOptions(); track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <label class="field field--amount">
+                    <span class="field__label">Amount (₹)</span>
+                    <input
+                      class="native-input"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [value]="item.amount"
+                      (input)="updateItem(item.key, { amount: $any($event.target).value })"
+                    />
+                  </label>
+
+                  <label class="field">
+                    <span class="field__label">Frequency</span>
+                    <select
+                      class="native-select"
+                      [value]="item.frequency"
+                      (change)="updateItem(item.key, { frequency: $any($event.target).value })"
+                    >
+                      @for (option of frequencyOptions; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <cb-button variant="secondary" (click)="removeItem(item.key)">
+                    Remove<span class="hidden-label"> this fee head</span>
+                  </cb-button>
+                </div>
+
+                <div class="installments">
+                  <p class="installments__label">Due dates</p>
+                  @if (item.installments.length === 0) {
+                    <p class="installments__empty">No due dates added yet.</p>
+                  }
+                  @for (installment of item.installments; track installment.key) {
+                    <div class="installment-row">
+                      <label class="field">
+                        <span class="field__label">Due on</span>
+                        <input
+                          class="native-input"
+                          type="date"
+                          [value]="installment.dueDate"
+                          (input)="
+                            updateInstallment(item.key, installment.key, {
+                              dueDate: $any($event.target).value,
+                            })
+                          "
+                        />
+                      </label>
+                      <label class="field field--amount">
+                        <span class="field__label">Amount (₹)</span>
+                        <input
+                          class="native-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          [value]="installment.amount"
+                          (input)="
+                            updateInstallment(item.key, installment.key, {
+                              amount: $any($event.target).value,
+                            })
+                          "
+                        />
+                      </label>
+                      <cb-button
+                        variant="secondary"
+                        (click)="removeInstallment(item.key, installment.key)"
+                      >
+                        Remove<span class="hidden-label"> this due date</span>
+                      </cb-button>
+                    </div>
+                  }
+                  <cb-button variant="secondary" (click)="addInstallment(item.key)">
+                    Add a due date
+                  </cb-button>
+                </div>
+              </cb-card>
+            </li>
+          }
+        </ul>
+
+        <div class="toolbar">
+          <cb-button variant="secondary" (click)="addItem()">Add a fee head</cb-button>
+        </div>
+
+        <div class="editor__actions">
+          <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">
+            Cancel
+          </cb-button>
+          <cb-button
+            [disabled]="!draftIsReady()"
+            [loading]="saving()"
+            loadingLabel="Saving…"
+            (click)="save()"
+          >
+            Save
+          </cb-button>
+        </div>
+      </div>
+    }
+  }
+}

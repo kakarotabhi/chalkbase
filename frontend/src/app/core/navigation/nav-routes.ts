@@ -114,6 +114,16 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['admissions', { path: '/admissions', icon: 'admissions' }],
   ['admissions.enquiries', { path: '/admissions/enquiries', icon: 'admissions' }],
   ['admissions.follow_ups', { path: '/admissions/follow-ups', icon: 'admissions' }],
+  // Fee structure (Phase 2, ADR-0012, ADR-0033). Same convention as academics and attendance
+  // above: both screens share the one glyph, and the container needs its own entry so
+  // `NavigationStore` does not drop both children along with an unresolvable parent.
+  //
+  // `fees.collect`, `fees.receipts` and `fees.defaulters` are reserved in the label catalogue
+  // (`nav-labels.ts`) for the collection lane, which has not shipped and so has no entry here yet
+  // — an id this map does not know is dropped and logged, exactly as ADR-0008 intends.
+  ['fees', { path: '/fees', icon: 'fees' }],
+  ['fees.heads', { path: '/fees/heads', icon: 'fees' }],
+  ['fees.structure', { path: '/fees/structure', icon: 'fees' }],
 ]);
 
 /**
