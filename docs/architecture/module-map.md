@@ -15,7 +15,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `academics` | `academic_session`, `school_class`, `section`, `subject` (per tenant); timetable and syllabus still planned | `/api/academics/**` | yes | sessions, classes and subjects built |
 | `attendance` | `attendance_mark`, `attendance_correction_request` (per tenant) — student attendance, daily and period-wise in one table from day one; staff attendance still needs a `staff` module | `/api/attendance` | yes | daily grain built: mark, view, lock, correction request and approval (ADR-0030); period-wise has its table shape and no write path |
 | `exam` | assessments, marks, report cards | `/api/exams` | yes | planned |
-| `fee` | fee heads, concessions, invoices, receipts | `/api/fees` | yes | planned |
+| `fee` | `fee_head`, `fee_concession_type`, `fee_structure`, `fee_structure_item`, `fee_installment` (per tenant) — fee structure only so far; invoices, receipts and the ledger itself (`fee_demand`, `fee_charge`, `fee_ledger_entry`, ADR-0012) still planned | `/api/fees/heads`, `/api/fees/concession-types`, `/api/fees/structures` | yes | fee heads, concession types (catalogue only — applying one to a student is not built) and a session-scoped, versioned fee structure per class built (ADR-0012, ADR-0033); demand, collection, receipts and dues not started |
 | `payroll` | salary structures, payslips | `/api/payroll` | yes | planned |
 | `transport` | routes, stops, vehicles, drivers | `/api/transport` | yes | planned |
 | `hostel` | rooms, allotments, mess | `/api/hostel` | yes | planned |
@@ -133,3 +133,4 @@ something" without importing `identity` or joining `user_account`. It answers no
 `UserSummary` already discloses at `GET /api/access/users`, so it carries no permission of its
 own — the caller's own module permission gates it, same as every other lookup interface in this
 table.
+`fee` reaches `academics.api.AcademicsLookup` the same read-only way `attendance` does, for the session and class a structure belongs to, and imports nothing else across a module boundary — not `student`, because a fee structure targets a class, not an individual student, in this lane (see `fee.package-info` for what FR-076 axes that would need are deferred and why). `fee_structure.created_by` follows `attendance_mark.marked_by`'s own precedent: a plain `uuid` column with a database foreign key, filled from `platform.security.CurrentUser`, never a JPA association to `identity`.

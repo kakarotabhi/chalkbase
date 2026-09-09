@@ -119,6 +119,21 @@ class AccessControlTests {
 
     private static final String DOCUMENT_READ = "document:document:read";
 
+    /**
+     * The fee module's grants (ADR-0012, ADR-0033): {@code fee:} sorts between {@code document:}
+     * and {@code identity:} ({@code fee} beats {@code identity} at the first character, and loses
+     * to {@code document} there too) — the same widening this file's other comments describe, said
+     * once more. Within the module, {@code concession_type} sorts before {@code head}, which sorts
+     * before {@code structure}, and {@code manage} before {@code read} in each.
+     */
+    private static final String FEE_CONCESSION_TYPE_MANAGE = "fee:concession_type:manage";
+
+    private static final String FEE_CONCESSION_TYPE_READ = "fee:concession_type:read";
+    private static final String FEE_HEAD_MANAGE = "fee:head:manage";
+    private static final String FEE_HEAD_READ = "fee:head:read";
+    private static final String FEE_STRUCTURE_MANAGE = "fee:structure:manage";
+    private static final String FEE_STRUCTURE_READ = "fee:structure:read";
+
     @Autowired
     MockMvc mockMvc;
 
@@ -196,6 +211,12 @@ class AccessControlTests {
                             ATTENDANCE_READ,
                             DOCUMENT_MANAGE,
                             DOCUMENT_READ,
+                            FEE_CONCESSION_TYPE_MANAGE,
+                            FEE_CONCESSION_TYPE_READ,
+                            FEE_HEAD_MANAGE,
+                            FEE_HEAD_READ,
+                            FEE_STRUCTURE_MANAGE,
+                            FEE_STRUCTURE_READ,
                             ROLE_MANAGE,
                             USER_MANAGE,
                             USER_READ,
@@ -246,6 +267,12 @@ class AccessControlTests {
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
+                        FEE_CONCESSION_TYPE_MANAGE,
+                        FEE_CONCESSION_TYPE_READ,
+                        FEE_HEAD_MANAGE,
+                        FEE_HEAD_READ,
+                        FEE_STRUCTURE_MANAGE,
+                        FEE_STRUCTURE_READ,
                         USER_MANAGE,
                         USER_READ,
                         SCHOOL_READ,
@@ -270,6 +297,12 @@ class AccessControlTests {
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
+                        FEE_CONCESSION_TYPE_MANAGE,
+                        FEE_CONCESSION_TYPE_READ,
+                        FEE_HEAD_MANAGE,
+                        FEE_HEAD_READ,
+                        FEE_STRUCTURE_MANAGE,
+                        FEE_STRUCTURE_READ,
                         ROLE_MANAGE,
                         USER_MANAGE,
                         USER_READ,
@@ -321,6 +354,12 @@ class AccessControlTests {
                         ATTENDANCE_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
+                        FEE_CONCESSION_TYPE_MANAGE,
+                        FEE_CONCESSION_TYPE_READ,
+                        FEE_HEAD_MANAGE,
+                        FEE_HEAD_READ,
+                        FEE_STRUCTURE_MANAGE,
+                        FEE_STRUCTURE_READ,
                         ROLE_MANAGE,
                         USER_MANAGE,
                         USER_READ,
@@ -438,6 +477,12 @@ class AccessControlTests {
                                 ATTENDANCE_CORRECTION_APPROVE,
                                 DOCUMENT_MANAGE,
                                 DOCUMENT_READ,
+                                FEE_CONCESSION_TYPE_MANAGE,
+                                FEE_CONCESSION_TYPE_READ,
+                                FEE_HEAD_MANAGE,
+                                FEE_HEAD_READ,
+                                FEE_STRUCTURE_MANAGE,
+                                FEE_STRUCTURE_READ,
                                 SUBJECT_MANAGE,
                                 STUDENT_READ,
                                 STUDENT_MANAGE,

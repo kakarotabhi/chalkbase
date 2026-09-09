@@ -954,3 +954,91 @@ export type AssignCounsellorRequest = Schemas['AssignCounsellorRequest'];
  * (`ADM_003`): a follow-up can only move an enquiry forward or close it.
  */
 export type LogFollowUpRequest = Schemas['LogFollowUpRequest'];
+
+/* ── Fee structure (Phase 2, GET/POST/PUT /api/fees/**) — ADR-0012, ADR-0033 ──────────────
+ * Fee heads, concession types, and a session-scoped fee structure per class. Fee demand,
+ * collection, receipts and dues are separate lanes and are not modelled here — see this feature's
+ * PR for exactly which FRs are covered.
+ */
+
+/** One of the seven fee heads Phase 0 §4 confirmed. A closed set on the backend, so a union here. */
+export type FeeHeadCategory = Schemas['FeeHeadResponse']['category'];
+
+/**
+ * A named thing this school charges for — "Tuition Fee", "Annual Day Fee". `FeeHeadResponse` on
+ * the backend. Internal under ADR-0014: a price list, not any family's own record.
+ *
+ * `capPercentOfTuition` is only ever present when `category` is `ANNUAL_DEVELOPMENT` — Delhi's DoE
+ * caps Development Fee as a proportion of tuition. `active` is returned rather than hidden: a
+ * structure written before a head was retired still names it.
+ */
+export type FeeHead = Schemas['FeeHeadResponse'];
+
+/** A fee head created or renamed, recategorised, capped/uncapped, retired or reinstated. One shape for create and update. */
+export type SaveFeeHeadRequest = Schemas['SaveFeeHeadRequest'];
+
+/** One of the six concession kinds FR-078 names. A closed set on the backend, so a union here. */
+export type FeeConcessionCategory = Schemas['FeeConcessionTypeResponse']['category'];
+
+/**
+ * A kind of waiver this school offers (FR-078) — a catalogue entry, never a grant to any student.
+ * `FeeConcessionTypeResponse` on the backend. `requiresApproval` defaults to true (ADR-0012 rule
+ * 5): a concession is money given away.
+ */
+export type FeeConcessionType = Schemas['FeeConcessionTypeResponse'];
+
+/** A concession type created or edited. One shape for create and update. */
+export type SaveFeeConcessionTypeRequest = Schemas['SaveFeeConcessionTypeRequest'];
+
+/** FR-077's six fee schedules, verbatim. A closed set on the backend, so a union here. */
+export type InstallmentFrequency = Schemas['FeeStructureItemResponse']['frequency'];
+
+/** One due date within a {@link FeeStructureItem}, and the amount due on it. `FeeInstallmentResponse` on the backend. */
+export type FeeInstallment = Schemas['FeeInstallmentResponse'];
+
+/**
+ * One fee head's amount, frequency and installments within a {@link FeeStructure}.
+ * `FeeStructureItemResponse` on the backend. Carries the head's own name and category inline, so
+ * rendering a bill needs no second lookup.
+ */
+export type FeeStructureItem = Schemas['FeeStructureItemResponse'];
+
+/**
+ * The live version of one class's fee structure for one academic session. `FeeStructureResponse`
+ * on the backend.
+ *
+ * **Never edited in place.** `PUT /api/fees/structures/{sessionId}/{classId}` always writes the
+ * next `version` for the same class and session and supersedes whatever was live before, in one
+ * transaction (ADR-0012 rule 6, ADR-0033) — a superseded version has no read endpoint in this
+ * build. `version` starts at 1; a session that has already run its course refuses a second one
+ * (`FEE_009`), though its very first version may still be recorded after the fact.
+ */
+export type FeeStructure = Schemas['FeeStructureResponse'];
+
+/** One due date within a {@link FeeStructureItemRequest}. `amount` must sum, per item, to that item's own `amount` (`FEE_006`). */
+export type FeeInstallmentRequest = Schemas['FeeInstallmentRequest'];
+
+/** One fee head's amount, frequency and installment schedule within a {@link SaveFeeStructureRequest}. */
+export type FeeStructureItemRequest = Schemas['FeeStructureItemRequest'];
+
+/**
+ * The complete new fee structure for one class in one session — always a whole replacement, never
+ * a patch. `SaveFeeStructureRequest` on the backend. A screen that means "change one amount"
+ * resubmits every item, pre-filled from what it loaded.
+ */
+export type SaveFeeStructureRequest = Schemas['SaveFeeStructureRequest'];
+
+/**
+ * "Copy last year's fee structure into this one" — the new-session convenience action ADR-0033
+ * argues for over both starting empty and a silent automatic copy. Copies every class that has a
+ * structure in `fromSessionId` and none yet in `toSessionId`; never overwrites a class a school
+ * has already entered.
+ */
+export type CopyFeeStructureRequest = Schemas['CopyFeeStructureRequest'];
+
+/**
+ * What a {@link CopyFeeStructureRequest} actually did — never silent. `skippedClassNames` are
+ * classes left untouched because they already had a structure in the destination session;
+ * `copied` are the newly written version-1 structures.
+ */
+export type CopyFeeStructureResponse = Schemas['CopyFeeStructureResponse'];

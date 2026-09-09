@@ -1,0 +1,348 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.hidden-label {
+  @include visually-hidden;
+}
+
+.session-picker {
+  max-width: 22rem;
+  margin-bottom: var(--cb-space-4);
+}
+
+// ── Copy panel ───────────────────────────────────────────────────────────
+
+.copy-panel {
+  max-width: 46rem;
+  margin-bottom: var(--cb-space-5);
+}
+
+.copy-panel__title {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+}
+
+.copy-panel__lede {
+  margin: 0 0 var(--cb-space-3);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.copy-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--cb-space-3);
+
+  cb-form-field {
+    flex: 1 1 14rem;
+  }
+}
+
+.copy-panel__result {
+  margin: var(--cb-space-3) 0 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.copy-panel__result--error {
+  color: var(--cb-danger);
+}
+
+// ── The class list: cards first, a table from expanded up (ADR-0010) ─────
+
+.list {
+  margin-bottom: var(--cb-space-5);
+}
+
+.list__table {
+  display: block;
+  width: 100%;
+}
+
+.list__caption {
+  @include visually-hidden;
+}
+
+.list__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--cb-space-2);
+  align-items: center;
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--name {
+  font-weight: 600;
+  font-size: var(--cb-font-size-base);
+}
+
+.cell--action {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+}
+
+@include from-expanded {
+  .list {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .list__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .list__caption {
+    // Still available to assistive tech; the visual hiding above already handles that.
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .list__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-bottom: 1px solid var(--cb-border);
+    vertical-align: middle;
+  }
+
+  .cell--action {
+    grid-column: auto;
+    grid-row: auto;
+    text-align: right;
+  }
+}
+
+// ── The item/installment editor ───────────────────────────────────────────
+
+.item-editor {
+  max-width: 52rem;
+  margin-top: var(--cb-space-5);
+  padding-top: var(--cb-space-5);
+  border-top: 1px solid var(--cb-border);
+}
+
+.item-editor__title {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-lg);
+  font-weight: 600;
+}
+
+.item-editor__lede {
+  margin: 0 0 var(--cb-space-4);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.items {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0 0 var(--cb-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.item-card__row {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-3);
+
+  @include from-medium {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-1);
+  min-width: 0;
+}
+
+.field--amount {
+  font-family: var(--cb-font-numeric);
+}
+
+.field__label {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.native-select,
+.native-input {
+  min-height: var(--cb-touch-target-min);
+  padding: 0 var(--cb-space-3);
+  background: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-sm);
+  font-size: var(--cb-font-size-base);
+  color: var(--cb-text);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.installments {
+  padding-top: var(--cb-space-3);
+  border-top: 1px dashed var(--cb-border);
+}
+
+.installments__label {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+}
+
+.installments__empty {
+  margin: 0 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.installment-row {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin-bottom: var(--cb-space-2);
+
+  @include from-medium {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: var(--cb-space-4);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+.editor__actions {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    justify-content: flex-start;
+
+    cb-button {
+      flex: none;
+    }
+  }
+}

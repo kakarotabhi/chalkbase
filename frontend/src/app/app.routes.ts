@@ -151,6 +151,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admissions/follow-up-queue').then((m) => m.FollowUpQueue),
       },
+      // Fee structure (Phase 2, ADR-0012, ADR-0033). No guard on either screen, same reasoning as
+      // academics and attendance above: `fee:head:read` / `fee:structure:read` are enforced by the
+      // endpoints, and each screen's own menu item is already withheld from anyone without it.
+      //
+      // The container has no index screen of its own, so it lands on the heads screen — fee heads
+      // have to exist before a structure can name one.
+      { path: 'fees', pathMatch: 'full', redirectTo: 'fees/heads' },
+      {
+        path: 'fees/heads',
+        title: 'Fee heads · Chalkbase',
+        loadComponent: () => import('./features/fees/fee-heads').then((m) => m.FeeHeads),
+      },
+      {
+        path: 'fees/structure',
+        title: 'Fee structure · Chalkbase',
+        loadComponent: () =>
+          import('./features/fees/fee-structure').then((m) => m.FeeStructurePage),
+      },
       // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.

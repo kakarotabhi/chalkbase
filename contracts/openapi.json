@@ -152,6 +152,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseCopyFeeStructureResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CopyFeeStructureResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseCorrectionRequestResponse": {
         "properties": {
           "data": {
@@ -256,6 +281,81 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Enrolment"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseFeeConcessionTypeResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeeConcessionTypeResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseFeeHeadResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeeHeadResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseFeeStructureResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeeStructureResponse"
           },
           "error": {
             "$ref": "#/components/schemas/ApiError"
@@ -413,6 +513,90 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/DocumentSummary"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListFeeConcessionTypeResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FeeConcessionTypeResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListFeeHeadResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FeeHeadResponse"
+            },
+            "type": "array"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "ApiResponseListFeeStructureResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FeeStructureResponse"
             },
             "type": "array"
           },
@@ -1667,6 +1851,44 @@
         },
         "type": "object"
       },
+      "CopyFeeStructureRequest": {
+        "properties": {
+          "fromSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "toSessionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromSessionId",
+          "toSessionId"
+        ],
+        "type": "object"
+      },
+      "CopyFeeStructureResponse": {
+        "properties": {
+          "copied": {
+            "items": {
+              "$ref": "#/components/schemas/FeeStructureResponse"
+            },
+            "type": "array"
+          },
+          "skippedClassNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "copied",
+          "skippedClassNames"
+        ],
+        "type": "object"
+      },
       "CorrectionRequestResponse": {
         "properties": {
           "attendanceDate": {
@@ -2382,6 +2604,260 @@
           "id",
           "sectionId",
           "sessionId"
+        ],
+        "type": "object"
+      },
+      "FeeConcessionTypeResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "SIBLING",
+              "STAFF_CHILD",
+              "MANAGEMENT_QUOTA",
+              "RTE_EWS",
+              "SCHOLARSHIP",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requiresApproval": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active",
+          "category",
+          "id",
+          "name",
+          "requiresApproval"
+        ],
+        "type": "object"
+      },
+      "FeeHeadResponse": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "capPercentOfTuition": {
+            "type": "number"
+          },
+          "category": {
+            "enum": [
+              "TUITION",
+              "ADMISSION",
+              "ANNUAL_DEVELOPMENT",
+              "TRANSPORT",
+              "EXAM",
+              "ACTIVITY",
+              "LATE_FEE"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "category",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "FeeInstallmentRequest": {
+        "properties": {
+          "amount": {
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "dueDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "dueDate"
+        ],
+        "type": "object"
+      },
+      "FeeInstallmentResponse": {
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "dueDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "dueDate",
+          "id"
+        ],
+        "type": "object"
+      },
+      "FeeStructureItemRequest": {
+        "properties": {
+          "amount": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "feeHeadId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "frequency": {
+            "enum": [
+              "ONE_TIME",
+              "MONTHLY",
+              "QUARTERLY",
+              "TERM_WISE",
+              "ANNUAL",
+              "CUSTOM"
+            ],
+            "type": "string"
+          },
+          "installments": {
+            "items": {
+              "$ref": "#/components/schemas/FeeInstallmentRequest"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "amount",
+          "feeHeadId",
+          "frequency",
+          "installments"
+        ],
+        "type": "object"
+      },
+      "FeeStructureItemResponse": {
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "feeHeadCategory": {
+            "enum": [
+              "TUITION",
+              "ADMISSION",
+              "ANNUAL_DEVELOPMENT",
+              "TRANSPORT",
+              "EXAM",
+              "ACTIVITY",
+              "LATE_FEE"
+            ],
+            "type": "string"
+          },
+          "feeHeadId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "feeHeadName": {
+            "type": "string"
+          },
+          "frequency": {
+            "enum": [
+              "ONE_TIME",
+              "MONTHLY",
+              "QUARTERLY",
+              "TERM_WISE",
+              "ANNUAL",
+              "CUSTOM"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "installments": {
+            "items": {
+              "$ref": "#/components/schemas/FeeInstallmentResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "amount",
+          "feeHeadCategory",
+          "feeHeadId",
+          "feeHeadName",
+          "frequency",
+          "id",
+          "installments"
+        ],
+        "type": "object"
+      },
+      "FeeStructureResponse": {
+        "properties": {
+          "academicSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "academicSessionName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeeStructureItemResponse"
+            },
+            "type": "array"
+          },
+          "schoolClassId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "schoolClassName": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "academicSessionId",
+          "academicSessionName",
+          "createdAt",
+          "id",
+          "items",
+          "schoolClassId",
+          "schoolClassName",
+          "version"
         ],
         "type": "object"
       },
@@ -3412,6 +3888,94 @@
         },
         "type": "object"
       },
+      "SaveFeeConcessionTypeRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "SIBLING",
+              "STAFF_CHILD",
+              "MANAGEMENT_QUOTA",
+              "RTE_EWS",
+              "SCHOLARSHIP",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 300,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          },
+          "requiresApproval": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active",
+          "category",
+          "name",
+          "requiresApproval"
+        ],
+        "type": "object"
+      },
+      "SaveFeeHeadRequest": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "capPercentOfTuition": {
+            "maximum": 100,
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "category": {
+            "enum": [
+              "TUITION",
+              "ADMISSION",
+              "ANNUAL_DEVELOPMENT",
+              "TRANSPORT",
+              "EXAM",
+              "ACTIVITY",
+              "LATE_FEE"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "active",
+          "category",
+          "name"
+        ],
+        "type": "object"
+      },
+      "SaveFeeStructureRequest": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeeStructureItemRequest"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "SaveGuardianRequest": {
         "properties": {
           "email": {
@@ -4433,7 +4997,7 @@
   "paths": {
     "/api/academics/classes": {
       "get": {
-        "operationId": "list_7",
+        "operationId": "list_9",
         "responses": {
           "200": {
             "content": {
@@ -4451,7 +5015,7 @@
         ]
       },
       "post": {
-        "operationId": "create_7",
+        "operationId": "create_9",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4511,7 +5075,7 @@
     },
     "/api/academics/classes/{id}": {
       "put": {
-        "operationId": "update_7",
+        "operationId": "update_9",
         "parameters": [
           {
             "in": "path",
@@ -4634,7 +5198,7 @@
     },
     "/api/academics/sessions": {
       "get": {
-        "operationId": "list_6",
+        "operationId": "list_8",
         "responses": {
           "200": {
             "content": {
@@ -4652,7 +5216,7 @@
         ]
       },
       "post": {
-        "operationId": "create_6",
+        "operationId": "create_8",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4682,7 +5246,7 @@
     },
     "/api/academics/sessions/{id}": {
       "put": {
-        "operationId": "update_6",
+        "operationId": "update_8",
         "parameters": [
           {
             "in": "path",
@@ -4754,7 +5318,7 @@
     },
     "/api/academics/subjects": {
       "get": {
-        "operationId": "list_5",
+        "operationId": "list_7",
         "parameters": [
           {
             "in": "query",
@@ -4790,7 +5354,7 @@
         ]
       },
       "post": {
-        "operationId": "create_5",
+        "operationId": "create_7",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4820,7 +5384,7 @@
     },
     "/api/academics/subjects/{id}": {
       "put": {
-        "operationId": "update_5",
+        "operationId": "update_7",
         "parameters": [
           {
             "in": "path",
@@ -5019,7 +5583,7 @@
         ]
       },
       "post": {
-        "operationId": "create_4",
+        "operationId": "create_6",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5296,7 +5860,7 @@
     },
     "/api/admissions/enquiries": {
       "get": {
-        "operationId": "list_4",
+        "operationId": "list_6",
         "parameters": [
           {
             "in": "query",
@@ -5380,7 +5944,7 @@
         ]
       },
       "post": {
-        "operationId": "create_3",
+        "operationId": "create_5",
         "requestBody": {
           "content": {
             "application/json": {
@@ -6008,7 +6572,7 @@
     },
     "/api/documents": {
       "get": {
-        "operationId": "list_3",
+        "operationId": "list_5",
         "parameters": [
           {
             "in": "query",
@@ -6142,7 +6706,7 @@
         ]
       },
       "get": {
-        "operationId": "get",
+        "operationId": "get_1",
         "parameters": [
           {
             "in": "path",
@@ -6171,7 +6735,7 @@
         ]
       },
       "put": {
-        "operationId": "update_4",
+        "operationId": "update_6",
         "parameters": [
           {
             "in": "path",
@@ -6239,6 +6803,333 @@
         },
         "tags": [
           "document-controller"
+        ]
+      }
+    },
+    "/api/fees/concession-types": {
+      "get": {
+        "operationId": "list_4",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListFeeConcessionTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-concession-type-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFeeConcessionTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeConcessionTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-concession-type-controller"
+        ]
+      }
+    },
+    "/api/fees/concession-types/{id}": {
+      "put": {
+        "operationId": "update_5",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFeeConcessionTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeConcessionTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-concession-type-controller"
+        ]
+      }
+    },
+    "/api/fees/heads": {
+      "get": {
+        "operationId": "list_3",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListFeeHeadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-head-controller"
+        ]
+      },
+      "post": {
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFeeHeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeHeadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-head-controller"
+        ]
+      }
+    },
+    "/api/fees/heads/{id}": {
+      "put": {
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFeeHeadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeHeadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-head-controller"
+        ]
+      }
+    },
+    "/api/fees/structures": {
+      "get": {
+        "operationId": "list_10",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListFeeStructureResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-structure-controller"
+        ]
+      }
+    },
+    "/api/fees/structures/copy": {
+      "post": {
+        "operationId": "copy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFeeStructureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCopyFeeStructureResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-structure-controller"
+        ]
+      }
+    },
+    "/api/fees/structures/{sessionId}/{classId}": {
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "classId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeStructureResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-structure-controller"
+        ]
+      },
+      "put": {
+        "operationId": "save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "classId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFeeStructureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseFeeStructureResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "fee-structure-controller"
         ]
       }
     },
@@ -6591,7 +7482,7 @@
     },
     "/api/schools/{id}": {
       "get": {
-        "operationId": "get_1",
+        "operationId": "get_2",
         "parameters": [
           {
             "in": "path",

@@ -1,0 +1,283 @@
+<p class="crumbs">Fees <span aria-hidden="true">›</span> Fee heads</p>
+<h1 class="page-title">Fee heads</h1>
+
+<p class="page-lede">
+  What this school charges for, and the kinds of waiver it offers. Neither list is tied to a session
+  — they carry over from year to year. It is the fee structure screen that says what a head costs
+  and to whom, for a given academic session.
+</p>
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (writeFailure(); as message) {
+  <div class="banner banner--danger" role="alert">
+    <div>
+      <strong class="banner__title">{{ message.title }}</strong>
+      <span>{{ message.detail }}</span>
+    </div>
+  </div>
+}
+
+<!-- ── Fee heads ─────────────────────────────────────────────────────────── -->
+
+<section class="section">
+  <h2 class="section__title">Fee heads</h2>
+
+  @if (headsForbidden()) {
+    <div class="banner banner--info" role="status">
+      <strong class="banner__title">You do not have permission to view fee heads</strong>
+      <span>Ask your principal to add "View fee heads" to your role.</span>
+    </div>
+  } @else if (headsLoading()) {
+    <p class="page-status" role="status">Loading fee heads…</p>
+  } @else if (headsLoadFailed()) {
+    <div class="banner banner--danger" role="alert">
+      <strong class="banner__title">Could not load fee heads</strong>
+      <span>Check your connection and try again.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reloadHeads()">Try again</cb-button>
+      </p>
+    </div>
+  } @else {
+    @if (canManageHeads() && !editor()) {
+      <div class="toolbar">
+        <cb-button id="head-add" (click)="startAddHead()">Add a fee head</cb-button>
+      </div>
+    }
+
+    @if (addingHead()) {
+      <div class="editor-card">
+        <ng-container [ngTemplateOutlet]="headEditor" />
+      </div>
+    }
+
+    @if (heads().length === 0) {
+      @if (!addingHead()) {
+        <p class="page-status" role="status">
+          No fee heads yet. Add the first one this school charges for — Tuition Fee is the usual
+          start.
+        </p>
+      }
+    } @else {
+      <ul class="cards">
+        @for (head of heads(); track head.id) {
+          <li>
+            <cb-card [accent]="head.active">
+              @if (editingHead(head.id)) {
+                <ng-container [ngTemplateOutlet]="headEditor" />
+              } @else {
+                <div class="row__head">
+                  <h3 class="row__name">{{ head.name }}</h3>
+                  @if (!head.active) {
+                    <cb-badge tone="warning">Not offered</cb-badge>
+                  }
+                </div>
+                <p class="row__meta">
+                  {{ categoryLabel(head.category) }}
+                  @if (head.capPercentOfTuition !== undefined) {
+                    · capped at {{ head.capPercentOfTuition }}% of tuition
+                  }
+                </p>
+                @if (canManageHeads()) {
+                  <div class="row__actions">
+                    <cb-button
+                      variant="secondary"
+                      [disabled]="!!editor() || saving()"
+                      (click)="startEditHead(head)"
+                    >
+                      Edit<span class="hidden-label"> {{ head.name }}</span>
+                    </cb-button>
+                    <cb-button
+                      variant="secondary"
+                      [disabled]="!!editor() || saving()"
+                      (click)="toggleHead(head)"
+                    >
+                      @if (head.active) {
+                        Stop offering<span class="hidden-label"> {{ head.name }}</span>
+                      } @else {
+                        Offer<span class="hidden-label"> {{ head.name }}</span> again
+                      }
+                    </cb-button>
+                  </div>
+                }
+              }
+            </cb-card>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
+
+<!-- ── Concession types ──────────────────────────────────────────────────── -->
+
+<section class="section">
+  <h2 class="section__title">Concession types</h2>
+  <p class="section__lede">
+    A catalogue of the waivers this school offers. Adding one here does not grant it to any student
+    — that happens when a fee demand is raised, which is not built yet.
+  </p>
+
+  @if (concessionsForbidden()) {
+    <div class="banner banner--info" role="status">
+      <strong class="banner__title">You do not have permission to view concession types</strong>
+      <span>Ask your principal to add "View concession types" to your role.</span>
+    </div>
+  } @else if (concessionsLoading()) {
+    <p class="page-status" role="status">Loading concession types…</p>
+  } @else if (concessionsLoadFailed()) {
+    <div class="banner banner--danger" role="alert">
+      <strong class="banner__title">Could not load concession types</strong>
+      <span>Check your connection and try again.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reloadConcessions()">Try again</cb-button>
+      </p>
+    </div>
+  } @else {
+    @if (canManageConcessions() && !editor()) {
+      <div class="toolbar">
+        <cb-button id="concession-add" (click)="startAddConcession()">
+          Add a concession type
+        </cb-button>
+      </div>
+    }
+
+    @if (addingConcession()) {
+      <div class="editor-card">
+        <ng-container [ngTemplateOutlet]="concessionEditor" />
+      </div>
+    }
+
+    @if (concessionTypes().length === 0) {
+      @if (!addingConcession()) {
+        <p class="page-status" role="status">No concession types yet.</p>
+      }
+    } @else {
+      <ul class="cards">
+        @for (type of concessionTypes(); track type.id) {
+          <li>
+            <cb-card [accent]="type.active">
+              @if (editingConcession(type.id)) {
+                <ng-container [ngTemplateOutlet]="concessionEditor" />
+              } @else {
+                <div class="row__head">
+                  <h3 class="row__name">{{ type.name }}</h3>
+                  @if (!type.active) {
+                    <cb-badge tone="warning">Not offered</cb-badge>
+                  }
+                  @if (type.requiresApproval) {
+                    <cb-badge tone="info">Needs approval</cb-badge>
+                  }
+                </div>
+                <p class="row__meta">{{ concessionLabel(type.category) }}</p>
+                @if (type.description) {
+                  <p class="row__description">{{ type.description }}</p>
+                }
+                @if (canManageConcessions()) {
+                  <div class="row__actions">
+                    <cb-button
+                      variant="secondary"
+                      [disabled]="!!editor() || saving()"
+                      (click)="startEditConcession(type)"
+                    >
+                      Edit<span class="hidden-label"> {{ type.name }}</span>
+                    </cb-button>
+                    <cb-button
+                      variant="secondary"
+                      [disabled]="!!editor() || saving()"
+                      (click)="toggleConcession(type)"
+                    >
+                      @if (type.active) {
+                        Stop offering<span class="hidden-label"> {{ type.name }}</span>
+                      } @else {
+                        Offer<span class="hidden-label"> {{ type.name }}</span> again
+                      }
+                    </cb-button>
+                  </div>
+                }
+              }
+            </cb-card>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
+
+<ng-template #headEditor>
+  <form class="editor" [formGroup]="headForm" (ngSubmit)="saveHead()" novalidate>
+    <p class="editor__heading">{{ addingHead() ? 'Add a fee head' : 'Edit this fee head' }}</p>
+
+    <cb-form-field #headName label="Name" controlId="head-name" [required]="true">
+      <cb-text-input formControlName="name" [id]="headName.controlId()" [readOnly]="saving()" />
+    </cb-form-field>
+
+    <cb-form-field label="Category" controlId="head-category" [required]="true">
+      <cb-select
+        formControlName="category"
+        id="head-category"
+        [options]="headCategoryOptions"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    @if (showCap()) {
+      <cb-form-field
+        label="Cap, as a percentage of tuition"
+        controlId="head-cap"
+        hint="Delhi's DoE caps Development Fee this way. Leave blank for no cap."
+      >
+        <cb-text-input formControlName="capPercentOfTuition" id="head-cap" [readOnly]="saving()" />
+      </cb-form-field>
+    }
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+</ng-template>
+
+<ng-template #concessionEditor>
+  <form class="editor" [formGroup]="concessionForm" (ngSubmit)="saveConcession()" novalidate>
+    <p class="editor__heading">
+      {{ addingConcession() ? 'Add a concession type' : 'Edit this concession type' }}
+    </p>
+
+    <cb-form-field #concessionName label="Name" controlId="concession-name" [required]="true">
+      <cb-text-input
+        formControlName="name"
+        [id]="concessionName.controlId()"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-form-field label="Category" controlId="concession-category" [required]="true">
+      <cb-select
+        formControlName="category"
+        id="concession-category"
+        [options]="concessionCategoryOptions"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-form-field label="Description" controlId="concession-description" hint="Optional.">
+      <cb-text-input
+        formControlName="description"
+        id="concession-description"
+        [readOnly]="saving()"
+      />
+    </cb-form-field>
+
+    <cb-checkbox
+      formControlName="requiresApproval"
+      id="concession-approval"
+      label="Requires approval before it is applied"
+    />
+
+    <div class="editor__actions">
+      <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">Cancel</cb-button>
+      <cb-button type="submit" [loading]="saving()" loadingLabel="Saving…">Save</cb-button>
+    </div>
+  </form>
+</ng-template>
