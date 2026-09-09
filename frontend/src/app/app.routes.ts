@@ -150,6 +150,7 @@ export const routes: Routes = [
         title: 'Follow-up queue · Chalkbase',
         loadComponent: () =>
           import('./features/admissions/follow-up-queue').then((m) => m.FollowUpQueue),
+      },
       // Fee structure (Phase 2, ADR-0012, ADR-0033). No guard on either screen, same reasoning as
       // academics and attendance above: `fee:head:read` / `fee:structure:read` are enforced by the
       // endpoints, and each screen's own menu item is already withheld from anyone without it.
