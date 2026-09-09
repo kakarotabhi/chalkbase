@@ -34,8 +34,8 @@ the way Phase 1's work was)
 | Documents (FR-013, FR-032)                                            | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render                                                          |
 | Basic dashboards                                                      | ✅ Done                                                                                                                                                     |
 | Export                                                                | ✅ Done                                                                                                                                                     |
-| **Phase 2 — daily attendance** | ✅ Done |
-| **Phase 2 — enquiries, fee structure** | 🔨 In progress |
+| **Phase 2 — daily attendance, enquiry management** | ✅ Done |
+| **Phase 2 — fee structure** | 🔨 In progress |
 | Deployment                                                            | ✅ Render dev · ⬜ Coolify/VPS (production, Phase 4)                                                                       |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
@@ -102,7 +102,7 @@ picking anything up here — this table is the state, not the brief.
 | Roadmap feature | Module | State |
 |---|---|---|
 | **Daily attendance** | `attendance` | ✅ Done — mark, view, lock, correction request and approval ([ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md)) |
-| **Enquiry management** | `admission` | 🔨 In progress |
+| **Enquiry management** | `admission` | ✅ Done — capture, status, a required assigned counsellor, follow-up history and the due-date follow-up queue |
 | **Fee structure** | `fee` | 🔨 In progress |
 | Online admission form | `admission` | ⬜ Not started |
 | Admission workflow | `admission` | ⬜ Not started |
