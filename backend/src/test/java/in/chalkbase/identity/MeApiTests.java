@@ -100,6 +100,9 @@ class MeApiTests {
     private static final String FEE_CONCESSION_TYPE_MANAGE = "fee:concession_type:manage";
     private static final String FEE_STRUCTURE_READ = "fee:structure:read";
     private static final String FEE_STRUCTURE_MANAGE = "fee:structure:manage";
+    private static final String COMMUNICATION_READ = "communication:circular:read";
+    private static final String COMMUNICATION_MANAGE = "communication:circular:manage";
+    private static final String COMMUNICATION_ACKNOWLEDGE = "communication:circular:acknowledge";
 
     /**
      * Anything that would make a navigation node say <em>where</em> to go rather than <em>what</em>
@@ -226,7 +229,10 @@ class MeApiTests {
                                 FEE_CONCESSION_TYPE_READ,
                                 FEE_CONCESSION_TYPE_MANAGE,
                                 FEE_STRUCTURE_READ,
-                                FEE_STRUCTURE_MANAGE)))
+                                FEE_STRUCTURE_MANAGE,
+                                COMMUNICATION_READ,
+                                COMMUNICATION_MANAGE,
+                                COMMUNICATION_ACKNOWLEDGE)))
                 // `schools` is deliberately gone. It pointed at the platform REGISTER — every campus
                 // on the deployment — which no school user may read; leaving it in the menu meant
                 // every user was shown a link to a list of every other school.
@@ -250,11 +256,11 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[2].children[0].id").value("academics.sessions"))
                 .andExpect(jsonPath("$.data.navigation[2].children[1].id").value("academics.classes"))
                 .andExpect(jsonPath("$.data.navigation[2].children[2].id").value("academics.subjects"))
-                // Attendance, at order 40 — just after academics (30) and ahead of fees and
-                // settings, which is where a class teacher's daily work belongs relative to fee
-                // setup and configuration screens. Leave requests (FR-047) sit between marking and
-                // corrections: routine work a class teacher does often, ahead of the corrections
-                // queue an admin visits far less often.
+                // Attendance, at order 40 — just after academics (30) and ahead of admissions,
+                // communication, fees and settings, which is where a class teacher's daily work
+                // belongs relative to office and configuration screens. Leave requests (FR-047)
+                // sit between marking and corrections: routine work a class teacher does often,
+                // ahead of the corrections queue an admin visits far less often.
                 .andExpect(jsonPath("$.data.navigation[3].id").value("attendance"))
                 .andExpect(jsonPath("$.data.navigation[3].children[0].id").value("attendance.mark"))
                 .andExpect(jsonPath("$.data.navigation[3].children[1].id").value("attendance.leave"))
@@ -264,19 +270,24 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[4].id").value("admissions"))
                 .andExpect(jsonPath("$.data.navigation[4].children[0].id").value("admissions.enquiries"))
                 .andExpect(jsonPath("$.data.navigation[4].children[1].id").value("admissions.follow_ups"))
-                // Fees, at order 50 — just after attendance and ahead of settings (90). Both
-                // children are declared inline by the module that owns them.
-                .andExpect(jsonPath("$.data.navigation[5].id").value("fees"))
-                .andExpect(jsonPath("$.data.navigation[5].children[0].id").value("fees.heads"))
-                .andExpect(jsonPath("$.data.navigation[5].children[1].id").value("fees.structure"))
-                .andExpect(jsonPath("$.data.navigation[6].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[6].children[0].id").value("settings.access"))
+                // Communication and fees both sit at order 50, just after admissions (45): ties
+                // break by id (NavigationCatalog.SIBLING_ORDER), and "communication" sorts before
+                // "fees" alphabetically.
+                .andExpect(jsonPath("$.data.navigation[5].id").value("communication"))
+                .andExpect(jsonPath("$.data.navigation[5].children[0].id").value("communication.circulars"))
+                // Fees, at order 50 too — see above for why it lands after communication rather
+                // than before it. Both children are declared inline by the module that owns them.
+                .andExpect(jsonPath("$.data.navigation[6].id").value("fees"))
+                .andExpect(jsonPath("$.data.navigation[6].children[0].id").value("fees.heads"))
+                .andExpect(jsonPath("$.data.navigation[6].children[1].id").value("fees.structure"))
+                .andExpect(jsonPath("$.data.navigation[7].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[7].children[0].id").value("settings.access"))
                 // The account roster, ordered right after Access (10) and ahead of the school
                 // module's Profile (20) — see IdentityNavigation's Javadoc for why 15.
-                .andExpect(jsonPath("$.data.navigation[6].children[1].id").value("settings.users"))
+                .andExpect(jsonPath("$.data.navigation[7].children[1].id").value("settings.users"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees all three children.
-                .andExpect(jsonPath("$.data.navigation[6].children[2].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[7].children[2].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())

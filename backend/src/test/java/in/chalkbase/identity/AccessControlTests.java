@@ -114,6 +114,17 @@ class AccessControlTests {
     private static final String ATTENDANCE_LEAVE_APPROVE = "attendance:leave:approve";
 
     /**
+     * Phase 2's communication grants: {@code communication:} sorts between {@code attendance:} and
+     * {@code document:} ({@code co} beats {@code do} at the first differing character, and loses to
+     * {@code at} at the second) — the same widening this file's other comments describe, said once
+     * more.
+     */
+    private static final String COMMUNICATION_ACKNOWLEDGE = "communication:circular:acknowledge";
+
+    private static final String COMMUNICATION_MANAGE = "communication:circular:manage";
+    private static final String COMMUNICATION_READ = "communication:circular:read";
+
+    /**
      * ADR-0025's grants: {@code document:} sorts between {@code academics:} and {@code identity:},
      * so these land there in every exact assertion below — the same widening this file's other
      * comments describe, said once more.
@@ -215,6 +226,9 @@ class AccessControlTests {
                             ATTENDANCE_LEAVE_REQUEST,
                             ATTENDANCE_MANAGE,
                             ATTENDANCE_READ,
+                            COMMUNICATION_ACKNOWLEDGE,
+                            COMMUNICATION_MANAGE,
+                            COMMUNICATION_READ,
                             DOCUMENT_MANAGE,
                             DOCUMENT_READ,
                             FEE_CONCESSION_TYPE_MANAGE,
@@ -274,6 +288,9 @@ class AccessControlTests {
                         ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
+                        COMMUNICATION_ACKNOWLEDGE,
+                        COMMUNICATION_MANAGE,
+                        COMMUNICATION_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         FEE_CONCESSION_TYPE_MANAGE,
@@ -307,6 +324,9 @@ class AccessControlTests {
                         ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
+                        COMMUNICATION_ACKNOWLEDGE,
+                        COMMUNICATION_MANAGE,
+                        COMMUNICATION_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         FEE_CONCESSION_TYPE_MANAGE,
@@ -367,6 +387,9 @@ class AccessControlTests {
                         ATTENDANCE_LEAVE_REQUEST,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
+                        COMMUNICATION_ACKNOWLEDGE,
+                        COMMUNICATION_MANAGE,
+                        COMMUNICATION_READ,
                         DOCUMENT_MANAGE,
                         DOCUMENT_READ,
                         FEE_CONCESSION_TYPE_MANAGE,
@@ -403,10 +426,10 @@ class AccessControlTests {
         grant(HILLVIEW_SCHEMA, priya, "AUDITOR", "SCHOOL", null, null, null);
 
         // school:school:read comes from all three; the three academics reads, the two student
-        // reads, document:document:read and the five attendance grants (mark read/manage, leave
-        // read/request/approve) only from the class teacher grant; identity:user:read and
-        // platform:audit:read only from the auditor grant. identity:role:manage comes from none of
-        // them, and no union of allows can produce it.
+        // reads, document:document:read, the five attendance grants (mark read/manage, leave
+        // read/request/approve) and the two communication grants only from the class teacher
+        // grant; identity:user:read and platform:audit:read only from the auditor grant.
+        // identity:role:manage comes from none of them, and no union of allows can produce it.
         mockMvc.perform(login(HILLVIEW_CODE, "priya"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.permissions")
@@ -424,7 +447,9 @@ class AccessControlTests {
                                 ATTENDANCE_MANAGE,
                                 ATTENDANCE_LEAVE_READ,
                                 ATTENDANCE_LEAVE_REQUEST,
-                                ATTENDANCE_LEAVE_APPROVE)));
+                                ATTENDANCE_LEAVE_APPROVE,
+                                COMMUNICATION_READ,
+                                COMMUNICATION_ACKNOWLEDGE)));
     }
 
     @Test
@@ -497,6 +522,9 @@ class AccessControlTests {
                                 ATTENDANCE_LEAVE_READ,
                                 ATTENDANCE_LEAVE_REQUEST,
                                 ATTENDANCE_LEAVE_APPROVE,
+                                COMMUNICATION_READ,
+                                COMMUNICATION_MANAGE,
+                                COMMUNICATION_ACKNOWLEDGE,
                                 DOCUMENT_MANAGE,
                                 DOCUMENT_READ,
                                 FEE_CONCESSION_TYPE_MANAGE,
