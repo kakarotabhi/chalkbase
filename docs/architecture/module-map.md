@@ -21,7 +21,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `hostel` | rooms, allotments, mess | `/api/hostel` | yes | planned |
 | `library` | catalogue, issues, returns, fines | `/api/library` | yes | planned |
 | `inventory` | assets, stock, labs | `/api/inventory` | yes | planned |
-| `communication` | notices, SMS/WhatsApp/email dispatch, templates | `/api/communication` | yes | planned |
+| `communication` | `circular`, `circular_target`, `circular_recipient` (per tenant) — circulars targeted by class and section; SMS/WhatsApp dispatch and templates still planned (ADR-0013, ADR-0035) | `/api/communication/circulars/**` | yes | compose, target, publish, per-recipient delivery and acknowledgement built (Phase 2, ADR-0035); email/push/SMS dispatch and multilingual templates not built |
 | `compliance` | UDISE+ and APAAR exports, board disclosures, audit records | `/api/compliance` | yes | planned |
 
 Modules are added in roadmap order — see
