@@ -259,14 +259,14 @@ class MeApiTests {
                 .andExpect(jsonPath("$.data.navigation[5].id").value("fees"))
                 .andExpect(jsonPath("$.data.navigation[5].children[0].id").value("fees.heads"))
                 .andExpect(jsonPath("$.data.navigation[5].children[1].id").value("fees.structure"))
-                .andExpect(jsonPath("$.data.navigation[5].id").value("settings"))
-                .andExpect(jsonPath("$.data.navigation[5].children[0].id").value("settings.access"))
+                .andExpect(jsonPath("$.data.navigation[6].id").value("settings"))
+                .andExpect(jsonPath("$.data.navigation[6].children[0].id").value("settings.access"))
                 // The account roster, ordered right after Access (10) and ahead of the school
                 // module's Profile (20) — see IdentityNavigation's Javadoc for why 15.
-                .andExpect(jsonPath("$.data.navigation[5].children[1].id").value("settings.users"))
+                .andExpect(jsonPath("$.data.navigation[6].children[1].id").value("settings.users"))
                 // Contributed by the school module under identity's settings container, placed by
                 // its dotted id. A principal holding school:school:update sees all three children.
-                .andExpect(jsonPath("$.data.navigation[5].children[2].id").value("settings.profile"))
+                .andExpect(jsonPath("$.data.navigation[6].children[2].id").value("settings.profile"))
                 // A leaf still carries children, as an empty array rather than as an absent field:
                 // a client walking the tree must not have to special-case the bottom of it.
                 .andExpect(jsonPath("$.data.navigation[0].children").isEmpty())
