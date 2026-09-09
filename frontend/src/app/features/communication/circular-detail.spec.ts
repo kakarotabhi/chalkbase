@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import {
   CircularDetail as CircularDetailModel,
   CircularRecipientResponse,
@@ -78,7 +79,7 @@ describe('CircularDetail', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CircularDetail],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
