@@ -410,6 +410,7 @@ separated them.
 | ~~The users roster has no menu entry.~~ ✅ Closed. `IdentityNavigation` now emits `settings.users`, gated on `identity:user:read` rather than `identity:user:manage` — `AUDITOR` and `VICE_PRINCIPAL` hold the first without the second, and can legitimately see the roster without acting on it — and `nav-routes.ts` resolves it. | `identity/infrastructure/IdentityNavigation.java`, `core/navigation/nav-routes.ts` |
 | ~~No impact preview when editing a role.~~ ✅ Closed. The edit form now shows who holds the role and, from ADR-0023, whether saving signs them out immediately (removing a permission) or waits for their next login (adding one) — built from `GET /api/access/roles/{id}/holders`, no new endpoint.                                | `features/access/access-roles.ts`                                                  |
 | ~~The design drift the assessment recorded is still open.~~ ✅ Closed for the three cheap items: the active nav item tints, the gutter is 32px from `from-expanded`, and `cb-card`/`cb-badge` replace the hand-rolled surfaces on the great majority of the 18 affected screens (a handful of card-shaped forms, and four screens' responsive card-to-table rows, are noted in the assessment as left for later rather than adopted silently). | [the assessment](design-drift-assessment.md) |
+| `students.documents` has no frontend route, and the allowlist entry in `tools/navigation-contract/allowlist.json` stays rather than gaining one. Documents already have a screen — the section on the student record built in [#66](https://github.com/kakarotabhi/chalkbase/pull/66) — so the only *new* thing a standalone route could offer is a school-wide, filterable-by-student-and-type documents view, which is a genuinely useful thing for an office to have. But `DocumentController#list` only accepts a mandatory `studentId` (`GET /api/documents?studentId=`, no whole-school listing, no type filter, no pagination) — that view needs a new backend endpoint before it needs a frontend route, and is real scope, not a routing gap. Building a route that just wraps the existing per-student endpoint behind a student picker would duplicate the record's own section for no new capability, which is not what "genuinely useful" was asking for. Decided in the PR that investigated this gap (`fix/documents-route-and-test-flake`); reopen when a lane owns `GET /api/documents` gaining a school-wide mode. | `core/navigation/nav-routes.ts`, `document/api/DocumentController.java` |
 
 Transport and hostel sections on the student record are **not** on this list: they are Phase 4
 modules, and [FR-028](requirements/02-functional-requirements.md) wants a need flag rather than a
@@ -725,6 +726,35 @@ Recorded so they are decided rather than discovered.
   `AccessControlTests` through `SchoolProvisioning` (replacing a test that had asserted the pre-fix
   behaviour as correct), and `RoleManagementTests` through the real permissions endpoint, confirming
   a role edited through the product — not a raw SQL edit — is the one that stays protected.
+- **The frontend suite's shared Vitest environment is not isolated per spec file, and a spec whose
+  own `afterEach` throws can strand `TestBed` "instantiated" for every test that runs after it in
+  the same run — including in unrelated files.** `@angular/build`'s generated test-bed-init module
+  guards `getTestBed().initTestEnvironment(...)` with `Symbol.for('@angular/cli/testbed-setup')` —
+  a *global-registry* symbol, deliberately the same across the whole worker — so the environment,
+  and its automatic `afterEach(getCleanupHook(true))` reset, is shared by every spec file that runs
+  in it. That reset hook fires after each spec file's own local `afterEach`; if the local one
+  throws first (typically `httpMock.verify()` finding a request nobody flushed), the reset for that
+  test appears not to run, and the next `TestBed.configureTestingModule(...)` — in that file, and in
+  whichever file runs next — fails with "Cannot configure the test module when the test module has
+  already been instantiated," a generic error with nothing pointing at the real cause. `login.spec.ts`
+  has been the visible casualty three times in CI history and has no defect of its own — it neither
+  stubs a global nor uses `forkJoin` nor leaves a request unflushed — it is simply an early,
+  frequently-run file that happens to go next. All three root causes found in CI history are already
+  fixed on `main`: `vi.stubGlobal('URL', …)` in an in-progress `student-import.spec.ts`, which
+  `vi.restoreAllMocks()` cannot undo (fixed by saving and restoring `URL.createObjectURL` /
+  `revokeObjectURL` directly — see the comment at `features/students/student-import.spec.ts:521`);
+  `forkJoin` in `access-roles.ts` cancelling its sibling request on error and leaving it in
+  `HttpTestingController`'s open-request queue unmatched (fixed by two independent subscriptions,
+  see `access-roles.ts`'s own comment on `loadScreen`); and the newly-added `cb-student-documents`
+  panel's `GET /api/documents?studentId=` call going unflushed in `student-detail.spec.ts`'s
+  `arrive()` helper (fixed by flushing it there). No fourth instance was found: every other live
+  `forkJoin` (`student-enrolments.ts`) is paired with a spec that captures the cancelled sibling
+  with `expectOne(...)` rather than skipping it, which is what keeps `verify()` from throwing, and
+  no other `vi.stubGlobal` exists in the suite. **Not fixed here** — this lane was frontend-only and
+  found no currently-live instance to fix, and adding a defensive reset to `login.spec.ts` itself
+  would treat a symptom the file doesn't have. Worth remembering the next time an unrelated spec
+  goes red for no visible reason: check whether the file that ran just before it left something
+  unflushed, not whether the failing file changed.
 
 ## Keeping this honest
 
