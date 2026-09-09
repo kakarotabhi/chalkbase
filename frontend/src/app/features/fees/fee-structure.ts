@@ -169,20 +169,42 @@ export class FeeStructurePage {
   );
 
   /** A save is only offered once every item and every installment holds something plausible. */
-  protected readonly draftIsReady = computed(() => {
+  protected readonly draftIsReady = computed(() => this.saveHint() === null);
+
+  /**
+   * What Save is waiting for, or null once nothing is. Checked in the same order the form reads,
+   * so a school working top to bottom always sees the very next thing to fix — never a rule
+   * further down that isn't the reason the button is grey yet.
+   *
+   * Written because the due-date requirement is not stated anywhere else on this screen: a row
+   * can hold a head, an amount and a frequency and still leave Save disabled for want of a due
+   * date, and nothing about "Due dates" or "No due dates added yet" says that one is required.
+   */
+  protected readonly saveHint = computed<string | null>(() => {
     const items = this.draftItems();
     if (items.length === 0) {
-      return false;
+      return 'Add a fee head before saving.';
     }
-    return items.every(
-      (item) =>
-        item.feeHeadId !== '' &&
-        Number(item.amount) > 0 &&
-        item.installments.length > 0 &&
-        item.installments.every(
-          (installment) => installment.dueDate !== '' && Number(installment.amount) > 0,
-        ),
-    );
+    if (items.some((item) => item.feeHeadId === '')) {
+      return 'Choose a fee head for every row.';
+    }
+    if (items.some((item) => !(Number(item.amount) > 0))) {
+      return 'Enter an amount greater than zero for every fee head.';
+    }
+    if (items.some((item) => item.installments.length === 0)) {
+      return 'Add at least one due date for every fee head.';
+    }
+    if (items.some((item) => item.installments.some((installment) => installment.dueDate === ''))) {
+      return 'Choose a date for every due date added.';
+    }
+    if (
+      items.some((item) =>
+        item.installments.some((installment) => !(Number(installment.amount) > 0)),
+      )
+    ) {
+      return 'Enter an amount greater than zero for every due date.';
+    }
+    return null;
   });
 
   protected readonly writeFailure = computed(() => {
