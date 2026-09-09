@@ -15,6 +15,7 @@ import in.chalkbase.fee.domain.FeeHeadCategory;
 import in.chalkbase.fee.domain.FeeInstallment;
 import in.chalkbase.fee.domain.FeeStructure;
 import in.chalkbase.fee.domain.FeeStructureItem;
+import in.chalkbase.fee.domain.InstallmentFrequency;
 import in.chalkbase.fee.infrastructure.FeeHeadRepository;
 import in.chalkbase.fee.infrastructure.FeeStructureRepository;
 import in.chalkbase.platform.audit.AuditAction;
