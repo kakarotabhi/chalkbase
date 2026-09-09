@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -201,12 +202,20 @@ export class EnquiryDetail {
   );
 
   constructor() {
-    this.load();
+    // Re-reads when the route id changes, which happens when somebody follows a link from one
+    // enquiry to another without the component being torn down — the same reasoning
+    // `student-detail.ts` gives for the identical pattern. Reading `this.id()` inside an effect
+    // rather than directly in the constructor body also means it never runs before a caller (a
+    // spec included) has had a chance to set the input.
+    effect(() => {
+      const id = this.id();
+      this.load(id);
+    });
     this.loadCounsellors();
   }
 
   protected reload(): void {
-    this.load();
+    this.load(this.id());
   }
 
   // ── Reassigning ──────────────────────────────────────────────────────────────────────────
@@ -288,11 +297,11 @@ export class EnquiryDetail {
 
   // ── internals ────────────────────────────────────────────────────────────────────────────
 
-  private load(): void {
+  private load(id: string): void {
     this.loading.set(true);
     this.failureCode.set(null);
     this.admissions
-      .enquiry(this.id())
+      .enquiry(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (enquiry) => {
