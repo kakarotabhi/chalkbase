@@ -125,6 +125,12 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['fees', { path: '/fees', icon: 'fees' }],
   ['fees.heads', { path: '/fees/heads', icon: 'fees' }],
   ['fees.structure', { path: '/fees/structure', icon: 'fees' }],
+
+  // Communication (Phase 2): circulars, targeted by class and section. The container needs its
+  // own entry for the same reason every other container above does — `NavigationStore` drops an
+  // unresolvable id along with its children. One screen so far, so both ids share the one glyph.
+  ['communication', { path: '/communication', icon: 'communication' }],
+  ['communication.circulars', { path: '/communication/circulars', icon: 'communication' }],
 ]);
 
 /**

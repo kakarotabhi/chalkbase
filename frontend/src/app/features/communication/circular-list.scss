@@ -1,0 +1,182 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-2);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.page-lede {
+  margin: 0 0 var(--cb-space-4);
+  max-width: 64ch;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.announcement {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-success);
+
+  &:not(:empty) {
+    margin-bottom: var(--cb-space-4);
+  }
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--cb-space-4);
+}
+
+.list {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0 0 var(--cb-space-4);
+  padding: 0;
+  list-style: none;
+
+  @include from-expanded {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// Surface, border, radius and padding come from cb-card (padding="sm"); only the internal layout
+// stays here.
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-2);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cb-space-2);
+}
+
+.card__title {
+  font-weight: 600;
+  color: var(--cb-text);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.card__meta {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.card__actions {
+  display: flex;
+  gap: var(--cb-space-2);
+}
+
+.paging {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-3);
+}
+
+.paging__position {
+  color: var(--cb-text-muted);
+  font-size: var(--cb-font-size-sm);
+}
+
+// ── The composer ─────────────────────────────────────────────────────────────────────────
+
+.body-input {
+  min-height: 8rem;
+  padding: var(--cb-space-2) var(--cb-space-3);
+  border: 1px solid var(--cb-border-strong);
+  border-radius: var(--cb-radius-sm);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font: inherit;
+  resize: vertical;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--cb-focus);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.targets-heading {
+  margin: var(--cb-space-4) 0 var(--cb-space-2);
+  font-size: var(--cb-font-size-sm);
+  font-weight: 600;
+  color: var(--cb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.targets {
+  display: grid;
+  gap: var(--cb-space-3);
+  margin: 0 0 var(--cb-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.target-row {
+  display: grid;
+  gap: var(--cb-space-2);
+  padding: var(--cb-space-3);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-sm);
+}
+
+.target-row__preview {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+.link-button {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--cb-danger);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

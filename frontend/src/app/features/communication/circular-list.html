@@ -1,0 +1,178 @@
+<p class="crumbs">Communication <span aria-hidden="true">›</span> Circulars</p>
+<h1 class="page-title">Circulars</h1>
+
+<p class="page-lede">
+  Notices composed for the school's families, targeted by class and section. Publishing generates
+  one recipient per actively enrolled student the targets resolve to.
+</p>
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (canManage()) {
+  <div class="toolbar">
+    <cb-button (click)="openCompose()">Compose a circular</cb-button>
+  </div>
+}
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading circulars…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view circulars</strong>
+    <span>Ask your principal to add "View circulars" to your role.</span>
+  </div>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load circulars</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else if (circulars().length === 0) {
+  <p class="page-status" role="status">No circulars have been composed yet.</p>
+} @else {
+  <ul class="list">
+    @for (circular of circulars(); track circular.id) {
+      <li>
+        <cb-card padding="sm">
+          <div class="card">
+            <div class="card__head">
+              <a class="card__title" [routerLink]="['/communication/circulars', circular.id]">
+                {{ circular.title }}
+              </a>
+              <cb-badge [tone]="circularStatusTone(circular.status)">
+                {{ circularStatusLabel(circular.status) }}
+              </cb-badge>
+            </div>
+            <p class="card__meta">
+              {{ circular.targetCount }} target(s)
+              @if (circular.status === 'PUBLISHED') {
+                · {{ circular.recipientCount }} recipient(s)
+                @if (circular.requiresAcknowledgement) {
+                  · {{ circular.acknowledgedCount }} acknowledged
+                }
+              }
+              @if (circular.requiresAcknowledgement) {
+                · acknowledgement required
+              }
+            </p>
+            @if (circular.status === 'DRAFT' && canManage()) {
+              <div class="card__actions">
+                <cb-button
+                  variant="secondary"
+                  [loading]="publishingId() === circular.id"
+                  [disabled]="!!publishingId() && publishingId() !== circular.id"
+                  (click)="publish(circular.id)"
+                >
+                  Publish
+                </cb-button>
+              </div>
+            }
+          </div>
+        </cb-card>
+      </li>
+    }
+  </ul>
+
+  @if (totalPages() > 1) {
+    <nav class="paging" aria-label="Pages">
+      <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+        Previous
+      </cb-button>
+      <span class="paging__position">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+      <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">Next</cb-button>
+    </nav>
+  }
+}
+
+@if (composeOpen()) {
+  <cb-bottom-sheet heading="Compose a circular" (closed)="closeCompose()">
+    @if (ladderFailed()) {
+      <p class="page-status" role="status">
+        The list of classes could not be loaded, so targets cannot be chosen. Reload the page to try
+        again.
+      </p>
+    }
+    <form [formGroup]="composeForm" (ngSubmit)="submitCompose()" novalidate>
+      <cb-form-field #titleField label="Title" controlId="circular-title">
+        <cb-text-input
+          formControlName="title"
+          [id]="titleField.controlId()"
+          [describedBy]="titleField.describedById()"
+        />
+      </cb-form-field>
+
+      <cb-form-field #bodyField label="Message" controlId="circular-body">
+        <textarea
+          class="body-input"
+          formControlName="body"
+          [id]="bodyField.controlId()"
+          rows="5"
+        ></textarea>
+      </cb-form-field>
+
+      <cb-checkbox
+        formControlName="requiresAcknowledgement"
+        label="Ask families to acknowledge this circular"
+      />
+
+      <h2 class="targets-heading">Targets</h2>
+      <ul class="targets">
+        @for (row of targetRows(); track row.key) {
+          <li class="target-row">
+            <cb-form-field label="Class" [controlId]="'circular-target-class-' + row.key">
+              <cb-select
+                [id]="'circular-target-class-' + row.key"
+                ariaLabel="Class"
+                [options]="classOptions()"
+                [ngModel]="row.classId"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setTargetClass(row.key, $event)"
+              />
+            </cb-form-field>
+            <cb-form-field label="Section" [controlId]="'circular-target-section-' + row.key">
+              <cb-select
+                [id]="'circular-target-section-' + row.key"
+                ariaLabel="Section"
+                [options]="row.sectionOptions"
+                [ngModel]="row.sectionId"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setTargetSection(row.key, $event)"
+              />
+            </cb-form-field>
+            <p class="target-row__preview" role="status">
+              @if (row.previewLoading) {
+                Counting…
+              } @else if (row.previewCount !== null) {
+                {{ row.previewCount }} student(s)
+              }
+            </p>
+            @if (targetRows().length > 1) {
+              <button type="button" class="link-button" (click)="removeTarget(row.key)">
+                Remove
+              </button>
+            }
+          </li>
+        }
+      </ul>
+      <cb-button variant="secondary" type="button" (click)="addTarget()">Add a target</cb-button>
+
+      @if (composeFailureCode()) {
+        <p class="banner__title">
+          Could not save this circular. Check your connection and try again.
+        </p>
+      }
+
+      <cb-button
+        type="submit"
+        [block]="true"
+        [loading]="composeSaving()"
+        loadingLabel="Saving…"
+        [disabled]="!hasAtLeastOneTarget()"
+      >
+        Save as draft
+      </cb-button>
+    </form>
+  </cb-bottom-sheet>
+}

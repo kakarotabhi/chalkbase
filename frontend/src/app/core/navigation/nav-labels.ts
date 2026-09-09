@@ -36,6 +36,7 @@ const NAV_LABELS: Readonly<Record<string, string>> = {
   'nav.fees.defaulters': 'Defaulters',
   'nav.timetable': 'Timetable',
   'nav.communication': 'Communication',
+  'nav.communication.circulars': 'Circulars',
   'nav.transport': 'Transport',
   'nav.hostel': 'Hostel',
   'nav.library': 'Library',

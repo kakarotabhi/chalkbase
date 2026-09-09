@@ -125,6 +125,12 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `FEE_009` | 409 | This academic session has already run; its fee structure can no longer be changed (ADR-0033) — only the very first version, backfilled after the fact, is ever allowed. |
 | `FEE_010` | 422 | A deactivated fee head cannot be added to a fee structure. |
 | `FEE_011` | 400 | `copy-from-previous` was asked to copy a session's structure into itself. |
+| `COMM_001` | 409 | This circular has already been published. |
+| `COMM_002` | 422 | None of the targeted classes or sections currently have any enrolled students. |
+| `COMM_003` | 422 | A target must name a class this school teaches, and a section, if given, must belong to it. |
+| `COMM_004` | 409 | This class or section is already targeted by this circular. |
+| `COMM_005` | 400 | This circular does not require an acknowledgement. |
+| `COMM_006` | 409 | This recipient has already acknowledged this circular. |
 
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
 them turns the login form into a way to discover which parents are registered.

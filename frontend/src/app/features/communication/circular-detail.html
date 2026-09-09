@@ -1,0 +1,145 @@
+<p class="crumbs">
+  Communication <span aria-hidden="true">›</span>
+  <a routerLink="/communication/circulars">Circulars</a> <span aria-hidden="true">›</span>
+  Circular
+</p>
+
+<p class="announcement" role="status">{{ announcement() }}</p>
+
+@if (loading()) {
+  <p class="page-status" role="status">Loading this circular…</p>
+} @else if (forbidden()) {
+  <div class="banner banner--info" role="status">
+    <strong class="banner__title">You do not have permission to view this circular</strong>
+    <span>Ask your principal to add "View circulars" to your role.</span>
+  </div>
+} @else if (missing()) {
+  <p class="page-status" role="status">This circular could not be found.</p>
+} @else if (failed()) {
+  <div class="banner banner--danger" role="alert">
+    <strong class="banner__title">Could not load this circular</strong>
+    <span>Check your connection and try again.</span>
+    <p class="banner__action">
+      <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+    </p>
+  </div>
+} @else if (circular(); as detail) {
+  <div class="head">
+    <h1 class="page-title">{{ detail.title }}</h1>
+    <cb-badge [tone]="circularStatusTone(detail.status)">
+      {{ circularStatusLabel(detail.status) }}
+    </cb-badge>
+  </div>
+
+  <p class="body-text">{{ detail.body }}</p>
+
+  <p class="meta">
+    {{ detail.recipientCount }} recipient(s)
+    @if (detail.requiresAcknowledgement) {
+      · {{ detail.acknowledgedCount }} acknowledged · acknowledgement required
+    }
+  </p>
+
+  <h2 class="section-heading">Targets</h2>
+  <ul class="targets">
+    @for (target of detail.targets; track target.id) {
+      <li>
+        {{
+          target.sectionName
+            ? classAndSection(target.className, target.sectionName)
+            : target.className + ' (whole class)'
+        }}
+      </li>
+    }
+  </ul>
+
+  @if (detail.status === 'PUBLISHED') {
+    <h2 class="section-heading">Recipients</h2>
+
+    @if (recipientsLoading()) {
+      <p class="page-status" role="status">Loading recipients…</p>
+    } @else if (recipientRows().length === 0) {
+      <p class="page-status" role="status">Nobody was reached by this circular.</p>
+    } @else {
+      <ul class="recipients">
+        @for (row of recipientRows(); track row.recipient.id) {
+          <li>
+            <cb-card padding="sm">
+              <div class="card">
+                <div class="card__head">
+                  <span class="card__name">{{ row.recipient.studentFullName }}</span>
+                  <span class="card__section">
+                    {{ classAndSection(row.recipient.className, row.recipient.sectionName) }}
+                  </span>
+                </div>
+                <p class="card__delivered">Delivered {{ row.deliveredAt }}</p>
+                @if (row.acknowledgedAt) {
+                  <p class="card__acknowledged">
+                    Acknowledged {{ row.acknowledgedAt }}
+                    @if (row.recipient.acknowledgementNote) {
+                      — "{{ row.recipient.acknowledgementNote }}"
+                    }
+                  </p>
+                } @else if (detail.requiresAcknowledgement && canAcknowledge()) {
+                  <div class="card__actions">
+                    <cb-button variant="secondary" (click)="openAcknowledge(row.recipient)">
+                      Record acknowledgement
+                    </cb-button>
+                  </div>
+                }
+              </div>
+            </cb-card>
+          </li>
+        }
+      </ul>
+
+      @if (totalPages() > 1) {
+        <nav class="paging" aria-label="Pages">
+          <cb-button variant="secondary" [disabled]="!hasPrevious()" (click)="previousPage()">
+            Previous
+          </cb-button>
+          <span class="paging__position">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+          <cb-button variant="secondary" [disabled]="!hasNext()" (click)="nextPage()">
+            Next
+          </cb-button>
+        </nav>
+      }
+    }
+  }
+}
+
+@if (acknowledgeTarget(); as target) {
+  <cb-bottom-sheet heading="Record acknowledgement" (closed)="closeAcknowledge()">
+    <p class="sheet-lede">
+      Recording that {{ target.studentFullName }}'s family has acknowledged this circular — by
+      phone, in writing, or in person.
+    </p>
+    <form [formGroup]="acknowledgeForm" (ngSubmit)="submitAcknowledge()" novalidate>
+      <cb-form-field
+        #noteField
+        label="Note (optional)"
+        controlId="acknowledge-note"
+        hint="How the family let the school know."
+      >
+        <cb-text-input
+          formControlName="note"
+          [id]="noteField.controlId()"
+          [describedBy]="noteField.describedById()"
+        />
+      </cb-form-field>
+
+      @if (acknowledgeFailureCode()) {
+        <p class="banner__title">Could not save this. Check your connection and try again.</p>
+      }
+
+      <cb-button
+        type="submit"
+        [block]="true"
+        [loading]="acknowledgeSaving()"
+        loadingLabel="Saving…"
+      >
+        Record
+      </cb-button>
+    </form>
+  </cb-bottom-sheet>
+}

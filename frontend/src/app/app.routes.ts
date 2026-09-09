@@ -191,6 +191,25 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/fees/fee-structure').then((m) => m.FeeStructurePage),
       },
+      // Communication (Phase 2): circulars, targeted by class and section. No guard on either
+      // screen, same reasoning as academics and attendance above — the endpoints enforce
+      // `communication:circular:read` / `communication:circular:acknowledge` on their own.
+      //
+      // The container has no index screen of its own, so it lands on the circular list.
+      { path: 'communication', pathMatch: 'full', redirectTo: 'communication/circulars' },
+      {
+        path: 'communication/circulars',
+        pathMatch: 'full',
+        title: 'Circulars · Chalkbase',
+        loadComponent: () =>
+          import('./features/communication/circular-list').then((m) => m.CircularList),
+      },
+      {
+        path: 'communication/circulars/:id',
+        title: 'Circular · Chalkbase',
+        loadComponent: () =>
+          import('./features/communication/circular-detail').then((m) => m.CircularDetail),
+      },
       // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.

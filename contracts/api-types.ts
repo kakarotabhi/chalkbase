@@ -11,9 +11,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_9"];
+        readonly get: operations["list_10"];
         readonly put?: never;
-        readonly post: operations["create_9"];
+        readonly post: operations["create_10"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -91,9 +91,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_8"];
+        readonly get: operations["list_9"];
         readonly put?: never;
-        readonly post: operations["create_8"];
+        readonly post: operations["create_9"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -139,9 +139,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_7"];
+        readonly get: operations["list_8"];
         readonly put?: never;
-        readonly post: operations["create_7"];
+        readonly post: operations["create_8"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -237,7 +237,7 @@ export interface paths {
         };
         readonly get: operations["users"];
         readonly put?: never;
-        readonly post: operations["create_6"];
+        readonly post: operations["create_7"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -363,9 +363,9 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_6"];
+        readonly get: operations["list_7"];
         readonly put?: never;
-        readonly post: operations["create_5"];
+        readonly post: operations["create_6"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -475,7 +475,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_11"];
+        readonly get: operations["list_12"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -491,7 +491,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["get_3"];
+        readonly get: operations["get_4"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -644,6 +644,102 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/api/communication/circulars": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_6"];
+        readonly put?: never;
+        readonly post: operations["create_5"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/communication/circulars/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["get_3"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/communication/circulars/{id}/publish": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["publish"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/communication/circulars/{id}/recipients": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["recipients"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/communication/circulars/{id}/recipients/{recipientId}/acknowledge": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["acknowledge"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/communication/circulars/target-preview": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["targetPreview"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/api/dashboard": {
         readonly parameters: {
             readonly query?: never;
@@ -779,7 +875,7 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get: operations["list_10"];
+        readonly get: operations["list_11"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -1266,6 +1362,9 @@ export interface components {
             /** Format: date */
             readonly startsOn: string;
         };
+        readonly AcknowledgeRecipientRequest: {
+            readonly note?: string;
+        };
         readonly ApiError: {
             readonly code: string;
             readonly details?: {
@@ -1275,6 +1374,22 @@ export interface components {
         };
         readonly ApiResponseAcademicSessionResponse: {
             readonly data?: components["schemas"]["AcademicSessionResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseCircularDetail: {
+            readonly data?: components["schemas"]["CircularDetail"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponseCircularRecipientResponse: {
+            readonly data?: components["schemas"]["CircularRecipientResponse"];
             readonly error?: components["schemas"]["ApiError"];
             readonly success: boolean;
             /** Format: date-time */
@@ -1577,6 +1692,22 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponsePageResponseCircularRecipientResponse: {
+            readonly data?: components["schemas"]["PageResponseCircularRecipientResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
+        readonly ApiResponsePageResponseCircularSummary: {
+            readonly data?: components["schemas"]["PageResponseCircularSummary"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponsePageResponseCorrectionRequestResponse: {
             readonly data?: components["schemas"]["PageResponseCorrectionRequestResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1721,6 +1852,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseTargetPreviewResponse: {
+            readonly data?: components["schemas"]["TargetPreviewResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseTemporaryPasswordResponse: {
             readonly data?: components["schemas"]["TemporaryPasswordResponse"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1806,6 +1945,75 @@ export interface components {
             readonly currentPassword: string;
             readonly newPassword: string;
         };
+        readonly CircularDetail: {
+            /** Format: int32 */
+            readonly acknowledgedCount: number;
+            readonly body: string;
+            /** Format: date-time */
+            readonly createdAt: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date-time */
+            readonly publishedAt?: string;
+            /** Format: int32 */
+            readonly recipientCount: number;
+            readonly requiresAcknowledgement: boolean;
+            /** @enum {string} */
+            readonly status: "DRAFT" | "PUBLISHED";
+            readonly targets: readonly components["schemas"]["CircularTargetResponse"][];
+            readonly title: string;
+        };
+        readonly CircularRecipientResponse: {
+            /** Format: date-time */
+            readonly acknowledgedAt?: string;
+            readonly acknowledgementNote?: string;
+            readonly admissionNumber: string;
+            readonly className: string;
+            /** Format: date-time */
+            readonly deliveredAt: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly sectionId: string;
+            readonly sectionName: string;
+            readonly studentFullName: string;
+            /** Format: uuid */
+            readonly studentId: string;
+        };
+        readonly CircularSummary: {
+            /** Format: int32 */
+            readonly acknowledgedCount: number;
+            /** Format: date-time */
+            readonly createdAt: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date-time */
+            readonly publishedAt?: string;
+            /** Format: int32 */
+            readonly recipientCount: number;
+            readonly requiresAcknowledgement: boolean;
+            /** @enum {string} */
+            readonly status: "DRAFT" | "PUBLISHED";
+            /** Format: int32 */
+            readonly targetCount: number;
+            readonly title: string;
+        };
+        readonly CircularTargetRequest: {
+            /** Format: uuid */
+            readonly classId: string;
+            /** Format: uuid */
+            readonly sectionId?: string;
+        };
+        readonly CircularTargetResponse: {
+            /** Format: uuid */
+            readonly classId: string;
+            readonly className: string;
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly sectionId?: string;
+            readonly sectionName?: string;
+        };
         readonly ClassEnrolmentCount: {
             /** Format: uuid */
             readonly classId: string;
@@ -1870,6 +2078,12 @@ export interface components {
             /** Format: uuid */
             readonly studentId: string;
             readonly studentName: string;
+        };
+        readonly CreateCircularRequest: {
+            readonly body: string;
+            readonly requiresAcknowledgement?: boolean;
+            readonly targets: readonly components["schemas"]["CircularTargetRequest"][];
+            readonly title: string;
         };
         readonly CreateEnquiryRequest: {
             /** Format: uuid */
@@ -2328,6 +2542,28 @@ export interface components {
             /** Format: int32 */
             readonly totalPages: number;
         };
+        readonly PageResponseCircularRecipientResponse: {
+            readonly content: readonly components["schemas"]["CircularRecipientResponse"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        readonly PageResponseCircularSummary: {
+            readonly content: readonly components["schemas"]["CircularSummary"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
         readonly PageResponseCorrectionRequestResponse: {
             readonly content: readonly components["schemas"]["CorrectionRequestResponse"][];
             /** Format: int32 */
@@ -2671,6 +2907,10 @@ export interface components {
             readonly id: string;
             readonly name: string;
         };
+        readonly TargetPreviewResponse: {
+            /** Format: int64 */
+            readonly count: number;
+        };
         readonly TemporaryPasswordResponse: {
             /** Format: uuid */
             readonly id: string;
@@ -2758,7 +2998,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    readonly list_9: {
+    readonly list_10: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2778,7 +3018,7 @@ export interface operations {
             };
         };
     };
-    readonly create_9: {
+    readonly create_10: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2904,7 +3144,7 @@ export interface operations {
             };
         };
     };
-    readonly list_8: {
+    readonly list_9: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2924,7 +3164,7 @@ export interface operations {
             };
         };
     };
-    readonly create_8: {
+    readonly create_9: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -2996,7 +3236,7 @@ export interface operations {
             };
         };
     };
-    readonly list_7: {
+    readonly list_8: {
         readonly parameters: {
             readonly query: {
                 readonly pageable: components["schemas"]["Pageable"];
@@ -3019,7 +3259,7 @@ export interface operations {
             };
         };
     };
-    readonly create_7: {
+    readonly create_8: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3201,7 +3441,7 @@ export interface operations {
             };
         };
     };
-    readonly create_6: {
+    readonly create_7: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3402,7 +3642,7 @@ export interface operations {
             };
         };
     };
-    readonly list_6: {
+    readonly list_7: {
         readonly parameters: {
             readonly query: {
                 readonly assignedCounsellorId?: string;
@@ -3429,7 +3669,7 @@ export interface operations {
             };
         };
     };
-    readonly create_5: {
+    readonly create_6: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3599,7 +3839,7 @@ export interface operations {
             };
         };
     };
-    readonly list_11: {
+    readonly list_12: {
         readonly parameters: {
             readonly query: {
                 readonly decision?: "PENDING" | "APPROVED" | "REJECTED";
@@ -3622,7 +3862,7 @@ export interface operations {
             };
         };
     };
-    readonly get_3: {
+    readonly get_4: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3909,6 +4149,170 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    readonly list_6: {
+        readonly parameters: {
+            readonly query: {
+                readonly pageable: components["schemas"]["Pageable"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseCircularSummary"];
+                };
+            };
+        };
+    };
+    readonly create_5: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateCircularRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCircularDetail"];
+                };
+            };
+        };
+    };
+    readonly get_3: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCircularDetail"];
+                };
+            };
+        };
+    };
+    readonly publish: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCircularDetail"];
+                };
+            };
+        };
+    };
+    readonly recipients: {
+        readonly parameters: {
+            readonly query: {
+                readonly pageable: components["schemas"]["Pageable"];
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseCircularRecipientResponse"];
+                };
+            };
+        };
+    };
+    readonly acknowledge: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+                readonly recipientId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["AcknowledgeRecipientRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseCircularRecipientResponse"];
+                };
+            };
+        };
+    };
+    readonly targetPreview: {
+        readonly parameters: {
+            readonly query: {
+                readonly classId: string;
+                readonly sectionId?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseTargetPreviewResponse"];
                 };
             };
         };
@@ -4217,7 +4621,7 @@ export interface operations {
             };
         };
     };
-    readonly list_10: {
+    readonly list_11: {
         readonly parameters: {
             readonly query: {
                 readonly sessionId: string;

@@ -61,6 +61,9 @@ public final class RoleTemplates {
     private static final String FEE_CONCESSION_TYPE_MANAGE = "fee:concession_type:manage";
     private static final String FEE_STRUCTURE_READ = "fee:structure:read";
     private static final String FEE_STRUCTURE_MANAGE = "fee:structure:manage";
+    private static final String COMMUNICATION_READ = "communication:circular:read";
+    private static final String COMMUNICATION_MANAGE = "communication:circular:manage";
+    private static final String COMMUNICATION_ACKNOWLEDGE = "communication:circular:acknowledge";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
@@ -179,6 +182,20 @@ public final class RoleTemplates {
      * {@code FEE_HEAD_READ} and {@code FEE_STRUCTURE_READ} only — answering "what does Nursery
      * cost" is part of counselling a prospective parent, and nothing here lets that role change a
      * price or define a waiver.
+     *
+     * <p>{@code communication:circular:*} (Phase 2) follows {@code attendance:*}'s own shape rather
+     * than {@code document:*}'s: {@code PRINCIPAL} and {@code VICE_PRINCIPAL} hold all three —
+     * composing and publishing a circular reaches the whole school, which is squarely the pair's
+     * existing wide reach, not an override of someone else's routine work. {@code CLASS_TEACHER}
+     * holds {@code COMMUNICATION_READ} and {@code COMMUNICATION_ACKNOWLEDGE} but not
+     * {@code COMMUNICATION_MANAGE}: seeing what was sent to their own section, and recording that a
+     * family acknowledged it — by phone, in writing, or in person — is daily front-line work, the
+     * same shape {@code DOCUMENT_READ}-without-{@code DOCUMENT_MANAGE} gives them; composing and
+     * publishing to a class or section is not handed to every class teacher by default, the same
+     * restraint that keeps {@code ATTENDANCE_CORRECTION_APPROVE} off this template. A school that
+     * wants a front-office role to compose circulars without touching fee or attendance data gets
+     * that separation for free, because {@code communication:circular:manage} is never bundled with
+     * either module's own permissions on any template here.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -216,7 +233,10 @@ public final class RoleTemplates {
                     FEE_CONCESSION_TYPE_READ,
                     FEE_CONCESSION_TYPE_MANAGE,
                     FEE_STRUCTURE_READ,
-                    FEE_STRUCTURE_MANAGE),
+                    FEE_STRUCTURE_MANAGE,
+                    COMMUNICATION_READ,
+                    COMMUNICATION_MANAGE,
+                    COMMUNICATION_ACKNOWLEDGE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
                     "Vice Principal",
@@ -249,7 +269,10 @@ public final class RoleTemplates {
                     FEE_CONCESSION_TYPE_READ,
                     FEE_CONCESSION_TYPE_MANAGE,
                     FEE_STRUCTURE_READ,
-                    FEE_STRUCTURE_MANAGE),
+                    FEE_STRUCTURE_MANAGE,
+                    COMMUNICATION_READ,
+                    COMMUNICATION_MANAGE,
+                    COMMUNICATION_ACKNOWLEDGE),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
@@ -265,7 +288,9 @@ public final class RoleTemplates {
                     ATTENDANCE_MANAGE,
                     ATTENDANCE_LEAVE_READ,
                     ATTENDANCE_LEAVE_REQUEST,
-                    ATTENDANCE_LEAVE_APPROVE),
+                    ATTENDANCE_LEAVE_APPROVE,
+                    COMMUNICATION_READ,
+                    COMMUNICATION_ACKNOWLEDGE),
             // Reads students, because marks are recorded against a child. Deliberately does NOT read
             // guardians, and the distinction is the point: with no scope narrower than the school,
             // that permission is a searchable directory of every parent's mobile number, handed to
