@@ -8,6 +8,7 @@
   "admissions.follow_ups",
   "attendance",
   "attendance.corrections",
+  "attendance.leave",
   "attendance.mark",
   "audit",
   "dashboard",

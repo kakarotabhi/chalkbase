@@ -452,6 +452,31 @@
         ],
         "type": "object"
       },
+      "ApiResponseLeaveRequestResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LeaveRequestResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponseListAcademicSessionResponse": {
         "properties": {
           "data": {
@@ -1122,6 +1147,31 @@
         ],
         "type": "object"
       },
+      "ApiResponsePageResponseLeaveRequestResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageResponseLeaveRequestResponse"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "timestamp"
+        ],
+        "type": "object"
+      },
       "ApiResponsePageResponseStudentSummary": {
         "properties": {
           "data": {
@@ -1566,6 +1616,9 @@
           "admissionNumber": {
             "type": "string"
           },
+          "approvedLeave": {
+            "type": "boolean"
+          },
           "editable": {
             "type": "boolean"
           },
@@ -1600,6 +1653,7 @@
         },
         "required": [
           "admissionNumber",
+          "approvedLeave",
           "editable",
           "fullName",
           "studentId"
@@ -2052,6 +2106,34 @@
         ],
         "type": "object"
       },
+      "CreateLeaveRequest": {
+        "properties": {
+          "endDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endDate",
+          "reason",
+          "startDate",
+          "studentId"
+        ],
+        "type": "object"
+      },
       "CreateRoleRequest": {
         "properties": {
           "description": {
@@ -2229,6 +2311,27 @@
         "type": "object"
       },
       "DecideCorrectionRequest": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
+      "DecideLeaveRequest": {
         "properties": {
           "decision": {
             "enum": [
@@ -3078,6 +3181,75 @@
         ],
         "type": "object"
       },
+      "LeaveRequestResponse": {
+        "properties": {
+          "className": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "decisionNote": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sectionName": {
+            "type": "string"
+          },
+          "startDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "studentName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "className",
+          "decision",
+          "endDate",
+          "id",
+          "reason",
+          "requestedAt",
+          "sectionId",
+          "sectionName",
+          "startDate",
+          "studentId",
+          "studentName"
+        ],
+        "type": "object"
+      },
       "LinkGuardianRequest": {
         "properties": {
           "guardianId": {
@@ -3537,6 +3709,40 @@
           "content": {
             "items": {
               "$ref": "#/components/schemas/GuardianSummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "size": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalElements": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalPages": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "content",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object"
+      },
+      "PageResponseLeaveRequestResponse": {
+        "properties": {
+          "content": {
+            "items": {
+              "$ref": "#/components/schemas/LeaveRequestResponse"
             },
             "type": "array"
           },
@@ -6168,7 +6374,7 @@
     },
     "/api/attendance/correction-requests/{id}/decision": {
       "post": {
-        "operationId": "decide",
+        "operationId": "decide_1",
         "parameters": [
           {
             "in": "path",
@@ -6204,6 +6410,121 @@
         },
         "tags": [
           "attendance-correction-controller"
+        ]
+      }
+    },
+    "/api/attendance/leave-requests": {
+      "get": {
+        "operationId": "list_11",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "decision",
+            "required": false,
+            "schema": {
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageable",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResponseLeaveRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-leave-controller"
+        ]
+      }
+    },
+    "/api/attendance/leave-requests/{id}": {
+      "get": {
+        "operationId": "get_3",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeaveRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-leave-controller"
+        ]
+      }
+    },
+    "/api/attendance/leave-requests/{id}/decision": {
+      "post": {
+        "operationId": "decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideLeaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeaveRequestResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-leave-controller"
         ]
       }
     },
@@ -6345,6 +6666,47 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseSectionAttendanceView"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "attendance-controller"
+        ]
+      }
+    },
+    "/api/attendance/sections/{sectionId}/leave-requests": {
+      "post": {
+        "operationId": "requestLeave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseLeaveRequestResponse"
                 }
               }
             },

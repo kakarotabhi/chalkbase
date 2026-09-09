@@ -461,6 +461,54 @@ export interface paths {
         };
         readonly get?: never;
         readonly put?: never;
+        readonly post: operations["decide_1"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/leave-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["list_11"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/leave-requests/{id}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get: operations["get_3"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/leave-requests/{id}/decision": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
         readonly post: operations["decide"];
         readonly delete?: never;
         readonly options?: never;
@@ -494,6 +542,22 @@ export interface paths {
         readonly get: operations["view"];
         readonly put?: never;
         readonly post: operations["mark"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/api/attendance/sections/{sectionId}/leave-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        readonly post: operations["requestLeave"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -1337,6 +1401,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponseLeaveRequestResponse: {
+            readonly data?: components["schemas"]["LeaveRequestResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponseListAcademicSessionResponse: {
             readonly data?: readonly components["schemas"]["AcademicSessionResponse"][];
             readonly error?: components["schemas"]["ApiError"];
@@ -1537,6 +1609,14 @@ export interface components {
             readonly timestamp: string;
             readonly traceId?: string;
         };
+        readonly ApiResponsePageResponseLeaveRequestResponse: {
+            readonly data?: components["schemas"]["PageResponseLeaveRequestResponse"];
+            readonly error?: components["schemas"]["ApiError"];
+            readonly success: boolean;
+            /** Format: date-time */
+            readonly timestamp: string;
+            readonly traceId?: string;
+        };
         readonly ApiResponsePageResponseStudentSummary: {
             readonly data?: components["schemas"]["PageResponseStudentSummary"];
             readonly error?: components["schemas"]["ApiError"];
@@ -1678,6 +1758,7 @@ export interface components {
         };
         readonly AttendanceStudentMark: {
             readonly admissionNumber: string;
+            readonly approvedLeave: boolean;
             readonly editable: boolean;
             readonly fullName: string;
             /** Format: uuid */
@@ -1813,6 +1894,15 @@ export interface components {
             /** Format: uuid */
             readonly sectionId: string;
         };
+        readonly CreateLeaveRequest: {
+            /** Format: date */
+            readonly endDate: string;
+            readonly reason: string;
+            /** Format: date */
+            readonly startDate: string;
+            /** Format: uuid */
+            readonly studentId: string;
+        };
         readonly CreateRoleRequest: {
             readonly description?: string;
             readonly name: string;
@@ -1854,6 +1944,11 @@ export interface components {
             readonly students?: components["schemas"]["StudentsTile"];
         };
         readonly DecideCorrectionRequest: {
+            /** @enum {string} */
+            readonly decision: "PENDING" | "APPROVED" | "REJECTED";
+            readonly note?: string;
+        };
+        readonly DecideLeaveRequest: {
             /** @enum {string} */
             readonly decision: "PENDING" | "APPROVED" | "REJECTED";
             readonly note?: string;
@@ -2105,6 +2200,29 @@ export interface components {
             /** Format: int32 */
             readonly validRows: number;
         };
+        readonly LeaveRequestResponse: {
+            readonly className: string;
+            /** Format: date-time */
+            readonly decidedAt?: string;
+            /** @enum {string} */
+            readonly decision: "PENDING" | "APPROVED" | "REJECTED";
+            readonly decisionNote?: string;
+            /** Format: date */
+            readonly endDate: string;
+            /** Format: uuid */
+            readonly id: string;
+            readonly reason: string;
+            /** Format: date-time */
+            readonly requestedAt: string;
+            /** Format: uuid */
+            readonly sectionId: string;
+            readonly sectionName: string;
+            /** Format: date */
+            readonly startDate: string;
+            /** Format: uuid */
+            readonly studentId: string;
+            readonly studentName: string;
+        };
         readonly LinkageGapsTile: {
             /** Format: int64 */
             readonly guardiansWithoutAStudent?: number;
@@ -2245,6 +2363,17 @@ export interface components {
         };
         readonly PageResponseGuardianSummary: {
             readonly content: readonly components["schemas"]["GuardianSummary"][];
+            /** Format: int32 */
+            readonly page: number;
+            /** Format: int32 */
+            readonly size: number;
+            /** Format: int64 */
+            readonly totalElements: number;
+            /** Format: int32 */
+            readonly totalPages: number;
+        };
+        readonly PageResponseLeaveRequestResponse: {
+            readonly content: readonly components["schemas"]["LeaveRequestResponse"][];
             /** Format: int32 */
             readonly page: number;
             /** Format: int32 */
@@ -3444,7 +3573,7 @@ export interface operations {
             };
         };
     };
-    readonly decide: {
+    readonly decide_1: {
         readonly parameters: {
             readonly query?: never;
             readonly header?: never;
@@ -3466,6 +3595,77 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseCorrectionRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly list_11: {
+        readonly parameters: {
+            readonly query: {
+                readonly decision?: "PENDING" | "APPROVED" | "REJECTED";
+                readonly pageable: components["schemas"]["Pageable"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponsePageResponseLeaveRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly get_3: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseLeaveRequestResponse"];
+                };
+            };
+        };
+    };
+    readonly decide: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly id: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["DecideLeaveRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseLeaveRequestResponse"];
                 };
             };
         };
@@ -3564,6 +3764,32 @@ export interface operations {
                 };
                 content: {
                     readonly "*/*": components["schemas"]["ApiResponseSectionAttendanceView"];
+                };
+            };
+        };
+    };
+    readonly requestLeave: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly sectionId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["CreateLeaveRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description OK */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "*/*": components["schemas"]["ApiResponseLeaveRequestResponse"];
                 };
             };
         };
