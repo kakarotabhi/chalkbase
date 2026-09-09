@@ -50,6 +50,8 @@ public final class RoleTemplates {
     private static final String ATTENDANCE_READ = "attendance:mark:read";
     private static final String ATTENDANCE_MANAGE = "attendance:mark:manage";
     private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
+    private static final String ENQUIRY_READ = "admission:enquiry:read";
+    private static final String ENQUIRY_MANAGE = "admission:enquiry:manage";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
@@ -133,6 +135,14 @@ public final class RoleTemplates {
      * {@code STUDENT_MANAGE} — and {@code ATTENDANCE_CORRECTION_APPROVE} is theirs alone: deciding
      * that a memory of a locked day overrides what was recorded at the time is oversight, the same
      * shape as {@code STUDENT_REVEAL_RESTRICTED} on {@code PRINCIPAL}.
+     *
+     * <p>{@code admission:enquiry:*} (FR-016, FR-017) is {@code ADMISSION_COUNSELLOR}'s own —
+     * enquiries are that template's daily work, the reason its description already read "from the
+     * first call to the admission" before this module existed to back it. {@code PRINCIPAL} and
+     * {@code VICE_PRINCIPAL} hold both as the same kind of override {@code ATTENDANCE_MANAGE} is on
+     * both of them: a head of school can reassign or follow up any enquiry, not because they run the
+     * front desk day to day, but because nothing here is scoped narrower than the school yet and an
+     * override with no narrower grant to fall back on has to be the wide one.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -159,7 +169,9 @@ public final class RoleTemplates {
                     DOCUMENT_MANAGE,
                     ATTENDANCE_READ,
                     ATTENDANCE_MANAGE,
-                    ATTENDANCE_CORRECTION_APPROVE),
+                    ATTENDANCE_CORRECTION_APPROVE,
+                    ENQUIRY_READ,
+                    ENQUIRY_MANAGE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
                     "Vice Principal",
@@ -181,7 +193,9 @@ public final class RoleTemplates {
                     DOCUMENT_MANAGE,
                     ATTENDANCE_READ,
                     ATTENDANCE_MANAGE,
-                    ATTENDANCE_CORRECTION_APPROVE),
+                    ATTENDANCE_CORRECTION_APPROVE,
+                    ENQUIRY_READ,
+                    ENQUIRY_MANAGE),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
@@ -235,7 +249,9 @@ public final class RoleTemplates {
                     GUARDIAN_READ,
                     GUARDIAN_MANAGE,
                     DOCUMENT_READ,
-                    DOCUMENT_MANAGE),
+                    DOCUMENT_MANAGE,
+                    ENQUIRY_READ,
+                    ENQUIRY_MANAGE),
             new RoleTemplate("LIBRARIAN", "Librarian", "The catalogue, issues, returns and fines.", SCHOOL_READ),
             new RoleTemplate(
                     "TRANSPORT_MANAGER",

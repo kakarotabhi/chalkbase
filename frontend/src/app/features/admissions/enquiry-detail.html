@@ -1,0 +1,274 @@
+<p class="crumbs">
+  <a class="crumbs__link" routerLink="/admissions/enquiries">Enquiries</a>
+  <span aria-hidden="true">›</span> Enquiry
+</p>
+
+@if (loading()) {
+  <h1 class="page-title">Enquiry</h1>
+  <p class="page-status" role="status">Loading this enquiry…</p>
+} @else if (forbidden()) {
+  <h1 class="page-title">Enquiry</h1>
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">You do not have permission to view this enquiry</strong>
+      <span>Ask your principal to add "View enquiries" to your role.</span>
+    </div>
+  </div>
+} @else if (missing()) {
+  <h1 class="page-title">Enquiry</h1>
+  <div class="banner banner--info" role="status">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">There is no such enquiry at this school</strong>
+      <span>The link may be wrong, or this enquiry belongs to another school.</span>
+    </div>
+  </div>
+} @else if (failed()) {
+  <h1 class="page-title">Enquiry</h1>
+  <div class="banner banner--danger" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M12 7.5v5" />
+      <path d="M12 16.2v.1" />
+    </svg>
+    <div>
+      <strong class="banner__title">Could not load this enquiry</strong>
+      <span>Check your connection and try again.</span>
+      <p class="banner__action">
+        <cb-button variant="secondary" (click)="reload()">Try again</cb-button>
+      </p>
+    </div>
+  </div>
+} @else if (view(); as enquiry) {
+  <div class="page-head">
+    <div class="page-head__titles">
+      <h1 class="page-title">{{ enquiry.childFullName }}</h1>
+      <cb-badge [tone]="enquiry.statusTone">{{ enquiry.statusLabel }}</cb-badge>
+    </div>
+  </div>
+
+  <p class="announcement" role="status">{{ announcement() }}</p>
+
+  <div class="grid">
+    <cb-card class="section">
+      <h2 class="section__heading">Child and family</h2>
+      <dl class="fact-list">
+        <div class="fact">
+          <dt>Date of birth</dt>
+          <dd>{{ enquiry.childDateOfBirth ?? 'Not given' }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Interested class</dt>
+          <dd>{{ enquiry.interestedClassName ?? 'Not given' }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Parent / guardian</dt>
+          <dd>{{ enquiry.parentName }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Phone</dt>
+          <dd>{{ enquiry.parentPhone }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Email</dt>
+          <dd>{{ enquiry.parentEmail ?? 'Not given' }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Source</dt>
+          <dd>{{ enquiry.source }}</dd>
+        </div>
+        @if (enquiry.remarks) {
+          <div class="fact fact--wide">
+            <dt>Notes at capture</dt>
+            <dd>{{ enquiry.remarks }}</dd>
+          </div>
+        }
+        <div class="fact">
+          <dt>Captured by</dt>
+          <dd>{{ enquiry.capturedByName }} · {{ enquiry.createdAt }}</dd>
+        </div>
+      </dl>
+    </cb-card>
+
+    <cb-card class="section">
+      <h2 class="section__heading">Counsellor and follow-up</h2>
+      <dl class="fact-list">
+        <div class="fact">
+          <dt>Assigned to</dt>
+          <dd>{{ enquiry.assignedCounsellorName }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Next follow-up</dt>
+          <dd>{{ enquiry.nextFollowUpDate ?? 'Closed — nothing scheduled' }}</dd>
+        </div>
+      </dl>
+
+      @if (canManage() && !reassigning()) {
+        <cb-button variant="secondary" (click)="startReassign()">Reassign</cb-button>
+      }
+
+      @if (reassigning()) {
+        <form class="reassign" [formGroup]="reassignForm" (ngSubmit)="submitReassign()">
+          <cb-form-field
+            #counsellorField
+            label="Assign to"
+            [required]="true"
+            [controlId]="'reassign-counsellor'"
+          >
+            <cb-select
+              formControlName="counsellorId"
+              [id]="counsellorField.controlId()"
+              [options]="counsellorOptions()"
+            />
+          </cb-form-field>
+
+          @if (counsellorsFailed()) {
+            <p class="reassign__note">The counsellor list could not be loaded.</p>
+          }
+
+          @if (reassignErrorMessage(); as message) {
+            <p class="reassign__error" role="alert">{{ message }}</p>
+          }
+
+          <div class="reassign__actions">
+            <cb-button
+              type="button"
+              variant="secondary"
+              [disabled]="reassignSaving()"
+              (click)="cancelReassign()"
+            >
+              Cancel
+            </cb-button>
+            <cb-button type="submit" [loading]="reassignSaving()">Save</cb-button>
+          </div>
+        </form>
+      }
+    </cb-card>
+  </div>
+
+  @if (canManage()) {
+    <cb-card class="section">
+      <h2 class="section__heading">Log a follow-up</h2>
+
+      @if (closed()) {
+        <p class="page-status">
+          This enquiry has already
+          {{ enquiry.status === 'CONVERTED' ? 'converted' : 'been marked lost' }} — there is nothing
+          left to follow up.
+        </p>
+      } @else {
+        <form class="follow-up-form" [formGroup]="followUpForm" (ngSubmit)="submitFollowUp()">
+          <cb-form-field
+            #noteField
+            label="What happened"
+            [required]="true"
+            class="follow-up-form__field--wide"
+            [controlId]="'follow-up-note'"
+          >
+            <cb-text-input
+              formControlName="note"
+              [id]="noteField.controlId()"
+              [describedBy]="noteField.describedById()"
+            />
+          </cb-form-field>
+
+          <cb-form-field
+            #nextDateField
+            label="Next follow-up"
+            hint="Leave as is, or clear it if you are closing the enquiry"
+            [controlId]="'follow-up-next-date'"
+          >
+            <cb-text-input
+              type="date"
+              formControlName="nextFollowUpDate"
+              [id]="nextDateField.controlId()"
+              [describedBy]="nextDateField.describedById()"
+            />
+          </cb-form-field>
+
+          <cb-form-field #resultField label="Move status to" [controlId]="'follow-up-result'">
+            <cb-select
+              formControlName="resultingStatus"
+              [id]="resultField.controlId()"
+              [options]="followUpResultOptions"
+            />
+          </cb-form-field>
+
+          @if (followUpErrorMessage(); as message) {
+            <p class="follow-up-form__error follow-up-form__field--wide" role="alert">
+              {{ message }}
+            </p>
+          }
+
+          <div class="follow-up-form__actions follow-up-form__field--wide">
+            <cb-button type="submit" [loading]="followUpSaving()">Log follow-up</cb-button>
+          </div>
+        </form>
+      }
+    </cb-card>
+  }
+
+  <cb-card class="section">
+    <h2 class="section__heading">Follow-up history</h2>
+
+    @if (followUps().length === 0) {
+      <p class="page-status">No follow-up logged yet.</p>
+    } @else {
+      <ol class="history">
+        @for (entry of followUps(); track entry.id) {
+          <li class="history__entry">
+            <p class="history__meta">
+              {{ entry.recordedByName }} · {{ entry.recordedAt }}
+              @if (entry.resultingStatusLabel) {
+                · moved to {{ entry.resultingStatusLabel }}
+              }
+            </p>
+            <p class="history__note">{{ entry.note }}</p>
+            @if (entry.nextFollowUpDate) {
+              <p class="history__next">Next follow-up: {{ entry.nextFollowUpDate }}</p>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </cb-card>
+}

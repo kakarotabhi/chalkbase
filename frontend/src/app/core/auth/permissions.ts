@@ -107,6 +107,17 @@ export const Permissions = {
   ATTENDANCE_MANAGE: 'attendance:mark:manage',
   /** Approving or rejecting a correction request. `AttendancePermissions.CORRECTION_APPROVE`. */
   ATTENDANCE_CORRECTION_APPROVE: 'attendance:correction:approve',
+
+  /**
+   * Seeing the enquiry list, one enquiry's detail and follow-up history, and the due-date
+   * follow-up queue. `AdmissionPermissions.ENQUIRY_READ`.
+   */
+  ADMISSION_ENQUIRY_READ: 'admission:enquiry:read',
+  /**
+   * Capturing an enquiry, assigning or reassigning its counsellor, and logging a follow-up.
+   * `AdmissionPermissions.ENQUIRY_MANAGE`.
+   */
+  ADMISSION_ENQUIRY_MANAGE: 'admission:enquiry:manage',
 } as const;
 
 /** One of the codes above. Nothing else may be passed to a permission check. */

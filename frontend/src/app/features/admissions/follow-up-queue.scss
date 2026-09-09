@@ -1,0 +1,263 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/page' as *;
+@use '../../../styles/banner' as *;
+
+.crumbs {
+  margin: 0 0 var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+
+  @include compact-only {
+    display: none;
+  }
+}
+
+.page-head {
+  margin-bottom: var(--cb-space-4);
+}
+
+.page-title {
+  @include page-title;
+
+  margin-bottom: var(--cb-space-1);
+}
+
+.page-subtitle,
+.page-status,
+.muted,
+.parent,
+.status,
+.due-date,
+.cell__label,
+.paging__position {
+  color: var(--cb-text-muted);
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.page-status {
+  @include page-status;
+}
+
+.banner {
+  @include banner-base;
+  @include banner-tones;
+
+  margin-bottom: var(--cb-space-4);
+}
+
+.banner__title {
+  @include banner-title;
+}
+
+.banner__action {
+  margin: var(--cb-space-3) 0 0;
+}
+
+.scope {
+  display: flex;
+  align-items: center;
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-4);
+}
+
+.scope__label {
+  font-size: var(--cb-font-size-sm);
+  color: var(--cb-text-muted);
+}
+
+// ── The list ───────────────────────────────────────────────────────────────
+
+.list__table {
+  display: block;
+  width: 100%;
+}
+
+.list__caption {
+  @include visually-hidden;
+}
+
+.list__head {
+  display: none;
+}
+
+tbody {
+  display: block;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'child'
+    'parent'
+    'class'
+    'counsellor'
+    'due';
+  gap: var(--cb-space-2);
+  margin-bottom: var(--cb-space-2);
+  padding: var(--cb-space-3) var(--cb-space-4);
+  background: var(--cb-surface-raised);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-md);
+}
+
+.cell {
+  display: block;
+  min-width: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.cell--child {
+  grid-area: child;
+}
+
+.cell--parent {
+  grid-area: parent;
+}
+
+.cell--class {
+  grid-area: class;
+}
+
+.cell--counsellor {
+  grid-area: counsellor;
+}
+
+.cell--due {
+  grid-area: due;
+}
+
+.cell__label {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.name {
+  display: inline-block;
+  min-height: var(--cb-touch-target-min);
+  padding: var(--cb-space-1) 0;
+  color: var(--cb-primary);
+  font-size: var(--cb-font-size-base);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--cb-radius-sm);
+    box-shadow: var(--cb-focus-ring);
+  }
+}
+
+.status,
+.parent {
+  display: block;
+  font-size: var(--cb-font-size-sm);
+}
+
+.phone {
+  font-family: var(--cb-font-numeric);
+}
+
+.due-date {
+  display: block;
+  margin-top: var(--cb-space-1);
+  font-size: var(--cb-font-size-sm);
+}
+
+// ── Paging ─────────────────────────────────────────────────────────────────
+
+.paging {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cb-space-3);
+  margin-top: var(--cb-space-4);
+
+  @include from-medium {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paging__position {
+  margin: 0;
+  font-size: var(--cb-font-size-sm);
+}
+
+.paging__buttons {
+  display: flex;
+  gap: var(--cb-space-3);
+
+  cb-button {
+    flex: 1;
+  }
+
+  @include from-medium {
+    cb-button {
+      flex: none;
+    }
+  }
+}
+
+// ── The table, from expanded up ────────────────────────────────────────────
+
+@include from-expanded {
+  .list {
+    overflow-x: auto;
+    background: var(--cb-surface-raised);
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius-md);
+  }
+
+  .list__table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .list__head {
+    display: table-header-group;
+
+    th {
+      padding: var(--cb-space-3) var(--cb-space-4);
+      background: var(--cb-surface);
+      font-size: var(--cb-font-size-sm);
+      color: var(--cb-text-muted);
+      text-align: left;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  .row {
+    display: table-row;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  .row > .cell {
+    display: table-cell;
+    padding: var(--cb-space-3) var(--cb-space-4);
+    border-top: 1px solid var(--cb-border);
+    vertical-align: top;
+  }
+
+  .cell__label {
+    @include visually-hidden;
+  }
+
+  .name {
+    min-height: 0;
+    padding: 0;
+  }
+}

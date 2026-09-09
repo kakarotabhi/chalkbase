@@ -893,3 +893,64 @@ export type CorrectionDecision = Schemas['CorrectionRequestResponse']['decision'
 
 /** An administrator's decision on a correction request: `APPROVED` or `REJECTED`, never `PENDING`. */
 export type DecideCorrectionRequest = Schemas['DecideCorrectionRequest'];
+/* ── Admissions: enquiry management (Phase 2, FR-016/017, /api/admissions/**) ─────────────
+ * Enquiry management only — capture, status, an assigned counsellor and the due-date follow-up
+ * queue. Not the online admission form, not the workflow past an enquiry's own four statuses, not
+ * student conversion: those are separate, later lanes (docs/requirements/08-phase-2-scope.md
+ * §"Admissions").
+ */
+
+/** Where a walk-in, phone call, website lead, referral, campaign or imported row came from (FR-016). */
+export type EnquirySource = Schemas['EnquirySummary']['source'];
+
+/**
+ * Where one enquiry stands, before it ever becomes an application. Four values, not FR-021's nine
+ * application stages — see the backend's `EnquiryStatus` for why those are a different, later
+ * lane's set: `NEW` (captured, nobody has followed up), `IN_PROGRESS` (at least one follow-up),
+ * `CONVERTED` (the family is going ahead — the pipeline's own arrow into "Application", not a
+ * student record created here) and `LOST` (will not be proceeding).
+ */
+export type EnquiryStatus = Schemas['EnquirySummary']['status'];
+
+/**
+ * One row of the enquiry list. `EnquirySummary` on the backend.
+ *
+ * `nextFollowUpDate` is absent once the enquiry has closed (`CONVERTED` or `LOST`) — never treat a
+ * missing date as "overdue by nothing"; it means there is nothing left to follow up on.
+ */
+export type EnquirySummary = Schemas['EnquirySummary'];
+
+/**
+ * One enquiry, in full, with its whole follow-up history. `EnquiryDetailResponse` on the backend.
+ */
+export type EnquiryDetailResponse = Schemas['EnquiryDetailResponse'];
+
+/** One entry of an enquiry's follow-up history — who, when, what was said, what happens next. */
+export type EnquiryFollowUpResponse = Schemas['EnquiryFollowUpResponse'];
+
+/**
+ * One row of the due-date follow-up queue — the list that makes this more than a mailbox.
+ * `EnquiryFollowUpQueueItem` on the backend.
+ *
+ * `nextFollowUpDate` is never absent here, unlike on `EnquirySummary`: the queue only ever returns
+ * an enquiry that still has one. `overdue` is true once that date is strictly before today; due
+ * today reads as due, not yet overdue.
+ */
+export type EnquiryFollowUpQueueItem = Schemas['EnquiryFollowUpQueueItem'];
+
+/**
+ * Capturing one enquiry (FR-016). `assignedCounsellorId` is required, not optional — an unassigned
+ * enquiry is the mailbox this feature exists to prevent.
+ */
+export type CreateEnquiryRequest = Schemas['CreateEnquiryRequest'];
+
+/** Assigns or reassigns the counsellor responsible for one enquiry's follow-up. */
+export type AssignCounsellorRequest = Schemas['AssignCounsellorRequest'];
+
+/**
+ * A counsellor's dated note against one enquiry (FR-017). `nextFollowUpDate` is required unless
+ * `resultingStatus` closes the enquiry (`CONVERTED` or `LOST`) — the backend rejects an open
+ * enquiry left with no next follow-up date (`ADM_004`). `resultingStatus` of `NEW` is rejected too
+ * (`ADM_003`): a follow-up can only move an enquiry forward or close it.
+ */
+export type LogFollowUpRequest = Schemas['LogFollowUpRequest'];

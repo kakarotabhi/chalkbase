@@ -8,7 +8,7 @@ or changes a module** — agents read it instead of scanning the whole backend.
 | `platform` | shared kernel: tenancy, security, error handling, navigation, paging, config, the `StorageService` storage port (ADR-0025), classification-driven CSV export (`platform.export`, ADR-0027). Owns `audit_event` (per tenant) — the audit log records every module, so putting it in one of them would make the rest depend on that one to be audited. Also owns `public.state` (ADR-0029) — global reference data, seeded once from `IndianStates.java`, not per tenant. | `/api/audit`, `/api/dashboard`, `/api/reference/states` | `audit_event` is; `state` (in `public`) is not | built, with its screen |
 | `school` | `public.school`, `public.school_group` (registry); `school_profile` (per tenant) | `/api/schools`, `/api/schools/bootstrap`, `/api/schools/boards`, `/api/school/profile` | registry is not; the profile is | built |
 | `identity` | `user_account`, `user_identifier`, `user_credential`, `permission`, `role`, `role_permission`, `user_role_grant` (per tenant); `public.spring_session` | `/api/auth/**`, `/api/access/**`, `/api/me` | yes | built |
-| `admission` | enquiries, applications, admission fees | `/api/admissions` | yes | planned |
+| `admission` | `enquiry`, `enquiry_follow_up` (per tenant) — enquiry management only; applications and admission fees still planned | `/api/admissions` | yes | enquiry capture, status, counsellor assignment, follow-up history and the due-date follow-up queue built (Phase 2, FR-016/017); the online admission form, the application workflow and student conversion are separate, later lanes |
 | `student` | `student`, `guardian`, `student_guardian`, `student_enrolment`, `student_contact`, `student_transfer`, `student_medical`, `student_compliance` (per tenant); alumni still planned | `/api/students/**`, `/api/guardians/**` | yes | students, guardians, enrolment, CSV import, the contact/previous-school/medical/compliance sections, and masked/unmasked CSV export ([ADR-0027](adr/0027-export-masking.md)) built |
 | `document` | `document` (per tenant) — a student's certificates, photo, signature and other documents; bytes held behind `platform`'s `StorageService`, not in this table (ADR-0025) | `/api/documents/**` | yes | port, module and student attachment built; renewal reminders and Restricted-category document types deliberately not built |
 | `staff` | staff records, qualifications, leave | `/api/staff` | yes | planned |
@@ -123,3 +123,13 @@ domain data, not audit rows, and ADR-0018 §3 already rules out storing a value 
 so "who did this" has to live on the record itself, and `platform.security.CurrentUser` is what
 gets a module a plain `UUID` for that without importing `identity`, the same way
 `user_account.password_reset_by` already does one module over.
+
+`admission` reaches `academics.api.AcademicsLookup` the same read-only way `attendance` does, to
+resolve the class an enquiry names, and adds a new interface of the same shape on the other side:
+`identity.api.IdentityLookup`, the first time a feature module has needed to point at a **staff**
+account rather than a student or an academic structure — an enquiry names an assigned counsellor,
+and this is how `admission` answers "who is that" and "can this account still be assigned
+something" without importing `identity` or joining `user_account`. It answers no more than
+`UserSummary` already discloses at `GET /api/access/users`, so it carries no permission of its
+own — the caller's own module permission gates it, same as every other lookup interface in this
+table.

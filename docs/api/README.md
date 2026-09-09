@@ -107,6 +107,10 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `ATT_006` | 409 | This correction request has already been decided. |
 | `ATT_007` | 409 | This student already has a mark for that date (a concurrent-write race; the API's own upsert should not reach this). |
 | `ATT_008` | 409 | This school has not set a current academic session yet. |
+| `ADM_001` | 409 | A follow-up was logged against an enquiry already Converted or Lost. |
+| `ADM_002` | 422 | The account named as counsellor is not an active user of this school. |
+| `ADM_003` | 400 | A follow-up tried to set an enquiry's status back to New. |
+| `ADM_004` | 400 | A follow-up left an enquiry open (New or In progress) with no next follow-up date. |
 
 `AUTH_001` is returned for both a wrong password and an unknown user, deliberately — distinguishing
 them turns the login form into a way to discover which parents are registered.

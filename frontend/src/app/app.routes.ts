@@ -121,6 +121,36 @@ export const routes: Routes = [
             (m) => m.AttendanceCorrections,
           ),
       },
+      // Admissions: enquiry management only (Phase 2, FR-016/017). No guard on any of the three,
+      // same reasoning as academics and attendance above: the endpoints enforce
+      // `admission:enquiry:read` / `admission:enquiry:manage` on their own, and each screen's menu
+      // item is already withheld from anyone without it.
+      //
+      // The container lands on the enquiry list — a front office's daily work, not the follow-up
+      // queue a counsellor visits with a narrower question already in mind. **Order matters**:
+      // `admissions/enquiries` is declared before `admissions/enquiries/:id`, the same reason
+      // `students/guardians` precedes `students/:id` above.
+      { path: 'admissions', pathMatch: 'full', redirectTo: 'admissions/enquiries' },
+      {
+        path: 'admissions/enquiries',
+        pathMatch: 'full',
+        title: 'Enquiries · Chalkbase',
+        loadComponent: () =>
+          import('./features/admissions/enquiry-list').then((m) => m.EnquiryList),
+      },
+      {
+        path: 'admissions/enquiries/:id',
+        // "Enquiry", never the child's name — the same reasoning `students/:id` gives.
+        title: 'Enquiry · Chalkbase',
+        loadComponent: () =>
+          import('./features/admissions/enquiry-detail').then((m) => m.EnquiryDetail),
+      },
+      {
+        path: 'admissions/follow-ups',
+        title: 'Follow-up queue · Chalkbase',
+        loadComponent: () =>
+          import('./features/admissions/follow-up-queue').then((m) => m.FollowUpQueue),
+      },
       // Students, and the record behind them (ADR-0020). No guard on any of the three, for the
       // same reason the audit log has none: ADR-0008 puts authorization on the server, and a
       // `canActivate` checking `student:student:read` would be a second copy of it.

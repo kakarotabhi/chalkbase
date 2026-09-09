@@ -90,6 +90,16 @@ class AccessControlTests {
     private static final String STUDENT_REVEAL_RESTRICTED = "student:student:reveal_restricted";
 
     /**
+     * The admission module's grants (Phase 2, FR-016/017): {@code admission:} sorts between
+     * {@code academics:} and {@code attendance:} — {@code d} follows {@code c} at the second
+     * character against {@code academics}, and precedes {@code t} at the same position against
+     * {@code attendance} — the same widening this file's other comments describe, said once more.
+     */
+    private static final String ADMISSION_MANAGE = "admission:enquiry:manage";
+
+    private static final String ADMISSION_READ = "admission:enquiry:read";
+
+    /**
      * ADR-0030's grants: {@code attendance:} sorts between {@code academics:} and
      * {@code document:} ({@code attendance} loses to {@code academics} at the third character, and
      * beats {@code document} at the first) — the same widening this file's other comments describe,
@@ -179,6 +189,8 @@ class AccessControlTests {
                             SESSION_READ,
                             SUBJECT_MANAGE,
                             SUBJECT_READ,
+                            ADMISSION_MANAGE,
+                            ADMISSION_READ,
                             ATTENDANCE_CORRECTION_APPROVE,
                             ATTENDANCE_MANAGE,
                             ATTENDANCE_READ,
@@ -227,6 +239,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ADMISSION_MANAGE,
+                        ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
@@ -249,6 +263,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ADMISSION_MANAGE,
+                        ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
@@ -298,6 +314,8 @@ class AccessControlTests {
                         SESSION_READ,
                         SUBJECT_MANAGE,
                         SUBJECT_READ,
+                        ADMISSION_MANAGE,
+                        ADMISSION_READ,
                         ATTENDANCE_CORRECTION_APPROVE,
                         ATTENDANCE_MANAGE,
                         ATTENDANCE_READ,
@@ -413,6 +431,8 @@ class AccessControlTests {
                                 CLASS_READ,
                                 CLASS_MANAGE,
                                 SUBJECT_READ,
+                                ADMISSION_MANAGE,
+                                ADMISSION_READ,
                                 ATTENDANCE_READ,
                                 ATTENDANCE_MANAGE,
                                 ATTENDANCE_CORRECTION_APPROVE,

@@ -1,0 +1,159 @@
+<form class="form" [formGroup]="form" (ngSubmit)="submit()">
+  <h2 class="form__heading">Capture an enquiry</h2>
+
+  <div class="form__grid">
+    <cb-form-field
+      #childNameField
+      label="Child's name"
+      [required]="true"
+      [controlId]="controlId['childFullName']"
+      [error]="fieldError('childFullName')"
+    >
+      <cb-text-input
+        formControlName="childFullName"
+        autocomplete="off"
+        [id]="childNameField.controlId()"
+        [describedBy]="childNameField.describedById()"
+        [invalid]="childNameField.hasError()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #dobField
+      label="Date of birth"
+      hint="If known"
+      [controlId]="controlId['childDateOfBirth']"
+      [error]="fieldError('childDateOfBirth')"
+    >
+      <cb-text-input
+        type="date"
+        formControlName="childDateOfBirth"
+        [id]="dobField.controlId()"
+        [describedBy]="dobField.describedById()"
+        [invalid]="dobField.hasError()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #classField
+      label="Interested class"
+      [controlId]="controlId['interestedClassId']"
+      [error]="fieldError('interestedClassId')"
+    >
+      <cb-select
+        formControlName="interestedClassId"
+        [id]="classField.controlId()"
+        [options]="classOptions()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #sourceField
+      label="Source"
+      [required]="true"
+      [controlId]="controlId['source']"
+      [error]="fieldError('source')"
+    >
+      <cb-select
+        formControlName="source"
+        [id]="sourceField.controlId()"
+        [options]="sourceOptions"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #parentNameField
+      label="Parent or guardian's name"
+      [required]="true"
+      [controlId]="controlId['parentName']"
+      [error]="fieldError('parentName')"
+    >
+      <cb-text-input
+        formControlName="parentName"
+        autocomplete="off"
+        [id]="parentNameField.controlId()"
+        [describedBy]="parentNameField.describedById()"
+        [invalid]="parentNameField.hasError()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #parentPhoneField
+      label="Parent's phone"
+      [required]="true"
+      [controlId]="controlId['parentPhone']"
+      [error]="fieldError('parentPhone')"
+    >
+      <cb-text-input
+        type="tel"
+        formControlName="parentPhone"
+        autocomplete="off"
+        inputmode="tel"
+        [id]="parentPhoneField.controlId()"
+        [describedBy]="parentPhoneField.describedById()"
+        [invalid]="parentPhoneField.hasError()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #parentEmailField
+      label="Parent's email"
+      hint="If given"
+      [controlId]="controlId['parentEmail']"
+      [error]="fieldError('parentEmail')"
+    >
+      <cb-text-input
+        type="email"
+        formControlName="parentEmail"
+        autocomplete="off"
+        [id]="parentEmailField.controlId()"
+        [describedBy]="parentEmailField.describedById()"
+        [invalid]="parentEmailField.hasError()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #counsellorField
+      label="Assign to"
+      [required]="true"
+      hint="Who follows this up"
+      [controlId]="controlId['assignedCounsellorId']"
+      [error]="fieldError('assignedCounsellorId')"
+    >
+      <cb-select
+        formControlName="assignedCounsellorId"
+        [id]="counsellorField.controlId()"
+        [options]="counsellorOptions()"
+      />
+    </cb-form-field>
+
+    <cb-form-field
+      #remarksField
+      label="Notes"
+      hint="Anything worth recording from this first contact"
+      class="form__field--wide"
+      [controlId]="controlId['remarks']"
+      [error]="fieldError('remarks')"
+    >
+      <cb-text-input
+        formControlName="remarks"
+        [id]="remarksField.controlId()"
+        [describedBy]="remarksField.describedById()"
+        [invalid]="remarksField.hasError()"
+      />
+    </cb-form-field>
+  </div>
+
+  @if (failureCode() && hasNoFieldErrors()) {
+    <p class="form__banner banner--danger" role="alert">
+      Could not save this enquiry. Check the fields above and try again.
+    </p>
+  }
+
+  <div class="form__actions">
+    <cb-button type="button" variant="secondary" [disabled]="saving()" (click)="cancel()">
+      Cancel
+    </cb-button>
+    <cb-button type="submit" [loading]="saving()">Add enquiry</cb-button>
+  </div>
+</form>

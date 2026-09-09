@@ -106,6 +106,14 @@ export const APP_NAV_ROUTES: ReadonlyMap<string, NavRoute> = new Map<string, Nav
   ['attendance', { path: '/attendance', icon: 'attendance' }],
   ['attendance.mark', { path: '/attendance/mark', icon: 'attendance' }],
   ['attendance.corrections', { path: '/attendance/corrections', icon: 'attendance' }],
+
+  // Admissions (Phase 2): enquiry management only — FR-016, FR-017. Both screens share the one
+  // glyph, the same convention as every other section above; the container needs its own entry for
+  // the same reason every other container does — `NavigationStore` drops an unresolvable id along
+  // with its children.
+  ['admissions', { path: '/admissions', icon: 'admissions' }],
+  ['admissions.enquiries', { path: '/admissions/enquiries', icon: 'admissions' }],
+  ['admissions.follow_ups', { path: '/admissions/follow-ups', icon: 'admissions' }],
 ]);
 
 /**

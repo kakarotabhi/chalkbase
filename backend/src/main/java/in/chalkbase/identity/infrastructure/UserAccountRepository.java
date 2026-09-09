@@ -36,4 +36,10 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, UUID> 
     @Query("select a.id from UserAccount a where a.id in :accountIds and a.status = :status")
     List<UUID> findIdsByIdInAndStatus(
             @Param("accountIds") Iterable<UUID> accountIds, @Param("status") AccountStatus status);
+
+    /**
+     * Every account this school could still assign something to, by name — {@code IdentityLookupService}'s
+     * whole answer for {@code IdentityLookup.activeUsers()}.
+     */
+    List<UserAccount> findByStatusOrderByDisplayNameAsc(AccountStatus status);
 }
