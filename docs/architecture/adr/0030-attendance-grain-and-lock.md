@@ -118,6 +118,81 @@ their cost.
 - **No 75% eligibility report.** A session-scoped setting and a report over it — out of scope for
   this lane, noted so it is not mistaken for forgotten.
 
+## Leave requests: how an approval reaches the register, resolved 2026-09-09
+
+FR-047 asks for leave applications with an approval step. Phase 2's own scope document names the
+trap directly: "a request form that captures dates and a reason looks done without an approval
+step, or — more subtly — an approval step that never touches the attendance record it is meant to
+explain." `EXCUSED_LEAVE` already exists as one of the six statuses this ADR's Decision section
+settles on; an approved leave request that does not connect to it is that second, disconnected
+ledger.
+
+**The connection is a read, made when a section's register is opened for the covered date — not a
+write made when the request is approved.** `attendance_leave_request` is a new table (its own
+migration, `V2026_09_09_0143`), with no foreign key to `attendance_mark` in either direction.
+Approving a request never inserts or updates a mark. Instead, `AttendanceMarkingService.view` —
+and therefore `mark`, which calls the same builder for its own response — reads
+`attendance_leave_request` for the section's roster and the date opened, and offers
+`AttendanceStudentMark.approvedLeave` as a signal the marking screen uses to default an unmarked
+student to `EXCUSED_LEAVE`. The teacher's own save is still the only thing that writes
+`attendance_mark`, and a teacher who sees the signal and marks the student `PRESENT` anyway — the
+child came after all — is not overridden by anything here.
+
+**Why not write the mark at approval time.** Two provisions this ADR and its sibling DTOs already
+settle make it the wrong shape, not merely an alternative one:
+
+- `MarkAttendanceRequest.attendanceDate` is `@PastOrPresent`, and `AttendanceErrorCode.FUTURE_DATE_NOT_ALLOWED`
+  is the service-level twin of that refusal. A leave request is advance notice, most often of a date
+  that has not happened yet; writing a mark for it at approval time means writing a mark for a
+  future date, which every other path into this table refuses.
+- `AttendanceMarkingService.mark` validates every entry against `StudentLookup.rosterOfSection`
+  **as of the day marked** — a roster that can genuinely change before the date arrives (a student
+  moves section, or leaves the school). Writing a mark at approval time commits to a roster that is
+  not yet the fact of record.
+
+A read made at the moment marking actually happens has neither problem: the date being read for is,
+by construction, the date the roster and the lock window are both being evaluated against already.
+
+**Why a read rather than nothing (the "mailbox" failure).** A leave request that only ever sits in
+its own table, checked by nobody marking a register, is exactly the disconnected ledger Phase 2's
+scope document warns about — a form with an approval step that produces a fact nobody downstream
+ever reads. The read is what makes the approval visible where it matters, on the register itself,
+without asking this module to predict a future roster or pre-empt a teacher's own judgment on the
+day.
+
+**A backdated leave request is refused, not routed anywhere.** `AttendanceErrorCode.LEAVE_DATE_IN_PAST`
+refuses a `startDate` before today outright. This module already has an approval workflow for a day
+that has already happened — `attendance_correction_request`, decided by
+`AttendanceCorrectionService` — and a leave request for a past date is a request about a day that
+either already has a mark (a correction is the right tool) or does not yet (in which case the
+school marks the day honestly first, then corrects it if the absence should read as excused). Adding
+a second approval mechanism that reaches the same outcome by a different name is the "module becomes
+unmaintainable" failure `AGENTS.md`'s own conventions warn against, so this lane does not build one:
+one date range in the future, one decision, one place a correction is ever requested from.
+
+**A locked day.** Ordinarily an approved leave request is acted on before its date locks — the
+teacher opens the register some time before end-of-day-plus-24h and either accepts the
+`EXCUSED_LEAVE` default or marks otherwise. If nobody opens the register at all before the window
+closes, the day locks with that student simply unmarked, exactly as it would for any student on any
+day nobody marked — this lane adds no scheduled job to write a mark on a school's behalf, the same
+restraint ADR-0030's own lock already keeps ("computed from `LocalDate.now()` ... nothing to drift
+out of step with the clock"). A day that locks unmarked already needed a human to notice and act;
+an approved leave request does not change who that is or invent a job to replace them. If it is
+later noticed and needs a record, the correction-request workflow is what creates one, the same as
+any other missed mark.
+
+**Who may request, who may approve, and why a parent slots in later without reshaping the record.**
+`ScopeType.WARD` is deliberately unassignable (see `RoleTemplates`' own note on `PARENT` holding no
+permissions yet), so nobody requests a leave as a parent today — `attendance_leave_request.requested_by`
+is always a staff `user_account`, someone acting on a parent's behalf, the same shape
+`attendance_mark.marked_by` already has. Nothing about the table or the DTO shape needs to change
+when a parent gets a login of their own: `requested_by` stays "whoever's account filed this",
+whether that account belongs to a class teacher today or, later, to a guardian with a `WARD`-scoped
+session of their own — a new caller of the same `POST .../leave-requests` endpoint, not a new column.
+`AttendancePermissions.LEAVE_REQUEST` and `LEAVE_APPROVE` are two permissions, not one — see that
+class's own Javadoc for why a school may reasonably want to let staff file without letting the same
+staff decide, and `RoleTemplates`' note on why `CLASS_TEACHER` holds both today regardless.
+
 ## Consequences
 
 - `attendance_mark` and `attendance_correction_request` are per-tenant, owned by the new
@@ -132,3 +207,7 @@ their cost.
 - A correction changes two rows in one transaction: the request (decided) and the mark (corrected),
   each with its own audit entry. Approving is the only path that writes a mark's `status` once its
   edit window has closed — `AttendanceCorrectionService`, never `AttendanceMarkingService`.
+- `attendance_leave_request` is a third per-tenant table, also owned by `attendance`, also reaching
+  `academics` and `student` only through their named interfaces. Deciding one changes exactly one
+  row — see the amendment above for why that is one audit entry rather than the two a correction's
+  decision produces.

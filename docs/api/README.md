@@ -107,6 +107,9 @@ Cross-cutting codes come from `PlatformErrorCode`; each module declares its own.
 | `ATT_006` | 409 | This correction request has already been decided. |
 | `ATT_007` | 409 | This student already has a mark for that date (a concurrent-write race; the API's own upsert should not reach this). |
 | `ATT_008` | 409 | This school has not set a current academic session yet. |
+| `ATT_009` | 400 | A leave request's end date is before its start date. |
+| `ATT_010` | 400 | A leave request must start today or later; a past date needs a correction request instead. |
+| `ATT_011` | 409 | This leave request has already been decided. |
 | `ADM_001` | 409 | A follow-up was logged against an enquiry already Converted or Lost. |
 | `ADM_002` | 422 | The account named as counsellor is not an active user of this school. |
 | `ADM_003` | 400 | A follow-up tried to set an enquiry's status back to New. |
