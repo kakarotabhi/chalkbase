@@ -52,6 +52,12 @@ public final class RoleTemplates {
     private static final String ATTENDANCE_CORRECTION_APPROVE = "attendance:correction:approve";
     private static final String ENQUIRY_READ = "admission:enquiry:read";
     private static final String ENQUIRY_MANAGE = "admission:enquiry:manage";
+    private static final String FEE_HEAD_READ = "fee:head:read";
+    private static final String FEE_HEAD_MANAGE = "fee:head:manage";
+    private static final String FEE_CONCESSION_TYPE_READ = "fee:concession_type:read";
+    private static final String FEE_CONCESSION_TYPE_MANAGE = "fee:concession_type:manage";
+    private static final String FEE_STRUCTURE_READ = "fee:structure:read";
+    private static final String FEE_STRUCTURE_MANAGE = "fee:structure:manage";
 
     /**
      * Note what no template holds: {@code school:school:create}. Onboarding a campus creates a
@@ -143,6 +149,20 @@ public final class RoleTemplates {
      * both of them: a head of school can reassign or follow up any enquiry, not because they run the
      * front desk day to day, but because nothing here is scoped narrower than the school yet and an
      * override with no narrower grant to fall back on has to be the wide one.
+     * <p>{@code fee:*} (ADR-0012, ADR-0033) splits three ways rather than following
+     * {@code STUDENT_READ}/{@code STUDENT_MANAGE}'s two: {@code PRINCIPAL} and
+     * {@code VICE_PRINCIPAL} hold every one of the six, the same reach they already have over
+     * classes and subjects, because a fee head, a concession type and a fee structure are all
+     * decisions about how the school runs. {@code ACCOUNTANT} holds both fee head permissions and
+     * both structure permissions — "fees, receipts and the day book" is literally this template's
+     * description — but only {@code FEE_CONCESSION_TYPE_READ}, not manage: defining what a
+     * concession type <em>means</em> for this school (whether RTE/EWS tagging exists as a category,
+     * whether a management-quota waiver needs approval) is a policy decision this build reserves to
+     * the two templates that already decide policy elsewhere, not a variant of the day-to-day fee
+     * work the accountant already does with the other four. {@code ADMISSION_COUNSELLOR} holds
+     * {@code FEE_HEAD_READ} and {@code FEE_STRUCTURE_READ} only — answering "what does Nursery
+     * cost" is part of counselling a prospective parent, and nothing here lets that role change a
+     * price or define a waiver.
      */
     private static final List<RoleTemplate> TEMPLATES = List.of(
             new RoleTemplate(
@@ -171,7 +191,13 @@ public final class RoleTemplates {
                     ATTENDANCE_MANAGE,
                     ATTENDANCE_CORRECTION_APPROVE,
                     ENQUIRY_READ,
-                    ENQUIRY_MANAGE),
+                    ENQUIRY_MANAGE,
+                    FEE_HEAD_READ,
+                    FEE_HEAD_MANAGE,
+                    FEE_CONCESSION_TYPE_READ,
+                    FEE_CONCESSION_TYPE_MANAGE,
+                    FEE_STRUCTURE_READ,
+                    FEE_STRUCTURE_MANAGE),
             new RoleTemplate(
                     "VICE_PRINCIPAL",
                     "Vice Principal",
@@ -195,7 +221,13 @@ public final class RoleTemplates {
                     ATTENDANCE_MANAGE,
                     ATTENDANCE_CORRECTION_APPROVE,
                     ENQUIRY_READ,
-                    ENQUIRY_MANAGE),
+                    ENQUIRY_MANAGE,
+                    FEE_HEAD_READ,
+                    FEE_HEAD_MANAGE,
+                    FEE_CONCESSION_TYPE_READ,
+                    FEE_CONCESSION_TYPE_MANAGE,
+                    FEE_STRUCTURE_READ,
+                    FEE_STRUCTURE_MANAGE),
             new RoleTemplate(
                     "CLASS_TEACHER",
                     "Class Teacher",
@@ -235,7 +267,12 @@ public final class RoleTemplates {
                     "Fees, receipts and the day book.",
                     SCHOOL_READ,
                     STUDENT_READ,
-                    GUARDIAN_READ),
+                    GUARDIAN_READ,
+                    FEE_HEAD_READ,
+                    FEE_HEAD_MANAGE,
+                    FEE_CONCESSION_TYPE_READ,
+                    FEE_STRUCTURE_READ,
+                    FEE_STRUCTURE_MANAGE),
             new RoleTemplate(
                     "ADMISSION_COUNSELLOR",
                     "Admission Counsellor",
@@ -251,7 +288,9 @@ public final class RoleTemplates {
                     DOCUMENT_READ,
                     DOCUMENT_MANAGE,
                     ENQUIRY_READ,
-                    ENQUIRY_MANAGE),
+                    ENQUIRY_MANAGE,
+                    FEE_HEAD_READ,
+                    FEE_STRUCTURE_READ),
             new RoleTemplate("LIBRARIAN", "Librarian", "The catalogue, issues, returns and fines.", SCHOOL_READ),
             new RoleTemplate(
                     "TRANSPORT_MANAGER",
