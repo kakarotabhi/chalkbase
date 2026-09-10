@@ -169,6 +169,65 @@ describe('Login', () => {
     httpMock.expectNone('/api/auth/login');
   });
 
+  it('recovers as soon as the form is edited, without a reload, after a lockout (AUTH_003)', () => {
+    signIn();
+
+    httpMock.expectOne('/api/auth/login').flush(
+      {
+        success: false,
+        timestamp: '2026-09-05T10:00:00Z',
+        error: { code: AUTH_ERROR.ACCOUNT_LOCKED, message: 'Locked.' },
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    fixture.detectChanges();
+
+    expect(submitButton().disabled).toBe(true);
+
+    // A different person walks up to the same shared computer and types their own username. The
+    // stale lockout — for an account that is not theirs — must not stop them from signing in.
+    type('login-username', 'principal');
+
+    expect(submitButton().disabled).toBe(false);
+    expect(text()).not.toContain('Account locked');
+    expect(element().querySelector('.banner')).toBeNull();
+  });
+
+  it('lets a resubmit of the same locked account reach the server again, honestly, rather than blocking silently', () => {
+    signIn();
+
+    httpMock.expectOne('/api/auth/login').flush(
+      {
+        success: false,
+        timestamp: '2026-09-05T10:00:00Z',
+        error: { code: AUTH_ERROR.ACCOUNT_LOCKED, message: 'Locked.' },
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    fixture.detectChanges();
+
+    // Retype the same still-locked username. Editing clears the disable, so this reaches the
+    // server instead of being silently refused — that is what caused the original bug.
+    type('login-username', 'priya.sharma');
+    expect(submitButton().disabled).toBe(false);
+
+    element().querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/auth/login').flush(
+      {
+        success: false,
+        timestamp: '2026-09-05T10:00:00Z',
+        error: { code: AUTH_ERROR.ACCOUNT_LOCKED, message: 'Locked.' },
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('Account locked');
+    expect(submitButton().disabled).toBe(true);
+  });
+
   it('points an unknown school code at the field that is wrong (AUTH_005)', () => {
     signIn();
 

@@ -4,11 +4,17 @@ import {
   DestroyRef,
   ElementRef,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValueChangeEvent,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { apiErrorCode } from '../../../core/api/api-error';
 import { AUTH_ERROR, AuthApi } from '../../../core/api/auth-api';
@@ -77,6 +83,24 @@ export class Login {
   // Reactive forms are not signals, so nothing below would recompute on touch or status changes
   // without something to depend on. `form.events` is that something.
   private readonly formEvents = toSignal(this.form.events, { initialValue: null });
+
+  /**
+   * The banner and the lockout describe the credentials that were submitted, not whatever is in
+   * the fields now — so the moment any field is edited, that result no longer applies. This is
+   * what a shared school-office computer needs: one person fails their password three times, the
+   * next person types their own username, and the form must not still be refusing *them* with
+   * someone else's "Account locked". Any field clears it, not just the username, because a school
+   * code or password edit is just as much a different attempt as a username edit is.
+   *
+   * This does not weaken the lockout. If the same locked account is retyped and submitted, the
+   * server says AUTH_003 again and the button disables again — honest, rather than silently
+   * refusing forever with no way to find out the account had actually been unlocked.
+   */
+  private readonly clearStaleFailureOnEdit = effect(() => {
+    if (this.formEvents() instanceof ValueChangeEvent) {
+      this.failureCode.set(null);
+    }
+  });
 
   protected readonly isLocked = computed(() => this.failureCode() === AUTH_ERROR.ACCOUNT_LOCKED);
 
