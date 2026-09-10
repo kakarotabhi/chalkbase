@@ -46,3 +46,12 @@ docs/artifacts/*.html
 # Supabase CLI scratch state — a linked-project ref, written by whichever project you last
 # linked. Machine-local, not a property of the repository.
 supabase/.temp/
+
+# Playwright MCP writes a page snapshot per interaction while a screen is being driven in a
+# browser. They are a byproduct of a verification session, not a fixture, and fourteen of them
+# reached main before anyone noticed.
+.playwright-mcp/
+
+# Agent worktrees. Running several agents at once puts a checkout of each branch under here; the
+# branches themselves are pushed, so nothing is lost when these are removed.
+.claude/worktrees/
