@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 /**
  * Mirroring a list screen's filters and page into the URL, the way every list in this app does it.
  *
- * Lives here rather than beside one feature because seven screens now do this — the student list,
+ * Lives here rather than beside one feature because six screens now do this — the student list,
  * the guardian directory, leave requests, enquiries, circulars, and the audit log — and the two
- * rules below are exactly the sort of thing that must not be got slightly differently seven times:
+ * rules below are exactly the sort of thing that must not be got slightly differently six times:
  * one screen that pushes a history entry per keystroke, or one that writes `?status=` instead of
  * dropping the key, would work today and read as broken the first time someone actually uses the
  * back button.
