@@ -459,7 +459,10 @@ describe('SchoolClasses', () => {
       expect(dialog()?.textContent).toContain('Stop running A of Class 1?');
       expect(dialog()?.textContent).toContain('will not appear in Mark attendance');
       expect(dialog()?.textContent).toContain('If any students are currently enrolled in it');
-      expect(dialog()?.textContent).not.toMatch(/\d/);
+      // Not a bare "no digits" check: the fixture's own class name, "Class 1", has one. What must
+      // be absent is the class dialog's count-bearing phrasing — a number standing next to
+      // "student(s) is/are currently enrolled" — not literally every digit anywhere in the dialog.
+      expect(dialog()?.textContent).not.toMatch(/\d+\s+students?\s+(is|are)\s+currently enrolled/);
       httpMock.expectNone({ url: `${SECTIONS_URL}/sec-1-a`, method: 'PUT' });
     });
 
