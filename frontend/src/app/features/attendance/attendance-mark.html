@@ -102,8 +102,12 @@
       <div>
         <strong class="banner__title">This date is locked</strong>
         <span>
-          It is more than a day old, so a mark can no longer be changed directly. Request a
-          correction on the student who needs one instead.
+          @if (hasAnyMark()) {
+            It is more than a day old, so a mark can no longer be changed directly. Request a
+            correction on the student who needs one instead.
+          } @else {
+            It is more than a day old, and nobody was marked on it. It can no longer be marked.
+          }
         </span>
       </div>
     </div>

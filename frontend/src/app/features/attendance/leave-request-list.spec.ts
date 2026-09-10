@@ -92,6 +92,21 @@ describe('LeaveRequestList', () => {
     expect(text()).toContain('New leave request');
   });
 
+  it('renders the date range as a school reads it, not the raw yyyy-MM-dd values', () => {
+    signInWith(Permissions.ATTENDANCE_LEAVE_READ);
+    fixture = TestBed.createComponent(LeaveRequestList);
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne((candidate) => candidate.url === LIST_URL)
+      .flush(envelope(page([request()])));
+    fixture.detectChanges();
+
+    expect(text()).toContain('10 Sept 2026 – 12 Sept 2026');
+    expect(text()).not.toContain('2026-09-10');
+    expect(text()).not.toContain('2026-09-12');
+  });
+
   it('hides "New leave request" for a caller who cannot file one', () => {
     signInWith(Permissions.ATTENDANCE_LEAVE_READ);
     fixture = TestBed.createComponent(LeaveRequestList);

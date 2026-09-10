@@ -23,7 +23,8 @@ already saved is still there.
 
 A day's attendance locks automatically once it is more than a day old — end of that school day, plus
 24 hours. After that you cannot change a mark directly; you will see a lock notice next to it
-instead, with a **Request a correction** action.
+instead, with a **Request a correction** action. If a day was never marked at all, there is nothing
+to correct — the banner says so plainly, and that day can no longer be marked.
 
 1. Select **Request a correction** next to the student whose mark needs fixing.
 2. Choose what it should have been, and say why in a sentence or two — this goes to whoever approves
