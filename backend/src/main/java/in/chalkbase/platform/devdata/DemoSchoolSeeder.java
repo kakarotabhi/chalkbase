@@ -41,13 +41,18 @@ import org.springframework.stereotype.Component;
  *
  * <p><strong>It is idempotent, and by default it will not touch a school it did not create.</strong>
  * The first thing it does is ask the API whether {@link #SCHOOL_CODE} is already registered. If it
- * is, it logs one line and returns — unless {@value #TOP_UP_PROPERTY} is set, in which case it signs
- * in and tops the roster up to {@link DemoRoster#TOTAL_CHILDREN} instead of skipping outright. See
+ * is, the roster is left alone unless {@value #TOP_UP_PROPERTY} is set, in which case it signs in
+ * and tops the roster up to {@link DemoRoster#TOTAL_CHILDREN} instead of skipping outright. See
  * {@link #topUp} for why that is a top-up and not a second seed: it imports only the children beyond
  * however many the school already has, so restarting with the property left on twenty times still
  * leaves the roster at {@link DemoRoster#TOTAL_CHILDREN}, not twenty times that. Nothing here
  * updates, deletes or repairs a student that is already there; a developer who wants the demo school
- * rebuilt from nothing drops the schema and the registry row by hand, deliberately.
+ * rebuilt from nothing drops the schema and the registry row by hand, deliberately. Attendance
+ * history is the one thing that is <em>not</em> gated behind {@value #TOP_UP_PROPERTY}: an
+ * already-registered school still gets {@link #refreshAttendanceHistory} called on every restart,
+ * because it is cheap (one read per section, one skipped insert per mark already on file) and
+ * keeping the last few weeks recent is not the kind of choice growing the roster is — see
+ * {@link #seedAttendanceHistory}.
  *
  * <p><strong>Why a school with the smaller, pre-ADR-0021 roster can exist at all.</strong> The
  * shared Supabase project every `local` developer points at already had {@link #SCHOOL_CODE}
@@ -133,6 +138,15 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
      */
     private static final String PASSWORD = "Chalkbase@2026";
 
+    /**
+     * How many school days of attendance history {@link #seedAttendanceHistory} backfills for every
+     * section. Roughly a month of the working week — enough that a student's history screen shows a
+     * pattern rather than one dot, and enough locked days that the correction-request workflow
+     * (ADR-0030) always has something to file against, without seeding so much that a fresh school
+     * takes noticeably longer to boot.
+     */
+    private static final int ATTENDANCE_HISTORY_SCHOOL_DAYS = 20;
+
     private static final Logger log = LoggerFactory.getLogger(DemoSchoolSeeder.class);
 
     /**
@@ -191,19 +205,32 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
                         DemoRoster.TOTAL_CHILDREN,
                         TOP_UP_PROPERTY,
                         SCHOOL_SCHEMA);
-                return;
+            } else {
+                try {
+                    topUp(api);
+                } catch (RuntimeException ex) {
+                    // Same reasoning as the fresh-seed catch below: not fatal, and the next start (with the
+                    // property still set) picks up wherever the student count actually landed, because
+                    // admit(...) below is keyed on that count rather than on a flag saying "done".
+                    log.error(
+                            "Topping up demo school {}'s roster failed. The next start with {}=true will pick up"
+                                    + " wherever the student count actually landed.",
+                            SCHOOL_CODE,
+                            TOP_UP_PROPERTY,
+                            ex);
+                }
             }
             try {
-                topUp(api);
+                // Unlike the roster above, this is not behind TOP_UP_PROPERTY: see
+                // refreshAttendanceHistory for why keeping attendance history recent is not the same
+                // kind of choice as growing the roster is.
+                refreshAttendanceHistory(api);
             } catch (RuntimeException ex) {
-                // Same reasoning as the fresh-seed catch below: not fatal, and the next start (with the
-                // property still set) picks up wherever the student count actually landed, because
-                // admit(...) below is keyed on that count rather than on a flag saying "done".
                 log.error(
-                        "Topping up demo school {}'s roster failed. The next start with {}=true will pick up"
-                                + " wherever the student count actually landed.",
+                        "Refreshing demo school {}'s attendance history failed. The next start will retry — "
+                                + "seeded marks are written with `on conflict ... do nothing`, so nothing already"
+                                + " on file is at risk.",
                         SCHOOL_CODE,
-                        TOP_UP_PROPERTY,
                         ex);
             }
             return;
@@ -304,8 +331,15 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         UUID sessionId = createAcademicSession(api, year);
         List<SeedSection> sections = createLadder(api);
         int guardianCount = admit(api, sessionId, year, sections, 0);
+        int attendanceMarks = seedAttendanceHistory(api, sessionId, sections);
 
-        announce(port, year, sections.size(), guardianCount, (System.currentTimeMillis() - started) / 1000);
+        announce(
+                port,
+                year,
+                sections.size(),
+                guardianCount,
+                attendanceMarks,
+                (System.currentTimeMillis() - started) / 1000);
     }
 
     // ── topping up an existing school ───────────────────────────────────────────────────────────
@@ -795,6 +829,178 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
         return LocalDate.of(born, 1 + index % 12, 1 + (index * 7) % 28);
     }
 
+    // ── attendance history ───────────────────────────────────────────────────────────────────
+
+    /**
+     * Roughly the last {@link #ATTENDANCE_HISTORY_SCHOOL_DAYS} school days of daily attendance,
+     * backfilled for every section, so a school that has just been seeded is not one where the
+     * marking screen, a student's own history and — the reason this method exists —
+     * {@code AttendanceCorrectionController}'s workflow all have nothing to show. A correction can
+     * only be requested against a mark that has already locked (end of day plus 24 hours, ADR-0030),
+     * and a school with zero attendance rows has no locked mark for anyone to demonstrate that
+     * against.
+     *
+     * <p><strong>Written straight to {@code attendance_mark}, not through {@code POST
+     * /api/attendance/sections/{id}}.</strong> That endpoint is exactly right for a real classroom
+     * and exactly wrong for this method: it refuses any date older than yesterday
+     * ({@code AttendanceErrorCode.MARK_LOCKED}), because a mark that old is meant to go through a
+     * correction request, not a plain edit. A seeder backfilling three weeks of history is not a
+     * teacher who showed up late — it is the same situation {@link #createAccounts} is already in
+     * with no endpoint to call, except here the endpoint exists and its lock is precisely the thing
+     * standing in the way. So this writes the rows the way {@code AttendanceMarkingService.mark}
+     * would have, straight to the schema-qualified table, through the same {@link JdbcClient} and
+     * for the same reason: this is the application building its own demo data, not a caller the
+     * lock exists to hold back.
+     *
+     * <p><strong>Idempotent by the table's own constraint, not by a flag.</strong>
+     * {@code uq_attendance_mark_daily} is a unique index on {@code (student_id, attendance_date)}
+     * for the daily grain, so every insert below carries {@code on conflict ... do nothing} — a
+     * school that already has a day's mark gets nothing written for it, silently, whether this
+     * runs once or every startup. That is deliberate: unlike the roster (gated behind
+     * {@link #TOP_UP_PROPERTY} because growing it is a choice), refreshing attendance history costs
+     * one read per section and one skipped insert per mark already on file, so it runs on every
+     * start rather than asking a developer to opt in — see {@link #refreshAttendanceHistory}.
+     *
+     * <p>Every date comes from {@link #recentSchoolDays}, computed from {@code LocalDate.now()} at
+     * the moment this runs rather than written down here — the window this method backfills is
+     * always "the last few weeks", not the few weeks around whenever this method was written.
+     *
+     * @return how many marks were actually written, as opposed to skipped because the day already
+     *     had one
+     */
+    private int seedAttendanceHistory(SeedApiClient api, UUID sessionId, List<SeedSection> sections) {
+        String schema = SchemaName.requireValid(SCHOOL_SCHEMA);
+        UUID markedBy = classTeacherAccountId(schema);
+        List<LocalDate> days = recentSchoolDays(LocalDate.now(), ATTENDANCE_HISTORY_SCHOOL_DAYS);
+
+        int written = 0;
+        for (int s = 0; s < sections.size(); s++) {
+            UUID sectionId = sections.get(s).sectionId();
+            List<UUID> roster = rosterOf(api, sectionId);
+            for (int d = 0; d < days.size(); d++) {
+                LocalDate date = days.get(d);
+                for (int i = 0; i < roster.size(); i++) {
+                    AttendanceDraw draw = draw(s, d, i);
+                    written += jdbc.sql("insert into " + schema + ".attendance_mark"
+                                    + " (id, student_id, academic_session_id, section_id, attendance_date,"
+                                    + " status, remarks, marked_by)"
+                                    + " values (?, ?, ?, ?, ?, ?, ?, ?)"
+                                    + " on conflict (student_id, attendance_date) where period_number is null"
+                                    + " do nothing")
+                            .params(
+                                    uuid(),
+                                    roster.get(i),
+                                    sessionId,
+                                    sectionId,
+                                    date,
+                                    draw.status(),
+                                    draw.remarks(),
+                                    markedBy)
+                            .update();
+                }
+            }
+        }
+        log.info(
+                "Seeded {} new attendance mark(s) across the last {} school day(s) for {} section(s) (any mark"
+                        + " already on file was left as it was)",
+                written,
+                days.size(),
+                sections.size());
+        return written;
+    }
+
+    /**
+     * Backfills attendance history for an already-registered {@link #SCHOOL_CODE}, independently of
+     * {@link #TOP_UP_PROPERTY}. Growing the roster is opt-in — a school a developer already has open
+     * should not silently gain new students on every restart — but keeping the marking and
+     * correction screens demonstrable is not the same kind of choice, and
+     * {@link #seedAttendanceHistory} costs one read per section plus a skipped insert per mark
+     * already on file, so it runs every time rather than behind a flag nobody remembers to set.
+     */
+    private void refreshAttendanceHistory(SeedApiClient api) {
+        signIn(api, ACCOUNTS.getFirst().username());
+        SeedSession session = currentSession(api);
+        List<SeedSection> sections = existingLadder(api);
+        seedAttendanceHistory(api, session.id(), sections);
+    }
+
+    /**
+     * The student ids on a section's live roster, in register order — read through the same
+     * attendance view a teacher's screen opens ({@code GET /api/attendance/sections/{id}}, which
+     * defaults to today when no date is given). Not {@code student.api.StudentLookup}: this package
+     * may not import it (module boundary, ADR-0011's own reasoning for why the seeder speaks HTTP at
+     * all), and the roster a register actually shows is exactly what {@link #seedAttendanceHistory}
+     * needs to mark against.
+     */
+    private static List<UUID> rosterOf(SeedApiClient api, UUID sectionId) {
+        List<UUID> studentIds = new ArrayList<>();
+        for (JsonNode entry :
+                api.get("/api/attendance/sections/" + sectionId).path("data").path("entries")) {
+            studentIds.add(UUID.fromString(entry.path("studentId").asText()));
+        }
+        return studentIds;
+    }
+
+    /**
+     * The class teacher's account id, read back from {@code schema} — {@code attendance_mark
+     * .marked_by} is not null, and every mark this method writes is attributed to the one account
+     * that would actually run a school's daily roll call, the same account {@link #createAccounts}
+     * already built for exactly that role.
+     */
+    private UUID classTeacherAccountId(String schema) {
+        return jdbc.sql("select ua.id from " + schema + ".user_account ua"
+                        + " join " + schema + ".user_identifier ui on ui.user_account_id = ua.id"
+                        + " where ui.type = 'USERNAME' and ui.value = ?")
+                .param("classteacher")
+                .query(UUID.class)
+                .single();
+    }
+
+    /**
+     * The last {@code count} school days up to and including {@code today}, oldest first —
+     * Saturdays and Sundays skipped, no public-holiday calendar consulted (this lane's own
+     * documented gap; see ADR-0030's "what this build does not do"). Computed fresh every call
+     * rather than a stored list, so the window this seeds is always relative to when it runs.
+     */
+    private static List<LocalDate> recentSchoolDays(LocalDate today, int count) {
+        List<LocalDate> days = new ArrayList<>(count);
+        LocalDate day = today;
+        while (days.size() < count) {
+            if (day.getDayOfWeek() != java.time.DayOfWeek.SATURDAY
+                    && day.getDayOfWeek() != java.time.DayOfWeek.SUNDAY) {
+                days.add(day);
+            }
+            day = day.minusDays(1);
+        }
+        java.util.Collections.reverse(days);
+        return List.copyOf(days);
+    }
+
+    /**
+     * A status and an optional bland remark for one (section, day, student) triple. Patterned
+     * rather than randomised, so a re-run before the day's mark exists yet reproduces the same
+     * values the first run would have written: mostly {@code PRESENT}, a scattering of
+     * {@code ABSENT}, {@code LATE} and {@code EXCUSED_LEAVE}, with a plain, invented remark on a
+     * fraction of the non-present rows and never a name or a reason tied to a real person (AGENTS
+     * rule 9 — this file invents children, not their medical or family circumstances).
+     */
+    private static AttendanceDraw draw(int sectionIndex, int dayIndex, int studentIndex) {
+        int key = (sectionIndex * 7 + dayIndex * 31 + studentIndex) % 40;
+        if (key < 34) {
+            return new AttendanceDraw("PRESENT", null);
+        }
+        if (key < 37) {
+            return new AttendanceDraw("ABSENT", key == 34 ? "Informed by phone" : null);
+        }
+        if (key < 39) {
+            return new AttendanceDraw("LATE", key == 37 ? "Bus was delayed" : null);
+        }
+        return new AttendanceDraw("EXCUSED_LEAVE", "Approved leave");
+    }
+
+    /** {@code AttendanceStatus} as a plain string — this package may not import {@code attendance.domain}. */
+    private record AttendanceDraw(String status, String remarks) {}
+
     // ── the academic year ────────────────────────────────────────────────────────────────────
 
     /**
@@ -821,7 +1027,8 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
      * and every one of the six hundred children stay out of the log, because AGENTS rule 9 does not
      * have an exception for invented people — the habit is what protects the real ones.
      */
-    private void announce(int port, AcademicYear year, int sectionCount, int guardianCount, long seconds) {
+    private void announce(
+            int port, AcademicYear year, int sectionCount, int guardianCount, int attendanceMarks, long seconds) {
         StringBuilder block =
                 new StringBuilder("""
 
@@ -846,10 +1053,20 @@ public class DemoSchoolSeeder implements ApplicationListener<ApplicationReadyEve
                    %d students · %d classes · %d sections · %d guardian records
                    The roster came in as one file, through the same bulk import a real school's
                    onboarding uses (ADR-0021) — see the audit log for STUDENTS_IMPORTED.
-                   Seeded in %d s. This runs once: restart and it is skipped.
+                   %d attendance mark(s) seeded across the last %d school days, so the marking
+                   screen and the correction-request workflow (ADR-0030) both have history to
+                   demonstrate against, not an empty register.
+                   Seeded in %d s. The roster runs once and restart skips it; attendance history
+                   refreshes on every start so it stays recent.
                 ────────────────────────────────────────────────────────────────────────────
                 """.formatted(
-                DemoRoster.children().size(), DemoRoster.CLASS_NAMES.size(), sectionCount, guardianCount, seconds));
+                        DemoRoster.children().size(),
+                        DemoRoster.CLASS_NAMES.size(),
+                        sectionCount,
+                        guardianCount,
+                        attendanceMarks,
+                        ATTENDANCE_HISTORY_SCHOOL_DAYS,
+                        seconds));
         log.info("{}", block);
     }
 
