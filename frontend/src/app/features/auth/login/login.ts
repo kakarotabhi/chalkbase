@@ -8,8 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValueChangeEvent,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { apiErrorCode } from '../../../core/api/api-error';
 import { AUTH_ERROR, AuthApi } from '../../../core/api/auth-api';
 import { DevicePreferences } from '../../../core/auth/device-preferences';
@@ -72,10 +78,10 @@ export class Login {
   /** The `error.code` of the last failed attempt, or null. Never the message (ADR-0007). */
   protected readonly failureCode = signal<string | null>(null);
   /**
-   * A snapshot of `formEvents()` taken the instant `failureCode` was set — not the form's values,
-   * the *event stream position*. Compared against the live `formEvents()` in `activeFailureCode`
-   * below: unequal means at least one field, touch or status change has happened since, so the
-   * failure no longer describes what is in the form now.
+   * A snapshot of `lastValueChange()` taken the instant `failureCode` was set — not the field
+   * values, the *value-change-stream position*. Compared against the live `lastValueChange()` in
+   * `activeFailureCode` below: unequal means at least one field's value has actually changed
+   * since, so the failure no longer describes what is in the form now.
    *
    * A position rather than a value comparison on purpose: retyping the exact same locked username
    * still produces a new `ValueChangeEvent` object, so it still counts as an edit and still
@@ -90,26 +96,40 @@ export class Login {
   private readonly formEvents = toSignal(this.form.events, { initialValue: null });
 
   /**
-   * `failureCode`, but only while the form is still exactly as it was when the failure happened.
-   * The banner and the lockout describe the credentials that were submitted, not whatever is in
-   * the fields *now* — the moment the user edits any field, touches a different one, or resubmits,
-   * that result no longer applies and must not keep disabling the button or naming the wrong
-   * account. This is what a shared school-office computer needs: one person fails their password
-   * three times, the next person starts typing their own username, and the form must not still be
-   * refusing *them* with someone else's "Account locked".
+   * Only the value-change slice of `form.events` — deliberately narrower than `formEvents` above.
+   * `activeFailureCode` uses this, not `formEvents`, because touching a field or tabbing through
+   * it without changing anything has not made a wrong credential any less wrong: the banner names
+   * a fact about what was submitted, and a fact does not stop being true because the cursor moved.
+   */
+  private readonly lastValueChange = toSignal(
+    this.form.events.pipe(
+      filter((event): event is ValueChangeEvent<unknown> => event instanceof ValueChangeEvent),
+    ),
+    { initialValue: null },
+  );
+
+  /**
+   * `failureCode`, but only while the form's values are still exactly as they were when the
+   * failure happened. The banner and the lockout describe the credentials that were submitted,
+   * not whatever is in the fields *now* — the moment the user actually changes any field's value
+   * or resubmits, that result no longer applies and must not keep disabling the button or naming
+   * the wrong account. This is what a shared school-office computer needs: one person fails their
+   * password three times, the next person starts typing their own username, and the form must not
+   * still be refusing *them* with someone else's "Account locked".
    *
    * Any field clears it, not just the username, because a school code or password edit is just as
-   * much a different attempt as a username edit is. This does not weaken the lockout: retyping and
-   * resubmitting the *same* still-locked account is allowed to reach the server, which answers
-   * AUTH_003 again, honestly — rather than the client silently refusing forever with no way to
-   * tell whether the account had actually unlocked.
+   * much a different attempt as a username edit is. Touching or tabbing through a field, with no
+   * value change, does not clear it — see `lastValueChange`. This does not weaken the lockout:
+   * retyping and resubmitting the *same* still-locked account is allowed to reach the server,
+   * which answers AUTH_003 again, honestly — rather than the client silently refusing forever with
+   * no way to tell whether the account had actually unlocked.
    *
    * Deliberately a plain computed rather than an effect that resets `failureCode`: a computed is
    * re-evaluated inline while this same view's template is read, so the button and the banner can
    * never render one change-detection pass behind the signal that controls them.
    */
   protected readonly activeFailureCode = computed(() =>
-    this.formEvents() === this.failureFormPosition() ? this.failureCode() : null,
+    this.lastValueChange() === this.failureFormPosition() ? this.failureCode() : null,
   );
 
   protected readonly isLocked = computed(
@@ -205,9 +225,9 @@ export class Login {
         error: (error: unknown) => {
           this.submitting.set(false);
           this.failureCode.set(apiErrorCode(error));
-          // Recorded now, not read lazily later: this is the event-stream position the form was
-          // at when this failure happened, and `activeFailureCode` compares against it.
-          this.failureFormPosition.set(this.formEvents());
+          // Recorded now, not read lazily later: this is the value-change-stream position the
+          // form was at when this failure happened, and `activeFailureCode` compares against it.
+          this.failureFormPosition.set(this.lastValueChange());
         },
       });
   }

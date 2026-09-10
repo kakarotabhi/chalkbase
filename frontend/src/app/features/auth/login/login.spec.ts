@@ -228,6 +228,28 @@ describe('Login', () => {
     expect(submitButton().disabled).toBe(true);
   });
 
+  it('does not clear the lockout on a touch alone — only an actual value change (AUTH_003)', () => {
+    signIn();
+
+    httpMock.expectOne('/api/auth/login').flush(
+      {
+        success: false,
+        timestamp: '2026-09-05T10:00:00Z',
+        error: { code: AUTH_ERROR.ACCOUNT_LOCKED, message: 'Locked.' },
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    fixture.detectChanges();
+
+    // Tabbing into a field and back out, with nothing retyped, has not made the credentials any
+    // less wrong — the banner is a fact about what was submitted, not about cursor position.
+    field('login-username').dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+
+    expect(submitButton().disabled).toBe(true);
+    expect(text()).toContain('Account locked');
+  });
+
   it('points an unknown school code at the field that is wrong (AUTH_005)', () => {
     signIn();
 
