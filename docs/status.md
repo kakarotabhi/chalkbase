@@ -19,10 +19,10 @@ the way Phase 1's work was)
 | API response envelope and error handling                              | ✅ Done                                                                                                                                                     |
 | Design tokens and palette                                             | ✅ Done                                                                                                                                                     |
 | Screen designs for the first six screens                              | ✅ Done                                                                                                                                                     |
-| Architecture decisions (ADR-0001…0027)                                | ✅ Done                                                                                                                                                     |
+| Architecture decisions (ADR-0001…0035)                                | ✅ Done                                                                                                                                                     |
 | **Phase 0 discovery — all 13 deliverables**                           | ✅ Done                                                                                                                                                     |
 | Identity: login, sessions, forced password change                     | ✅ Done                                                                                                                                                     |
-| Permissions, roles, scoped grants                                     | ✅ Enforced and manageable, with a screen · ⬜ impact preview                                                                                               |
+| Permissions, roles, scoped grants                                     | ✅ Done — enforced, manageable, with a screen and a role-edit impact preview                                                                                               |
 | Server-driven navigation (`GET /api/me`)                              | ✅ Done                                                                                                                                                     |
 | Schema-per-tenant: registry, migration orchestrator                   | ✅ Done                                                                                                                                                     |
 | Audit log (FR-008) — table, service, `GET /api/audit`, and its screen | ✅ Done                                                                                                                                                     |
@@ -31,11 +31,11 @@ the way Phase 1's work was)
 | Academic sessions, classes and sections                               | ✅ Done                                                                                                                                                     |
 | Subjects                                                              | ✅ Done                                                                                                                                                     |
 | Students, guardians and enrolment                                     | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
-| Documents (FR-013, FR-032)                                            | ✅ Storage port, module, S3 adapter and a screen · ⬜ the five environment variables set on Render                                                          |
+| Documents (FR-013, FR-032)                                            | ✅ Done — storage port, module, S3 adapter, a screen, and the five environment variables set and verified on Render                                                          |
 | Basic dashboards                                                      | ✅ Done                                                                                                                                                     |
 | Export                                                                | ✅ Done                                                                                                                                                     |
-| **Phase 2 — daily attendance, enquiry management, circulars and notices** | ✅ Done |
-| **Phase 2 — fee structure** | 🔨 In progress |
+| **Phase 2 — daily attendance, leave requests, enquiry management, circulars and notices** | ✅ Done |
+| **Phase 2 — fee structure** | ✅ Done — heads, concession types, and a session-scoped versioned structure per class |
 | Deployment                                                            | ✅ Render dev · ⬜ Coolify/VPS (production, Phase 4)                                                                       |
 
 A ✅ in this table means the slice works end to end, not that the roadmap feature is finished.
@@ -104,7 +104,7 @@ picking anything up here — this table is the state, not the brief.
 |---|---|---|
 | **Daily attendance** | `attendance` | ✅ Done — mark, view, lock, correction request and approval ([ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md)) |
 | **Enquiry management** | `admission` | ✅ Done — capture, status, a required assigned counsellor, follow-up history and the due-date follow-up queue |
-| **Fee structure** | `fee` | 🔨 In progress |
+| **Fee structure** | `fee` | ✅ Done — fee heads and concession types as catalogues, and a session-scoped, versioned structure per class with copy-forward ([ADR-0033](architecture/adr/0033-fee-structure-versioning.md)) |
 | Online admission form | `admission` | ⬜ Not started |
 | Admission workflow | `admission` | ⬜ Not started |
 | Student conversion | `admission` → `student` | ⬜ Not started |
@@ -302,6 +302,8 @@ here. What is left is externally blocked rather than undecided.
 | SMS / WhatsApp provider                     | Chosen once DLT registration completes — that process shows which providers are painless.                                                                                                                                                             | After DLT          |
 | Payment gateway                             | Chosen once the pilot school's bank and settlement account are known. Razorpay is the intended first adapter.                                                                                                                                         | Before online fees |
 | ~~Production migration off Supabase Seoul~~ | **Settled: not before Phase 4.** See _Decisions taken and not to be reopened_ below.                                                                                                                                                                  | Phase 4            |
+| **Should overlapping academic sessions be refused?**                        | Two sessions can cover the same day today — the academics module has no overlap check and no error code for one, though `SESSION_ALREADY_CURRENT` shows it already cares about sessions not colliding. Nothing breaks while only the _current_ session is read. It becomes unanswerable the first time anything maps a date to a year: attendance across a year boundary, a fee due date, a report card, a transfer certificate. A school might legitimately want a short summer session inside a long one, which is why this is a product call and not a bug fix. | Before fee demand |
+| **Should an academic session or a role be deletable?**                      | Classes and subjects state their no-delete rule in their own ledes — switched off, kept in place, brought back — which is the right answer for records with history hanging off them, and it is said where a user reads it. Sessions and roles have no delete and no stated reason. A school that mistypes a session name during setup is stuck with it forever, and the demo school now carries a role whose own description reads "Synthetic role for verification, to be deleted".                                                                              | Before the first real school |
 
 ## Decisions taken and not to be reopened
 
@@ -325,13 +327,15 @@ which is only `public`. So this is an accepted risk on a dev environment with no
 **not** a thing to ship a real school against. The remediation is four `ALTER TABLE … ENABLE ROW
 LEVEL SECURITY` statements and belongs in whatever change first puts real data on a deployment.
 
-**No platform-operator account before Phase 2.** [ADR-0024](architecture/adr/0024-bootstrap-deployment.md)
-weighed it and chose the setup-key bootstrap endpoint instead, which closed the actual gap:
-onboarding works. `/api/schools` list, get and create still require `school:school:create`, which no
-role holds, so they remain callable by nobody — harmless, because the bootstrap endpoint does not go
-through them. The operator account needs somewhere to live outside any tenant schema, its own
-authentication path, and its own answer to how the first operator is created; that is a Phase 2
-shaped piece of work, not a Phase 1 loose end.
+**No platform-operator account before Phase 2 — and Phase 2 has arrived, so this one has expired.**
+[ADR-0024](architecture/adr/0024-bootstrap-deployment.md) weighed it and chose the setup-key
+bootstrap endpoint instead, which closed the actual gap: onboarding works. `/api/schools` list, get
+and create still require `school:school:create`, which no role holds, so they remain callable by
+nobody — harmless while bootstrap does not go through them. The deferral was explicitly "a Phase 2
+shaped piece of work, not a Phase 1 loose end", and the project is now in Phase 2. The account needs
+somewhere to live outside any tenant schema, its own authentication path, and its own answer to how
+the first operator is created. **Treat this as live work to be scheduled, not a settled decision** —
+it stays in this section only so the reasoning behind the original deferral is not lost.
 
 **Transport and hostel stay as Phase 4 modules with nothing on the student record.**
 [FR-028](requirements/02-functional-requirements.md) lists both as sections and they were considered
@@ -441,14 +445,20 @@ row that records less than it promises, and a role nobody can delete. None of th
 test suite, and all four were found within an hour of using the product as a person.
 
 A second pass on 2026-09-09 drove **every control on every screen** rather than sampling them —
-[phase-2-verification.md](phase-2-verification.md). Twelve findings stand and two were withdrawn on
-inspection. Two features turned out not to work at all: **"Add a document" closes the form it opens**,
-so upload, edit, download and delete are unreachable and ADR-0025's storage adapter has never been
-exercised from the UI; and **the student record header shows the newest enrolment rather than the
-current one**, so from the February a school does next year's promotions until the year turns over,
-every record page names a class the child is not in yet and contradicts the list it was opened from.
-A third, **stopping a class takes its enrolled children off the register with no confirmation at
-all**, is not a bug in the code so much as a missing sentence.
+[phase-2-verification.md](phase-2-verification.md), 188 recorded actions. Twelve findings stood and
+two were withdrawn on inspection. Two features turned out not to work at all: **"Add a document"
+closed the form it opened**, which made upload, edit, download and delete unreachable and left
+ADR-0025's storage adapter unexercised from the UI; and **the student record header showed the
+newest enrolment rather than the current one**, so from the February a school does next year's
+promotions until the year turns over, every record page named a class the child was not in yet and
+contradicted the list it was opened from.
+
+**Nine of the twelve are fixed and merged** (#90 through #97). Three remain open and are listed under
+[Known gaps and debt](#known-gaps-and-debt); two further questions belong to the product owner and
+are in [Waiting on a decision](#waiting-on-a-decision). Two parts of the pass could not be finished
+at the time — the attendance correction workflow, which needed the history #90 now seeds, and
+document upload through the UI, which needed #93 — and both are re-verifiable on the current
+deployment.
 
 The pattern is the same one Phase 1 found and worth stating again: the API returns the right answer
 and the screen shows a different one. Nothing reachable from `curl` was wrong. What was wrong was
@@ -457,6 +467,31 @@ only visible by pressing the button.
 ## Known gaps and debt
 
 Recorded so they are decided rather than discovered.
+
+- **Stopping a class takes its enrolled children off the register, and asks nothing first.** "Stop
+  running Nursery" fires on one click: no dialog, no count, no mention that anyone is enrolled. Both
+  its sections vanish from Mark attendance immediately — measured, 23 sections became 21 — so the six
+  children enrolled in it cannot be marked present or absent by anybody. Nothing is lost and one
+  click restores it; the problem is that a school has no way to know to make that click. The same
+  product stops to explain three separate consequences before removing a guardian. Finding O in
+  [the second verification pass](phase-2-verification.md); not yet fixed.
+- **No list screen puts its filters in the URL.** `location.search` stays empty however a list is
+  filtered or paged, and no feature screen reads `queryParamMap` — students, guardians, leave
+  requests, enquiries, circulars, users and the audit log all behave this way. A filtered view cannot
+  be linked, bookmarked, or recovered with the back button. On a 65-row demo that is a nuisance; at
+  the ~600 rows a real school has it is the difference between usable and not. Finding E in
+  [the second verification pass](phase-2-verification.md); not yet fixed.
+- **A CI job that only runs after merge can stay red for days without anyone noticing.** The
+  `Frontend image` job is gated on `if: github.ref == 'refs/heads/main'`, so it never runs on a pull
+  request and nothing blocks on it. It had been failing since the generated contract was introduced:
+  `Dockerfile.frontend` copies only `frontend/`, while `tsconfig.json` maps `@contracts/*` outside
+  it, so every generated type degraded to an index signature and the build died on a pagination field
+  rather than on the missing import. Fixed in #97. **The structural point is not fixed** — the image
+  jobs are the deliverable for the Coolify path
+  [ADR-0015](architecture/adr/0015-deployment-baseline.md) names as production, and nothing tells
+  anyone when they break. Running them on pull requests that touch the relevant paths costs two to
+  three minutes per PR, which is a trade for the product owner rather than a default to change
+  quietly.
 
 - ~~There is no HTTP timeout anywhere in the app.~~ ✅ Closed. `timeoutInterceptor`
   (`core/interceptors/timeout-interceptor.ts`) applies one number, one place: 150 seconds, chosen
