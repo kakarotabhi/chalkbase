@@ -2987,6 +2987,7 @@ export interface components {
             readonly displayName: string;
             /** Format: uuid */
             readonly id: string;
+            readonly locked: boolean;
             readonly status: string;
         };
     };
