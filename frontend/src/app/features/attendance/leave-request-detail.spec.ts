@@ -100,6 +100,28 @@ describe('LeaveRequestDetail', () => {
     expect(text()).toContain('Leave request approved.');
   });
 
+  it('renders the date range and the decision timestamp for a school reader, not raw machine values', () => {
+    signInWith(Permissions.ATTENDANCE_LEAVE_READ, Permissions.ATTENDANCE_LEAVE_APPROVE);
+    fixture = TestBed.createComponent(LeaveRequestDetail);
+    fixture.componentRef.setInput('id', LEAVE_ID);
+    fixture.detectChanges();
+
+    httpMock.expectOne(DETAIL_URL).flush(
+      envelope({
+        ...pendingRequest(),
+        decision: 'APPROVED',
+        decidedAt: '2026-09-09T05:48:44.543297687Z',
+      }),
+    );
+    fixture.detectChanges();
+
+    // The session fixture's school is Asia/Kolkata (session-fixture.ts): 05:48 UTC is 11:18 there.
+    expect(text()).toContain('10 Sept 2026 – 12 Sept 2026');
+    expect(text()).toContain('9 Sept 2026, 11:18');
+    expect(text()).not.toContain('2026-09-10');
+    expect(text()).not.toContain('2026-09-09T05:48:44.543297687Z');
+  });
+
   it('does not offer a decision to a caller who can only read', () => {
     signInWith(Permissions.ATTENDANCE_LEAVE_READ);
     fixture = TestBed.createComponent(LeaveRequestDetail);

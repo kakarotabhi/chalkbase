@@ -196,6 +196,82 @@ describe('FeeStructurePage', () => {
     expect(text()).toContain('saved as version 1');
   });
 
+  it('says what Save is waiting for, one thing at a time, until nothing is missing', () => {
+    arrive([]);
+
+    (element().querySelector('.cell--action cb-button button') as HTMLButtonElement)?.click();
+    fixture.detectChanges();
+
+    // No fee head added yet.
+    let saveButton = Array.from(element().querySelectorAll('cb-button button')).find(
+      (button) => button.textContent?.trim() === 'Save',
+    ) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(true);
+    expect(element().querySelector('.editor__save-hint')?.textContent).toContain(
+      'Add a fee head before saving.',
+    );
+
+    (
+      Array.from(element().querySelectorAll('cb-button button')).find((button) =>
+        (button.textContent ?? '').includes('Add a fee head'),
+      ) as HTMLButtonElement
+    )?.click();
+    fixture.detectChanges();
+
+    // A head is picked automatically, but it has no amount yet.
+    expect(element().querySelector('.editor__save-hint')?.textContent).toContain(
+      'Enter an amount greater than zero for every fee head.',
+    );
+
+    const amountInput = element().querySelector(
+      '.item-card__row input[type="number"]',
+    ) as HTMLInputElement;
+    amountInput.value = '5000';
+    amountInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // An amount now, but no due date — the requirement nothing else on screen states.
+    expect(element().querySelector('.editor__save-hint')?.textContent).toContain(
+      'Add at least one due date for every fee head.',
+    );
+
+    (
+      Array.from(element().querySelectorAll('cb-button button')).find((button) =>
+        (button.textContent ?? '').includes('Add a due date'),
+      ) as HTMLButtonElement
+    )?.click();
+    fixture.detectChanges();
+
+    // A due date row exists, but no date chosen on it yet.
+    expect(element().querySelector('.editor__save-hint')?.textContent).toContain(
+      'Choose a date for every due date added.',
+    );
+
+    const dateInput = element().querySelector('input[type="date"]') as HTMLInputElement;
+    dateInput.value = '2026-04-10';
+    dateInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // A date now, but no amount on the due date itself.
+    expect(element().querySelector('.editor__save-hint')?.textContent).toContain(
+      'Enter an amount greater than zero for every due date.',
+    );
+
+    const installmentAmount = element().querySelectorAll(
+      '.installment-row input[type="number"]',
+    )[0] as HTMLInputElement;
+    installmentAmount.value = '5000';
+    installmentAmount.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Nothing left to fix.
+    expect(element().querySelector('.editor__save-hint')).toBeNull();
+    saveButton = Array.from(element().querySelectorAll('cb-button button')).find(
+      (button) => button.textContent?.trim() === 'Save',
+    ) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(false);
+  });
+
   it('explains the lock rule by name when the session has already run', () => {
     arrive([]);
 

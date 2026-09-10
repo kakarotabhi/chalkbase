@@ -136,6 +136,16 @@ export class AttendanceMark {
     () => this.failureCode() !== null && this.failureCode() !== ACCESS_DENIED,
   );
   protected readonly locked = computed(() => this.view()?.locked ?? false);
+  /**
+   * Whether at least one row on this (locked) date actually has a mark to correct.
+   *
+   * The locked banner used to always point at "Request a correction on the student who needs
+   * one", but the per-row button only renders when a row has a {@link RosterRow.markId} — on a
+   * locked date nobody ever marked, every row lacks one, and the banner was pointing at a control
+   * that was absent everywhere on the page. This is what lets the banner tell the two situations
+   * apart.
+   */
+  protected readonly hasAnyMark = computed(() => this.rows().some((row) => row.markId !== null));
 
   /**
    * Mirrors {@link sectionControl}'s value as a signal.

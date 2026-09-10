@@ -17,6 +17,7 @@ import { permitted } from '../../core/auth/session-store';
 import { Badge, BadgeTone } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { Select, SelectOption } from '../../shared/components/select/select';
+import { formatDay } from '../../shared/formatting/day';
 import {
   ACCESS_DENIED,
   classAndSection,
@@ -160,8 +161,8 @@ function toRow(response: LeaveRequestResponse): LeaveRequestRow {
     placement: classAndSection(response.className, response.sectionName),
     dateRange:
       response.startDate === response.endDate
-        ? response.startDate
-        : `${response.startDate} – ${response.endDate}`,
+        ? formatDay(response.startDate)
+        : `${formatDay(response.startDate)} – ${formatDay(response.endDate)}`,
     reason: response.reason,
     decisionLabel: leaveDecisionLabel(response.decision),
     decisionTone: leaveDecisionTone(response.decision),
