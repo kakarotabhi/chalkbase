@@ -11,6 +11,20 @@ spring:
   profiles:
     default: local
 
+  # Boot auto-configures an in-memory UserDetailsManager — and logs a fresh random password for it
+  # at WARN — on every startup where no application-supplied UserDetailsService, AuthenticationManager
+  # or AuthenticationProvider bean exists. This application supplies none of those: AuthenticationService
+  # (identity module) verifies a submitted password against `user_credential` itself and builds the
+  # SecurityContext by hand, never asking a Spring Security AuthenticationManager for one, and
+  # SecurityConfig never calls httpBasic() or formLogin() — the two things that would put a filter in
+  # the chain that consults it. So the generated user is created but reachable by nothing: no request
+  # on any profile is authenticated against it. Excluded here, application-wide, so the warning stops
+  # instead of being re-derived by whoever reads the boot log next. Pinned by
+  # UserDetailsServiceAutoConfigurationTests.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
   jpa:
     hibernate:
       # `validate` cannot work here: it would check one schema, and there are as many as there are

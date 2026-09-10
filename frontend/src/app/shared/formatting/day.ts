@@ -48,3 +48,35 @@ export function today(): string {
   const date = `${now.getDate()}`.padStart(2, '0');
   return `${now.getFullYear()}-${month}-${date}`;
 }
+
+/**
+ * An instant, as a school reads it: `9 Sept 2026, 15:35`, in the *school's* time zone.
+ *
+ * A timestamp off the wire carries no zone of its own — it is UTC — so rendering it with no zone
+ * named reads correctly only for a viewer sitting in the same zone as the school, and prints the
+ * device's own local time everywhere else. That is wrong for the same reason a bare
+ * `new Date(string)` is wrong for a calendar day (see {@link formatDay}): a reader elsewhere sees
+ * a plausible but different time and has no way to tell. The school's own zone is what
+ * `SessionStore.schoolTimezone` carries off `GET /api/me` (ADR-0032) — build the formatter with it
+ * once per screen and reuse it for every row, rather than reading the zone per row.
+ */
+export function instantFormat(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+  });
+}
+
+/**
+ * Renders one ISO instant with an already-built {@link instantFormat}. A value this cannot parse
+ * is shown as it arrived rather than as `Invalid Date` — the same rule {@link formatDay} follows.
+ */
+export function formatInstant(format: Intl.DateTimeFormat, iso: string): string {
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? iso : format.format(parsed);
+}

@@ -129,8 +129,13 @@ export class StudentDetail {
     if (!student) {
       return null;
     }
-    // `?? []` is belt and braces: the contract makes the list required — see `StudentDetail`.
-    const current = (student.enrolments ?? []).find((enrolment) => enrolment.active) ?? null;
+    // The history (`enrolments`) is newest-first and can hold a session that has not started yet
+    // — a school that has promoted early for next year. `currentEnrolment` is the one placement
+    // the backend has already matched to `academics.currentSession()` (see `StudentService`), so
+    // use it rather than the newest `active` row in the history, which would show next year's
+    // class while this year is still being taught. Same field and the same absent-case wording as
+    // `student-list.ts` and `guardian-list.ts`.
+    const current = student.currentEnrolment ?? null;
     return {
       fullName: student.fullName,
       admissionNumber: student.admissionNumber,

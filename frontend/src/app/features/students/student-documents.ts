@@ -261,9 +261,21 @@ export class StudentDocuments {
   constructor() {
     // Re-reads when the route id changes, which happens when somebody follows a link from one
     // record to another without this component being torn down.
+    //
+    // This effect's only dependency may ever be `studentId()`. It used to also call `closeAdd()`,
+    // which reads the `fileInput` viewChild — but `#fileInput` only exists in the DOM while
+    // `adding()` is true (`@if (adding())` in the template). Reading a viewChild inside an effect
+    // makes that viewChild a dependency, so the moment `startAdd()` set `adding` to true and the
+    // form (and `#fileInput`) rendered, `fileInput()` flipped from undefined to defined, which
+    // re-ran this effect, which called `closeAdd()` again and set `adding` back to false —
+    // closing the very form the effect's own re-run had just watched appear. That is why "Add a
+    // document" did nothing but flash "Loading documents…": every open was undone one microtask
+    // later. Reset the plain signals directly here instead of routing through a helper that
+    // touches the view, and keep it that way — anything this effect calls must not read a
+    // viewChild, ElementRef or other view-derived signal.
     effect(() => {
       const studentId = this.studentId();
-      this.closeAdd();
+      this.resetAddState();
       this.editingId.set(null);
       this.removing.set(null);
       this.load(studentId);
@@ -484,13 +496,21 @@ export class StudentDocuments {
       });
   }
 
-  private closeAdd(): void {
+  /** The signal resets `closeAdd()` and the constructor effect share. No view read belongs here —
+   * see the constructor's comment on why. */
+  private resetAddState(): void {
     this.adding.set(false);
     this.uploading.set(false);
     this.uploadPercent.set(0);
     this.uploadFailureCode.set(null);
     this.uploadFailureStatus.set(0);
     this.fileName.set(null);
+  }
+
+  /** Called from user-initiated handlers only (`cancelAdd`, a successful `submitUpload`) — never
+   * from the constructor effect, because it reads the `fileInput` viewChild. */
+  private closeAdd(): void {
+    this.resetAddState();
     const input = this.fileInput()?.nativeElement;
     if (input) {
       input.value = '';
