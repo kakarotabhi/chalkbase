@@ -114,6 +114,72 @@ describe('AttendanceMark', () => {
     expect(text()).toContain('Mark all present');
   });
 
+  it('says plainly that nothing was marked when a locked date has no marks at all', () => {
+    signInWith(Permissions.ATTENDANCE_READ, Permissions.ATTENDANCE_MANAGE);
+    fixture = TestBed.createComponent(AttendanceMark);
+    fixture.detectChanges();
+    httpMock.expectOne(CLASSES_URL).flush(envelope(oneClass()));
+    fixture.detectChanges();
+
+    const select = element().querySelector<HTMLSelectElement>('#attendance-section');
+    select!.value = 'section-5a';
+    select!.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne(
+      (candidate) => candidate.url === '/api/attendance/sections/section-5a',
+    );
+    req.flush(envelope(view({ locked: true })));
+    fixture.detectChanges();
+
+    expect(text()).toContain('nobody was marked on it');
+    expect(text()).not.toContain('Request a correction on the student who needs one');
+    expect(element().querySelector('.link-button')).toBeNull();
+  });
+
+  it('points at the per-row correction control when a locked date does have a mark', () => {
+    signInWith(Permissions.ATTENDANCE_READ, Permissions.ATTENDANCE_MANAGE);
+    fixture = TestBed.createComponent(AttendanceMark);
+    fixture.detectChanges();
+    httpMock.expectOne(CLASSES_URL).flush(envelope(oneClass()));
+    fixture.detectChanges();
+
+    const select = element().querySelector<HTMLSelectElement>('#attendance-section');
+    select!.value = 'section-5a';
+    select!.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const req = httpMock.expectOne(
+      (candidate) => candidate.url === '/api/attendance/sections/section-5a',
+    );
+    req.flush(
+      envelope(
+        view({
+          locked: true,
+          entries: [
+            {
+              studentId: 'student-1',
+              admissionNumber: 'ADM-001',
+              fullName: 'Aarav Sharma',
+              rollNumber: '1',
+              editable: false,
+              approvedLeave: false,
+              markId: 'mark-1',
+              status: 'PRESENT',
+            },
+          ],
+        }),
+      ),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('Request a correction on the student who needs one instead.');
+    const requestButton = Array.from(element().querySelectorAll('.link-button')).find(
+      (button) => button.textContent?.trim() === 'Request a correction',
+    );
+    expect(requestButton).toBeTruthy();
+  });
+
   it('notes an approved leave request and pre-selects Excused leave for an unmarked student', () => {
     signInWith(Permissions.ATTENDANCE_READ, Permissions.ATTENDANCE_MANAGE);
     fixture = TestBed.createComponent(AttendanceMark);

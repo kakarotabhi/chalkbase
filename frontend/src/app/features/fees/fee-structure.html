@@ -193,7 +193,10 @@
                 </div>
 
                 <div class="installments">
-                  <p class="installments__label">Due dates</p>
+                  <p class="installments__label">
+                    Due dates
+                    <span class="installments__required">at least one is required to save</span>
+                  </p>
                   @if (item.installments.length === 0) {
                     <p class="installments__empty">No due dates added yet.</p>
                   }
@@ -252,14 +255,19 @@
           <cb-button variant="secondary" [disabled]="saving()" (click)="cancelEdit()">
             Cancel
           </cb-button>
-          <cb-button
-            [disabled]="!draftIsReady()"
-            [loading]="saving()"
-            loadingLabel="Saving…"
-            (click)="save()"
-          >
-            Save
-          </cb-button>
+          <div class="editor__save">
+            <cb-button
+              [disabled]="!draftIsReady()"
+              [loading]="saving()"
+              loadingLabel="Saving…"
+              (click)="save()"
+            >
+              Save
+            </cb-button>
+            @if (saveHint(); as hint) {
+              <p class="editor__save-hint">{{ hint }}</p>
+            }
+          </div>
         </div>
       </div>
     }

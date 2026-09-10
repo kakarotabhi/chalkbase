@@ -17,6 +17,7 @@ import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
+import { formatInstant, instantFormat } from '../../shared/formatting/day';
 import { AUDIT_ACTION_OPTIONS, actionLabel, entityLabel, fieldLabel } from './audit-actions';
 
 /** The error code a 403 carries (ADR-0007). Branch on this, never on the message. */
@@ -45,29 +46,6 @@ const OUTCOME_TONES: Readonly<Record<AuditOutcome, BadgeTone>> = {
   FAILURE: 'warning',
   DENIED: 'danger',
 };
-
-/**
- * The day and time as a reader scans them, in the *school's* zone (ADR-0032) — not the reader's
- * device.
- *
- * Before the school carried a time zone, this had no choice but to default to the device's own
- * zone, which read correctly for everyone in India (one country, one zone) and misleadingly for
- * anyone opening the log from abroad: a login at 21:00 in Mumbai would print as 15:30 to a reader
- * in London, on a screen whose whole job is saying exactly when something happened. Naming the
- * school's own zone here means every reader — at the school or off it — sees the time the event
- * actually happened there, which is the time worth investigating an incident against.
- */
-function shortTimeFormat(timeZone: string): Intl.DateTimeFormat {
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone,
-  });
-}
 
 /**
  * The same instant, said in full and with the zone named.
@@ -161,7 +139,19 @@ export class AuditLog {
    * when they are reconstructing what happened and when.
    */
   protected readonly timeZone = computed(() => this.sessionStore.schoolTimezone());
-  private readonly shortTime = computed(() => shortTimeFormat(this.timeZone()));
+  /**
+   * The day and time as a reader scans them, in the *school's* zone — not the reader's device.
+   *
+   * Before the school carried a time zone, this had no choice but to default to the device's own
+   * zone, which read correctly for everyone in India (one country, one zone) and misleadingly for
+   * anyone opening the log from abroad: a login at 21:00 in Mumbai would print as 15:30 to a
+   * reader in London, on a screen whose whole job is saying exactly when something happened.
+   * Naming the school's own zone here means every reader — at the school or off it — sees the
+   * time the event actually happened there, which is the time worth investigating an incident
+   * against. Built from the shared {@link instantFormat} rather than a local formatter, the same
+   * one every other screen on this product renders an instant with.
+   */
+  private readonly shortTime = computed(() => instantFormat(this.timeZone()));
   private readonly fullTime = computed(() => fullTimeFormat(this.timeZone()));
 
   /** `from` and `to` are `yyyy-MM-dd` — a day the user picked, not an instant. */
@@ -207,8 +197,8 @@ export class AuditLog {
     const fullTime = this.fullTime();
     return this.rows().map((event) => ({
       id: event.id,
-      occurredAt: formatTime(shortTime, event.occurredAt),
-      occurredAtFull: formatTime(fullTime, event.occurredAt),
+      occurredAt: formatInstant(shortTime, event.occurredAt),
+      occurredAtFull: formatInstant(fullTime, event.occurredAt),
       occurredAtIso: event.occurredAt,
       actorId: event.actorId ?? null,
       // A failed sign-in has no actor at all — the account was never established. Saying so beats
@@ -418,10 +408,4 @@ function describeRecord(event: AuditEvent): string | null {
     return `${entityLabel(type)} · ${id}`;
   }
   return type ? entityLabel(type) : (id ?? null);
-}
-
-/** A timestamp the backend sent that this app cannot parse is shown as it arrived, not as junk. */
-function formatTime(format: Intl.DateTimeFormat, iso: string): string {
-  const parsed = new Date(iso);
-  return Number.isNaN(parsed.getTime()) ? iso : format.format(parsed);
 }

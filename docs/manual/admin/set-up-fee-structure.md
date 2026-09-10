@@ -41,7 +41,8 @@ sign-off on.
 3. Add a fee head, its amount, how often it is collected (one-time, monthly, quarterly, term-wise,
    annual, or custom), and the due date or dates that amount is split across. Add another fee head
    the same way for anything else this class pays.
-4. Select **Save**.
+4. Select **Save**. It stays greyed out until every fee head has a head, an amount and at least
+   one due date — the screen names whichever of those is still missing.
 
 **Saving never changes what was there before.** It writes a brand new version of that class's
 structure and puts the old one aside, unchanged. If an inspector or an auditor ever asks what a
