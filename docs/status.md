@@ -79,12 +79,41 @@ than a gap. Transport and hostel are recorded under _Decisions taken and not to 
 than left to be rediscovered.
 
 The honest caveat on "complete": it means every feature the roadmap named exists end to end, not
-that it has met a real school. The largest untested thing was volume — the seed used to be a few
-dozen students, so no list screen, no paging and no search had ever been exercised at the ~600 rows a
-real school has. The `local` seed now admits ~600 (see _Also queued, not blocking_, below), which
-makes the exercise possible; it does not itself constitute having done it. Nobody has yet paged
-through the student list, timed the guardian phone search, or watched an import at this size against
-a database that is not a developer's own laptop — that is still the open question, not a closed one.
+that it has met a real school. The largest untested thing was volume — and **that has now been
+measured, on 2026-09-10, against the deployed environment.**
+
+600 synthetic children were imported into `DEMO-001` through the bulk import endpoint, taking it to
+**665 students behind 364 guardians**, with 173 children sharing a guardian with a sibling and 29
+carrying none. Names are invented combinations from open pools, the technique `DemoRoster` already
+uses; no row corresponds to a real person.
+
+| Operation | Wall clock | Work above the network floor |
+| --------- | ---------- | ---------------------------- |
+| `/actuator/health` — touches no database, so this **is** the floor | 1.08–1.38 s | — |
+| Import 600 students, 309 guardians, 571 links | 18.4 s | one call, all-or-nothing |
+| Validate the same file | 8.6 s | nothing written |
+| Student list, first page | 1.60–1.69 s | ~0.4 s |
+| Student list, **deepest** page (26 of 27) | 1.61–1.94 s | ~0.5 s |
+| Search by name | 1.60–1.83 s | ~0.5 s |
+| Search by admission number | ~1.6 s | ~0.4 s |
+| Guardian directory | ~1.6 s | ~0.4 s |
+| **Guardian phone search** | 1.47–1.61 s | **~0.35 s — the fastest of them** |
+| Dashboard | 1.95–2.08 s | ~0.8 s |
+
+Two things worth stating plainly. **Offset pagination does not degrade with depth**: the last page of
+27 costs the same as the first, so the `?page=&size=` choice in the conventions is holding. And the
+**guardian phone search — the query [ADR-0020](architecture/adr/0020-student-and-guardian-model.md)
+§5 exists to make possible — is the cheapest query on the list**, not the most expensive. Searching
+`9600000018` returns one record reading "Linked to 4 students": one guardian, four siblings, found by
+a number.
+
+Everything else on the page is network latency to a free instance in Singapore, not the application.
+A single first sample showed the guardian search at 3.6 s and the dashboard at 3.9 s; both fell to
+their steady-state numbers on repeat, so those were cold-path artefacts rather than measurements —
+which is the argument for never reporting one sample.
+
+What this does **not** establish: concurrency. Every number above is one user at a time. A morning
+where forty teachers open the register at once is a different question and is still open.
 
 **Built in Phase 1 but not on its list**, because the roadmap assumed them rather than naming them:
 identity, login and server-side sessions; forced password change, enforced on the server; schema-per-
@@ -245,8 +274,8 @@ not build one here.
   of a create-and-link sequence per child, which is what keeps six hundred students from turning a
   developer's `./mvnw spring-boot:run` into a coffee break. See
   [running locally](development/running-locally.md). List screens, paging and the guardian phone
-  search below now have six hundred rows to be measured against — that measurement itself is not
-  done, see below.
+  search now have six hundred rows to be measured against, and **that measurement has been done** —
+  on the deployed environment, 2026-09-10. See _Phase 1 in detail_ above for the numbers.
 - **That larger seed could not reach a database that already had `DEMO-001`.** The seeder is
   idempotent by skipping outright once the school code is registered, and the shared Supabase project
   registered `DEMO-001` back when the roster was a few dozen students — so every `local` boot against
