@@ -468,19 +468,36 @@ only visible by pressing the button.
 
 Recorded so they are decided rather than discovered.
 
-- **The free instance runs out of memory, and the configured ceiling does not fit in 512 MB.** Render
-  reported it in its own words on 2026-09-10: `Instance failed … Ran out of memory (used over 512MB)`.
-  That settles what the silent restarts recorded in
-  [the second verification pass](phase-2-verification.md) as Finding G actually were — twice in
-  twenty-five minutes, no shutdown log, no exception. They are OOM kills, not free-tier idle
-  spin-down. The arithmetic says so too. `render.yaml` sets
-  `-XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m`, which on a 512 MB instance reserves **~307 MB
-  of heap plus 160 MB of metaspace — 467 MB before a single byte of code cache, GC metadata, direct
-  buffers or the JVM's own footprint.** The comment above that setting worries about exactly this
-  and then picks numbers that do not fit. The 2026-09-10 kill happened about nineteen minutes after
-  a clean start, with nobody using the app, which points at footprint creep rather than a
-  request-driven spike — `UseSerialGC` does not return committed heap to the OS readily, and Spring
-  Modulith's runtime verification retains class metadata from the ArchUnit scan.
+- **The free instance runs out of memory, and the binding constraint is metaspace, not heap.** Render
+  reported the first kill in its own words on 2026-09-10: `Instance failed … Ran out of memory (used
+  over 512MB)`. That settles what the silent restarts recorded in
+  [the second verification pass](phase-2-verification.md) as Finding G were — twice in twenty-five
+  minutes, no shutdown log, no exception. They are OOM kills, not free-tier idle spin-down.
+
+  The first attempt to fix it made things worse, and that is the part worth keeping. It reasoned
+  about heap — `-XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m` is ~307 MB of heap plus 160 MB of
+  metaspace, 467 MB of a 512 MB box before code cache, GC metadata or the JVM's own footprint — and
+  cut *metaspace* to 128 MB as part of buying headroom. The next boot died before serving a single
+  request:
+
+      Terminating due to java.lang.OutOfMemoryError: Metaspace
+
+  So the app needs **more** metaspace than 128 MB, not less. It loads an unusual number of classes
+  for its size: Spring Boot 4, Hibernate with 33 repositories, and Spring Modulith's runtime
+  verification, which pulls ArchUnit in and scans every module at startup. The settings now give
+  metaspace 224 MB and take it out of the heap (35%, ~179 MB), which this application idles far
+  below.
+
+  **If it OOMs again, the next lever is structural rather than numerical.** Spring Modulith's runtime
+  verification (`spring-modulith-runtime`) is what loads ArchUnit into a long-lived process that has
+  no need of it after startup. Keeping it was a decision taken when the cost looked like 257 seconds
+  of startup; the cost now also includes the metaspace that makes this instance unable to stay up.
+  That is worth re-deciding with the new evidence rather than treating as settled. The other lever is
+  simply a larger instance.
+
+  A useful side effect of the failed attempt: `-XX:+ExitOnOutOfMemoryError`, added at the same time,
+  is why the log says what went wrong. The earlier kills said nothing at all.
+
 - **`spring.autoconfigure.exclude` for `UserDetailsServiceAutoConfiguration` does not appear to take
   effect on the deployed build.** #94 added it to `application.yml`, its test asserts no
   `UserDetailsService` bean under `{test, prod}` and passes, and the class name is correct for Boot
