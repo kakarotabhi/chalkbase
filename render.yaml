@@ -61,13 +61,21 @@ services:
       #       nobody using the app. The comment that used to sit here worried about exactly this
       #       and then picked numbers that could not hold.
       #
-      # The numbers below leave real headroom instead of nominal headroom:
+      # The first attempt at fixing this cut metaspace to 128 MB and made things worse — the app
+      # then died during startup with `OutOfMemoryError: Metaspace` before it ever served a request.
+      # That was the useful failure: **the binding constraint here is metaspace, not heap.** This
+      # application loads an unusual number of classes for its size — Spring Boot 4, Hibernate with
+      # 33 repositories, and Spring Modulith's runtime verification, which pulls ArchUnit in and
+      # scans every module at startup.
       #
-      #   heap        ~230 MB   MaxRAMPercentage=45
-      #   metaspace    128 MB   measured need is well under this; it is a ceiling, not a reservation
-      #   code cache    64 MB   the default reserves 240 MB of address space and confuses the sums
+      # So the budget is spent the other way round: metaspace gets the room it demonstrably needs
+      # and the heap gives it up.
+      #
+      #   metaspace    224 MB   the measured need is above 128 MB and was surviving at 160 MB
+      #   heap        ~179 MB   MaxRAMPercentage=35 — this app idles far below that
+      #   code cache    48 MB   the default reserves 240 MB of address space and confuses the sums
       #   ------------------
-      #   total        422 MB   leaving ~90 MB for GC structures, direct buffers and the JVM itself
+      #   total        451 MB   leaving ~60 MB for GC structures, direct buffers and the JVM itself
       #
       # Thread stacks are not in that table on purpose: `spring.threads.virtual.enabled` is true, so
       # request handling does not cost a 1 MB native stack per concurrent request.
@@ -80,7 +88,7 @@ services:
       # Overriding the whole JAVA_OPTS string here rather than in the Dockerfile keeps the VPS
       # deployment, which has real memory, on the setting that suits it.
       - key: JAVA_OPTS
-        value: -XX:MaxRAMPercentage=45 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+        value: -XX:MaxRAMPercentage=35 -XX:MaxMetaspaceSize=224m -XX:ReservedCodeCacheSize=48m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
 
       # Supabase. `sync: false` means Render prompts once at Blueprint creation and stores the value
       # in the service's environment — it is never written back to this file.
