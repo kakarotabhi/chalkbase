@@ -112,6 +112,10 @@ export class EnquiryDetail {
   });
   protected readonly reassignSaving = signal(false);
   protected readonly reassignFailureCode = signal<string | null>(null);
+  /** True once "Save" has been pressed on the reassign form. */
+  private readonly reassignAttempted = signal(false);
+  /** Bumped on every change so `reassignFieldError` recomputes. */
+  private readonly reassignRevision = signal(0);
 
   protected readonly followUpResultOptions = FOLLOW_UP_RESULT_OPTIONS;
   protected readonly followUpForm = this.formBuilder.group({
@@ -121,6 +125,10 @@ export class EnquiryDetail {
   });
   protected readonly followUpSaving = signal(false);
   protected readonly followUpFailureCode = signal<string | null>(null);
+  /** True once "Log follow-up" has been pressed. */
+  private readonly followUpAttempted = signal(false);
+  /** Bumped on every change so `followUpFieldErrors` recomputes. */
+  private readonly followUpRevision = signal(0);
 
   protected readonly announcement = signal('');
 
@@ -155,6 +163,36 @@ export class EnquiryDetail {
       FOLLOW_UP_MESSAGES[code] ??
       'Could not log this follow-up. Check the fields above and try again.'
     );
+  });
+
+  protected readonly reassignFieldError = computed<string | null>(() => {
+    this.reassignRevision();
+    this.reassignAttempted();
+    const control = this.reassignForm.controls.counsellorId;
+    if (!control.touched && !this.reassignAttempted()) {
+      return null;
+    }
+    if (control.hasError('required')) {
+      return 'Choose who this enquiry is assigned to.';
+    }
+    return null;
+  });
+
+  /**
+   * `resultingStatus` is not wired up here — it carries no validator. `nextFollowUpDate` is a
+   * cross-field rule rather than one Angular validates on its own control (`AdmissionErrorCode`'s
+   * own `NEXT_FOLLOW_UP_DATE_REQUIRED`, the same shape `StudentCompliance`'s APAAR consent check
+   * uses): a date is required unless this follow-up is closing the enquiry.
+   */
+  protected readonly followUpFieldErrors = computed<
+    Readonly<{ note: string | null; nextFollowUpDate: string | null }>
+  >(() => {
+    this.followUpRevision();
+    this.followUpAttempted();
+    return {
+      note: this.followUpNoteError(),
+      nextFollowUpDate: this.nextFollowUpDateError(),
+    };
   });
 
   protected readonly counsellorOptions = computed<readonly SelectOption[]>(() =>
@@ -212,6 +250,12 @@ export class EnquiryDetail {
       this.load(id);
     });
     this.loadCounsellors();
+    this.reassignForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.reassignRevision.update((count) => count + 1);
+    });
+    this.followUpForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.followUpRevision.update((count) => count + 1);
+    });
   }
 
   protected reload(): void {
@@ -223,6 +267,7 @@ export class EnquiryDetail {
   protected startReassign(): void {
     const current = this.enquiry();
     this.reassignFailureCode.set(null);
+    this.reassignAttempted.set(false);
     this.reassignForm.reset(
       { counsellorId: current?.assignedCounsellorId ?? '' },
       { emitEvent: false },
@@ -238,7 +283,9 @@ export class EnquiryDetail {
   }
 
   protected submitReassign(): void {
+    this.reassignAttempted.set(true);
     this.reassignForm.markAllAsTouched();
+    this.reassignRevision.update((count) => count + 1);
     if (this.reassignForm.invalid || this.reassignSaving()) {
       return;
     }
@@ -266,8 +313,10 @@ export class EnquiryDetail {
   // ── Logging a follow-up ──────────────────────────────────────────────────────────────────
 
   protected submitFollowUp(): void {
+    this.followUpAttempted.set(true);
     this.followUpForm.markAllAsTouched();
-    if (this.followUpForm.invalid || this.followUpSaving()) {
+    this.followUpRevision.update((count) => count + 1);
+    if (this.followUpForm.invalid || this.followUpSaving() || this.nextFollowUpDateError()) {
       return;
     }
     const value = this.followUpForm.getRawValue();
@@ -284,6 +333,7 @@ export class EnquiryDetail {
       .subscribe({
         next: (updated) => {
           this.followUpSaving.set(false);
+          this.followUpAttempted.set(false);
           this.enquiry.set(updated);
           this.followUpForm.reset({ note: '', nextFollowUpDate: today(), resultingStatus: '' });
           this.announcement.set('Follow-up logged.');
@@ -325,6 +375,34 @@ export class EnquiryDetail {
         next: (counsellors) => this.counsellors.set(counsellors),
         error: () => this.counsellorsFailed.set(true),
       });
+  }
+
+  private followUpNoteError(): string | null {
+    const control = this.followUpForm.controls.note;
+    if (!control.touched && !this.followUpAttempted()) {
+      return null;
+    }
+    if (control.hasError('required')) {
+      return 'Say what happened in this follow-up.';
+    }
+    if (control.hasError('maxlength')) {
+      return 'What happened is 1000 characters or fewer.';
+    }
+    return null;
+  }
+
+  /** The rule the backend enforces as `NEXT_FOLLOW_UP_DATE_REQUIRED` — mirrored here so it shows
+   * under the field it is about, rather than only after a round trip. */
+  private nextFollowUpDateError(): string | null {
+    if (!this.followUpAttempted()) {
+      return null;
+    }
+    const value = this.followUpForm.getRawValue();
+    const closing = value.resultingStatus === 'CONVERTED' || value.resultingStatus === 'LOST';
+    if (!closing && !value.nextFollowUpDate) {
+      return FOLLOW_UP_MESSAGES[NEXT_FOLLOW_UP_DATE_REQUIRED];
+    }
+    return null;
   }
 }
 

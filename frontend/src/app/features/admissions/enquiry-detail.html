@@ -153,11 +153,13 @@
             label="Assign to"
             [required]="true"
             [controlId]="'reassign-counsellor'"
+            [error]="reassignFieldError()"
           >
             <cb-select
               formControlName="counsellorId"
               [id]="counsellorField.controlId()"
               [options]="counsellorOptions()"
+              [invalid]="counsellorField.hasError()"
             />
           </cb-form-field>
 
@@ -203,11 +205,13 @@
             [required]="true"
             class="follow-up-form__field--wide"
             [controlId]="'follow-up-note'"
+            [error]="followUpFieldErrors().note"
           >
             <cb-text-input
               formControlName="note"
               [id]="noteField.controlId()"
               [describedBy]="noteField.describedById()"
+              [invalid]="noteField.hasError()"
             />
           </cb-form-field>
 
@@ -216,12 +220,14 @@
             label="Next follow-up"
             hint="Leave as is, or clear it if you are closing the enquiry"
             [controlId]="'follow-up-next-date'"
+            [error]="followUpFieldErrors().nextFollowUpDate"
           >
             <cb-text-input
               type="date"
               formControlName="nextFollowUpDate"
               [id]="nextDateField.controlId()"
               [describedBy]="nextDateField.describedById()"
+              [invalid]="nextDateField.hasError()"
             />
           </cb-form-field>
 

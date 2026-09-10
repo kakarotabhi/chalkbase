@@ -23,6 +23,34 @@ import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { ACCESS_DENIED } from './students-shared';
 
+/** Which control each message belongs under. */
+const FIELDS = [
+  'bloodGroup',
+  'cwsnStatus',
+  'disabilityDetails',
+  'allergies',
+  'chronicConditions',
+  'medication',
+  'emergencyContactName',
+  'emergencyContactPhone',
+  'emergencyContactRelation',
+] as const;
+
+type Field = (typeof FIELDS)[number];
+
+/** The backend's own limits, restated so a value is refused before the round trip rather than after. */
+const MAX_LENGTH_MESSAGE: Readonly<Record<Field, string>> = {
+  bloodGroup: 'A blood group is 40 characters or fewer.',
+  cwsnStatus: 'A CWSN / disability status is 100 characters or fewer.',
+  disabilityDetails: 'Disability details are 2000 characters or fewer.',
+  allergies: 'A list of allergies is 2000 characters or fewer.',
+  chronicConditions: 'Chronic conditions are 2000 characters or fewer.',
+  medication: 'A list of medication is 2000 characters or fewer.',
+  emergencyContactName: 'A name is 200 characters or fewer.',
+  emergencyContactPhone: 'A phone number is 20 characters or fewer.',
+  emergencyContactRelation: 'A relation is 60 characters or fewer.',
+};
+
 /**
  * A student's health record (FR-034): CWSN/disability, allergies, chronic conditions, medication,
  * blood group, and an emergency contact.
@@ -83,6 +111,21 @@ export class StudentMedical {
     emergencyContactRelation: ['', Validators.maxLength(60)],
   });
 
+  /** True once Save has been pressed: before that, only touched fields show a message. */
+  private readonly attempted = signal(false);
+  /** Bumped on every change so the messages recompute; values come off the controls. */
+  private readonly revision = signal(0);
+
+  protected readonly fieldErrors = computed<Readonly<Record<Field, string | null>>>(() => {
+    this.revision();
+    this.attempted();
+    const errors: Record<string, string | null> = {};
+    for (const field of FIELDS) {
+      errors[field] = this.messageFor(field);
+    }
+    return errors as Readonly<Record<Field, string | null>>;
+  });
+
   protected readonly summary = computed(() => this.medical() ?? EMPTY_MEDICAL_SUMMARY);
 
   protected readonly hasAnyRestricted = computed(() => {
@@ -115,6 +158,12 @@ export class StudentMedical {
         };
     }
   });
+
+  constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.revision.update((count) => count + 1);
+    });
+  }
 
   /** Whether a caller may see the real value of a given field: revealed, and it was actually recorded. */
   protected valueFor(has: boolean, field: keyof MedicalDetail): string | null {
@@ -172,6 +221,7 @@ export class StudentMedical {
   }
 
   private openEditor(detail: MedicalDetail | null): void {
+    this.attempted.set(false);
     const summary = this.summary();
     this.form.reset(
       {
@@ -203,7 +253,9 @@ export class StudentMedical {
     if (this.busy()) {
       return;
     }
+    this.attempted.set(true);
     this.form.markAllAsTouched();
+    this.revision.update((count) => count + 1);
     if (this.form.invalid) {
       return;
     }
@@ -252,6 +304,17 @@ export class StudentMedical {
     afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
       injector: this.injector,
     });
+  }
+
+  private messageFor(field: Field): string | null {
+    const control = this.form.controls[field];
+    if (!control.touched && !this.attempted()) {
+      return null;
+    }
+    if (control.hasError('maxlength')) {
+      return MAX_LENGTH_MESSAGE[field];
+    }
+    return null;
   }
 }
 

@@ -12,7 +12,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { apiErrorCode } from '../../core/api/api-error';
 import { ContactDetail } from '../../core/api/models';
 import { StudentsApi } from '../../core/api/students-api';
@@ -22,6 +27,10 @@ import { Button } from '../../shared/components/button/button';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { ACCESS_DENIED } from './students-shared';
+
+/** The backend's own limits, restated so a value is refused before the round trip rather than after. */
+const PHONE_MAX_LENGTH = 20;
+const EMAIL_MAX_LENGTH = 320;
 
 /**
  * A student's own address, phone and email (FR-028).
@@ -58,8 +67,24 @@ export class StudentContact {
 
   protected readonly form = this.formBuilder.group({
     address: '',
-    phone: ['', Validators.maxLength(20)],
-    email: ['', [Validators.email, Validators.maxLength(320)]],
+    phone: ['', Validators.maxLength(PHONE_MAX_LENGTH)],
+    email: ['', [Validators.email, Validators.maxLength(EMAIL_MAX_LENGTH)]],
+  });
+
+  /** True once Save has been pressed: before that, only touched fields show a message. */
+  private readonly attempted = signal(false);
+  /** Bumped on every change so the messages recompute; values come off the controls. */
+  private readonly revision = signal(0);
+
+  protected readonly fieldErrors = computed<
+    Readonly<{ phone: string | null; email: string | null }>
+  >(() => {
+    this.revision();
+    this.attempted();
+    return {
+      phone: this.messageFor(this.form.controls.phone, 'phone'),
+      email: this.messageFor(this.form.controls.email, 'email'),
+    };
   });
 
   protected readonly view = computed(() => {
@@ -88,8 +113,15 @@ export class StudentContact {
     }
   });
 
+  constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.revision.update((count) => count + 1);
+    });
+  }
+
   protected startEdit(): void {
     this.failureCode.set(null);
+    this.attempted.set(false);
     const contact = this.contact();
     this.form.reset(
       {
@@ -115,7 +147,9 @@ export class StudentContact {
     if (this.busy()) {
       return;
     }
+    this.attempted.set(true);
     this.form.markAllAsTouched();
+    this.revision.update((count) => count + 1);
     if (this.form.invalid) {
       return;
     }
@@ -148,5 +182,20 @@ export class StudentContact {
     afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
       injector: this.injector,
     });
+  }
+
+  private messageFor(control: AbstractControl, name: 'phone' | 'email'): string | null {
+    if (!control.touched && !this.attempted()) {
+      return null;
+    }
+    if (name === 'email' && control.hasError('email')) {
+      return 'Enter an email address like name@example.com.';
+    }
+    if (control.hasError('maxlength')) {
+      return name === 'email'
+        ? `An email address is ${EMAIL_MAX_LENGTH} characters or fewer.`
+        : `A phone number is ${PHONE_MAX_LENGTH} characters or fewer.`;
+    }
+    return null;
   }
 }

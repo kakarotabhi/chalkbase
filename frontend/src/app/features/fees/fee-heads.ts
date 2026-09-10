@@ -10,7 +10,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { FeeApi } from '../../core/api/fee-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
@@ -149,6 +154,34 @@ export class FeeHeads {
   protected readonly showCap = computed(() => {
     this.formValue();
     return this.headForm.controls.category.value === 'ANNUAL_DEVELOPMENT';
+  });
+
+  /**
+   * Only `name` is wired up here. `category` carries a `required` validator too, but neither
+   * select offers an empty option (see `cb-select`'s own `placeholder`) — both forms reset to a
+   * real category, so it can never actually be invalid. `capPercentOfTuition` and `description`
+   * carry no validator at all.
+   */
+  protected readonly headFieldErrors = computed<Readonly<{ name: string | null }>>(() => {
+    this.formValue();
+    this.attempted();
+    this.serverErrors();
+    return {
+      name: this.messageFor(this.headForm.controls.name, 'name', 'Give this fee head a name.'),
+    };
+  });
+
+  protected readonly concessionFieldErrors = computed<Readonly<{ name: string | null }>>(() => {
+    this.formValue();
+    this.attempted();
+    this.serverErrors();
+    return {
+      name: this.messageFor(
+        this.concessionForm.controls.name,
+        'name',
+        'Give this concession type a name.',
+      ),
+    };
   });
 
   protected readonly writeFailure = computed(() => {
@@ -503,5 +536,24 @@ export class FeeHeads {
     afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
       injector: this.injector,
     });
+  }
+
+  /** A server-named reason wins — it is about the value just refused — otherwise the client's own. */
+  private messageFor(
+    control: AbstractControl,
+    serverField: string,
+    requiredMessage: string,
+  ): string | null {
+    const fromServer = this.serverErrors()[serverField];
+    if (fromServer) {
+      return fromServer;
+    }
+    if (!control.touched && !this.attempted()) {
+      return null;
+    }
+    if (control.hasError('required')) {
+      return requiredMessage;
+    }
+    return null;
   }
 }

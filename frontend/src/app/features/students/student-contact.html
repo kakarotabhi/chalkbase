@@ -25,24 +25,36 @@
         />
       </cb-form-field>
 
-      <cb-form-field #phoneField label="Phone" controlId="contact-phone">
+      <cb-form-field
+        #phoneField
+        label="Phone"
+        controlId="contact-phone"
+        [error]="fieldErrors().phone"
+      >
         <cb-text-input
           formControlName="phone"
           type="tel"
           autocomplete="tel"
           [id]="phoneField.controlId()"
           [describedBy]="phoneField.describedById()"
+          [invalid]="phoneField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>
 
-      <cb-form-field #emailField label="Email" controlId="contact-email">
+      <cb-form-field
+        #emailField
+        label="Email"
+        controlId="contact-email"
+        [error]="fieldErrors().email"
+      >
         <cb-text-input
           formControlName="email"
           type="email"
           autocomplete="email"
           [id]="emailField.controlId()"
           [describedBy]="emailField.describedById()"
+          [invalid]="emailField.hasError()"
           [readOnly]="busy()"
         />
       </cb-form-field>

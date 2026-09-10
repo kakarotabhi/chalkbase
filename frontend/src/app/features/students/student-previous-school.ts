@@ -24,6 +24,25 @@ import { TextInput } from '../../shared/components/text-input/text-input';
 import { formatDay } from '../../shared/formatting/day';
 import { ACCESS_DENIED } from './students-shared';
 
+/** Which control each message belongs under. `transferCertificateIssuedOn` carries no validator —
+ * the column is nullable and a date, so nothing typed into it can be too long. */
+const FIELDS = [
+  'previousSchoolName',
+  'previousSchoolBoard',
+  'transferCertificateNumber',
+  'reasonForLeaving',
+] as const;
+
+type Field = (typeof FIELDS)[number];
+
+/** The backend's own limits, restated so a value is refused before the round trip rather than after. */
+const MAX_LENGTH_MESSAGE: Readonly<Record<Field, string>> = {
+  previousSchoolName: 'A school name is 200 characters or fewer.',
+  previousSchoolBoard: 'A board name is 60 characters or fewer.',
+  transferCertificateNumber: 'A transfer certificate number is 60 characters or fewer.',
+  reasonForLeaving: 'A reason for leaving is 4000 characters or fewer.',
+};
+
 /**
  * Where a student came from, and the transfer certificate that admitted them (FR-033).
  *
@@ -64,6 +83,21 @@ export class StudentPreviousSchool {
     reasonForLeaving: ['', Validators.maxLength(4000)],
   });
 
+  /** True once Save has been pressed: before that, only touched fields show a message. */
+  private readonly attempted = signal(false);
+  /** Bumped on every change so the messages recompute; values come off the controls. */
+  private readonly revision = signal(0);
+
+  protected readonly fieldErrors = computed<Readonly<Record<Field, string | null>>>(() => {
+    this.revision();
+    this.attempted();
+    const errors: Record<string, string | null> = {};
+    for (const field of FIELDS) {
+      errors[field] = this.messageFor(field);
+    }
+    return errors as Readonly<Record<Field, string | null>>;
+  });
+
   protected readonly view = computed(() => {
     const record = this.record();
     return {
@@ -94,8 +128,15 @@ export class StudentPreviousSchool {
     }
   });
 
+  constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.revision.update((count) => count + 1);
+    });
+  }
+
   protected startEdit(): void {
     this.failureCode.set(null);
+    this.attempted.set(false);
     const record = this.record();
     this.form.reset(
       {
@@ -123,7 +164,9 @@ export class StudentPreviousSchool {
     if (this.busy()) {
       return;
     }
+    this.attempted.set(true);
     this.form.markAllAsTouched();
+    this.revision.update((count) => count + 1);
     if (this.form.invalid) {
       return;
     }
@@ -158,5 +201,16 @@ export class StudentPreviousSchool {
     afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(), {
       injector: this.injector,
     });
+  }
+
+  private messageFor(field: Field): string | null {
+    const control = this.form.controls[field];
+    if (!control.touched && !this.attempted()) {
+      return null;
+    }
+    if (control.hasError('maxlength')) {
+      return MAX_LENGTH_MESSAGE[field];
+    }
+    return null;
   }
 }
