@@ -4,6 +4,11 @@ FROM node:24-alpine AS build
 WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
+# The generated contract lives outside frontend/ and tsconfig.json maps `@contracts/*` to
+# `../contracts/*` — so from WORKDIR /build that resolves to /contracts. Copy it in, or every
+# generated type silently degrades to an index signature and the build dies on TS4111 rather than
+# on the missing import, which is why this took two days to be noticed.
+COPY contracts/ /contracts/
 COPY frontend/ ./
 RUN npm run build
 
