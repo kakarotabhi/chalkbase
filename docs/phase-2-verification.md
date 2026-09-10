@@ -33,7 +33,11 @@ below, because a verification report that only lists hits is not a verification 
 | ~~F~~ | ~~Restricted fields are never masked~~ — **withdrawn: the masking is correct**                                         | —              | —                        |
 | ~~H~~ | ~~The API publishes its whole surface unauthenticated~~ — **withdrawn: a documented decision**                         | —              | —                        |
 
-Fixed and awaiting merge: **A, B, D** in #91, **C** in #90, **J** in #92, **K** in #93, **L** in #94.
+**All of these are now merged** — A, B, D in #91, J in #92, K in #93, L in #94 — and the two that
+could not be exercised during the pass have since been verified end to end on the deployed
+environment (2026-09-10). **C did not turn out the way #90 claimed**; see below. What remains open is
+O, E and the two owner questions, all carried into `status.md`'s _Known gaps and debt_ and
+_Waiting on a decision_ so whoever picks up the next piece of work reads them.
 
 ## What the product does well, stated plainly
 
@@ -145,7 +149,19 @@ Finding A is the same defect wearing a different hat.
 A correction can only be filed against a mark on a locked date (end of day plus 24 hours). The demo
 seed creates no attendance at all, so every past date reads "Not marked" and `Request a correction` is
 correctly withheld — it renders only when a row has a `markId`. The approve/reject half of the module,
-and anything that reads attendance history, is unverified. #90 seeds it.
+and anything that reads attendance history, was unverified at the time.
+
+**Correction.** #90 was reported here and elsewhere as making this reachable on the deployed
+environment. It does not, and cannot: `DemoSchoolSeeder` is `@Profile("local")` and
+`refuseAnythingButLocal()` throws when `prod` is active, because it writes invented children and a
+well-known password. Its twenty days of history therefore only ever exist on a developer's machine,
+and the Render school still has none.
+
+The workflow **was** verified on 2026-09-10 — file a correction, see it queue, approve it, watch the
+mark change from `HALF_DAY` to `PRESENT` and the queue empty — but only because marks made by hand
+during the previous day's verification had aged past the twenty-four-hour lock. That was luck. If the
+deployed environment is ever meant to demonstrate attendance history, it needs a separate,
+`prod`-safe path that writes no invented people.
 
 ### M — overlapping academic sessions are accepted
 
@@ -502,8 +518,8 @@ it only so it is not mistaken for one later.
 
 | Area                                             | Why not                                                                                                                                                                                      |
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Attendance corrections: file, approve, reject    | No mark exists on a locked date (Finding C). #90 seeds the history that makes this reachable.                                                                                                |
-| Documents: upload, download, delete              | The button is broken (Finding K). Fix in #93. ADR-0025's storage adapter is therefore unexercised from the UI.                                                                               |
+| ~~Attendance corrections: file, approve, reject~~ | **Now verified** (2026-09-10): filed against a locked mark, queued, approved, and the mark changed `HALF_DAY` → `PRESENT` with the queue emptying. Reachable by luck rather than by #90 — see Finding C. |
+| ~~Documents: upload, download, delete~~ | **Now verified** (2026-09-10) once #93 merged: the form opens and stays open, a file uploads and is listed with its size and date, and deleting it names the consequence first. ADR-0025's storage adapter is exercised from the UI, and separately round-tripped through the API byte-identical. |
 | Unmasked student export                          | Held by no shipped role, deliberately. Correct trade; leaves the path unexercised.                                                                                                           |
 | Circular acknowledgement by a recipient          | Needs a parent account, which is a deferred decision.                                                                                                                                        |
 | Converting an enquiry to an admission            | The status moves to `Converted`; whether that should create a student is Phase 2 scope, not a defect.                                                                                        |
