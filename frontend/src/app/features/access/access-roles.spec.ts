@@ -36,6 +36,7 @@ const holder = (over: Partial<UserSummary> = {}): UserSummary => ({
   id: 'acct-priya',
   displayName: 'Priya Sharma',
   status: 'ACTIVE',
+  locked: false,
   ...over,
 });
 

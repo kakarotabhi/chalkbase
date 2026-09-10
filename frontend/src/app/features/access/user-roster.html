@@ -240,6 +240,9 @@
                 <cb-badge [tone]="row.active ? 'success' : 'warning'">
                   {{ row.statusLabel }}
                 </cb-badge>
+                @if (row.active && row.locked) {
+                  <cb-badge tone="danger" class="locked-badge">Locked</cb-badge>
+                }
               </td>
 
               <td class="cell cell--actions">
@@ -265,15 +268,20 @@
                       >
                         Deactivate<span class="hidden-label"> {{ row.displayName }}</span>
                       </button>
-                      <button
-                        type="button"
-                        class="link"
-                        [id]="row.unlockButtonId"
-                        [disabled]="busyId() !== null"
-                        (click)="unlock(row)"
-                      >
-                        Clear lockout<span class="hidden-label"> for {{ row.displayName }}</span>
-                      </button>
+                      @if (row.locked) {
+                        <!-- Only offered on a row the "Locked" badge above already marked as one:
+                             the roster now knows, so it stops offering this everywhere (see the
+                             class Javadoc). -->
+                        <button
+                          type="button"
+                          class="link"
+                          [id]="row.unlockButtonId"
+                          [disabled]="busyId() !== null"
+                          (click)="unlock(row)"
+                        >
+                          Clear lockout<span class="hidden-label"> for {{ row.displayName }}</span>
+                        </button>
+                      }
                       <button
                         type="button"
                         class="link"

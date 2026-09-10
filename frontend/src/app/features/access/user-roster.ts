@@ -53,6 +53,8 @@ interface AccountRow {
   readonly status: string;
   readonly statusLabel: string;
   readonly active: boolean;
+  /** Whether a lockout is in force right now — already resolved against the server's clock. */
+  readonly locked: boolean;
   readonly isSelf: boolean;
   readonly deactivateButtonId: string;
   readonly reactivateButtonId: string;
@@ -63,15 +65,16 @@ interface AccountRow {
 /**
  * This school's account roster (`docs/status.md`: "Roles and permissions … User management").
  *
- * ## What this screen cannot show, and why
+ * ## The lockout badge, and why "Clear lockout" is not always offered
  *
- * `GET /api/access/users` answers `UserSummary` for every account in one call — id, display name,
- * status — and nothing else. There is no lockout flag and no last-login time on that list: only
- * the four per-account write endpoints answer `UserAccountResponse`, which does carry
- * `lockedUntil`. Fetching each account individually to paint a lock badge would be the N+1 request
- * pattern every list screen in this app avoids, so **Clear lockout** is offered on every active
- * account rather than only the ones known to need it, and the confirmation after clicking it is
- * where the truth comes from. This is a known gap (`docs/status.md`), not an oversight.
+ * `GET /api/access/users` now answers `UserSummary.locked` for every account in one call — the
+ * backend's own comparison of `lockedUntil` against its clock, not the raw timestamp (see the
+ * doc comment on `UserSummary` in `core/api/models.ts`), so this screen never has to redo that
+ * comparison against the reader's own, possibly skewed or differently-zoned, one. `view()` reads
+ * it straight: a `cb-badge` says "Locked" only while `row.locked` is true, and **Clear lockout**
+ * is offered only there too, next to Deactivate and Reset password — the same row already tells
+ * an admin why it is missing everywhere else, the way an inactive row's Status badge is why
+ * Deactivate itself is replaced by Reactivate rather than merely disabled.
  *
  * ## A temporary password is shown exactly once
  *
@@ -179,6 +182,7 @@ export class UserRoster {
       status: account.status,
       statusLabel: labelFor(STATUS_LABELS, account.status),
       active: account.status === 'ACTIVE',
+      locked: account.locked,
       isSelf: account.id === this.currentUserId(),
       deactivateButtonId: `account-deactivate-${account.id}`,
       reactivateButtonId: `account-reactivate-${account.id}`,
@@ -436,10 +440,10 @@ export class UserRoster {
       .subscribe({
         next: () => {
           this.busyId.set(null);
-          // Whether the account was actually locked is not something this response distinguishes
-          // (see the class Javadoc), so this says what is now true rather than guessing at a change.
-          this.announcement.set(`Any lockout on ${row.displayName}'s account has been cleared.`);
-          this.focusAfterRender(`#${row.unlockButtonId}`);
+          // The button is only offered on a row this screen already knows is locked (see the
+          // class Javadoc), so this states the outcome plainly rather than hedging.
+          this.announcement.set(`${row.displayName}'s lockout has been cleared.`);
+          this.refresh(() => this.focusAfterRender(`#${row.deactivateButtonId}`));
         },
         error: () => {
           this.busyId.set(null);

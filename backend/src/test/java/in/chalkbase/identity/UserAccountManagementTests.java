@@ -14,6 +14,8 @@ import in.chalkbase.school.domain.Board;
 import in.chalkbase.school.domain.School;
 import in.chalkbase.school.infrastructure.SchoolRepository;
 import jakarta.servlet.http.Cookie;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -183,6 +185,45 @@ class UserAccountManagementTests {
         assertThat(countOf(AuditAction.ENTITY_UPDATED, account)).isZero();
     }
 
+    // ── Roster: `locked` reads the lockout, not merely its presence ────────────────────────────
+
+    @Test
+    void theRosterShowsAnAccountAsLockedWhileTheLockoutIsStillInForce() throws Exception {
+        UUID teacher = createAccount("teacher", "Some Teacher", "SUBJECT_TEACHER");
+        Cookie session = signIn("principal");
+
+        mockMvc.perform(get("/api/access/users").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.data[?(@.id == '" + teacher + "')].locked").value(false));
+
+        lock(teacher, Instant.now().plus(30, ChronoUnit.MINUTES));
+
+        mockMvc.perform(get("/api/access/users").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.data[?(@.id == '" + teacher + "')].locked").value(true));
+    }
+
+    /**
+     * The subtlety a per-row lockout badge has to get right: {@code locked_until} is a timestamp,
+     * not a flag, and one in the past means the lockout it named is over. A roster that showed
+     * "locked" merely because the column was non-null would keep flagging this account days after
+     * whoever tripped it was free to sign back in.
+     */
+    @Test
+    void theRosterStopsShowingAnAccountAsLockedOnceTheLockoutHasExpired() throws Exception {
+        UUID teacher = createAccount("teacher", "Some Teacher", "SUBJECT_TEACHER");
+        Cookie session = signIn("principal");
+
+        lock(teacher, Instant.now().minus(1, ChronoUnit.MINUTES));
+
+        mockMvc.perform(get("/api/access/users").cookie(session))
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.data[?(@.id == '" + teacher + "')].locked").value(false));
+    }
+
     // ── Deactivate: session actually ends, and the last-manager guard ──────────────────────────
 
     @Test
@@ -306,6 +347,17 @@ class UserAccountManagementTests {
                 .params(UUID.randomUUID(), accountId, roleId)
                 .update();
         return accountId;
+    }
+
+    /**
+     * The PostgreSQL driver cannot infer a SQL type for a bare {@code java.time.Instant};
+     * {@code Timestamp} is what it maps to {@code timestamptz} through — the same helper
+     * {@code SessionStandingFilterTests} uses.
+     */
+    private void lock(UUID accountId, Instant until) {
+        jdbc.sql("update " + SCHEMA + ".user_account set locked_until = ? where id = ?")
+                .params(java.sql.Timestamp.from(until), accountId)
+                .update();
     }
 
     private String statusOf(UUID accountId) {

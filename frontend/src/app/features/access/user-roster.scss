@@ -199,6 +199,11 @@ tbody {
   vertical-align: middle;
 }
 
+// The status cell can hold two badges at once (Active + Locked); this one only ever follows it.
+.locked-badge {
+  margin-left: var(--cb-space-2);
+}
+
 .row__actions {
   display: flex;
   flex-wrap: wrap;

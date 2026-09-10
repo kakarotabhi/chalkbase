@@ -4,6 +4,7 @@ import in.chalkbase.identity.api.GrantResponse;
 import in.chalkbase.identity.api.RoleResponse;
 import in.chalkbase.identity.api.UserSummary;
 import in.chalkbase.identity.domain.Role;
+import in.chalkbase.identity.domain.UserAccount;
 import in.chalkbase.identity.domain.UserRoleGrant;
 import in.chalkbase.identity.infrastructure.RoleRepository;
 import in.chalkbase.identity.infrastructure.UserAccountRepository;
@@ -11,6 +12,7 @@ import in.chalkbase.identity.infrastructure.UserRoleGrantRepository;
 import in.chalkbase.platform.error.NotFoundException;
 import in.chalkbase.platform.security.PermissionCatalog;
 import in.chalkbase.platform.security.PermissionDefinition;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -62,11 +64,9 @@ public class AccessDirectory {
     }
 
     public List<UserSummary> users() {
+        Instant now = Instant.now();
         return accounts.findAll().stream()
-                .map(account -> new UserSummary(
-                        account.getId(),
-                        account.getDisplayName(),
-                        account.getStatus().name()))
+                .map(account -> toSummary(account, now))
                 .sorted(Comparator.comparing(UserSummary::displayName))
                 .toList();
     }
@@ -87,11 +87,9 @@ public class AccessDirectory {
         if (accountIds.isEmpty()) {
             return List.of();
         }
+        Instant now = Instant.now();
         return accounts.findAllById(accountIds).stream()
-                .map(account -> new UserSummary(
-                        account.getId(),
-                        account.getDisplayName(),
-                        account.getStatus().name()))
+                .map(account -> toSummary(account, now))
                 .sorted(Comparator.comparing(UserSummary::displayName))
                 .toList();
     }
@@ -108,6 +106,16 @@ public class AccessDirectory {
         if (!roles.existsById(roleId)) {
             throw new NotFoundException("Role", roleId);
         }
+    }
+
+    /**
+     * {@code locked} is evaluated once against {@code now} rather than per-account against a fresh
+     * clock read, so every row in one response answers "locked" against the same instant — see
+     * {@link UserSummary}'s own Javadoc for why the comparison happens here and not in the browser.
+     */
+    private static UserSummary toSummary(UserAccount account, Instant now) {
+        return new UserSummary(
+                account.getId(), account.getDisplayName(), account.getStatus().name(), account.isLocked(now));
     }
 
     static RoleResponse toResponse(Role role) {

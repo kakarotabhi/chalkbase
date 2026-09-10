@@ -18,6 +18,7 @@ const account = (over: Partial<UserSummary> = {}): UserSummary => ({
   id: 'acct-priya',
   displayName: 'Priya Sharma',
   status: 'ACTIVE',
+  locked: false,
   ...over,
 });
 
@@ -270,7 +271,7 @@ describe('UserRoster', () => {
   // ── Unlock ────────────────────────────────────────────────────────────────────────────────
 
   it('clears a lockout without asking for confirmation', () => {
-    arrive();
+    arrive([account({ locked: true })]);
 
     button('Clear lockout').click();
     fixture.detectChanges();
@@ -285,7 +286,28 @@ describe('UserRoster', () => {
     );
     fixture.detectChanges();
 
+    // The row no longer being locked is what makes "cleared" true, not merely the response coming
+    // back — so this re-reads the roster before the announcement is trusted.
+    list().flush(envelope([account({ locked: false })]));
+    fixture.detectChanges();
+
     expect(text()).toContain('lockout');
     expect(text()).toContain('cleared');
+  });
+
+  // ── The lockout badge (docs/status.md: the roster used to offer this on every active account) ──
+
+  it('shows a Locked badge and offers Clear lockout only while a lockout is in force', () => {
+    arrive([account({ locked: true })]);
+
+    expect(text()).toContain('Locked');
+    expect(button('Clear lockout')).toBeTruthy();
+  });
+
+  it('does not show a Locked badge or offer Clear lockout on an account that is not locked', () => {
+    arrive([account({ locked: false })]);
+
+    expect(text()).not.toContain('Locked');
+    expect(button('Clear lockout')).toBeUndefined();
   });
 });
