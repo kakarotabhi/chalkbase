@@ -29,6 +29,7 @@ the way Phase 1's work was)
 | School profile — `GET`/`PUT /api/school/profile` and its screen       | ✅ Done                                                                                                                                                     |
 | Shared UI components                                                  | ✅ Button, field, inputs, checkbox, select, bottom sheet                                                                                                    |
 | Academic sessions, classes and sections                               | ✅ Done                                                                                                                                                     |
+| Classes/sections — confirms before "Stop running" one that has enrolled students | ✅ Done |
 | Subjects                                                              | ✅ Done                                                                                                                                                     |
 | Students, guardians and enrolment                                     | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
 | Documents (FR-013, FR-032)                                            | ✅ Done — storage port, module, S3 adapter, a screen, and the five environment variables set and verified on Render                                                          |

@@ -29,6 +29,11 @@ own "A"; you are not naming them across the whole school.
 Nothing here is deleted — it is **switched off**. Select **Stop running** on the row. It stays
 visible, marked as not running, and you can switch it back on at any time.
 
+Stopping a class or a section takes it out of **Mark attendance** immediately, so nobody can mark
+anyone in it present or absent until it is switched back on. Before it happens, you are asked to
+confirm. For a class, the question says how many students are enrolled in it right now, so you
+know what you are about to do rather than finding out from a teacher who cannot find their class.
+
 This is deliberate. Once a student has been enrolled into a class, deleting it would leave that
 student's record pointing at something that no longer exists. Switching it off keeps the history
 honest and still takes it out of the lists people pick from.
