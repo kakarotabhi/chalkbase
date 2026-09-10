@@ -141,6 +141,13 @@
                 <p class="rung__meta">
                   @if (row.sections.length === 0) {
                     No sections yet
+                  } @else if (!row.active) {
+                    <!--
+                      Stopping a class does not touch its sections' own `active` flag, so saying "X
+                      of Y running" here would be true of that flag and false of what it means:
+                      Mark attendance will not offer any of them while the class itself is stopped.
+                    -->
+                    Sections do not run while the class is stopped
                   } @else {
                     {{ row.activeSectionCount }} of {{ row.sections.length }} sections running
                   }
@@ -342,3 +349,61 @@
     </div>
   </form>
 </ng-template>
+
+@if (stoppingClass(); as target) {
+  <cb-dialog
+    [heading]="'Stop running ' + target.name + '?'"
+    confirmLabel="Stop running"
+    cancelLabel="Keep it running"
+    confirmVariant="danger"
+    [busy]="saving()"
+    (confirmed)="confirmStopClass()"
+    (cancelled)="cancelStopClass()"
+  >
+    @let impact = stopClassImpact();
+    @if (impact.known && impact.count > 0) {
+      <p>
+        <strong>{{ impact.count }}</strong>
+        {{ impact.count === 1 ? 'student is' : 'students are' }} currently enrolled in
+        {{ target.name }}.
+      </p>
+      <p>
+        Its sections will not appear in Mark attendance until {{ target.name }} is switched back on
+        — nobody will be able to mark
+        {{ impact.count === 1 ? 'that student' : 'those students' }} present or absent until then.
+      </p>
+    } @else if (impact.known) {
+      <p>
+        Nobody is currently enrolled in {{ target.name }}, so this will not affect anyone's
+        attendance.
+      </p>
+      <p>Its sections will not appear in Mark attendance until it is switched back on.</p>
+    } @else {
+      <p>
+        Its sections will not appear in Mark attendance until {{ target.name }} is switched back on.
+        If any students are enrolled in it, nobody will be able to mark them present or absent until
+        then.
+      </p>
+    }
+    <p>It stays in the ladder, and can be switched back on at any time.</p>
+  </cb-dialog>
+}
+
+@if (stoppingSection(); as target) {
+  <cb-dialog
+    [heading]="'Stop running ' + target.section.qualifiedName + '?'"
+    confirmLabel="Stop running"
+    cancelLabel="Keep it running"
+    confirmVariant="danger"
+    [busy]="saving()"
+    (confirmed)="confirmStopSection()"
+    (cancelled)="cancelStopSection()"
+  >
+    <p>
+      {{ target.section.qualifiedName }} will not appear in Mark attendance until it is switched
+      back on. If any students are currently enrolled in it, nobody will be able to mark them
+      present or absent until then.
+    </p>
+    <p>It can be switched back on at any time.</p>
+  </cb-dialog>
+}
