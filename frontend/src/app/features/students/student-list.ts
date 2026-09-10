@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
@@ -31,6 +31,7 @@ import { Card } from '../../shared/components/card/card';
 import { Dialog } from '../../shared/components/dialog/dialog';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import { StudentForm } from './student-form';
 import {
   ACCESS_DENIED,
@@ -90,14 +91,18 @@ interface StudentRow {
  * and marks all point at them. There is deliberately no delete affordance on this screen or the
  * record, and the status field on the form is where a school records that somebody left.
  *
- * ## The filters are not in the URL, and that is deliberate
+ * ## The URL carries what is safe to carry, and no more
  *
- * A student's name is Confidential (ADR-0014). Putting `q` into the router's query parameters would
- * mint a URL with a child's name in it — one that lands in browser history, in a bookmark, in a
- * screenshot, and in whatever a support ticket pastes. The search text does travel to the server as
- * `?q=`, because that is a box the user chose to type into; the difference is that this app is not
- * the one building a *link* out of it. The cost is that the back button does not restore a search,
- * which is a smaller thing than the leak.
+ * Status and the class/section choice are mirrored into the URL (`?status=&sectionId=&page=`, see
+ * `syncUrl`), replacing the current history entry rather than pushing one, so a filtered page can
+ * be linked, bookmarked, reloaded, and returned to by the back button after opening a student's
+ * record — at 27 pages of students, losing your place there stopped being a nuisance. The search
+ * box is the one filter that stays out of it: a student's name is Confidential (ADR-0014), and
+ * putting `q` into the router's query parameters would mint a URL with a child's name in it — one
+ * that lands in browser history, in a bookmark, in a screenshot, and in whatever a support ticket
+ * pastes. The search text does travel to the server as `?q=`, because that is a box the user chose
+ * to type into; the difference is that this app is not the one building a *link* out of it. The
+ * cost is that the back button does not restore a search, which is a smaller thing than the leak.
  *
  * ## There is no guard on this route, deliberately
  *
@@ -130,6 +135,7 @@ export class StudentList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly document = inject(DOCUMENT);
 
@@ -158,17 +164,21 @@ export class StudentList {
   /** The confirmation dialog for the unmasked export — see `startUnmaskedExport`. */
   protected readonly confirmingUnmaskedExport = signal(false);
 
+  /**
+   * `status` and `sectionId` seed from the URL so that loading a link someone shared reproduces
+   * the view they were looking at. `q` never does — see the class Javadoc.
+   */
   protected readonly filters = this.formBuilder.group({
     q: '',
-    status: '',
-    sectionId: '',
+    status: this.route.snapshot.queryParamMap.get('status') ?? '',
+    sectionId: this.route.snapshot.queryParamMap.get('sectionId') ?? '',
   });
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */
   protected readonly failureCode = signal<string | null>(null);
   protected readonly rows = signal<readonly StudentSummary[]>([]);
-  protected readonly page = signal(0);
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -328,6 +338,7 @@ export class StudentList {
     this.filters.reset({ q: '', status: '', sectionId: '' }, { emitEvent: false });
     this.revision.update((count) => count + 1);
     this.page.set(0);
+    this.syncUrl();
     this.load();
   }
 
@@ -336,6 +347,7 @@ export class StudentList {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -344,6 +356,7 @@ export class StudentList {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -482,7 +495,22 @@ export class StudentList {
    * the wrong rows or an empty page, and both look like a broken screen. */
   private refilter(): void {
     this.page.set(0);
+    this.syncUrl();
     this.load();
+  }
+
+  /**
+   * Mirrors `status`, `sectionId` and `page` into the URL — never `q`, see the class Javadoc.
+   * Called after every change to any of the three, so the address bar is never a step behind what
+   * is on screen.
+   */
+  private syncUrl(): void {
+    const { status, sectionId } = this.filters.getRawValue();
+    syncListQueryParams(this.router, this.route, {
+      status: status || undefined,
+      sectionId: sectionId || undefined,
+      page: this.page() || undefined,
+    });
   }
 
   private load(): void {

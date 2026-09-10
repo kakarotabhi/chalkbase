@@ -14,11 +14,13 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { NgTemplateOutlet } from '@angular/common';
 import { AcademicsApi } from '../../core/api/academics-api';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
+import { DashboardApi } from '../../core/api/dashboard-api';
 import { SchoolClass, Section } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { permitted } from '../../core/auth/session-store';
 import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
+import { Dialog } from '../../shared/components/dialog/dialog';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { ACCESS_DENIED, DUPLICATE_SECTION_NAME } from './academics-shared';
@@ -106,16 +108,38 @@ interface ClassRow {
  * stops running is deactivated and can be brought back; a mistyped one is renamed. So there is no
  * delete affordance on this screen, and deactivating is an ordinary labelled button on the row
  * rather than something hidden inside an edit form.
+ *
+ * ## Stopping something asks first
+ *
+ * Attendance marking only offers a section whose class **and** section are both active, so
+ * switching either off takes it out of the register immediately — a child enrolled there cannot be
+ * marked present or absent again until it is switched back on, and nothing about the ladder screen
+ * said that until this dialog existed. Starting one running again carries no such surprise, so it
+ * stays a single press.
+ *
+ * A class's confirmation names how many students hold a live enrolment in it right now, the same
+ * way the guardian-removal dialog on the student record names the computed consequence rather than
+ * a boilerplate warning. That count comes from the landing dashboard's own tile
+ * (`GET /api/dashboard`, `students.byClass`) — the one place this number is already on the wire —
+ * and it is gated the same way the tile is: on a session being current and on this caller holding
+ * `student:student:read`, which a class manager is not guaranteed to hold. When it is not available
+ * the dialog still names the consequence, just without a number it cannot vouch for.
+ *
+ * A section's confirmation cannot do the same: nothing in the contract exposes a per-section
+ * enrolled count (`student.api.SectionEnrolmentCount` exists only as a backend-internal read
+ * between modules, never returned to a client), so its dialog states the consequence in words and
+ * says nothing it would have to guess.
  */
 @Component({
   selector: 'cb-school-classes',
-  imports: [ReactiveFormsModule, NgTemplateOutlet, Badge, Button, FormField, TextInput],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, Badge, Button, Dialog, FormField, TextInput],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './school-classes.html',
   styleUrl: './school-classes.scss',
 })
 export class SchoolClasses {
   private readonly api = inject(AcademicsApi);
+  private readonly dashboard = inject(DashboardApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
@@ -157,6 +181,26 @@ export class SchoolClasses {
 
   /** What just happened, said once, in the live region. */
   protected readonly announcement = signal('');
+
+  /** The class waiting on a confirmed "stop running", or null. */
+  protected readonly stoppingClass = signal<ClassRow | null>(null);
+  /** The section — and the class it belongs to — waiting on a confirmed "stop running", or null. */
+  protected readonly stoppingSection = signal<{
+    readonly row: ClassRow;
+    readonly section: SectionRow;
+  } | null>(null);
+
+  /**
+   * Active enrolment counts by class id, this session, from the landing dashboard's own tile.
+   *
+   * Null while unknown: before the first answer arrives, when no session is current, or when this
+   * caller does not hold `student:student:read` — the tile is simply absent from the response for
+   * any of those reasons and this screen cannot tell which. A class id absent from a non-null map
+   * has zero enrolled (`ClassEnrolmentCount` lists only classes with at least one), which is a real
+   * answer and different from "unknown"; the confirmation dialog says one or the other, never a
+   * guessed zero.
+   */
+  private readonly classEnrolment = signal<ReadonlyMap<string, number> | null>(null);
 
   /**
    * Only the newest reorder is allowed to paint. Each request carries the complete ladder, so a
@@ -306,11 +350,28 @@ export class SchoolClasses {
     }
   });
 
+  /**
+   * What stopping the class waiting on confirmation would do, in the terms the dialog needs: a
+   * known headcount, or none to vouch for.
+   */
+  protected readonly stopClassImpact = computed<{
+    readonly known: boolean;
+    readonly count: number;
+  }>(() => {
+    const target = this.stoppingClass();
+    const counts = this.classEnrolment();
+    if (!target || counts === null) {
+      return { known: false, count: 0 };
+    }
+    return { known: true, count: counts.get(target.id) ?? 0 };
+  });
+
   /** Tracks the form so `nameError` recomputes; the value itself comes off the control. */
   private readonly formValue = signal(0);
 
   constructor() {
     this.load();
+    this.loadEnrolment();
 
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.formValue.update((count) => count + 1);
@@ -431,11 +492,54 @@ export class SchoolClasses {
 
   // ── Active and inactive ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Starting a class running again is a single press — nothing about it is a surprise. Stopping
+   * one takes its sections out of Mark attendance immediately, so it asks first instead.
+   */
   protected toggleClass(row: ClassRow): void {
     if (this.saving()) {
       return;
     }
-    const next = !row.active;
+    if (row.active) {
+      this.askToStopClass(row);
+      return;
+    }
+    this.writeClassActive(row, true);
+  }
+
+  protected askToStopClass(row: ClassRow): void {
+    if (this.saving() || this.editor()) {
+      return;
+    }
+    this.writeFailureCode.set(null);
+    this.stoppingClass.set(row);
+  }
+
+  protected cancelStopClass(): void {
+    const target = this.stoppingClass();
+    if (this.saving() || !target) {
+      return;
+    }
+    this.stoppingClass.set(null);
+    this.focusAfterRender(`#${target.activeButtonId}`);
+  }
+
+  /**
+   * The dialog stays mounted and `[busy]` for the whole request — it is not dismissed here, only
+   * once the write settles, so the confirm button can show progress the way `cb-dialog` exists to
+   * show it (see the component's own docblock). Closing it immediately, before the request is even
+   * sent, would discard that capability for no reason: the row's `saving()` guard already stops a
+   * second submission, so nothing about correctness depends on the dialog closing early.
+   */
+  protected confirmStopClass(): void {
+    const target = this.stoppingClass();
+    if (this.saving() || !target) {
+      return;
+    }
+    this.writeClassActive(target, false);
+  }
+
+  private writeClassActive(row: ClassRow, next: boolean): void {
     this.saving.set(true);
     this.writeFailureCode.set(null);
 
@@ -445,6 +549,7 @@ export class SchoolClasses {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          this.stoppingClass.set(null);
           this.announcement.set(
             next
               ? `${row.name} is running again.`
@@ -452,15 +557,55 @@ export class SchoolClasses {
           );
           this.refresh(() => this.focusAfterRender(`#${row.activeButtonId}`));
         },
-        error: (error: unknown) => this.failWrite(error, `#${row.activeButtonId}`),
+        // A refused stop closes the dialog rather than leaving it open with nothing new to say —
+        // the reason lives in the page's own error banner (`writeFailure`), the same place every
+        // other refused write on this screen reports, and focus goes back to the row that asked.
+        error: (error: unknown) => {
+          this.stoppingClass.set(null);
+          this.failWrite(error, `#${row.activeButtonId}`);
+        },
       });
   }
 
+  /** Same reasoning as {@link toggleClass}: only stopping a section asks first. */
   protected toggleSection(row: ClassRow, section: SectionRow): void {
     if (this.saving()) {
       return;
     }
-    const next = !section.active;
+    if (section.active) {
+      this.askToStopSection(row, section);
+      return;
+    }
+    this.writeSectionActive(section, true);
+  }
+
+  protected askToStopSection(row: ClassRow, section: SectionRow): void {
+    if (this.saving() || this.editor()) {
+      return;
+    }
+    this.writeFailureCode.set(null);
+    this.stoppingSection.set({ row, section });
+  }
+
+  protected cancelStopSection(): void {
+    const target = this.stoppingSection();
+    if (this.saving() || !target) {
+      return;
+    }
+    this.stoppingSection.set(null);
+    this.focusAfterRender(`#${target.section.activeButtonId}`);
+  }
+
+  /** Same reasoning as {@link confirmStopClass}: the dialog stays up and busy until the write settles. */
+  protected confirmStopSection(): void {
+    const target = this.stoppingSection();
+    if (this.saving() || !target) {
+      return;
+    }
+    this.writeSectionActive(target.section, false);
+  }
+
+  private writeSectionActive(section: SectionRow, next: boolean): void {
     this.saving.set(true);
     this.writeFailureCode.set(null);
 
@@ -470,6 +615,7 @@ export class SchoolClasses {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          this.stoppingSection.set(null);
           this.announcement.set(
             next
               ? `${section.qualifiedName} is running again.`
@@ -477,7 +623,10 @@ export class SchoolClasses {
           );
           this.refresh(() => this.focusAfterRender(`#${section.activeButtonId}`));
         },
-        error: (error: unknown) => this.failWrite(error, `#${section.activeButtonId}`),
+        error: (error: unknown) => {
+          this.stoppingSection.set(null);
+          this.failWrite(error, `#${section.activeButtonId}`);
+        },
       });
   }
 
@@ -557,6 +706,30 @@ export class SchoolClasses {
           this.loading.set(false);
           this.loadFailureCode.set(apiErrorCode(error));
         },
+      });
+  }
+
+  /**
+   * The count the "stop running" dialog names for a class, read once from the landing dashboard's
+   * own tile rather than a second, purpose-built endpoint this lane does not own.
+   *
+   * A failure here — including the ordinary "this caller does not hold `student:student:read`"
+   * case, which the dashboard answers by omitting the tile rather than an error — must not block or
+   * blank the ladder this call is only decorating. The dialog falls back to naming the consequence
+   * without a number instead of guessing one.
+   */
+  private loadEnrolment(): void {
+    this.dashboard
+      .get()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          const byClass = response.students?.byClass;
+          this.classEnrolment.set(
+            byClass ? new Map(byClass.map((row) => [row.classId, row.count])) : null,
+          );
+        },
+        error: () => this.classEnrolment.set(null),
       });
   }
 

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SchoolClass } from '../../core/api/models';
+import { DashboardClassCount, SchoolClass } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
 import { SchoolClasses } from './school-classes';
@@ -9,6 +9,7 @@ import { SchoolClasses } from './school-classes';
 const CLASSES_URL = '/api/academics/classes';
 const ORDER_URL = '/api/academics/classes/order';
 const SECTIONS_URL = '/api/academics/sections';
+const DASHBOARD_URL = '/api/dashboard';
 
 /** An invented ladder for an invented school. Never real school data in a fixture. */
 const NURSERY: SchoolClass = {
@@ -62,12 +63,21 @@ describe('SchoolClasses', () => {
   const text = () => element().textContent ?? '';
 
   const ladderRequest = () => httpMock.expectOne({ url: CLASSES_URL, method: 'GET' });
+  const dashboardRequest = () => httpMock.expectOne({ url: DASHBOARD_URL, method: 'GET' });
 
   const control = (id: string) => element().querySelector<HTMLButtonElement>(`#${id}`);
   const press = (id: string) => {
     control(id)!.click();
     fixture.detectChanges();
   };
+
+  /** The dialog's own confirm or cancel button, never the row control that opened it. */
+  const dialogButton = (label: string) =>
+    Array.from(element().querySelectorAll('.dialog__panel button')).find((candidate) =>
+      (candidate.textContent ?? '').includes(label),
+    ) as HTMLButtonElement | undefined;
+
+  const dialog = () => element().querySelector('.dialog__panel');
 
   const rungNames = () =>
     Array.from(element().querySelectorAll('.rung__name')).map((node) => node.textContent?.trim());
@@ -87,10 +97,20 @@ describe('SchoolClasses', () => {
     fixture.detectChanges();
   };
 
-  const arrive = (ladder: readonly SchoolClass[] = LADDER) => {
+  /**
+   * The landing dashboard's own enrolment tile, which the "stop running" dialog reads for a class's
+   * headcount. Defaults to an empty ladder-wide count: present and known, nobody enrolled anywhere
+   * — the ordinary case for an invented fixture — rather than absent, which this screen reads as
+   * "unknown" and would make every count-bearing assertion ambiguous about which case it is testing.
+   */
+  const arrive = (
+    ladder: readonly SchoolClass[] = LADDER,
+    byClass: readonly DashboardClassCount[] = [],
+  ) => {
     fixture = TestBed.createComponent(SchoolClasses);
     fixture.detectChanges();
     ladderRequest().flush(envelope(ladder));
+    dashboardRequest().flush(envelope({ students: { enrolled: 0, byClass } }));
     fixture.detectChanges();
   };
 
@@ -179,6 +199,7 @@ describe('SchoolClasses', () => {
   it('offers a retry when the ladder cannot be loaded', () => {
     fixture = TestBed.createComponent(SchoolClasses);
     fixture.detectChanges();
+    dashboardRequest().flush(envelope({}));
     ladderRequest().flush(refusal('GEN_001'), { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
@@ -199,6 +220,7 @@ describe('SchoolClasses', () => {
   it('explains a refusal calmly instead of crashing or redirecting', () => {
     fixture = TestBed.createComponent(SchoolClasses);
     fixture.detectChanges();
+    dashboardRequest().flush(envelope({}));
     ladderRequest().flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
 
@@ -253,7 +275,10 @@ describe('SchoolClasses', () => {
   it('stops and starts a class running, in one press each way', () => {
     arrive();
 
+    // Stopping asks first — see the dialog tests below for what it says.
     press('class-active-cls-one');
+    dialogButton('Stop running')!.click();
+    fixture.detectChanges();
     const stopped = httpMock.expectOne({ url: `${CLASSES_URL}/${CLASS_ONE.id}`, method: 'PUT' });
     expect(stopped.request.body).toEqual({ name: 'Class 1', active: false });
     stopped.flush(envelope({ ...CLASS_ONE, active: false }));
@@ -327,7 +352,10 @@ describe('SchoolClasses', () => {
   it('stops and starts a section running', () => {
     arrive();
 
+    // Stopping asks first — see the dialog tests below for what it says.
     press('section-active-sec-1-a');
+    dialogButton('Stop running')!.click();
+    fixture.detectChanges();
     const stopped = httpMock.expectOne({ url: `${SECTIONS_URL}/sec-1-a`, method: 'PUT' });
     expect(stopped.request.body).toEqual({ name: 'A', active: false });
     stopped.flush(envelope({ id: 'sec-1-a', name: 'A', active: false }));
@@ -335,6 +363,192 @@ describe('SchoolClasses', () => {
     settleRefresh(LADDER);
 
     expect(text()).toContain('A of Class 1 is no longer running');
+  });
+
+  // ── Stopping asks first ──────────────────────────────────────────────────────────────────
+  //
+  // Attendance marking drops a section the moment its class or the section itself stops running,
+  // and nothing on this screen used to say so. These are the specs that would have caught it: they
+  // fail against the code that fired the PUT straight from the row button, and pass once "Stop
+  // running" opens a dialog naming what enrolled students stand to lose first.
+
+  describe('stopping a class', () => {
+    it('names how many students are enrolled before stopping it', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+
+      expect(dialog()).not.toBeNull();
+      expect(dialog()?.textContent).toContain('Stop running Nursery?');
+      expect(dialog()?.textContent).toContain('6');
+      expect(dialog()?.textContent).toContain('currently enrolled in Nursery');
+      expect(dialog()?.textContent).toContain('will not appear in Mark attendance');
+      // Nothing has been asked of the server yet.
+      httpMock.expectNone({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' });
+    });
+
+    it('does nothing at all when stopping is declined', async () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+      document.body.appendChild(fixture.nativeElement);
+
+      press('class-active-cls-nursery');
+      dialogButton('Keep it running')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(dialog()).toBeNull();
+      httpMock.expectNone({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' });
+      // Focus goes back to the row control that opened the dialog, not the document.
+      expect(document.activeElement?.id).toBe('class-active-cls-nursery');
+
+      fixture.nativeElement.remove();
+    });
+
+    it('stops the class once the question is confirmed', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+      dialogButton('Stop running')!.click();
+      fixture.detectChanges();
+
+      const stopped = httpMock.expectOne({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' });
+      expect(stopped.request.body).toEqual({ name: 'Nursery', active: false });
+      stopped.flush(envelope({ ...NURSERY, active: false }));
+      fixture.detectChanges();
+      settleRefresh([{ ...NURSERY, active: false }, CLASS_ONE, CLASS_TWO]);
+
+      expect(dialog()).toBeNull();
+      expect(text()).toContain('Nursery is no longer running');
+    });
+
+    /**
+     * `cb-dialog` exists partly so a confirmation can show progress instead of freezing the page —
+     * see its own docblock. That only holds if the dialog is still mounted when the request is in
+     * flight: closing it the instant "Stop running" is pressed would throw that capability away
+     * before the busy state ever had a chance to render.
+     */
+    it('stays open and busy for as long as the request is in flight', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+      dialogButton('Stop running')!.click();
+      fixture.detectChanges();
+
+      // The request is out, but nothing has answered it yet.
+      const stopped = httpMock.expectOne({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' });
+      expect(dialog()).not.toBeNull();
+      expect(dialogButton('Stop running')?.disabled).toBe(true);
+      expect(dialogButton('Keep it running')?.disabled).toBe(true);
+
+      stopped.flush(envelope({ ...NURSERY, active: false }));
+      fixture.detectChanges();
+      settleRefresh([{ ...NURSERY, active: false }, CLASS_ONE, CLASS_TWO]);
+
+      expect(dialog()).toBeNull();
+    });
+
+    /**
+     * A refused stop closes the dialog rather than leaving it open with nothing new to say, or
+     * vanishing as if nothing happened: the reason lands in the page's own error banner, the same
+     * place every other refused write on this screen reports one, and the row keeps the class as it
+     * was — nobody is told it stopped running when it did not.
+     */
+    it('closes the dialog and explains the refusal, on the page, when the stop fails', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+      dialogButton('Stop running')!.click();
+      fixture.detectChanges();
+
+      httpMock
+        .expectOne({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' })
+        .flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
+      fixture.detectChanges();
+
+      expect(dialog()).toBeNull();
+      expect(text()).toContain('You do not have permission to change classes and sections');
+      // Still running, and no quiet refetch was made to discover that.
+      expect(control('class-active-cls-nursery')?.textContent).toContain('Stop running');
+    });
+
+    it('says nobody is enrolled rather than showing a zero as if it were a warning', () => {
+      // The default `arrive()` dashboard tile is present and empty: known, and zero everywhere.
+      arrive();
+
+      press('class-active-cls-one');
+
+      expect(dialog()?.textContent).toContain('Nobody is currently enrolled in Class 1');
+      expect(dialog()?.textContent).not.toContain('0 student');
+    });
+
+    it('states the consequence without a number it cannot vouch for, when the count is not known', () => {
+      // No `students` tile at all — the caller lacks `student:student:read`, or no session is
+      // current. Either way this screen cannot tell, and must not guess a headcount.
+      fixture = TestBed.createComponent(SchoolClasses);
+      fixture.detectChanges();
+      ladderRequest().flush(envelope(LADDER));
+      dashboardRequest().flush(envelope({}));
+      fixture.detectChanges();
+
+      press('class-active-cls-one');
+
+      const body = dialog()?.textContent ?? '';
+      expect(body).toContain('will not appear in Mark attendance');
+      expect(body).toContain('If any students are enrolled in it');
+      expect(body).not.toMatch(/\d+\s+students?\s+(is|are)\s+currently enrolled/);
+    });
+  });
+
+  describe('stopping a section', () => {
+    it('names the consequence without a number, because no per-section count is on the wire', () => {
+      arrive();
+
+      press('section-active-sec-1-a');
+
+      expect(dialog()).not.toBeNull();
+      expect(dialog()?.textContent).toContain('Stop running A of Class 1?');
+      expect(dialog()?.textContent).toContain('will not appear in Mark attendance');
+      expect(dialog()?.textContent).toContain('If any students are currently enrolled in it');
+      // Not a bare "no digits" check: the fixture's own class name, "Class 1", has one. What must
+      // be absent is the class dialog's count-bearing phrasing — a number standing next to
+      // "student(s) is/are currently enrolled" — not literally every digit anywhere in the dialog.
+      expect(dialog()?.textContent).not.toMatch(/\d+\s+students?\s+(is|are)\s+currently enrolled/);
+      httpMock.expectNone({ url: `${SECTIONS_URL}/sec-1-a`, method: 'PUT' });
+    });
+
+    it('does nothing at all when stopping is declined', () => {
+      arrive();
+
+      press('section-active-sec-1-a');
+      dialogButton('Keep it running')!.click();
+      fixture.detectChanges();
+
+      expect(dialog()).toBeNull();
+      httpMock.expectNone({ url: `${SECTIONS_URL}/sec-1-a`, method: 'PUT' });
+    });
+  });
+
+  /**
+   * Stopping a class does not touch its sections' own `active` flag, so the count of sections
+   * flagged active is true and, read on a row marked "Not running", misleading: none of them can
+   * be used while the class itself is off.
+   */
+  it('does not claim a stopped class still has sections running', () => {
+    const retired: SchoolClass = {
+      id: 'cls-retired',
+      name: 'Retired Class',
+      sequence: 5,
+      active: false,
+      sections: [
+        { id: 'sec-r-a', name: 'A', active: true },
+        { id: 'sec-r-b', name: 'B', active: true },
+      ],
+    };
+    arrive([retired]);
+
+    const rung = element().querySelector('.rung');
+    expect(rung?.textContent).toContain('Sections do not run while the class is stopped');
+    expect(rung?.textContent).not.toContain('sections running');
   });
 
   it('shows a refused name under the field that was refused', () => {

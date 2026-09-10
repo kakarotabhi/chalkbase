@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { EnquirySummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
@@ -55,7 +56,15 @@ describe('EnquiryList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [EnquiryList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -63,6 +72,7 @@ describe('EnquiryList', () => {
 
   afterEach(() => {
     httpMock.verify();
+    vi.restoreAllMocks();
   });
 
   function flushReferenceData(): void {
@@ -128,5 +138,91 @@ describe('EnquiryList', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Capture an enquiry');
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  /**
+   * `status` is safe to carry in a link — it names no one. `q` (a child's or parent's name) stays
+   * out, per the class Javadoc, exactly as `student-list` keeps its own search box out.
+   */
+  it('mirrors a status filter change into the URL, replacing rather than pushing', () => {
+    signInWith(Permissions.ADMISSION_ENQUIRY_READ);
+    fixture = TestBed.createComponent(EnquiryList);
+    fixture.detectChanges();
+    flushReferenceData();
+    httpMock.expectOne((candidate) => candidate.url === ENQUIRIES_URL).flush(envelope(page([])));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const select = element().querySelector('#enquiry-status-filter') as HTMLSelectElement;
+    select.value = 'CONVERTED';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: {
+          status: 'CONVERTED',
+          source: null,
+          assignedCounsellorId: null,
+          page: null,
+        },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    httpMock.expectOne((candidate) => candidate.url === ENQUIRIES_URL).flush(envelope(page([])));
+  });
+
+  /** Loading a link with `?status=&source=&page=` reproduces that filtered, paged view. */
+  it('loads a URL with query params by reproducing that filtered, paged view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [EnquiryList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap({
+                status: 'CONVERTED',
+                source: 'REFERRAL',
+                page: '2',
+              }),
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.ADMISSION_ENQUIRY_READ);
+
+    fixture = TestBed.createComponent(EnquiryList);
+    fixture.detectChanges();
+    flushReferenceData();
+
+    const request = httpMock.expectOne((candidate) => candidate.url === ENQUIRIES_URL);
+    expect(request.request.params.get('status')).toBe('CONVERTED');
+    expect(request.request.params.get('source')).toBe('REFERRAL');
+    expect(request.request.params.get('page')).toBe('2');
+    request.flush(envelope(page([])));
+    fixture.detectChanges();
+
+    expect((element().querySelector('#enquiry-status-filter') as HTMLSelectElement).value).toBe(
+      'CONVERTED',
+    );
+    expect((element().querySelector('#enquiry-source-filter') as HTMLSelectElement).value).toBe(
+      'REFERRAL',
+    );
   });
 });
