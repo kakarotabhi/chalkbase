@@ -555,58 +555,18 @@ Recorded so they are decided rather than discovered.
   A useful side effect of the failed attempt: `-XX:+ExitOnOutOfMemoryError`, added at the same time,
   is why the log says what went wrong. The earlier kills said nothing at all.
 
-- **`spring.autoconfigure.exclude` for `UserDetailsServiceAutoConfiguration` does not appear to take
-  effect on the deployed build.** #94 added it to `application.yml`, its test asserts no
-  `UserDetailsService` bean under `{test, prod}` and passes, and the class name is correct for Boot
-  4.1 (`org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration`, present
-  in `spring-boot-security-4.1.1.jar`). Yet both boots of the deployed build that contains it — at
-  03:50 and 04:15 on 2026-09-10 — still log `Using generated security password` from that very class,
-  and `application-prod.yml` sets no competing `spring.autoconfigure` key. Either the exclusion is
-  not applying in that context or the test passes for a reason unrelated to it, which would make the
-  test vacuous. **Harmless either way** — the in-memory user was traced to being unreachable before
-  #94 was written — but a fix that ships, passes its own test, and does not do the thing is worth
-  understanding rather than leaving.
+- ~~**`spring.autoconfigure.exclude` for `UserDetailsServiceAutoConfiguration` does not appear to
+  take effect on the deployed build.**~~ ✅ **It does. I was reading the wrong container.** The two
+  boots I checked at 03:50 and 04:15 on 2026-09-10 still logged `Using generated security password`,
+  and I recorded that as a fix which had shipped and done nothing. What actually happened is that
+  #95 merged five minutes after #94 and cancelled its deploy, so those boots were still running the
+  image from *before* the exclusion existed. Checked again on 2026-09-10 across the two clean boots
+  of the current deploy: **zero occurrences**. The autoconfiguration is off and the warning is gone.
 
-- ~~**Stopping a class takes its enrolled children off the register, and asks nothing first.**~~
-  ✅ Closed (#103), and verified on the deployed environment on 2026-09-10. "Stop running" on a class
-  now asks first, and the question names the number: *"62 students are currently enrolled in Nursery.
-  Its sections will not appear in Mark attendance until Nursery is switched back on — nobody will be
-  able to mark those students present or absent until then."* Cancelling leaves it running; the
-  dialog stays open with both buttons disabled for the two-plus seconds the write takes, rather than
-  vanishing and leaving the page still. A stopped class's row no longer claims "N of M sections
-  running" — it says sections do not run while the class is stopped. The section-level dialog states
-  the same consequence **conditionally** — *"if any students are currently enrolled in it"* — because
-  no endpoint exposes a per-section count and inventing one would be worse than saying less.
+  Kept rather than deleted because the mistake is the useful part: on a platform that cancels an
+  in-flight deploy when a newer commit lands, "the log still says X" only means something once you
+  have established which build produced the log.
 
-  The hazard it guards was measured, not assumed: stopping Nursery took the Mark attendance section
-  picker from 23 options to 21, and restoring it brought them back.
-
-  Left open by it: no per-section enrolled count exists on the wire, so only the class dialog can
-  name a number. And for three to five seconds after switching a class back on, the success banner
-  and the row disagree — the banner says it is running again while the row still reads "Not running",
-  because the list refetch lands after the banner.
-- ~~**No list screen puts its filters in the URL.**~~ ✅ Closed (#105) for everything that should
-  carry, and verified on the deployed environment on 2026-09-10. Six screens now mirror their filters
-  and page through one shared helper, `shared/routing/list-query-params.ts`. A URL round-trips:
-  opening `?status=ACTIVE&page=4` cold reproduced the same "Showing 101–125 of 662" and the same
-  first and last rows, with the Status dropdown rehydrated. Clearing a filter **removes its key**
-  rather than writing `?status=` or `status=null`.
-
-  **Search text is deliberately excluded, and that is not an omission.** A child's name must never
-  end up in a link, a bookmark, a screenshot or a browser history (ADR-0014), so the student,
-  guardian and enquiry search boxes stay out of the URL — verified by typing a name and watching
-  `location.search` carry only `status` and `sectionId`. The audit log applies the same rule to
-  actors: the URL carries the actor's UUID and the chip recovers the display name from the first row
-  that answers.
-
-  **A decision worth knowing rather than rediscovering:** every write uses `replaceUrl: true`, so
-  `history.length` was unchanged across six filter changes and page turns. There is no
-  history-entry-per-keystroke trap — and the consequence is that Back exits the list screen entirely
-  rather than undoing a filter. That is the documented intent, not an accident.
-
-  Two screens could not be exercised: circulars syncs only `page` and the demo holds a single
-  circular so no pager renders, and the audit log answers `403` to a principal (see the entry below
-  about who can read it).
 - **A CI job that only runs after merge can stay red for days without anyone noticing.** The
   `Frontend image` job is gated on `if: github.ref == 'refs/heads/main'`, so it never runs on a pull
   request and nothing blocks on it. It had been failing since the generated contract was introduced:
@@ -867,19 +827,23 @@ Recorded so they are decided rather than discovered.
   search on its own. Every shipped template that holds `identity:role:manage` also holds
   `identity:user:read` (`RoleTemplates`), so this is a gap for a school's own invented roles rather
   than the common case.
-- **`IdentityNavigation` declares `settings.access` but not `settings.users`.** The roles and access
-  screen is on the server-driven menu; the account roster is not, and is reached from a link on the
-  access screen or by typing the URL — the same trade `students.import` already made in the other
-  direction (an id registered here ahead of the backend emitting it). Adding a `settings.users`
-  navigation id is a small backend change and belongs with whichever lane is next in `identity`.
-- **Documents has no working adapter on the deployed environment yet.** ADR-0025's amendment
-  picked the S3-compatible adapter (AWS SDK v2) and it is built, tested and wired to a
-  documents section on the student record, but `prod` still answers a clean 503 until the five
-  `CHALKBASE_STORAGE_*` variables are set on Render — see
-  [docs/operations/document-storage.md](operations/document-storage.md) for exactly which ones
-  and where each value comes from in the Supabase dashboard. A document uploaded on `local` or
-  `test` works end to end today; nothing uploaded on the deployed environment persists until
-  that one operational step happens.
+- ~~**`IdentityNavigation` declares `settings.access` but not `settings.users`.**~~ ✅ Closed, and
+  this entry simply outlived the fix. `IdentityNavigation` emits `SETTINGS_USERS` gated on
+  `IdentityPermissions.USER_READ`, `contracts/navigation-ids.json` carries `settings.users`, and
+  _What is left on the frontend_ has recorded it as closed for some time — these two sections of the
+  same file disagreed with each other.
+
+- ~~**Documents has no working adapter on the deployed environment yet.**~~ ✅ Closed. The five
+  `CHALKBASE_STORAGE_*` variables are set on Render, and the round trip was verified twice on
+  2026-09-10 — once through the API (upload a synthetic PNG, download it back byte-identical,
+  delete it: 201, 200, 204) and once through the student record's own documents section, where a
+  file uploads, lists with its size and date, and deletes behind a confirmation that names the
+  consequence. ADR-0025's S3-compatible adapter works on the deployed environment.
+
+  This entry, the At-a-glance row and the Phase 1 table each said something different about the
+  same fact for most of a day. The `prod` profile still answers a clean 503 when the variables are
+  absent, which is what makes this an operational step rather than a gap.
+
 - **Attendance (Phase 2) has no academic calendar to check a date against.**
   [FR-015](requirements/02-functional-requirements.md) asks for one and it is not built —
   confirmed while building `attendance`, which is the first feature Phase 0 decision 8 makes
