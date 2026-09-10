@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { apiErrorCode } from '../../core/api/api-error';
 import { AUDIT_PAGE_SIZE, AuditApi } from '../../core/api/audit-api';
 import { AuditEvent, AuditOutcome } from '../../core/api/models';
@@ -18,6 +19,7 @@ import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { formatInstant, instantFormat } from '../../shared/formatting/day';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import { AUDIT_ACTION_OPTIONS, actionLabel, entityLabel, fieldLabel } from './audit-actions';
 
 /** The error code a 403 carries (ADR-0007). Branch on this, never on the message. */
@@ -111,6 +113,16 @@ interface ActorFilter {
  * `changedFields` is a list of field NAMES (ADR-0014). Nothing here may render them as
  * `name → value`, and nothing may imply a value is available behind a click: the audit table does
  * not hold one, and it is not an oversight that it does not.
+ *
+ * ## The URL carries `action`, `from`, `to`, `actorId` and `page`
+ *
+ * None of the five is a name: `actorId` is the UUID `filterByActor` already pins the chip to, not
+ * the text on it, so — unlike `student-list`'s search box — there is nothing here for ADR-0014 to
+ * say no to. The chip's own label is not carried in the URL; `fillActorNameFromRows` recovers it
+ * from the first row the filtered request answers, once, rather than ever writing a person's name
+ * into the address bar. Every change replaces the current history entry rather than pushing one,
+ * so an investigation that pages through months of rows can be linked, bookmarked and resumed
+ * exactly where it left off.
  */
 @Component({
   selector: 'cb-audit-log',
@@ -124,6 +136,8 @@ export class AuditLog {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly sessionStore = inject(SessionStore);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly actionOptions = ACTION_OPTIONS;
   protected readonly pageSize = AUDIT_PAGE_SIZE;
@@ -154,22 +168,32 @@ export class AuditLog {
   private readonly shortTime = computed(() => instantFormat(this.timeZone()));
   private readonly fullTime = computed(() => fullTimeFormat(this.timeZone()));
 
-  /** `from` and `to` are `yyyy-MM-dd` — a day the user picked, not an instant. */
+  /**
+   * `from` and `to` are `yyyy-MM-dd` — a day the user picked, not an instant. All three seed from
+   * the URL, so a link with `?action=&from=&to=` reproduces the same filtered view.
+   */
   protected readonly filters = this.formBuilder.group({
-    action: '',
-    from: '',
-    to: '',
+    action: this.route.snapshot.queryParamMap.get('action') ?? '',
+    from: this.route.snapshot.queryParamMap.get('from') ?? '',
+    to: this.route.snapshot.queryParamMap.get('to') ?? '',
   });
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */
   protected readonly failureCode = signal<string | null>(null);
   protected readonly rows = signal<readonly AuditEvent[]>([]);
-  protected readonly page = signal(0);
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
   protected readonly expandedId = signal<string | null>(null);
-  protected readonly actor = signal<ActorFilter | null>(null);
+  /**
+   * Seeded from `?actorId=` with an empty name: the URL carries the id `filterByActor` pins, never
+   * the name beside it (see the class Javadoc). `fillActorNameFromRows` fills the name in once the
+   * first filtered row answers, so the chip does not sit there blank for long.
+   */
+  protected readonly actor = signal<ActorFilter | null>(
+    initialActorFilter(this.route.snapshot.queryParamMap.get('actorId')),
+  );
 
   /**
    * Only the request that answers last should be allowed to paint. Two filter changes in quick
@@ -187,6 +211,17 @@ export class AuditLog {
   protected readonly filtered = computed(() => {
     const { action, from, to } = this.filters.getRawValue();
     return this.actor() !== null || action !== '' || from !== '' || to !== '';
+  });
+
+  /**
+   * The chip's own view of `actor`: null while a URL-seeded actor's name has not arrived yet (see
+   * `fillActorNameFromRows`), so a shared link never flashes "Only " with nothing after it. The
+   * request itself does not wait — `load` reads `actor()` directly and filters from the first
+   * paint.
+   */
+  protected readonly pinnedActor = computed(() => {
+    const pinned = this.actor();
+    return pinned && pinned.name !== '' ? pinned : null;
   });
 
   /** Set when the range reads backwards. Shown against `To`, and nothing is requested. */
@@ -238,6 +273,7 @@ export class AuditLog {
     // filter would show either the wrong rows or an empty page, and both look like a broken screen.
     this.filters.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.page.set(0);
+      this.syncUrl();
       this.load();
     });
   }
@@ -259,6 +295,7 @@ export class AuditLog {
     }
     this.actor.set({ id: row.actorId, name: row.actorName });
     this.page.set(0);
+    this.syncUrl();
     this.load();
   }
 
@@ -268,6 +305,7 @@ export class AuditLog {
     }
     this.actor.set(null);
     this.page.set(0);
+    this.syncUrl();
     this.load();
   }
 
@@ -277,6 +315,7 @@ export class AuditLog {
     // One reset, one reload: `valueChanges` would otherwise fire here and request the same page
     // twice.
     this.filters.reset({ action: '', from: '', to: '' }, { emitEvent: false });
+    this.syncUrl();
     this.load();
   }
 
@@ -289,6 +328,7 @@ export class AuditLog {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -297,6 +337,7 @@ export class AuditLog {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -338,6 +379,7 @@ export class AuditLog {
           this.totalElements.set(result.totalElements);
           this.totalPages.set(result.totalPages);
           this.loading.set(false);
+          this.fillActorNameFromRows();
         },
         error: (error: unknown) => {
           if (request !== this.latestRequest) {
@@ -351,6 +393,42 @@ export class AuditLog {
         },
       });
   }
+
+  /** Mirrors `action`, `from`, `to`, `actorId` and `page` into the URL — see the class Javadoc. */
+  private syncUrl(): void {
+    const { action, from, to } = this.filters.getRawValue();
+    syncListQueryParams(this.router, this.route, {
+      action: action || undefined,
+      from: from || undefined,
+      to: to || undefined,
+      actorId: this.actor()?.id ?? undefined,
+      page: this.page() || undefined,
+    });
+  }
+
+  /**
+   * Fills in the actor chip's name once the rows it named have answered.
+   *
+   * Only runs for a filter this constructor seeded from the URL, before any row has ever been
+   * fetched — `filterByActor` already has the name in hand from the row that was clicked, so it
+   * never needs this. The rows are all this one actor's (the request just asked for exactly that),
+   * so the first one's name is every one's name.
+   */
+  private fillActorNameFromRows(): void {
+    const pinned = this.actor();
+    if (!pinned || pinned.name !== '') {
+      return;
+    }
+    const named = this.rows().find((row) => row.actorId === pinned.id);
+    if (named) {
+      this.actor.set({ id: pinned.id, name: named.actorName?.trim() || 'Not signed in' });
+    }
+  }
+}
+
+/** `?actorId=` off a shared link: the id only, with the name left for `fillActorNameFromRows` to find. */
+function initialActorFilter(actorId: string | null): ActorFilter | null {
+  return actorId ? { id: actorId, name: '' } : null;
 }
 
 /** `2026-09-01` → the instant that local day began. `from` is inclusive, so this is the bound. */

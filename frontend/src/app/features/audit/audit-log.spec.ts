@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AuditEvent } from '../../core/api/models';
 import { AuditLog } from './audit-log';
@@ -98,7 +99,15 @@ describe('AuditLog', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AuditLog],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -387,5 +396,86 @@ describe('AuditLog', () => {
     expect(request.request.params.get('page')).toBe('0');
     request.flush(envelope(page([event({ action: 'LOGIN_FAILED' })], 1)));
     fixture.detectChanges();
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  /**
+   * None of `action`, `from`, `to`, `actorId` or `page` is a name — `actorId` is the UUID the chip
+   * is already pinned to, never the text on it — so unlike `student-list`'s search box there is
+   * nothing here for ADR-0014 to say no to.
+   */
+  it('mirrors a filter change into the URL, replacing rather than pushing', () => {
+    arrive();
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    choose('audit-action', 'LOGIN_FAILED');
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { action: 'LOGIN_FAILED', from: null, to: null, actorId: null, page: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    search().flush(envelope(page([event({ action: 'LOGIN_FAILED' })])));
+  });
+
+  /** Loading a link with `?action=&from=&to=&page=` reproduces that filtered, paged view. */
+  it('loads a URL with query params by reproducing that filtered, paged view', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: {
+          queryParamMap: convertToParamMap({
+            action: 'LOGIN_FAILED',
+            from: '2026-09-01',
+            to: '2026-09-05',
+            page: '2',
+          }),
+        },
+      },
+    });
+
+    fixture = TestBed.createComponent(AuditLog);
+    fixture.detectChanges();
+
+    const request = search();
+    expect(request.request.params.get('action')).toBe('LOGIN_FAILED');
+    expect(request.request.params.get('page')).toBe('2');
+    const from = new Date(request.request.params.get('from')!);
+    expect([from.getFullYear(), from.getMonth(), from.getDate()]).toEqual([2026, 8, 1]);
+    const to = new Date(request.request.params.get('to')!);
+    expect([to.getFullYear(), to.getMonth(), to.getDate()]).toEqual([2026, 8, 6]);
+    request.flush(envelope(page([event({ action: 'LOGIN_FAILED' })], 60, 2)));
+    fixture.detectChanges();
+
+    expect((element().querySelector('#audit-action') as HTMLSelectElement).value).toBe(
+      'LOGIN_FAILED',
+    );
+    expect((element().querySelector('#audit-from') as HTMLInputElement).value).toBe('2026-09-01');
+    expect((element().querySelector('#audit-to') as HTMLInputElement).value).toBe('2026-09-05');
+  });
+
+  /**
+   * A shared `?actorId=` link narrows the request from the first paint, and the chip fills in its
+   * name once the rows it named have answered — the URL itself never carries that name.
+   */
+  it('loads a URL with an actorId by narrowing to that actor and naming the chip once rows answer', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { queryParamMap: convertToParamMap({ actorId: PRIYA }) } },
+    });
+
+    fixture = TestBed.createComponent(AuditLog);
+    fixture.detectChanges();
+
+    const request = search();
+    expect(request.request.params.get('actorId')).toBe(PRIYA);
+    request.flush(envelope(page([event()])));
+    fixture.detectChanges();
+
+    expect(text()).toContain('Only Priya Sharma');
   });
 });

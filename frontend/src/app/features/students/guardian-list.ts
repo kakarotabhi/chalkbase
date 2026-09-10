@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, debounceTime, distinctUntilChanged } from 'rxjs';
 import { apiErrorCode, apiErrorDetails } from '../../core/api/api-error';
 import { GUARDIAN_PAGE_SIZE, GuardiansApi } from '../../core/api/guardians-api';
@@ -22,6 +23,7 @@ import { Button } from '../../shared/components/button/button';
 import { Card } from '../../shared/components/card/card';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { TextInput } from '../../shared/components/text-input/text-input';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import { GuardianDuplicateWarning } from './guardian-duplicate-warning';
 import { ACCESS_DENIED, CONFLICT, classAndSection, downloadBlob } from './students-shared';
 
@@ -78,11 +80,14 @@ interface ChildRow {
  * cannot answer "which four?". That is a real gap and it is stated here rather than papered over
  * with a filter that does not exist.
  *
- * ## Confidential (ADR-0014), and the filters are not in the URL
+ * ## Confidential (ADR-0014), and the search box is not in the URL
  *
  * Guardians' names, phone numbers and email addresses. The search text goes to the server as `?q=`
  * because it is a box the user chose to type into; it is never put into the router, because that
- * would mint a link with a family's name in it.
+ * would mint a link with a family's name in it — the same reasoning `student-list` gives for its
+ * own search box. `page` carries no such risk and is mirrored into the URL (replacing the current
+ * history entry, never pushing one) so paging through the directory survives a trip to a guardian's
+ * own record and the browser's back button.
  */
 @Component({
   selector: 'cb-guardian-list',
@@ -96,6 +101,8 @@ export class GuardianList {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly document = inject(DOCUMENT);
 
@@ -127,7 +134,8 @@ export class GuardianList {
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */
   protected readonly failureCode = signal<string | null>(null);
   protected readonly rows = signal<readonly GuardianSummary[]>([]);
-  protected readonly page = signal(0);
+  /** Seeded from the URL, never `search` — see the class Javadoc. */
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -306,6 +314,7 @@ export class GuardianList {
         // A new search starts again from the first page: page four of the previous one is either
         // the wrong rows or an empty page, and both look like a broken screen.
         this.page.set(0);
+        this.syncUrl();
         this.load();
       });
 
@@ -327,6 +336,7 @@ export class GuardianList {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -335,6 +345,7 @@ export class GuardianList {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -543,6 +554,11 @@ export class GuardianList {
   }
 
   // ── internals ────────────────────────────────────────────────────────────────────────────
+
+  /** Mirrors `page` into the URL — never `search`, see the class Javadoc. */
+  private syncUrl(): void {
+    syncListQueryParams(this.router, this.route, { page: this.page() || undefined });
+  }
 
   private load(): void {
     const request = ++this.latestRequest;

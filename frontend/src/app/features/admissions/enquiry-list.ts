@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, merge } from 'rxjs';
 import { AcademicsApi } from '../../core/api/academics-api';
 import { AdmissionApi, ENQUIRY_PAGE_SIZE } from '../../core/api/admission-api';
@@ -32,6 +32,7 @@ import { Card } from '../../shared/components/card/card';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
 import { formatDay } from '../../shared/formatting/day';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import {
   ACCESS_DENIED,
   SOURCE_LABELS,
@@ -78,11 +79,13 @@ interface EnquiryRow {
  * parent's name or phone number into the box is answering "have we already spoken to this family",
  * so the counsellor and the status sit on the row rather than one tap away.
  *
- * ## The filters are not in the URL, and that is deliberate
+ * ## The URL carries what is safe to carry, and no more
  *
- * A child's name and a parent's phone number are Confidential (ADR-0014) — the same reasoning
- * `student-list` gives for keeping its own search box out of the router's query parameters applies
- * here without change.
+ * `status`, `source` and `assignedCounsellorId` are mirrored into the URL (replacing the current
+ * history entry, never pushing one) so a filtered view can be linked, bookmarked and survives a
+ * trip to one enquiry's own record. `q` never is: a child's name and a parent's phone number are
+ * Confidential (ADR-0014) — the same reasoning `student-list` gives for keeping its own search box
+ * out of the router's query parameters applies here without change.
  *
  * ## There is no guard on this route, deliberately
  *
@@ -104,6 +107,7 @@ export class EnquiryList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
 
   protected readonly pageSize = ENQUIRY_PAGE_SIZE;
@@ -114,18 +118,19 @@ export class EnquiryList {
   /** Both capturing an enquiry and reassigning its counsellor are gated on this one permission. */
   protected readonly canManage = permitted(Permissions.ADMISSION_ENQUIRY_MANAGE);
 
+  /** `status`, `source` and `assignedCounsellorId` seed from the URL; `q` never does — see the class Javadoc. */
   protected readonly filters = this.formBuilder.group({
     q: '',
-    status: '',
-    source: '',
-    assignedCounsellorId: '',
+    status: this.route.snapshot.queryParamMap.get('status') ?? '',
+    source: this.route.snapshot.queryParamMap.get('source') ?? '',
+    assignedCounsellorId: this.route.snapshot.queryParamMap.get('assignedCounsellorId') ?? '',
   });
 
   protected readonly loading = signal(true);
   /** The `error.code` of the last failed load, or null. Never the message (ADR-0007). */
   protected readonly failureCode = signal<string | null>(null);
   protected readonly rows = signal<readonly EnquirySummary[]>([]);
-  protected readonly page = signal(0);
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalElements = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -235,6 +240,7 @@ export class EnquiryList {
     );
     this.revision.update((count) => count + 1);
     this.page.set(0);
+    this.syncUrl();
     this.load();
   }
 
@@ -243,6 +249,7 @@ export class EnquiryList {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -251,6 +258,7 @@ export class EnquiryList {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -300,7 +308,22 @@ export class EnquiryList {
 
   private refilter(): void {
     this.page.set(0);
+    this.syncUrl();
     this.load();
+  }
+
+  /**
+   * Mirrors `status`, `source`, `assignedCounsellorId` and `page` into the URL — never `q`, see the
+   * class Javadoc.
+   */
+  private syncUrl(): void {
+    const { status, source, assignedCounsellorId } = this.filters.getRawValue();
+    syncListQueryParams(this.router, this.route, {
+      status: status || undefined,
+      source: source || undefined,
+      assignedCounsellorId: assignedCounsellorId || undefined,
+      page: this.page() || undefined,
+    });
   }
 
   private load(): void {
