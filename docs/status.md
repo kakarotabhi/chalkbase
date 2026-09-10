@@ -769,6 +769,8 @@ Recorded so they are decided rather than discovered.
   goes red for no visible reason: check whether the file that ran just before it left something
   unflushed, not whether the failing file changed.
 
+- **The demo school had zero attendance history until this fix.** `DemoSchoolSeeder` built accounts, a roster and guardians but never wrote a single `attendance_mark`, so a freshly seeded school showed only today's empty register and the correction-request workflow ([ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md)) had no locked mark to demonstrate against — a mark only locks a day after it is marked, and nothing was ever marked. `seedAttendanceHistory` now backfills roughly the last 20 school days (weekdays only; no holiday calendar to consult, the same gap noted above) for every section, computed from `LocalDate.now()` at each run so the window stays recent rather than fixed to whenever this method was written. It writes straight to `attendance_mark` rather than through `POST /api/attendance/sections/{id}`, because that endpoint correctly refuses anything older than yesterday (`MARK_LOCKED`) — exactly the backwards case for a seeder whose purpose is history that is already locked. Idempotent by the table's own `uq_attendance_mark_daily` constraint (`on conflict (student_id, attendance_date) where period_number is null do nothing`), so — unlike the roster, which stays behind `chalkbase.dev.top-up-demo-school` — it runs on every startup rather than behind a flag, at the cost of one read per section and a skipped insert per mark already on file.
+
 ## Keeping this honest
 
 - Update this file in the same PR as the change.
