@@ -15,10 +15,11 @@ import { apiErrorCode } from '../../core/api/api-error';
 import { AttendanceApi } from '../../core/api/attendance-api';
 import { LeaveRequestResponse } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
-import { permitted } from '../../core/auth/session-store';
+import { SessionStore, permitted } from '../../core/auth/session-store';
 import { Badge } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { Card } from '../../shared/components/card/card';
+import { formatDay, formatInstant, instantFormat } from '../../shared/formatting/day';
 import {
   ACCESS_DENIED,
   NOT_FOUND,
@@ -49,8 +50,14 @@ export class LeaveRequestDetail {
   private readonly api = inject(AttendanceApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sessionStore = inject(SessionStore);
 
   protected readonly canApprove = permitted(Permissions.ATTENDANCE_LEAVE_APPROVE);
+
+  /** The zone the decision timestamp below is rendered in — the school's, not the reader's device (ADR-0032). */
+  private readonly decidedAtFormat = computed(() =>
+    instantFormat(this.sessionStore.schoolTimezone()),
+  );
 
   protected readonly loading = signal(true);
   protected readonly failureCode = signal<string | null>(null);
@@ -79,14 +86,16 @@ export class LeaveRequestDetail {
       placement: classAndSection(request.className, request.sectionName),
       dateRange:
         request.startDate === request.endDate
-          ? request.startDate
-          : `${request.startDate} – ${request.endDate}`,
+          ? formatDay(request.startDate)
+          : `${formatDay(request.startDate)} – ${formatDay(request.endDate)}`,
       reason: request.reason,
       requestedAt: request.requestedAt,
       decisionLabel: leaveDecisionLabel(request.decision),
       decisionTone: leaveDecisionTone(request.decision),
       pending: request.decision === 'PENDING',
-      decidedAt: request.decidedAt ?? null,
+      decidedAt: request.decidedAt
+        ? formatInstant(this.decidedAtFormat(), request.decidedAt)
+        : null,
       decisionNote: request.decisionNote ?? null,
     };
   });

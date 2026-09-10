@@ -48,6 +48,12 @@ interface EnrolmentRow {
   readonly active: boolean;
   readonly enrolledOn: string;
   readonly editButtonId: string;
+  /**
+   * The one row this student's record header is built from: the live placement in the school's
+   * current academic session (`academics.currentSession()`, not merely the newest row — see
+   * `StudentDetail.ts`). At most one row can be this.
+   */
+  readonly isCurrent: boolean;
 }
 
 /**
@@ -130,9 +136,19 @@ export class StudentEnrolments {
     return editing === 'new' ? null : editing;
   });
 
-  protected readonly rows = computed<readonly EnrolmentRow[]>(() =>
+  /**
+   * The school's current academic session id, or null while `sessions` has not loaded yet. Read
+   * off the same list the "add enrolment" picker uses (`AcademicSession.current`) rather than
+   * introducing a second source of truth for "which year is this".
+   */
+  private readonly currentSessionId = computed(
+    () => this.sessions().find((session) => session.current)?.id ?? null,
+  );
+
+  protected readonly rows = computed<readonly EnrolmentRow[]>(() => {
+    const currentSessionId = this.currentSessionId();
     // Newest first. The API does not state an order, and "which year is this" is read top-down.
-    [...this.enrolments()]
+    return [...this.enrolments()]
       .sort((a, b) => b.enrolledOn.localeCompare(a.enrolledOn))
       .map((enrolment) => ({
         id: enrolment.id,
@@ -148,8 +164,9 @@ export class StudentEnrolments {
         active: enrolment.active,
         enrolledOn: formatDay(enrolment.enrolledOn),
         editButtonId: `enrolment-edit-${enrolment.id}`,
-      })),
-  );
+        isCurrent: enrolment.active && enrolment.sessionId === currentSessionId,
+      }));
+  });
 
   protected readonly sessionOptions = computed<readonly SelectOption[]>(() =>
     this.sessions().map((session) => ({
