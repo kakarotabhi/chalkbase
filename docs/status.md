@@ -405,6 +405,8 @@ no reason, and the sections land with the modules.
 
 | Fixed, found driving the deployed app: the student record header picked the newest *active* enrolment out of the history instead of `currentEnrolment`, so a student promoted early into next session's class showed that class in the header while the student list, the CSV export and `GET /api/students/{id}` still named the current one — worst right after a school does next year's promotions. The header and its roll number now read `currentEnrolment`; the Enrolments card's "Current place" badge is now shown only on the row matching the school's current session, with a neutral "Placement for that year" badge on every other active row. | `features/students/student-detail.ts`, `features/students/student-enrolments.ts` |
 
+| Fixed, found by driving the deployed app in a browser rather than by any test: the documents section's "Add a document" button opened the upload form and closed it again in the same instant, every time, because the constructor `effect()` in `student-documents.ts` depended on `closeAdd()`, which reads the `fileInput` `viewChild` that only exists while the form it just opened is mounted — reading a viewChild inside an effect makes it a dependency, so opening the form re-ran the effect, which closed the form the re-run had just watched appear. Upload, download, edit and delete were therefore unreachable in production; `editingId` reads the same trap and made Edit unusable too. Fixed by resetting the reload effect's own state directly instead of through a view-touching helper; none of the other six student-record cards has a constructor effect of this shape. `student-documents.spec.ts` is the first spec on any of the seven student-record cards | `features/students/student-documents.ts`, `features/students/student-documents.spec.ts` |
+
 ## What is left on the frontend
 
 Every backend controller has a screen except one, so this list is short and specific. It exists
@@ -433,6 +435,20 @@ It is worth reading for what it says about the *kind* of thing that survived CI:
 reach the database it was written for, a screen whose prose contradicts its own behaviour, an audit
 row that records less than it promises, and a role nobody can delete. None of those are visible to a
 test suite, and all four were found within an hour of using the product as a person.
+
+A second pass on 2026-09-09 drove **every control on every screen** rather than sampling them —
+[phase-2-verification.md](phase-2-verification.md). Twelve findings stand and two were withdrawn on
+inspection. Two features turned out not to work at all: **"Add a document" closes the form it opens**,
+so upload, edit, download and delete are unreachable and ADR-0025's storage adapter has never been
+exercised from the UI; and **the student record header shows the newest enrolment rather than the
+current one**, so from the February a school does next year's promotions until the year turns over,
+every record page names a class the child is not in yet and contradicts the list it was opened from.
+A third, **stopping a class takes its enrolled children off the register with no confirmation at
+all**, is not a bug in the code so much as a missing sentence.
+
+The pattern is the same one Phase 1 found and worth stating again: the API returns the right answer
+and the screen shows a different one. Nothing reachable from `curl` was wrong. What was wrong was
+only visible by pressing the button.
 
 ## Known gaps and debt
 
