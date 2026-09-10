@@ -5,6 +5,7 @@ import in.chalkbase.identity.api.UserSummary;
 import in.chalkbase.identity.domain.AccountStatus;
 import in.chalkbase.identity.domain.UserAccount;
 import in.chalkbase.identity.infrastructure.UserAccountRepository;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,8 +38,9 @@ public class IdentityLookupService implements IdentityLookup {
 
     @Override
     public List<UserSummary> activeUsers() {
+        Instant now = Instant.now();
         return accounts.findByStatusOrderByDisplayNameAsc(AccountStatus.ACTIVE).stream()
-                .map(IdentityLookupService::toSummary)
+                .map(account -> toSummary(account, now))
                 .toList();
     }
 
@@ -52,13 +54,14 @@ public class IdentityLookupService implements IdentityLookup {
         if (distinct.isEmpty()) {
             return Map.of();
         }
+        Instant now = Instant.now();
         return accounts.findAllById(distinct).stream()
-                .map(IdentityLookupService::toSummary)
+                .map(account -> toSummary(account, now))
                 .collect(Collectors.toMap(UserSummary::id, Function.identity()));
     }
 
-    private static UserSummary toSummary(UserAccount account) {
+    private static UserSummary toSummary(UserAccount account, Instant now) {
         return new UserSummary(
-                account.getId(), account.getDisplayName(), account.getStatus().name());
+                account.getId(), account.getDisplayName(), account.getStatus().name(), account.isLocked(now));
     }
 }

@@ -666,13 +666,12 @@ export type ImportReport = Schemas['ImportReport'];
  * `Permissions`. `access-shared.ts` carries the two values this build knows, `ACTIVE` and
  * `DISABLED`, and copes with a third the way `navLabel` copes with an unknown navigation id.
  *
- * **No `lockedUntil` here.** The roster this backs (`GET /api/access/users`) answers this shape for
- * every account in one call, and a lockout is not on it — only the four per-account write endpoints
- * answer `UserAccountResponse`, which does carry it. So the roster screen cannot show "locked"
- * as a fact about a row; it can only offer **Clear lockout** on every active account and say
- * afterwards, from that response, whether anything was actually cleared. Adding a per-row lockout
- * badge would mean fetching each account individually — the N+1 request list screens exist to
- * avoid — so this is a known gap, not an oversight; see `docs/status.md`.
+ * **`locked` is a fact, not `lockedUntil` itself.** The backend already compared the raw timestamp
+ * against its own clock (`AccessDirectory.toSummary`) before this ever reaches the wire, because a
+ * lockout expires on its own — a value in the past means the account is not locked any more, and
+ * shipping the instant instead would make this screen redo that same "is it still in the future"
+ * comparison against the viewer's own (possibly skewed, possibly differently-zoned) clock. Read
+ * `locked` as the answer, never derive it from a timestamp this record does not carry.
  */
 export type UserSummary = Schemas['UserSummary'];
 

@@ -5626,6 +5626,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "locked": {
+            "type": "boolean"
+          },
           "status": {
             "type": "string"
           }
@@ -5633,6 +5636,7 @@
         "required": [
           "displayName",
           "id",
+          "locked",
           "status"
         ],
         "type": "object"

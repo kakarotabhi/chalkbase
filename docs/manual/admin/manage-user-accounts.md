@@ -17,8 +17,9 @@ accounts" on its own, separately from "Manage roles and permissions"; see
 3. **Deactivate** ends the account's access and every session it currently holds, immediately,
    everywhere it is signed in. Nothing about the account is lost, and **Reactivate** brings it back
    at any time.
-4. **Clear lockout** removes a lockout from repeated wrong password attempts. It is always safe to
-   select — if the account was not locked, nothing changes.
+4. **Clear lockout** removes a lockout from repeated wrong password attempts, before it would have
+   expired on its own. The roster only offers it on an account the **Locked** badge marks as
+   currently locked — it is not shown on the rest, because there is nothing for it to do there.
 5. **Reset password** issues a new temporary password and, like deactivating, ends every session the
    account currently holds immediately.
 
