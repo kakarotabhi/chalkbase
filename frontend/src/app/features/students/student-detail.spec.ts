@@ -200,6 +200,72 @@ describe('StudentDetail', () => {
     expect(text()).toContain('2026–27');
   });
 
+  /**
+   * The reproduction: a school that has already promoted a student into next session's class
+   * while this session is still current. `enrolments` is newest-first, so the naive `.find(active)`
+   * this screen used to use picked the later row. The header must read `currentEnrolment` instead,
+   * which the backend has already matched to `academics.currentSession()`.
+   */
+  it("shows the current session's class in the header, not the newest enrolment", () => {
+    const promotedEarly = record({
+      currentEnrolment: {
+        sessionName: '2026–27',
+        className: 'Nursery',
+        sectionName: 'A',
+        rollNumber: '7',
+      },
+      enrolments: [
+        {
+          id: 'e-2',
+          sessionId: 'y2',
+          sessionName: 'VERIFY-2099-01',
+          classId: 'c2',
+          className: 'LKG',
+          sectionId: 'sec-b',
+          sectionName: 'B',
+          rollNumber: '3',
+          active: true,
+          enrolledOn: '2026-09-01',
+        },
+        {
+          id: 'e-1',
+          sessionId: 'y1',
+          sessionName: '2026–27',
+          classId: 'c1',
+          className: 'Nursery',
+          sectionId: 'sec-a',
+          sectionName: 'A',
+          rollNumber: '7',
+          active: true,
+          enrolledOn: '2026-04-05',
+        },
+      ],
+    });
+
+    arrive(promotedEarly);
+
+    const details = element().querySelector('[aria-labelledby="record-details-heading"]');
+    const detailsText = details?.textContent ?? '';
+    expect(detailsText).toContain('Nursery · A');
+    expect(detailsText).toContain('7');
+    expect(detailsText).not.toContain('LKG');
+    expect(detailsText).not.toContain('VERIFY-2099-01');
+
+    // The later enrolment is still in the history below — only the header is wrong when this
+    // regresses, and the history is where the fixture proves it was never lost.
+    expect(text()).toContain('LKG · B');
+    expect(text()).toContain('VERIFY-2099-01');
+  });
+
+  /** A student with no placement in the current session — never admitted to one yet, or a leaver. */
+  it('says the student is not enrolled this year when there is no current-session placement', () => {
+    const { currentEnrolment: _omitted, ...withoutCurrentEnrolment } = record();
+    arrive(withoutCurrentEnrolment as StudentRecord);
+
+    const details = element().querySelector('[aria-labelledby="record-details-heading"]');
+    expect(details?.textContent ?? '').toContain('Not enrolled yet');
+  });
+
   /** Absent, not null — see the fixture. An unrecorded admission date is a real state. */
   it('says an admission date is not recorded when the server left the field out', () => {
     const { admittedOn: _omitted, ...withoutAdmittedOn } = record();

@@ -214,12 +214,16 @@
   <ol class="enrolments">
     @for (row of rows(); track row.id) {
       <li>
-        <cb-card [accent]="row.active">
+        <cb-card [accent]="row.isCurrent">
           <div class="enrolment__head">
             <span class="enrolment__session">{{ row.sessionName }}</span>
-            @if (row.active) {
-              <!-- The word, not only the tint. -->
+            @if (row.isCurrent) {
+              <!-- The word, not only the tint. Only the row for the school's current academic
+                   session earns this — an active row for a past or future year is a real
+                   placement, just not this one. -->
               <cb-badge tone="primary">Current place</cb-badge>
+            } @else if (row.active) {
+              <cb-badge tone="neutral">Placement for that year</cb-badge>
             } @else {
               <cb-badge tone="neutral">Ended</cb-badge>
             }
