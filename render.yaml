@@ -52,14 +52,35 @@ services:
       - key: PORT
         value: 8080
 
-      # The free instance has 512 MB. The image's default is MaxRAMPercentage=75, which asks for a
-      # ~384 MB heap and leaves metaspace, code cache, thread stacks and Hikari's native buffers to
-      # fit in the remaining ~128 MB — survivable, until a student import arrives during a tenant
-      # migration pass and the container is killed with no stack trace to explain it. Overriding
-      # the whole JAVA_OPTS string here rather than the Dockerfile keeps the VPS deployment, which
-      # has real memory, on the setting that suits it.
+      # The free instance has 512 MB, and the previous setting here did not fit inside it.
+      #
+      #   -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m
+      #     = ~307 MB heap + 160 MB metaspace = 467 MB, before code cache, GC metadata, direct
+      #       buffers or the JVM's own footprint. Render killed the instance on 2026-09-10:
+      #       "Ran out of memory (used over 512MB)", about nineteen minutes into a clean start with
+      #       nobody using the app. The comment that used to sit here worried about exactly this
+      #       and then picked numbers that could not hold.
+      #
+      # The numbers below leave real headroom instead of nominal headroom:
+      #
+      #   heap        ~230 MB   MaxRAMPercentage=45
+      #   metaspace    128 MB   measured need is well under this; it is a ceiling, not a reservation
+      #   code cache    64 MB   the default reserves 240 MB of address space and confuses the sums
+      #   ------------------
+      #   total        422 MB   leaving ~90 MB for GC structures, direct buffers and the JVM itself
+      #
+      # Thread stacks are not in that table on purpose: `spring.threads.virtual.enabled` is true, so
+      # request handling does not cost a 1 MB native stack per concurrent request.
+      #
+      # ExitOnOutOfMemoryError is deliberate. A JVM that has hit its heap ceiling and is thrashing
+      # serves requests slowly and confusingly; dying and being restarted by Render is both faster
+      # to recover from and visible in the deploy log, which "used over 512MB" with no stack trace
+      # is not.
+      #
+      # Overriding the whole JAVA_OPTS string here rather than in the Dockerfile keeps the VPS
+      # deployment, which has real memory, on the setting that suits it.
       - key: JAVA_OPTS
-        value: -XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC
+        value: -XX:MaxRAMPercentage=45 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
 
       # Supabase. `sync: false` means Render prompts once at Blueprint creation and stores the value
       # in the service's environment — it is never written back to this file.

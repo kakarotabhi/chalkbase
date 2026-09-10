@@ -468,6 +468,31 @@ only visible by pressing the button.
 
 Recorded so they are decided rather than discovered.
 
+- **The free instance runs out of memory, and the configured ceiling does not fit in 512 MB.** Render
+  reported it in its own words on 2026-09-10: `Instance failed … Ran out of memory (used over 512MB)`.
+  That settles what the silent restarts recorded in
+  [the second verification pass](phase-2-verification.md) as Finding G actually were — twice in
+  twenty-five minutes, no shutdown log, no exception. They are OOM kills, not free-tier idle
+  spin-down. The arithmetic says so too. `render.yaml` sets
+  `-XX:MaxRAMPercentage=60 -XX:MaxMetaspaceSize=160m`, which on a 512 MB instance reserves **~307 MB
+  of heap plus 160 MB of metaspace — 467 MB before a single byte of code cache, GC metadata, direct
+  buffers or the JVM's own footprint.** The comment above that setting worries about exactly this
+  and then picks numbers that do not fit. The 2026-09-10 kill happened about nineteen minutes after
+  a clean start, with nobody using the app, which points at footprint creep rather than a
+  request-driven spike — `UseSerialGC` does not return committed heap to the OS readily, and Spring
+  Modulith's runtime verification retains class metadata from the ArchUnit scan.
+- **`spring.autoconfigure.exclude` for `UserDetailsServiceAutoConfiguration` does not appear to take
+  effect on the deployed build.** #94 added it to `application.yml`, its test asserts no
+  `UserDetailsService` bean under `{test, prod}` and passes, and the class name is correct for Boot
+  4.1 (`org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration`, present
+  in `spring-boot-security-4.1.1.jar`). Yet both boots of the deployed build that contains it — at
+  03:50 and 04:15 on 2026-09-10 — still log `Using generated security password` from that very class,
+  and `application-prod.yml` sets no competing `spring.autoconfigure` key. Either the exclusion is
+  not applying in that context or the test passes for a reason unrelated to it, which would make the
+  test vacuous. **Harmless either way** — the in-memory user was traced to being unreachable before
+  #94 was written — but a fix that ships, passes its own test, and does not do the thing is worth
+  understanding rather than leaving.
+
 - **Stopping a class takes its enrolled children off the register, and asks nothing first.** "Stop
   running Nursery" fires on one click: no dialog, no count, no mention that anyone is enrolled. Both
   its sections vanish from Mark attendance immediately — measured, 23 sections became 21 — so the six
@@ -829,6 +854,16 @@ Recorded so they are decided rather than discovered.
 
 - **The demo school had zero attendance history until this fix.** `DemoSchoolSeeder` built accounts, a roster and guardians but never wrote a single `attendance_mark`, so a freshly seeded school showed only today's empty register and the correction-request workflow ([ADR-0030](architecture/adr/0030-attendance-grain-and-lock.md)) had no locked mark to demonstrate against — a mark only locks a day after it is marked, and nothing was ever marked. `seedAttendanceHistory` now backfills roughly the last 20 school days (weekdays only; no holiday calendar to consult, the same gap noted above) for every section, computed from `LocalDate.now()` at each run so the window stays recent rather than fixed to whenever this method was written. It writes straight to `attendance_mark` rather than through `POST /api/attendance/sections/{id}`, because that endpoint correctly refuses anything older than yesterday (`MARK_LOCKED`) — exactly the backwards case for a seeder whose purpose is history that is already locked. Idempotent by the table's own `uq_attendance_mark_daily` constraint (`on conflict (student_id, attendance_date) where period_number is null do nothing`), so — unlike the roster, which stays behind `chalkbase.dev.top-up-demo-school` — it runs on every startup rather than behind a flag, at the cost of one read per section and a skipped insert per mark already on file.
 
+
+  **This only ever runs on a developer's machine, and that is deliberate.** `DemoSchoolSeeder` is
+  `@Profile("local")` and `refuseAnythingButLocal()` throws if `prod` or `test` is active — it writes
+  invented children and a well-known password, so refusing loudly is the right behaviour. The
+  consequence is easy to state wrongly and was: **the deployed demo school on Render has no seeded
+  attendance history and no way to acquire one.** Anything that reads attendance history therefore
+  cannot be demonstrated there. The correction workflow was verified on 2026-09-10 only because marks
+  made by hand during the previous day's verification had aged past the twenty-four-hour lock — luck,
+  not this fix. If the Render environment is ever meant to demonstrate attendance history, that needs
+  a separate, `prod`-safe path that writes no invented people.
 ## Keeping this honest
 
 - Update this file in the same PR as the change.
