@@ -29,7 +29,6 @@ the way Phase 1's work was)
 | School profile — `GET`/`PUT /api/school/profile` and its screen       | ✅ Done                                                                                                                                                     |
 | Shared UI components                                                  | ✅ Button, field, inputs, checkbox, select, bottom sheet                                                                                                    |
 | Academic sessions, classes and sections                               | ✅ Done                                                                                                                                                     |
-| Classes/sections — confirms before "Stop running" one that has enrolled students | ✅ Done |
 | Subjects                                                              | ✅ Done                                                                                                                                                     |
 | Students, guardians and enrolment                                     | ✅ Core record, contact, medical, previous school and compliance — including the Restricted columns, encrypted · ⬜ transport and hostel, which are Phase 4 |
 | Documents (FR-013, FR-032)                                            | ✅ Done — storage port, module, S3 adapter, a screen, and the five environment variables set and verified on Render                                                          |
@@ -499,6 +498,33 @@ only visible by pressing the button.
 
 Recorded so they are decided rather than discovered.
 
+- **The audit log is unreadable by the one person who could grant access to it.** `principal` holds
+  35 permissions and not `platform:audit:read`, so `/audit` answers `403 PERM_001` and the screen
+  says *"Ask your principal to add 'View the audit log' to your role"* — to the principal. The screen
+  degrades correctly and says so without recording anything, which is right; who should hold the
+  permission is a product decision nobody has taken. Only `auditor` can read it today.
+- **The demo school carries visible leftover verification data.** Two stopped classes `VERIFY-Class`
+  and `VERIFY-Class-2` sit at the bottom of the ladder, their sections appear in the student list's
+  class filter, a deactivated `VERIFY Test User` is on the roster, the only circular is titled
+  "VERIFY Annual Day rehearsal", and student `2026/0001` carries a `VERIFY-2099-01` enrolment with a
+  test address and email. None of it is wrong, all of it is visible to anyone being shown the
+  product. It accumulated because verification runs against the environment that is also the demo.
+- **`students.documents` is offered by the server and routed by nothing.** Every screen logs
+  `[nav] dropping "students.documents" — no route is registered for it in nav-routes.ts`. Harmless to
+  a user and already recorded under _What is left on the frontend_ as needing a backend endpoint
+  first; noted here because it is a live server/client contract drift, visible in every console.
+- **A lockout disables the sign-in form for the next person, until the page is reloaded.** Found on
+  2026-09-10 while verifying the roster's new Locked badge. Six failed sign-ins against one account
+  return `AUTH_003`, and `login.ts`'s `isLocked` computed — `failureCode() === ACCOUNT_LOCKED`, bound
+  to the submit button's `[disabled]` — never resets when the form is edited. Typing a *different*
+  valid account's credentials leaves the button `disabled` with a form in `ng-valid`, under someone
+  else's "Account locked" banner. Only a reload recovers.
+
+  A school office has one shared computer. One teacher mistyping their password three times then
+  presents the next person with a sign-in form that will not submit and an error about an account
+  that is not theirs. The lockout itself is correct and stays; disabling the form for a different
+  user is the defect. Fix in flight.
+
 - **The free instance runs out of memory, and the binding constraint is metaspace, not heap.** Render
   reported the first kill in its own words on 2026-09-10: `Instance failed … Ran out of memory (used
   over 512MB)`. That settles what the silent restarts recorded in
@@ -541,19 +567,46 @@ Recorded so they are decided rather than discovered.
   #94 was written — but a fix that ships, passes its own test, and does not do the thing is worth
   understanding rather than leaving.
 
-- **Stopping a class takes its enrolled children off the register, and asks nothing first.** "Stop
-  running Nursery" fires on one click: no dialog, no count, no mention that anyone is enrolled. Both
-  its sections vanish from Mark attendance immediately — measured, 23 sections became 21 — so the six
-  children enrolled in it cannot be marked present or absent by anybody. Nothing is lost and one
-  click restores it; the problem is that a school has no way to know to make that click. The same
-  product stops to explain three separate consequences before removing a guardian. Finding O in
-  [the second verification pass](phase-2-verification.md); not yet fixed.
-- **No list screen puts its filters in the URL.** `location.search` stays empty however a list is
-  filtered or paged, and no feature screen reads `queryParamMap` — students, guardians, leave
-  requests, enquiries, circulars, users and the audit log all behave this way. A filtered view cannot
-  be linked, bookmarked, or recovered with the back button. On a 65-row demo that is a nuisance; at
-  the ~600 rows a real school has it is the difference between usable and not. Finding E in
-  [the second verification pass](phase-2-verification.md); not yet fixed.
+- ~~**Stopping a class takes its enrolled children off the register, and asks nothing first.**~~
+  ✅ Closed (#103), and verified on the deployed environment on 2026-09-10. "Stop running" on a class
+  now asks first, and the question names the number: *"62 students are currently enrolled in Nursery.
+  Its sections will not appear in Mark attendance until Nursery is switched back on — nobody will be
+  able to mark those students present or absent until then."* Cancelling leaves it running; the
+  dialog stays open with both buttons disabled for the two-plus seconds the write takes, rather than
+  vanishing and leaving the page still. A stopped class's row no longer claims "N of M sections
+  running" — it says sections do not run while the class is stopped. The section-level dialog states
+  the same consequence **conditionally** — *"if any students are currently enrolled in it"* — because
+  no endpoint exposes a per-section count and inventing one would be worse than saying less.
+
+  The hazard it guards was measured, not assumed: stopping Nursery took the Mark attendance section
+  picker from 23 options to 21, and restoring it brought them back.
+
+  Left open by it: no per-section enrolled count exists on the wire, so only the class dialog can
+  name a number. And for three to five seconds after switching a class back on, the success banner
+  and the row disagree — the banner says it is running again while the row still reads "Not running",
+  because the list refetch lands after the banner.
+- ~~**No list screen puts its filters in the URL.**~~ ✅ Closed (#105) for everything that should
+  carry, and verified on the deployed environment on 2026-09-10. Six screens now mirror their filters
+  and page through one shared helper, `shared/routing/list-query-params.ts`. A URL round-trips:
+  opening `?status=ACTIVE&page=4` cold reproduced the same "Showing 101–125 of 662" and the same
+  first and last rows, with the Status dropdown rehydrated. Clearing a filter **removes its key**
+  rather than writing `?status=` or `status=null`.
+
+  **Search text is deliberately excluded, and that is not an omission.** A child's name must never
+  end up in a link, a bookmark, a screenshot or a browser history (ADR-0014), so the student,
+  guardian and enquiry search boxes stay out of the URL — verified by typing a name and watching
+  `location.search` carry only `status` and `sectionId`. The audit log applies the same rule to
+  actors: the URL carries the actor's UUID and the chip recovers the display name from the first row
+  that answers.
+
+  **A decision worth knowing rather than rediscovering:** every write uses `replaceUrl: true`, so
+  `history.length` was unchanged across six filter changes and page turns. There is no
+  history-entry-per-keystroke trap — and the consequence is that Back exits the list screen entirely
+  rather than undoing a filter. That is the documented intent, not an accident.
+
+  Two screens could not be exercised: circulars syncs only `page` and the demo holds a single
+  circular so no pager renders, and the audit log answers `403` to a principal (see the entry below
+  about who can read it).
 - **A CI job that only runs after merge can stay red for days without anyone noticing.** The
   `Frontend image` job is gated on `if: github.ref == 'refs/heads/main'`, so it never runs on a pull
   request and nothing blocks on it. It had been failing since the generated contract was introduced:
