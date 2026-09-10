@@ -274,14 +274,32 @@ describe('StudentList', () => {
    * a filtered page's URL was replaced, must reproduce that same filtered, paged view — not reset
    * to page one with nothing chosen.
    */
-  it('loads a URL with query params by reproducing that filtered, paged view', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: {
-        snapshot: {
-          queryParamMap: convertToParamMap({ status: 'WITHDRAWN', sectionId: 'sec-a', page: '2' }),
+  it('loads a URL with query params by reproducing that filtered, paged view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [StudentList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap({
+                status: 'WITHDRAWN',
+                sectionId: 'sec-a',
+                page: '2',
+              }),
+            },
+          },
         },
-      },
-    });
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
 
     fixture = TestBed.createComponent(StudentList);
     fixture.detectChanges();

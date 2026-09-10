@@ -153,10 +153,23 @@ describe('CircularList', () => {
   });
 
   /** Loading a link with `?page=` reproduces that page, rather than resetting to the first one. */
-  it('loads a URL with a page number by reproducing that page', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '4' }) } },
-    });
+  it('loads a URL with a page number by reproducing that page', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [CircularList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '4' }) } },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
     signInWith(Permissions.COMMUNICATION_READ);
 
     fixture = TestBed.createComponent(CircularList);

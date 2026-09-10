@@ -425,19 +425,32 @@ describe('AuditLog', () => {
   });
 
   /** Loading a link with `?action=&from=&to=&page=` reproduces that filtered, paged view. */
-  it('loads a URL with query params by reproducing that filtered, paged view', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: {
-        snapshot: {
-          queryParamMap: convertToParamMap({
-            action: 'LOGIN_FAILED',
-            from: '2026-09-01',
-            to: '2026-09-05',
-            page: '2',
-          }),
+  it('loads a URL with query params by reproducing that filtered, paged view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [AuditLog],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap({
+                action: 'LOGIN_FAILED',
+                from: '2026-09-01',
+                to: '2026-09-05',
+                page: '2',
+              }),
+            },
+          },
         },
-      },
-    });
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
 
     fixture = TestBed.createComponent(AuditLog);
     fixture.detectChanges();
@@ -463,10 +476,23 @@ describe('AuditLog', () => {
    * A shared `?actorId=` link narrows the request from the first paint, and the chip fills in its
    * name once the rows it named have answered — the URL itself never carries that name.
    */
-  it('loads a URL with an actorId by narrowing to that actor and naming the chip once rows answer', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParamMap: convertToParamMap({ actorId: PRIYA }) } },
-    });
+  it('loads a URL with an actorId by narrowing to that actor and naming the chip once rows answer', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [AuditLog],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ actorId: PRIYA }) } },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
 
     fixture = TestBed.createComponent(AuditLog);
     fixture.detectChanges();

@@ -158,12 +158,25 @@ describe('LeaveRequestList', () => {
   });
 
   /** Loading a link with `?decision=&page=` reproduces that filtered, paged view. */
-  it('loads a URL with a status filter and a page by reproducing that view', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: {
-        snapshot: { queryParamMap: convertToParamMap({ decision: 'REJECTED', page: '1' }) },
-      },
-    });
+  it('loads a URL with a status filter and a page by reproducing that view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [LeaveRequestList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({ decision: 'REJECTED', page: '1' }) },
+          },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
     signInWith(Permissions.ATTENDANCE_LEAVE_READ);
 
     fixture = TestBed.createComponent(LeaveRequestList);

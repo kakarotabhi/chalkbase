@@ -195,10 +195,24 @@ describe('GuardianList', () => {
   });
 
   /** Loading a link with `?page=` reproduces that page, rather than resetting to the first one. */
-  it('loads a URL with a page number by reproducing that page', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '3' }) } },
-    });
+  it('loads a URL with a page number by reproducing that page', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [GuardianList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '3' }) } },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.GUARDIAN_READ, Permissions.GUARDIAN_MANAGE);
 
     fixture = TestBed.createComponent(GuardianList);
     fixture.detectChanges();

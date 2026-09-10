@@ -180,14 +180,31 @@ describe('EnquiryList', () => {
   });
 
   /** Loading a link with `?status=&source=&page=` reproduces that filtered, paged view. */
-  it('loads a URL with query params by reproducing that filtered, paged view', () => {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: {
-        snapshot: {
-          queryParamMap: convertToParamMap({ status: 'CONVERTED', source: 'REFERRAL', page: '2' }),
+  it('loads a URL with query params by reproducing that filtered, paged view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [EnquiryList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap({
+                status: 'CONVERTED',
+                source: 'REFERRAL',
+                page: '2',
+              }),
+            },
+          },
         },
-      },
-    });
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
     signInWith(Permissions.ADMISSION_ENQUIRY_READ);
 
     fixture = TestBed.createComponent(EnquiryList);
