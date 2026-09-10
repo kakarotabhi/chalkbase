@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { GuardianStudent, GuardianSummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
@@ -105,7 +106,15 @@ describe('GuardianList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [GuardianList],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -153,6 +162,65 @@ describe('GuardianList', () => {
     expect(labels.some((label) => label.includes('delete'))).toBe(false);
     expect(labels.some((label) => label.includes('remove'))).toBe(false);
     expect(labels).toContain('edit');
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  /**
+   * Without this, `location.search` stays empty however the directory is paged — a colleague could
+   * not be sent a link to page 12, and the back button after opening a guardian's record would
+   * always land back on page one. `search` deliberately stays out of it — see the class Javadoc.
+   */
+  it('mirrors a page turn into the URL, replacing rather than pushing', () => {
+    fixture = TestBed.createComponent(GuardianList);
+    fixture.detectChanges();
+    search().flush(envelope(page([guardian(), guardian({ id: 'g-2' })], 40)));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    button('Next').click();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { page: 1 },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    search().flush(envelope(page([], 40)));
+  });
+
+  /** Loading a link with `?page=` reproduces that page, rather than resetting to the first one. */
+  it('loads a URL with a page number by reproducing that page', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [GuardianList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '3' }) } },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.GUARDIAN_READ, Permissions.GUARDIAN_MANAGE);
+
+    fixture = TestBed.createComponent(GuardianList);
+    fixture.detectChanges();
+
+    const request = search();
+    expect(request.request.params.get('page')).toBe('3');
+    request.flush(envelope(page([], 0)));
+    fixture.detectChanges();
   });
 
   it('explains a 403 rather than crashing', () => {

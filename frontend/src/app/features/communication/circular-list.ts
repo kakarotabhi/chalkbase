@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   FormsModule,
   NonNullableFormBuilder,
@@ -28,6 +28,7 @@ import { Checkbox } from '../../shared/components/checkbox/checkbox';
 import { FormField } from '../../shared/components/form-field/form-field';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { TextInput } from '../../shared/components/text-input/text-input';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import { ACCESS_DENIED, circularStatusLabel, circularStatusTone } from './communication-shared';
 
 const WHOLE_CLASS = '';
@@ -58,6 +59,10 @@ interface TargetRow {
  * **There is no "edit a draft's targets" flow.** A circular is composed whole, with every target
  * chosen up front — the backend ships no endpoint to change a draft's targets afterwards, so a
  * school that wants a different audience discards the draft and composes another.
+ *
+ * **`page` is mirrored into the URL** (replacing the current history entry, never pushing one), so
+ * paging through past circulars survives opening one to publish it and coming back. There is no
+ * other filter on this screen to carry.
  */
 @Component({
   selector: 'cb-circular-list',
@@ -83,6 +88,8 @@ export class CircularList {
   private readonly api = inject(CommunicationApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly canManage = permitted(Permissions.COMMUNICATION_MANAGE);
 
@@ -92,7 +99,7 @@ export class CircularList {
   protected readonly loading = signal(true);
   protected readonly failureCode = signal<string | null>(null);
   protected readonly circulars = signal<readonly CircularSummary[]>([]);
-  protected readonly page = signal(0);
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalPages = signal(0);
 
   protected readonly publishingId = signal<string | null>(null);
@@ -165,6 +172,7 @@ export class CircularList {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -173,6 +181,7 @@ export class CircularList {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -274,6 +283,7 @@ export class CircularList {
           this.composeOpen.set(false);
           this.announcement.set('The circular was saved as a draft.');
           this.page.set(0);
+          this.syncUrl();
           this.load();
         },
         error: (error: unknown) => {
@@ -355,6 +365,11 @@ export class CircularList {
           );
         },
       });
+  }
+
+  /** Mirrors `page` into the URL. There is no other filter on this screen to carry. */
+  private syncUrl(): void {
+    syncListQueryParams(this.router, this.route, { page: this.page() || undefined });
   }
 
   private load(): void {

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { apiErrorCode } from '../../core/api/api-error';
 import { AttendanceApi, LEAVE_REQUEST_PAGE_SIZE } from '../../core/api/attendance-api';
 import { LeaveDecision, LeaveRequestResponse } from '../../core/api/models';
@@ -18,6 +18,7 @@ import { Badge, BadgeTone } from '../../shared/components/badge/badge';
 import { Button } from '../../shared/components/button/button';
 import { Select, SelectOption } from '../../shared/components/select/select';
 import { formatDay } from '../../shared/formatting/day';
+import { pageFromQueryParams, syncListQueryParams } from '../../shared/routing/list-query-params';
 import {
   ACCESS_DENIED,
   classAndSection,
@@ -60,6 +61,14 @@ interface LeaveRequestRow {
  * banner every other screen's does on a 403. "New leave request" is hidden rather than disabled for
  * a caller without `attendance:leave:request` — the same reasoning `student-list` gives for hiding
  * its own write actions.
+ *
+ * ## The status filter and the page are in the URL
+ *
+ * Neither carries a name — `decision` is one of three fixed words and `page` is a number — so
+ * unlike the search boxes on `student-list` and `guardian-list` there is nothing here for ADR-0014
+ * to say no to. Both are mirrored into the URL (replacing the current history entry, never pushing
+ * one), so a filtered, paged view can be linked, bookmarked, and survives a trip to one request's
+ * own decision screen and back.
  */
 @Component({
   selector: 'cb-leave-request-list',
@@ -72,18 +81,22 @@ export class LeaveRequestList {
   private readonly api = inject(AttendanceApi);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly pageSize = LEAVE_REQUEST_PAGE_SIZE;
   protected readonly decisionFilterOptions = DECISION_FILTER_OPTIONS;
 
   protected readonly canRequest = permitted(Permissions.ATTENDANCE_LEAVE_REQUEST);
 
-  protected readonly decisionFilter = this.formBuilder.control('');
+  protected readonly decisionFilter = this.formBuilder.control(
+    this.route.snapshot.queryParamMap.get('decision') ?? '',
+  );
 
   protected readonly loading = signal(true);
   protected readonly failureCode = signal<string | null>(null);
   protected readonly rows = signal<readonly LeaveRequestRow[]>([]);
-  protected readonly page = signal(0);
+  protected readonly page = signal(pageFromQueryParams(this.route));
   protected readonly totalPages = signal(0);
 
   protected readonly forbidden = computed(() => this.failureCode() === ACCESS_DENIED);
@@ -99,6 +112,7 @@ export class LeaveRequestList {
     this.load();
     this.decisionFilter.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.page.set(0);
+      this.syncUrl();
       this.load();
     });
   }
@@ -112,6 +126,7 @@ export class LeaveRequestList {
       return;
     }
     this.page.update((current) => current - 1);
+    this.syncUrl();
     this.load();
   }
 
@@ -120,7 +135,16 @@ export class LeaveRequestList {
       return;
     }
     this.page.update((current) => current + 1);
+    this.syncUrl();
     this.load();
+  }
+
+  /** Mirrors `decision` and `page` into the URL. Neither is Confidential — see the class Javadoc. */
+  private syncUrl(): void {
+    syncListQueryParams(this.router, this.route, {
+      decision: this.decisionFilter.value || undefined,
+      page: this.page() || undefined,
+    });
   }
 
   private load(): void {

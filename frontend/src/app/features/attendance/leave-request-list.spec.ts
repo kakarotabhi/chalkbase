@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { LeaveRequestResponse } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
@@ -54,7 +55,15 @@ describe('LeaveRequestList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LeaveRequestList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -62,6 +71,7 @@ describe('LeaveRequestList', () => {
 
   afterEach(() => {
     httpMock.verify();
+    vi.restoreAllMocks();
   });
 
   it('says so when the caller cannot see leave requests', () => {
@@ -116,5 +126,70 @@ describe('LeaveRequestList', () => {
     fixture.detectChanges();
 
     expect(text()).not.toContain('New leave request');
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  it('mirrors a status filter change into the URL, replacing rather than pushing', () => {
+    signInWith(Permissions.ATTENDANCE_LEAVE_READ);
+    fixture = TestBed.createComponent(LeaveRequestList);
+    fixture.detectChanges();
+    httpMock.expectOne((candidate) => candidate.url === LIST_URL).flush(envelope(page([])));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const select = element().querySelector('#leave-status-filter') as HTMLSelectElement;
+    select.value = 'APPROVED';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { decision: 'APPROVED', page: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    httpMock.expectOne((candidate) => candidate.url === LIST_URL).flush(envelope(page([])));
+  });
+
+  /** Loading a link with `?decision=&page=` reproduces that filtered, paged view. */
+  it('loads a URL with a status filter and a page by reproducing that view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [LeaveRequestList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap({ decision: 'REJECTED', page: '1' }) },
+          },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.ATTENDANCE_LEAVE_READ);
+
+    fixture = TestBed.createComponent(LeaveRequestList);
+    fixture.detectChanges();
+
+    const httpRequest = httpMock.expectOne((candidate) => candidate.url === LIST_URL);
+    expect(httpRequest.request.params.get('decision')).toBe('REJECTED');
+    expect(httpRequest.request.params.get('page')).toBe('1');
+    httpRequest.flush(envelope(page([])));
+    fixture.detectChanges();
+
+    expect((element().querySelector('#leave-status-filter') as HTMLSelectElement).value).toBe(
+      'REJECTED',
+    );
   });
 });

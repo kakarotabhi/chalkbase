@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { SchoolClass, StudentSummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
@@ -118,7 +118,15 @@ describe('StudentList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [StudentList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -209,6 +217,107 @@ describe('StudentList', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('No student matches this search');
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  /**
+   * Without this, `location.search` stays empty however the list is filtered — a filtered view
+   * could not be linked, bookmarked, or recovered with the back button. `status` and `sectionId`
+   * are safe to carry (no child's name in either); `q` deliberately is not — see the class Javadoc.
+   */
+  it('mirrors a filter change into the URL, replacing rather than pushing', () => {
+    arrive();
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    choose('student-status-filter', 'WITHDRAWN');
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { status: 'WITHDRAWN', sectionId: null, page: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    search().flush(envelope(page([])));
+  });
+
+  /** Turning the page is a filter change too: it must replace the URL, not push a new page-per-click entry. */
+  it('mirrors a page turn into the URL', () => {
+    fixture = TestBed.createComponent(StudentList);
+    fixture.detectChanges();
+    search().flush(envelope(page([student(), student({ id: 'b' })], 40, 0)));
+    classes().flush(envelope(ladder));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    button('Next').click();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { status: null, sectionId: null, page: 1 },
+        replaceUrl: true,
+      }),
+    );
+
+    search().flush(envelope(page([], 40, 1)));
+  });
+
+  /**
+   * The other half of the fix: a colleague following a link, or the back button landing here after
+   * a filtered page's URL was replaced, must reproduce that same filtered, paged view — not reset
+   * to page one with nothing chosen.
+   */
+  it('loads a URL with query params by reproducing that filtered, paged view', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [StudentList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: convertToParamMap({
+                status: 'WITHDRAWN',
+                sectionId: 'sec-a',
+                page: '2',
+              }),
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.STUDENT_READ, Permissions.STUDENT_MANAGE);
+
+    fixture = TestBed.createComponent(StudentList);
+    fixture.detectChanges();
+
+    const request = search();
+    expect(request.request.params.get('status')).toBe('WITHDRAWN');
+    expect(request.request.params.get('sectionId')).toBe('sec-a');
+    expect(request.request.params.get('page')).toBe('2');
+    request.flush(envelope(page([], 0, 2)));
+    classes().flush(envelope(ladder));
+    fixture.detectChanges();
+
+    expect((element().querySelector('#student-status-filter') as HTMLSelectElement).value).toBe(
+      'WITHDRAWN',
+    );
+    expect((element().querySelector('#student-section-filter') as HTMLSelectElement).value).toBe(
+      'sec-a',
+    );
   });
 
   /**

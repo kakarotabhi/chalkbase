@@ -80,7 +80,7 @@
 
   @if (filtered()) {
     <div class="chips">
-      @if (actor(); as pinned) {
+      @if (pinnedActor(); as pinned) {
         <!--
           The actor filter exists only as this chip, because the API filters on a UUID and a UUID
           text box is useless to a human. It is set by clicking a name in a row and removed here.

@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 import { CircularSummary } from '../../core/api/models';
 import { Permissions } from '../../core/auth/permissions';
 import { signInWith } from '../../core/auth/session-fixture';
@@ -22,12 +23,12 @@ const refusal = (code: string) => ({
   error: { code, message: 'Refused.' },
 });
 
-const page = (content: readonly CircularSummary[]) => ({
+const page = (content: readonly CircularSummary[], totalPages = 1) => ({
   content,
   page: 0,
   size: 25,
   totalElements: content.length,
-  totalPages: 1,
+  totalPages,
 });
 
 const circular = (over: Partial<CircularSummary> = {}): CircularSummary => ({
@@ -50,10 +51,23 @@ describe('CircularList', () => {
   const element = () => fixture.nativeElement as HTMLElement;
   const text = () => element().textContent ?? '';
 
+  const button = (label: string) =>
+    Array.from(element().querySelectorAll('button')).find((candidate) =>
+      (candidate.textContent ?? '').includes(label),
+    ) as HTMLButtonElement;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CircularList],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
+      ],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -61,6 +75,7 @@ describe('CircularList', () => {
 
   afterEach(() => {
     httpMock.verify();
+    vi.restoreAllMocks();
   });
 
   it('says so when the caller cannot read circulars', () => {
@@ -105,5 +120,65 @@ describe('CircularList', () => {
     fixture.detectChanges();
 
     expect(text()).toContain('Compose a circular');
+  });
+
+  // ── The URL (Finding E) ──────────────────────────────────────────────────────────────────
+
+  it('mirrors a page turn into the URL, replacing rather than pushing', () => {
+    signInWith(Permissions.COMMUNICATION_READ);
+    fixture = TestBed.createComponent(CircularList);
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne((candidate) => candidate.url === CIRCULARS_URL)
+      .flush(envelope(page([circular()], 2)));
+    httpMock.expectOne('/api/academics/classes').flush(envelope([]));
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    button('Next').click();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { page: 1 },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+
+    httpMock.expectOne((candidate) => candidate.url === CIRCULARS_URL).flush(envelope(page([])));
+  });
+
+  /** Loading a link with `?page=` reproduces that page, rather than resetting to the first one. */
+  it('loads a URL with a page number by reproducing that page', async () => {
+    // `overrideProvider` cannot follow the `TestBed.inject` in `beforeEach` — the module is
+    // already instantiated by then — so this one test builds its own, with the route it needs.
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [CircularList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ page: '4' }) } },
+        },
+      ],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
+    signInWith(Permissions.COMMUNICATION_READ);
+
+    fixture = TestBed.createComponent(CircularList);
+    fixture.detectChanges();
+
+    const request = httpMock.expectOne((candidate) => candidate.url === CIRCULARS_URL);
+    expect(request.request.params.get('page')).toBe('4');
+    request.flush(envelope(page([])));
+    httpMock.expectOne('/api/academics/classes').flush(envelope([]));
+    fixture.detectChanges();
   });
 });
