@@ -524,12 +524,18 @@ export class SchoolClasses {
     this.focusAfterRender(`#${target.activeButtonId}`);
   }
 
+  /**
+   * The dialog stays mounted and `[busy]` for the whole request — it is not dismissed here, only
+   * once the write settles, so the confirm button can show progress the way `cb-dialog` exists to
+   * show it (see the component's own docblock). Closing it immediately, before the request is even
+   * sent, would discard that capability for no reason: the row's `saving()` guard already stops a
+   * second submission, so nothing about correctness depends on the dialog closing early.
+   */
   protected confirmStopClass(): void {
     const target = this.stoppingClass();
     if (this.saving() || !target) {
       return;
     }
-    this.stoppingClass.set(null);
     this.writeClassActive(target, false);
   }
 
@@ -543,6 +549,7 @@ export class SchoolClasses {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          this.stoppingClass.set(null);
           this.announcement.set(
             next
               ? `${row.name} is running again.`
@@ -550,7 +557,13 @@ export class SchoolClasses {
           );
           this.refresh(() => this.focusAfterRender(`#${row.activeButtonId}`));
         },
-        error: (error: unknown) => this.failWrite(error, `#${row.activeButtonId}`),
+        // A refused stop closes the dialog rather than leaving it open with nothing new to say —
+        // the reason lives in the page's own error banner (`writeFailure`), the same place every
+        // other refused write on this screen reports, and focus goes back to the row that asked.
+        error: (error: unknown) => {
+          this.stoppingClass.set(null);
+          this.failWrite(error, `#${row.activeButtonId}`);
+        },
       });
   }
 
@@ -583,12 +596,12 @@ export class SchoolClasses {
     this.focusAfterRender(`#${target.section.activeButtonId}`);
   }
 
+  /** Same reasoning as {@link confirmStopClass}: the dialog stays up and busy until the write settles. */
   protected confirmStopSection(): void {
     const target = this.stoppingSection();
     if (this.saving() || !target) {
       return;
     }
-    this.stoppingSection.set(null);
     this.writeSectionActive(target.section, false);
   }
 
@@ -602,6 +615,7 @@ export class SchoolClasses {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          this.stoppingSection.set(null);
           this.announcement.set(
             next
               ? `${section.qualifiedName} is running again.`
@@ -609,7 +623,10 @@ export class SchoolClasses {
           );
           this.refresh(() => this.focusAfterRender(`#${section.activeButtonId}`));
         },
-        error: (error: unknown) => this.failWrite(error, `#${section.activeButtonId}`),
+        error: (error: unknown) => {
+          this.stoppingSection.set(null);
+          this.failWrite(error, `#${section.activeButtonId}`);
+        },
       });
   }
 

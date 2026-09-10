@@ -421,6 +421,56 @@ describe('SchoolClasses', () => {
       expect(text()).toContain('Nursery is no longer running');
     });
 
+    /**
+     * `cb-dialog` exists partly so a confirmation can show progress instead of freezing the page —
+     * see its own docblock. That only holds if the dialog is still mounted when the request is in
+     * flight: closing it the instant "Stop running" is pressed would throw that capability away
+     * before the busy state ever had a chance to render.
+     */
+    it('stays open and busy for as long as the request is in flight', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+      dialogButton('Stop running')!.click();
+      fixture.detectChanges();
+
+      // The request is out, but nothing has answered it yet.
+      const stopped = httpMock.expectOne({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' });
+      expect(dialog()).not.toBeNull();
+      expect(dialogButton('Stop running')?.disabled).toBe(true);
+      expect(dialogButton('Keep it running')?.disabled).toBe(true);
+
+      stopped.flush(envelope({ ...NURSERY, active: false }));
+      fixture.detectChanges();
+      settleRefresh([{ ...NURSERY, active: false }, CLASS_ONE, CLASS_TWO]);
+
+      expect(dialog()).toBeNull();
+    });
+
+    /**
+     * A refused stop closes the dialog rather than leaving it open with nothing new to say, or
+     * vanishing as if nothing happened: the reason lands in the page's own error banner, the same
+     * place every other refused write on this screen reports one, and the row keeps the class as it
+     * was — nobody is told it stopped running when it did not.
+     */
+    it('closes the dialog and explains the refusal, on the page, when the stop fails', () => {
+      arrive(LADDER, [{ classId: NURSERY.id, className: NURSERY.name, sequence: 1, count: 6 }]);
+
+      press('class-active-cls-nursery');
+      dialogButton('Stop running')!.click();
+      fixture.detectChanges();
+
+      httpMock
+        .expectOne({ url: `${CLASSES_URL}/${NURSERY.id}`, method: 'PUT' })
+        .flush(refusal('PERM_001'), { status: 403, statusText: 'Forbidden' });
+      fixture.detectChanges();
+
+      expect(dialog()).toBeNull();
+      expect(text()).toContain('You do not have permission to change classes and sections');
+      // Still running, and no quiet refetch was made to discover that.
+      expect(control('class-active-cls-nursery')?.textContent).toContain('Stop running');
+    });
+
     it('says nobody is enrolled rather than showing a zero as if it were a warning', () => {
       // The default `arrive()` dashboard tile is present and empty: known, and zero everywhere.
       arrive();
